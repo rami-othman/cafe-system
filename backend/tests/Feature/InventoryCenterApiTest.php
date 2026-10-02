@@ -16,6 +16,30 @@ class InventoryCenterApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_opening_inventory_posts_stock_and_balanced_finance_once(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $headers = $this->headers($tenant);
+        $warehouse = $this->warehouse($tenant);
+        $item = $this->createItem($tenant);
+        $period = (int) $this->postJson('/api/v1/finance/accounting-periods', [
+            'name' => '2032', 'startDate' => '2032-01-01', 'endDate' => '2032-12-31',
+        ], $headers)->assertCreated()->json('data.id');
+        $payload = ['lines' => [['warehouseId' => $warehouse, 'itemId' => $item,
+            'quantity' => '2.000', 'unitCost' => '5.0000']]];
+
+        $response = $this->postJson("/api/v1/inventory/accounting-periods/$period/opening-inventory", $payload, $headers)
+            ->assertCreated()->assertJsonPath('data.totalCost', '10.00');
+        $movementId = (int) $response->json('data.movementIds.0');
+        $journalId = (int) $response->json('data.journalEntryId');
+        $this->assertSame('opening_balance', DB::table('stock_movements')->where('id', $movementId)->value('type'));
+        $this->assertSame('2.000', DB::table('stock_balances')->where('warehouse_id', $warehouse)->where('inventory_item_id', $item)->value('quantity_on_hand'));
+        $this->assertSame('posted', DB::table('journal_entries')->where('id', $journalId)->value('status'));
+        $this->assertSame('10.00', DB::table('journal_entry_lines')->where('journal_entry_id', $journalId)->sum('debit'));
+        $this->postJson("/api/v1/inventory/accounting-periods/$period/opening-inventory", $payload, $headers)->assertUnprocessable();
+    }
+
     public function test_inventory_catalog_seeders_are_idempotent_and_keep_one_record_per_identity(): void
     {
         $this->seed(SuperAdminSeeder::class);

@@ -11,6 +11,7 @@ abstract interface class CafeConfigurationRepository {
   Future<CafeConfigurationBranch> updateBranch(int id, BranchDraft draft);
   Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
     String status = 'active',
+    String? group,
   });
   Future<ReceiptTemplate> getReceiptTemplate(int branchId);
   Future<ReceiptTemplate> updateReceiptTemplate(
@@ -105,17 +106,31 @@ class ApiCafeConfigurationRepository implements CafeConfigurationRepository {
   @override
   Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
     String status = 'active',
+    String? group,
   }) async {
-    final dynamic response = await _apiClient.get(
-      'finance/accounts',
-      queryParameters: <String, dynamic>{'status': status, 'perPage': 200},
-    );
-    final List<dynamic> rows = response is List ? response : const <dynamic>[];
-    return rows
-        .map(
+    // The imported chart has thousands of accounts, so a single page would hide
+    // most of them: read every page of the requested group.
+    final List<BranchFinancialAccountOption> all =
+        <BranchFinancialAccountOption>[];
+    for (int page = 1; page <= 50; page++) {
+      final dynamic response = await _apiClient.get(
+        'finance/accounts',
+        queryParameters: <String, dynamic>{
+          'status': status,
+          'perPage': 200,
+          'page': page,
+          if (group != null) 'group': group,
+        },
+      );
+      final List<dynamic> rows = response is List ? response : const <dynamic>[];
+      all.addAll(
+        rows.map(
           (dynamic row) => BranchFinancialAccountOption.fromJson(_map(row)),
-        )
-        .toList(growable: false);
+        ),
+      );
+      if (rows.length < 200) break;
+    }
+    return all;
   }
 
   @override

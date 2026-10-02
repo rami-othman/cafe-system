@@ -473,7 +473,7 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
                 : 'الحالة المحاسبية: مُرحّل • لا يوجد أثر نقدي عند الترحيل.')
           : 'الحالة المحاسبية: غير مُرحّل • حالة المخزون: لم يتم تنفيذ الاستهلاك بعد',
       actions: <Widget>[
-        if (i.canPost && !i.isWalkIn)
+        if (i.canPost && !i.isWalkIn && i.isCreditTerms)
           ElevatedButton.icon(
             onPressed: () => _confirmPost(i),
             icon: const Icon(Icons.post_add),
@@ -548,7 +548,10 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
                   i.isBackdated ? '${i.invoiceDate} (بتاريخ سابق)' : i.invoiceDate,
                 ),
                 _field('تاريخ الإنشاء', i.createdAt ?? '—'),
-                _field('الاستحقاق', i.dueDate ?? '—'),
+                _field('طريقة الدفع', _termsLabel(i.paymentTerms)),
+                if (i.paymentTerms == 'sham_cash')
+                  _field('رقم عملية شام كاش', i.paymentReference ?? '—'),
+                if (i.isCreditTerms) _field('الاستحقاق', i.dueDate ?? '—'),
                 _field('المرجع', i.reference ?? '—'),
                 if (posted) _field('مرجع القيد', i.journalReference ?? '—'),
                 if (i.isBackdated)
@@ -747,6 +750,55 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
     );
   }
 
+  String _termsLabel(String terms) => switch (terms) {
+    'cash' => 'كاش',
+    'sham_cash' => 'شام كاش',
+    _ => 'أجل',
+  };
+
+  /// A backdated draft can only be posted with a reason; ask for it instead of
+  /// letting the server reject the post.
+  Future<String?> _backdateReasonForPost(SalesInvoice i) async {
+    if (!i.isBackdated || (i.backdateReason ?? '').trim().isNotEmpty) {
+      return i.backdateReason;
+    }
+    final TextEditingController c = TextEditingController();
+    final String? reason = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('فاتورة بتاريخ سابق'),
+        content: SizedBox(
+          width: 380,
+          child: TextField(
+            controller: c,
+            autofocus: true,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'سبب التاريخ السابق',
+              helperText: 'مطلوب لترحيل فاتورة تاريخها قبل اليوم',
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (c.text.trim().length >= 3) {
+                Navigator.pop(dialogContext, c.text.trim());
+              }
+            },
+            child: const Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+    c.dispose();
+    return reason;
+  }
+
   Future<void> _confirmPost(SalesInvoice i) async {
     try {
       final p = await cubit.repository.postingPreview(i.id);
@@ -795,9 +847,12 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
         ),
       );
       if (approved != true) return;
+      final String? backdate = await _backdateReasonForPost(i);
+      if (i.isBackdated && (backdate ?? '').trim().isEmpty) return;
       final (_, List<Map<String, dynamic>> warnings) = await cubit.repository.post(
         i.id,
         'sales-post-${i.id}-${DateTime.now().microsecondsSinceEpoch}',
+        backdateReason: backdate,
       );
       if (mounted) {
         await load();
@@ -831,9 +886,13 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
         branchId: i.branchId,
         directSale: i.isWalkIn,
         invoiceDate: i.invoiceDate,
+        paymentTerms: i.paymentTerms,
+        initialReference: i.paymentReference,
       ),
     );
     if (result == null || !mounted) return;
+    final String? backdate = await _backdateReasonForPost(i);
+    if (i.isBackdated && (backdate ?? '').trim().isEmpty) return;
     try {
       final now = DateTime.now().microsecondsSinceEpoch;
       await cubit.repository.postAndCollect(i.id, <String, dynamic>{
@@ -848,6 +907,9 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
         'paymentMethodId': result['paymentMethodId'],
         if (result['financialLocationId'] != null)
           'financialLocationId': result['financialLocationId'],
+        if ((result['reference'] ?? '').toString().isNotEmpty)
+          'reference': result['reference'],
+        if ((backdate ?? '').trim().isNotEmpty) 'backdateReason': backdate,
         if (!i.isWalkIn)
           'allocations': <Map<String, dynamic>>[
             <String, dynamic>{'invoiceId': i.id, 'amount': result['amount']},
@@ -907,6 +969,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   String? invoiceDiscountType;
   DateTime date = DateTime.now();
   DateTime? dueDate;
+  String paymentTerms = 'credit';
+  final paymentReference = TextEditingController();
+  int? warehouseId;
+  List<WarehouseLocation> warehouses = const [];
   int? customerId;
   int? branchId;
   List<SalesCustomer> customers = const [];
@@ -926,6 +992,16 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   bool get _isFactory =>
       branches.any((branch) => branch.id == branchId && branch.isFactory);
   SalesCubit get cubit => context.read<SalesCubit>();
+  bool get _isWalkInSelected =>
+      customers.where((c) => c.id == customerId).firstOrNull?.isWalkIn == true;
+  List<WarehouseLocation> get _branchWarehouses => warehouses
+      .where(
+        (w) =>
+            w.isActive &&
+            !w.isLegacy &&
+            (w.branchId == null || w.branchId == branchId),
+      )
+      .toList(growable: false);
 
   void _changeCurrency(FactoryCurrencySelection value) {
     setState(() {
@@ -975,6 +1051,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     reference.dispose();
     notes.dispose();
     backdateReason.dispose();
+    paymentReference.dispose();
     invoiceDiscount.dispose();
     manualAdjustment.dispose();
     for (final l in lines) {
@@ -1011,9 +1088,15 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       ),
       _loadOptional(cubit.repository.materials(), 'المواد الخام', errors),
       _loadOptional(cubit.repository.salesTaxRate(), 'الضريبة', errors),
+      _loadOptional(
+        context.read<FinanceSetupCubit>().repository.getWarehouses(),
+        'المستودعات',
+        errors,
+      ),
     ]);
     if (!mounted) return;
     setState(() {
+      warehouses = values[5] as List<WarehouseLocation>? ?? const [];
       customers = values[0] as List<SalesCustomer>? ?? const [];
       products = values[1] as List<SalesProduct>? ?? const [];
       branches = values[2] as List<Branch>? ?? const [];
@@ -1057,7 +1140,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         notes.text = i.notes ?? '';
         backdateReason.text = i.backdateReason ?? '';
         date = DateTime.tryParse(i.invoiceDate) ?? date;
-        dueDate = DateTime.tryParse(i.dueDate ?? '');
+        paymentTerms = i.paymentTerms;
+        paymentReference.text = i.paymentReference ?? '';
+        warehouseId = i.warehouseId;
+        dueDate = i.isCreditTerms ? DateTime.tryParse(i.dueDate ?? '') : null;
         invoiceDiscountType = i.invoiceDiscountType;
         invoiceDiscount.text = i.invoiceDiscountValue ?? '';
         lines.addAll(
@@ -1124,7 +1210,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     setState(() => loadingMaterials = true);
     try {
       final result = await cubit.repository.materials(
-        branchId: _isFactory ? selectedBranch : null,
+        branchId: (_isFactory || warehouseId != null) ? selectedBranch : null,
+        warehouseId: warehouseId,
       );
       if (!mounted || generation != _materialsGeneration) return;
       setState(() {
@@ -1223,6 +1310,15 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       );
       return;
     }
+    if (_isWalkInSelected && paymentTerms == 'credit') {
+      setState(() => paymentTerms = 'cash');
+    }
+    if (paymentTerms == 'sham_cash' && paymentReference.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('أدخل رقم عملية شام كاش.')),
+      );
+      return;
+    }
     setState(() => saving = true);
     try {
       final due =
@@ -1242,7 +1338,13 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         'branchId': branchId,
         'customerId': customerId,
         'invoiceDate': _date(date),
-        'dueDate': _date(due),
+        'paymentTerms': paymentTerms,
+        // الاستحقاق له معنى للأجل فقط؛ الخادم يجعله تاريخ الفاتورة للدفع الفوري.
+        if (paymentTerms == 'credit') 'dueDate': _date(due),
+        'paymentReference': paymentTerms == 'sham_cash'
+            ? paymentReference.text.trim()
+            : null,
+        'warehouseId': warehouseId,
         'reference': reference.text.trim().isEmpty
             ? null
             : reference.text.trim(),
@@ -1300,7 +1402,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       }, id: savedId ?? widget.id);
       savedId = r.id;
       if (postAfterSave) {
-        if (r.isWalkIn) {
+        if (r.isWalkIn || r.paymentTerms != 'credit') {
           final result = await showDialog<Map<String, dynamic>>(
             context: context,
             builder: (_) => ImmediateCollectDialog(
@@ -1309,27 +1411,43 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                   .repository,
               invoiceTotal: r.total,
               branchId: r.branchId,
-              directSale: true,
+              directSale: r.isWalkIn,
               invoiceDate: r.invoiceDate,
+              paymentTerms: r.paymentTerms,
+              initialReference: r.paymentReference,
             ),
           );
           if (result == null) {
             if (mounted) context.go('/finance/sales/${r.id}');
             return;
           }
+          final now = DateTime.now().microsecondsSinceEpoch;
           await cubit.repository.postAndCollect(r.id, <String, dynamic>{
-            'postIdempotencyKey': 'sales-cash-post-${r.id}',
-            'paymentIdempotencyKey': 'sales-cash-pay-${r.id}',
+            'postIdempotencyKey': r.isWalkIn
+                ? 'sales-cash-post-${r.id}'
+                : 'sales-post-$now',
+            'paymentIdempotencyKey': r.isWalkIn
+                ? 'sales-cash-pay-${r.id}'
+                : 'sales-pay-$now',
             'paymentDate': result['paymentDate'],
             'amount': result['amount'],
             'paymentMethodId': result['paymentMethodId'],
             if (result['financialLocationId'] != null)
               'financialLocationId': result['financialLocationId'],
+            if ((result['reference'] ?? '').toString().isNotEmpty)
+              'reference': result['reference'],
+            if (backdateReason.text.trim().isNotEmpty)
+              'backdateReason': backdateReason.text.trim(),
+            if (!r.isWalkIn)
+              'allocations': <Map<String, dynamic>>[
+                <String, dynamic>{'invoiceId': r.id, 'amount': result['amount']},
+              ],
           });
         } else {
           await cubit.repository.post(
             r.id,
             'sales-post-${r.id}-${DateTime.now().microsecondsSinceEpoch}',
+            backdateReason: backdateReason.text,
           );
         }
       }
@@ -1392,7 +1510,9 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                             ?.isWalkIn ==
                         true
                     ? 'حفظ وترحيل نقدي'
-                    : 'ترحيل فاتورة المبيعات'),
+                    : (paymentTerms == 'credit'
+                          ? 'ترحيل فاتورة المبيعات'
+                          : 'ترحيل وتسجيل الدفعة')),
         ),
       ),
     ],
@@ -1456,7 +1576,13 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           (c) => c.id,
                           (c) =>
                               '${c.name} (${c.customerNumber})${c.isInternal ? ' • داخلي • فرع ${c.internalBranchId}' : ''}',
-                          (v) => setState(() => customerId = v),
+                          (v) => setState(() {
+                            customerId = v;
+                            // الزبون النقدي لا يتعامل بالأجل.
+                            if (_isWalkInSelected && paymentTerms == 'credit') {
+                              paymentTerms = 'cash';
+                            }
+                          }),
                         ),
                         TextButton.icon(
                           onPressed: _newCustomer,
@@ -1487,19 +1613,92 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           icon: const Icon(Icons.calendar_today),
                           label: Text("تاريخ الفاتورة: ${_date(date)}"),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            final d = await showDatePicker(
-                              context: context,
-                              initialDate: dueDate ?? date,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (d != null) setState(() => dueDate = d);
-                          },
-                          icon: const Icon(Icons.event),
-                          label: Text(
-                            "الاستحقاق: ${dueDate == null ? 'تلقائي' : _date(dueDate!)}",
+                        SizedBox(
+                          width: 200,
+                          child: DropdownButtonFormField<String>(
+                            key: ValueKey('terms-$paymentTerms-$_isWalkInSelected'),
+                            initialValue: paymentTerms,
+                            decoration: const InputDecoration(
+                              labelText: 'طريقة الدفع',
+                            ),
+                            items: <DropdownMenuItem<String>>[
+                              const DropdownMenuItem(
+                                value: 'cash',
+                                child: Text('كاش'),
+                              ),
+                              if (!_isWalkInSelected)
+                                const DropdownMenuItem(
+                                  value: 'credit',
+                                  child: Text('أجل'),
+                                ),
+                              const DropdownMenuItem(
+                                value: 'sham_cash',
+                                child: Text('شام كاش'),
+                              ),
+                            ],
+                            onChanged: (v) => setState(() {
+                              paymentTerms = v ?? 'cash';
+                              if (paymentTerms != 'credit') dueDate = null;
+                            }),
+                          ),
+                        ),
+                        if (paymentTerms == 'sham_cash')
+                          SizedBox(
+                            width: 220,
+                            child: TextFormField(
+                              controller: paymentReference,
+                              decoration: const InputDecoration(
+                                labelText: 'رقم عملية شام كاش',
+                              ),
+                            ),
+                          ),
+                        if (paymentTerms == 'credit')
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final d = await showDatePicker(
+                                context: context,
+                                initialDate: dueDate ?? date,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (d != null) setState(() => dueDate = d);
+                            },
+                            icon: const Icon(Icons.event),
+                            label: Text(
+                              "الاستحقاق: ${dueDate == null ? 'تلقائي' : _date(dueDate!)}",
+                            ),
+                          ),
+                        SizedBox(
+                          width: 240,
+                          child: DropdownButtonFormField<int?>(
+                            key: ValueKey('wh-$branchId-$warehouseId'),
+                            initialValue:
+                                _branchWarehouses.any((w) => w.id == warehouseId)
+                                ? warehouseId
+                                : null,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'المستودع (مخرجات المواد)',
+                            ),
+                            items: <DropdownMenuItem<int?>>[
+                              const DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text('مستودع الفرع الافتراضي'),
+                              ),
+                              ..._branchWarehouses.map(
+                                (w) => DropdownMenuItem<int?>(
+                                  value: w.id,
+                                  child: Text(
+                                    w.displayName,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              setState(() => warehouseId = v);
+                              _refreshMaterials(clearInvalid: true);
+                            },
                           ),
                         ),
                       ],
@@ -2610,12 +2809,18 @@ class ImmediateCollectDialog extends StatefulWidget {
     required this.branchId,
     this.directSale = false,
     this.invoiceDate,
+    this.paymentTerms = 'cash',
+    this.initialReference,
   });
   final FinanceSetupRepository financeSetupRepository;
   final String invoiceTotal;
   final int branchId;
   final bool directSale;
   final String? invoiceDate;
+
+  /// cash | sham_cash | credit — preselects the matching payment method.
+  final String paymentTerms;
+  final String? initialReference;
   @override
   State<ImmediateCollectDialog> createState() => _ImmediateCollectDialogState();
 }
@@ -2630,6 +2835,9 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
   int? methodId;
   bool loading = true;
   Object? error;
+  late final TextEditingController reference = TextEditingController(
+    text: widget.initialReference ?? '',
+  );
   DateTime paymentDate = DateTime.now();
   @override
   void initState() {
@@ -2650,6 +2858,7 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
   @override
   void dispose() {
     amount.dispose();
+    reference.dispose();
     super.dispose();
   }
 
@@ -2669,7 +2878,12 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
       if (!mounted) return;
       setState(() {
         methods = ms;
-        methodId = ms.firstOrNull?.id;
+        final String wanted = widget.paymentTerms == 'sham_cash'
+            ? 'sham_cash'
+            : 'cash';
+        methodId =
+            (ms.where((m) => m.type == wanted).firstOrNull ?? ms.firstOrNull)
+                ?.id;
         cashOptions = results[1] as CashSourceOptions;
         loading = false;
       });
@@ -2766,6 +2980,17 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
                         style: FinanceText.small,
                       ),
                     ),
+                  if (method?.type == 'sham_cash')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: TextField(
+                        controller: reference,
+                        decoration: const InputDecoration(
+                          labelText: 'رقم عملية شام كاش',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: amount,
@@ -2790,7 +3015,9 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
                   methodId == null ||
                   (method?.type == 'cash' &&
                       cashOptions?.mode == 'selectable' &&
-                      cashLocationId == null))
+                      cashLocationId == null) ||
+                  (method?.type == 'sham_cash' &&
+                      reference.text.trim().isEmpty))
               ? null
               : () {
                   final selected = methods.firstWhere((m) => m.id == methodId);
@@ -2807,6 +3034,8 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
                               ? cashLocationId
                               : null)
                         : selected.financialLocationId,
+                    if (selected.type == 'sham_cash')
+                      'reference': reference.text.trim(),
                   });
                 },
           child: const Text('ترحيل وتسجيل الدفعة'),

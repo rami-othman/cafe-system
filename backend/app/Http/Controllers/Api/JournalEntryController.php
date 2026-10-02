@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class JournalEntryController extends Controller
 {
-    public function __construct(private readonly JournalEntryService $entries) {}
+    public function __construct(private readonly JournalEntryService $entries, private readonly \App\Services\FinanceAccountMap $accountMap) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -59,7 +59,20 @@ class JournalEntryController extends Controller
     public function store(JournalEntryRequest $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $id = $this->entries->createDraft($request, $tenantId, $request->validated(), FinancialActor::id($request, $tenantId));
+        $id = $this->entries->createDraft($request, $tenantId, [
+            ...$request->validated(), 'sourceType' => 'manual', 'sourceId' => null,
+        ], FinancialActor::id($request, $tenantId));
+
+        return response()->json(['data' => $this->serializeDetail($tenantId, $this->entries->find($tenantId, $id))], 201);
+    }
+
+    public function opening(JournalEntryRequest $request, int $period): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        $actorId = FinancialActor::id($request, $tenantId);
+        abort_unless(DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)
+            ->where('role', 'owner')->whereNull('deleted_at')->exists(), 403, 'Owner access required.');
+        $id = $this->entries->createOpeningDraft($request, $tenantId, $period, $request->validated(), $actorId);
 
         return response()->json(['data' => $this->serializeDetail($tenantId, $this->entries->find($tenantId, $id))], 201);
     }
@@ -80,19 +93,56 @@ class JournalEntryController extends Controller
         return response()->json(['data' => $this->serializeDetail($tenantId, $this->entries->find($tenantId, $reversalId))], 201);
     }
 
+    /** @var array<int, ?string> */
+    private array $userNames = [];
+
+    private function userName(int $tenantId, mixed $userId): ?string
+    {
+        if (! $userId) {
+            return null;
+        }
+
+        return $this->userNames[(int) $userId] ??= DB::table('users')->where('tenant_id', $tenantId)->where('id', $userId)->value('name');
+    }
+
     private function serializeSummary(int $tenantId, object $entry): array
     {
-        [$debit, $credit] = $this->entries->totals($tenantId, $entry->id);
+        $hidden = $this->hiddenCostAccountIds($tenantId, $entry);
+        [$debit, $credit] = $this->entries->totals($tenantId, $entry->id, $hidden);
 
-        return ['id' => (int) $entry->id, 'entryNumber' => $entry->entry_number, 'entryDate' => $entry->entry_date, 'branchId' => $entry->branch_id ? (int) $entry->branch_id : null, 'branchName' => $entry->branch_name ?? null, 'sourceType' => $entry->source_type, 'sourceId' => $entry->source_id ? (int) $entry->source_id : null, 'sourceEvent' => $entry->source_event ?? null, 'description' => $entry->description, 'status' => $entry->status, 'debitTotal' => Money::decimal($debit), 'creditTotal' => Money::decimal($credit), 'postedAt' => $entry->posted_at, 'createdAt' => $entry->created_at, 'updatedAt' => $entry->updated_at, 'createdBy' => $entry->created_by ? (int) $entry->created_by : null, 'postedBy' => $entry->posted_by ? (int) $entry->posted_by : null, 'reversalOfId' => $entry->reversal_of_id ? (int) $entry->reversal_of_id : null, 'isReversed' => $this->entries->hasBeenReversed($tenantId, (int) $entry->id)];
+        return ['id' => (int) $entry->id, 'entryNumber' => $entry->entry_number, 'entryDate' => $entry->entry_date, 'branchId' => $entry->branch_id ? (int) $entry->branch_id : null, 'branchName' => $entry->branch_name ?? null, 'sourceType' => $entry->source_type, 'sourceId' => $entry->source_id ? (int) $entry->source_id : null, 'sourceEvent' => $entry->source_event ?? null, 'description' => $entry->description, 'status' => $entry->status, 'debitTotal' => Money::decimal($debit), 'creditTotal' => Money::decimal($credit), 'postedAt' => $entry->posted_at, 'createdAt' => $entry->created_at, 'updatedAt' => $entry->updated_at, 'createdBy' => $entry->created_by ? (int) $entry->created_by : null, 'createdByName' => $this->userName($tenantId, $entry->created_by), 'postedBy' => $entry->posted_by ? (int) $entry->posted_by : null, 'postedByName' => $this->userName($tenantId, $entry->posted_by), 'reversalOfId' => $entry->reversal_of_id ? (int) $entry->reversal_of_id : null, 'isReversed' => $this->entries->hasBeenReversed($tenantId, (int) $entry->id)];
     }
 
     private function serializeDetail(int $tenantId, object $entry): array
     {
         $summary = $this->serializeSummary($tenantId, $entry);
-        $summary['lines'] = DB::table('journal_entry_lines as lines')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')->where('lines.tenant_id', $tenantId)->where('lines.journal_entry_id', $entry->id)->orderBy('lines.line_number')->get(['lines.*', 'accounts.code as account_code', 'accounts.name_ar as account_name_ar', 'accounts.name_en as account_name_en'])->map(fn (object $line) => ['id' => (int) $line->id, 'lineNumber' => (int) $line->line_number, 'accountId' => (int) $line->financial_account_id, 'accountCode' => $line->account_code, 'accountNameAr' => $line->account_name_ar, 'accountNameEn' => $line->account_name_en, 'description' => $line->description, 'debit' => $line->debit, 'credit' => $line->credit])->values();
+        $hidden = $this->hiddenCostAccountIds($tenantId, $entry);
+        $summary['lines'] = DB::table('journal_entry_lines as lines')->when($hidden !== [], fn (Builder $q) => $q->whereNotIn('lines.financial_account_id', $hidden))->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')->where('lines.tenant_id', $tenantId)->where('lines.journal_entry_id', $entry->id)->orderBy('lines.line_number')->get(['lines.*', 'accounts.code as account_code', 'accounts.name_ar as account_name_ar', 'accounts.name_en as account_name_en'])->map(fn (object $line) => ['id' => (int) $line->id, 'lineNumber' => (int) $line->line_number, 'accountId' => (int) $line->financial_account_id, 'accountCode' => $line->account_code, 'accountNameAr' => $line->account_name_ar, 'accountNameEn' => $line->account_name_en, 'description' => $line->description, 'debit' => $line->debit, 'credit' => $line->credit])->values();
 
         return $summary;
+    }
+
+    /**
+     * Automatic sale/return entries also carry the stock side (cost of goods sold / inventory asset).
+     * It is bookkeeping noise for the reader, so those two lines are not shown (the books and reports keep them).
+     *
+     * @return array<int, int>
+     */
+    private function hiddenCostAccountIds(int $tenantId, object $entry): array
+    {
+        if (($entry->source_type ?? 'manual') === 'manual') {
+            return [];
+        }
+        $ids = fn (string $key) => array_filter([
+            $this->accountMap->account($tenantId, $key)?->id,
+            DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', \App\Services\FinanceAccountMap::LEGACY[$key])->value('id'),
+        ]);
+        $cogs = array_map('intval', $ids('sales.cost_of_goods_sold'));
+        if ($cogs === [] || ! DB::table('journal_entry_lines')->where('tenant_id', $tenantId)->where('journal_entry_id', $entry->id)->whereIn('financial_account_id', $cogs)->exists()) {
+            return [];
+        }
+
+        return array_values(array_unique([...$cogs, ...array_map('intval', $ids('sales.inventory_asset'))]));
     }
 
     private function actions(int $tenantId, object $entry, array $permissions): array

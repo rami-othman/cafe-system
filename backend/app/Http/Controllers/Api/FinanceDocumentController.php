@@ -25,6 +25,7 @@ final class FinanceDocumentController extends Controller
             ->leftJoin('branches', 'branches.id', '=', 'documents.branch_id')
             ->leftJoin('financial_locations as locations', 'locations.id', '=', 'documents.financial_location_id')
             ->where('documents.tenant_id', $tenantId)
+            ->whereNull('documents.deleted_at')
             ->select('documents.*', 'branches.name as branch_name', 'locations.name as location_name');
         if (DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role') !== 'owner') {
             \App\Support\BranchScope::applyFinancial($query, 'documents.branch_id', FinancialActor::user($actorId, $tenantId));
@@ -80,9 +81,49 @@ final class FinanceDocumentController extends Controller
     {
         $data = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
         $tenantId = TenantContext::id($request);
-        $row = $this->documents->reverse($request, $tenantId, $document, $data['reason'], FinancialActor::id($request, $tenantId));
+        $role = app(\App\Services\DefaultTenantRoleService::class)->canonicalLegacyRole(\App\Support\FinanceAccess::actor($request)->effectiveRoleCode());
+        $row = $this->documents->reverse($request, $tenantId, $document, $data['reason'], FinancialActor::id($request, $tenantId), $role === 'cashier');
 
         return response()->json(['data' => $this->serialize($row, true, $request)]);
+    }
+
+    public function trash(Request $request): JsonResponse
+    {
+        $this->assertOwner($request);
+        $tenantId = TenantContext::id($request);
+        $paginator = DB::table('finance_documents')->where('tenant_id', $tenantId)
+            ->whereNotNull('deleted_at')->orderByDesc('deleted_at')->paginate($this->perPage($request));
+
+        return response()->json([
+            'data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row, false, $request))->values(),
+            'meta' => $this->meta($paginator),
+        ]);
+    }
+
+    public function destroy(Request $request, int $document): JsonResponse
+    {
+        $actorId = $this->assertOwner($request);
+        $this->documents->delete($request, TenantContext::id($request), $document, $actorId);
+
+        return response()->json([], 204);
+    }
+
+    public function restore(Request $request, int $document): JsonResponse
+    {
+        $actorId = $this->assertOwner($request);
+        $row = $this->documents->restore($request, TenantContext::id($request), $document, $actorId);
+
+        return response()->json(['data' => $this->serialize($row, true, $request)]);
+    }
+
+    private function assertOwner(Request $request): int
+    {
+        $tenantId = TenantContext::id($request);
+        $actorId = FinancialActor::id($request, $tenantId);
+        abort_unless(DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)
+            ->where('role', 'owner')->whereNull('deleted_at')->exists(), 403, 'Owner access required.');
+
+        return $actorId;
     }
 
     private function validated(Request $request): array
@@ -126,6 +167,7 @@ final class FinanceDocumentController extends Controller
             'purchaseInvoiceId' => isset($row->purchase_invoice_id) && $row->purchase_invoice_id ? (int) $row->purchase_invoice_id : null,
             'reversalJournalEntryId' => $row->reversal_journal_entry_id ? (int) $row->reversal_journal_entry_id : null,
             'createdAt' => $row->created_at, 'postedAt' => $row->posted_at ?? null, 'reversedAt' => $row->reversed_at,
+            'deletedAt' => $row->deleted_at ?? null,
             'allowedActions' => $this->actions($row, $request),
         ];
         if (isset($row->branch_name)) {
@@ -146,11 +188,16 @@ final class FinanceDocumentController extends Controller
     {
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $actions = [];
-        if ($row->status === 'draft' && isset($permissions['finance.vouchers.post'])) {
+        if (($row->deleted_at ?? null) === null && $row->status === 'draft' && isset($permissions['finance.vouchers.post'])) {
             $actions[] = 'post';
         }
-        if ($row->status === 'posted' && ! $row->reversal_journal_entry_id && ($row->source_type ?? null) !== 'supplier_payment' && isset($permissions['finance.vouchers.reverse'])) {
+        if (($row->deleted_at ?? null) === null && $row->status === 'posted' && ! $row->reversal_journal_entry_id && ($row->source_type ?? null) !== 'supplier_payment' && isset($permissions['finance.vouchers.reverse'])) {
             $actions[] = 'reverse';
+        }
+        // The owner can delete any voucher; a posted one is reversed and hidden in a single step.
+        if (($row->deleted_at ?? null) === null && ($row->source_type ?? null) === null
+            && DB::table('users')->where('tenant_id', $row->tenant_id)->where('id', FinancialActor::id($request, (int) $row->tenant_id))->where('role', 'owner')->exists()) {
+            $actions[] = 'delete';
         }
 
         return $actions;

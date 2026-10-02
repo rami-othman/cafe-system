@@ -377,6 +377,9 @@ class SalesInvoice {
     this.isWalkIn = false,
     this.reference,
     this.notes,
+    this.paymentTerms = 'credit',
+    this.paymentReference,
+    this.warehouseId,
     this.grossSubtotal,
     this.lineDiscountTotal,
     this.invoiceDiscountType,
@@ -423,6 +426,12 @@ class SalesInvoice {
   final bool isWalkIn;
   final String? reference;
   final String? notes;
+
+  /// cash | credit | sham_cash — drives due date and posting route.
+  final String paymentTerms;
+  final String? paymentReference;
+  final int? warehouseId;
+  bool get isCreditTerms => paymentTerms == 'credit';
   final String? grossSubtotal;
   final String? lineDiscountTotal;
   final String? invoiceDiscountType;
@@ -469,6 +478,13 @@ class SalesInvoice {
     branchName: readString(j['branchName']),
     invoiceDate: readString(j['invoiceDate']),
     dueDate: readString(j['dueDate']).isEmpty ? null : readString(j['dueDate']),
+    paymentTerms: readString(j['paymentTerms']).isEmpty
+        ? 'credit'
+        : readString(j['paymentTerms']),
+    paymentReference: readString(j['paymentReference']).isEmpty
+        ? null
+        : readString(j['paymentReference']),
+    warehouseId: readInt(j['warehouseId']),
     status: readString(j['status']),
     subtotal: readString(j['subtotal']),
     taxTotal: readString(j['taxTotal']),

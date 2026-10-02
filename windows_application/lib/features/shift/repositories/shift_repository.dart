@@ -61,6 +61,8 @@ class ShiftRepository {
         destinationName: period['destinationName']?.toString(),
         varianceAccountCode: period['varianceAccountCode']?.toString(),
         varianceAccountName: period['varianceAccountName']?.toString(),
+        overAccountCode: period['overAccountCode']?.toString(),
+        overAccountName: period['overAccountName']?.toString(),
       );
     } on ApiException catch (error) {
       throw ShiftDataException(_lifecycleMessage(error));

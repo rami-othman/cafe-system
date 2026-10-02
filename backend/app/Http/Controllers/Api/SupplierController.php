@@ -57,7 +57,7 @@ class SupplierController extends Controller
     public function store(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $id = $this->suppliers->create($request, $tenant, $this->data($request), FinancialActor::id($request, $tenant));
+        $id = $this->suppliers->create($request, $tenant, $this->data($request, true), FinancialActor::id($request, $tenant));
 
         return response()->json(['data' => $this->profile($tenant, $id) + ['allowedActions' => $this->actions(array_fill_keys(FinanceAccess::capabilities($request), true))]], 201);
     }
@@ -68,7 +68,7 @@ class SupplierController extends Controller
     public function update(Request $request, int $supplier): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $this->suppliers->update($request, $tenant, $supplier, $this->data($request), FinancialActor::id($request, $tenant));
+        $this->suppliers->update($request, $tenant, $supplier, $this->data($request, false), FinancialActor::id($request, $tenant));
 
         return response()->json(['data' => $this->profile($tenant, $supplier) + ['allowedActions' => $this->actions(array_fill_keys(FinanceAccess::capabilities($request), true))]]);
     }
@@ -124,11 +124,12 @@ class SupplierController extends Controller
         ]]);
     }
 
-    private function data(Request $request): array
+    private function data(Request $request, bool $creating): array
     {
         return $request->validate([
             'isInternal' => ['sometimes', 'boolean'], 'internalBranchId' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'max:255'],
+            'customerId' => [$creating ? 'nullable' : 'prohibited', 'integer'],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -156,6 +157,8 @@ class SupplierController extends Controller
     {
         return [
             'id' => (int) $row->id,
+            'customerId' => $row->customer_id ? (int) $row->customer_id : null,
+            'financialAccountId' => $row->customer_id ? DB::table('customers')->where('tenant_id', $row->tenant_id)->where('id', $row->customer_id)->value('financial_account_id') : null,
             'supplierNumber' => $row->supplier_number,
             'isInternal' => (bool) $row->is_internal,
             'internalBranchId' => $row->internal_branch_id ? (int) $row->internal_branch_id : null,

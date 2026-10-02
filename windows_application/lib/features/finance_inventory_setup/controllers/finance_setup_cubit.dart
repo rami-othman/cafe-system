@@ -97,6 +97,10 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
     await repository.createDraft(payload);
     await loadEntries();
   });
+  Future<bool> createOpeningDraft(int periodId, Map<String, dynamic> payload) => _save(() async {
+    await repository.createOpeningDraft(periodId, payload);
+    await loadEntries();
+  });
   Future<bool> postEntry(int id) => _save(() async {
     await repository.postJournalEntry(id);
     await loadEntries();

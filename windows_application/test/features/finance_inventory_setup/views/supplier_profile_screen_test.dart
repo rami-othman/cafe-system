@@ -577,8 +577,12 @@ class _FakeBackend {
             requestOptions: options,
             statusCode: 422,
             data: <String, dynamic>{
-              'message':
+              'message': 'يرجى تصحيح البيانات المدخلة.',
+              'errors': <String, dynamic>{
+                'allocations': <String>[
                   'Allocation for AP-000010 exceeds its remaining balance of 250.00.',
+                ],
+              },
             },
           ),
           type: DioExceptionType.badResponse,
@@ -721,7 +725,7 @@ class _FakeBackend {
         // case the dialog auto-selects (see D2); anything else requires an
         // explicit pick.
         'allowedCashLocations': <Map<String, dynamic>>[
-          <String, dynamic>{'id': 3, 'name': 'Cash Drawer'},
+          <String, dynamic>{'id': 3, 'name': 'Cash Drawer', 'branchId': 1},
         ],
       });
     }

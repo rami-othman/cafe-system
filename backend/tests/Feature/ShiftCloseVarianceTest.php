@@ -55,7 +55,7 @@ final class ShiftCloseVarianceTest extends TestCase
         $this->assertSame('unknown_shortage', $closed['cash']['reason']);
     }
 
-    public function test_surplus_with_a_reason_posts_a_credit_to_6180(): void
+    public function test_surplus_with_a_reason_posts_a_credit_to_the_separate_4040_overage_account(): void
     {
         $this->fund('500.00');
         $shift = $this->open('500.00');
@@ -66,8 +66,11 @@ final class ShiftCloseVarianceTest extends TestCase
 
         $row = DB::table('shifts')->find($shift);
         $this->assertSame('50.00', $row->cash_difference);
+        // Overage is income on its own account (4040) — never mixed into the 6180 shortage expense.
+        $over4040 = (int) DB::table('financial_accounts')->where('tenant_id', $this->tenant)->where('code', '4040')->value('id');
         $variance6180 = (int) DB::table('financial_accounts')->where('tenant_id', $this->tenant)->where('code', '6180')->value('id');
-        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $row->cash_variance_journal_entry_id, 'financial_account_id' => $variance6180, 'debit' => '0.00', 'credit' => '50.00']);
+        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $row->cash_variance_journal_entry_id, 'financial_account_id' => $over4040, 'debit' => '0.00', 'credit' => '50.00']);
+        $this->assertDatabaseMissing('journal_entry_lines', ['journal_entry_id' => $row->cash_variance_journal_entry_id, 'financial_account_id' => $variance6180]);
         $this->assertSame('0.00', $this->ledger());
     }
 
@@ -106,6 +109,23 @@ final class ShiftCloseVarianceTest extends TestCase
 
         $journalId = DB::table('shifts')->where('id', $shift)->value('cash_variance_journal_entry_id');
         $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $journalId, 'financial_account_id' => $selected, 'debit' => '10.00']);
+    }
+
+    public function test_branch_selected_overage_account_receives_a_surplus(): void
+    {
+        $selected = (int) DB::table('financial_accounts')->insertGetId([
+            'tenant_id' => $this->tenant, 'code' => 'SCV-OVR', 'name_ar' => 'إيراد زيادة مخصص', 'name_en' => 'Custom overage',
+            'account_group' => 'revenue', 'normal_balance' => 'credit', 'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->putJson("/api/v1/cafe-configuration/branches/{$this->branch}", ['cashOverAccountId' => $selected], $this->headers)->assertOk()
+            ->assertJsonPath('data.cashOverAccountId', $selected);
+        $this->fund('400.00');
+        $shift = $this->open('400.00');
+
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '425.00', 'cashDifferenceReason' => 'unknown_surplus'], $this->headers)->assertOk();
+
+        $journalId = DB::table('shifts')->where('id', $shift)->value('cash_variance_journal_entry_id');
+        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $journalId, 'financial_account_id' => $selected, 'credit' => '25.00']);
     }
 
     public function test_manual_cash_movement_outside_the_shift_leaves_close_open_but_flags_unexplained_cash(): void

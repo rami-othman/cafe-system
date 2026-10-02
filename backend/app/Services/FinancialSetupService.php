@@ -69,6 +69,7 @@ class FinancialSetupService
             ['code' => '1010', 'name_ar' => 'صندوق نقطة البيع', 'name_en' => 'Cash Drawer', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1020', 'name_ar' => 'الخزنة الرئيسية', 'name_en' => 'Main Safe', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1030', 'name_ar' => 'الحساب البنكي', 'name_en' => 'Bank Account', 'account_group' => 'assets', 'normal_balance' => 'debit'],
+            ['code' => '1040', 'name_ar' => 'صندوق الشام كاش', 'name_en' => 'Sham Cash Box', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1100', 'name_ar' => 'أصل المخزون', 'name_en' => 'Inventory Asset', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1200', 'name_ar' => 'الذمم المدينة', 'name_en' => 'Accounts Receivable', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1500', 'name_ar' => 'الأصول الثابتة', 'name_en' => 'Fixed Assets', 'account_group' => 'assets', 'normal_balance' => 'debit'],
@@ -81,6 +82,7 @@ class FinancialSetupService
             ['code' => '4010', 'name_ar' => 'الخصومات الممنوحة', 'name_en' => 'Discounts Given', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
             ['code' => '4020', 'name_ar' => 'مرتجعات المبيعات', 'name_en' => 'Sales Returns', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
             ['code' => '4030', 'name_ar' => 'إيرادات الخدمات والرسوم', 'name_en' => 'Service and Charge Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
+            ['code' => '4040', 'name_ar' => 'زيادة الصندوق', 'name_en' => 'Cash Overage', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '5000', 'name_ar' => 'تكلفة البضاعة المباعة', 'name_en' => 'Cost of Goods Sold', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '5010', 'name_ar' => 'هدر وفروقات المخزون', 'name_en' => 'Waste / Inventory Variance', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '6100', 'name_ar' => 'مصروف الإيجار', 'name_en' => 'Rent Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
@@ -88,7 +90,7 @@ class FinancialSetupService
             ['code' => '6120', 'name_ar' => 'مصروف الخدمات', 'name_en' => 'Utilities Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6130', 'name_ar' => 'مصروف الصيانة', 'name_en' => 'Maintenance Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6140', 'name_ar' => 'مصروف التسويق', 'name_en' => 'Marketing Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
-            ['code' => '6180', 'name_ar' => 'عجز وزيادة الصندوق', 'name_en' => 'Cash Over / Short', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
+            ['code' => '6180', 'name_ar' => 'عجز الصندوق', 'name_en' => 'Cash Shortage', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6190', 'name_ar' => 'مصروفات متنوعة', 'name_en' => 'Miscellaneous Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
         ];
     }
@@ -114,6 +116,7 @@ class FinancialSetupService
             }
 
             $this->ensureCashAndBankDefaults($tenantId, $actorId);
+            $this->ensureSettlementMethodDefaults($tenantId, $actorId);
             $branchIds = DB::table('branches')->where('tenant_id', $tenantId)
                 ->where('is_active', true)->whereNull('deleted_at')->pluck('id');
             foreach ($branchIds as $branchId) {
@@ -145,7 +148,8 @@ class FinancialSetupService
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
-        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020', 'sales.additional_charge_revenue' => '4030', 'sales.manual_adjustment' => '4030'] as $key => $code) {
+        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020', 'sales.additional_charge_revenue' => '4030', 'sales.manual_adjustment' => '4030',
+            'sales.discount_given' => '4010', 'inventory.variance' => '5010', 'inventory.opening_equity' => '3000', 'cash.over' => '4040', 'cash.short' => '6180', 'cash.drawer' => '1010'] as $key => $code) {
             if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) {
                 continue;
             }
@@ -241,6 +245,38 @@ class FinancialSetupService
     }
 
     /**
+     * Sham Cash (an electronic wallet with its own "box") and the customer wallet. Sham Cash money is
+     * held in its own asset account + location, so its statement/reconciliation is separate from the
+     * drawer and the bank. The WALLET method has no ledger account of its own: a wallet payment is
+     * posted on the paying customer's single party account (the mapped account here is only the
+     * receivables control account used when a configuration needs a placeholder).
+     * Idempotent and name-preserving: an existing row keeps whatever name the owner gave it.
+     */
+    public function ensureSettlementMethodDefaults(int $tenantId, ?int $actorId = null): void
+    {
+        $now = now();
+        $shamAccountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1040')->value('id');
+        $shamLocationId = null;
+        if ($shamAccountId) {
+            $existing = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'SHAM-CASH')->first(['id', 'name']);
+            $taken = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('financial_account_id', $shamAccountId)->where('code', '<>', 'SHAM-CASH')->exists();
+            if (! $taken) {
+                DB::table('financial_locations')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'SHAM-CASH'], ['branch_id' => null, 'financial_account_id' => $shamAccountId, 'name' => $existing->name ?? 'صندوق الشام كاش', 'kind' => 'bank', 'type' => 'bank', 'bank_name' => 'الشام كاش', 'masked_reference' => null, 'is_active' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+                $shamLocationId = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'SHAM-CASH')->value('id');
+            }
+            if ($shamLocationId) {
+                $name = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('code', 'SHAM-CASH')->value('name');
+                DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'SHAM-CASH'], ['name' => $name ?? 'شام كاش', 'type' => 'sham_cash', 'financial_account_id' => $shamAccountId, 'financial_location_id' => $shamLocationId, 'is_active' => true, 'sort_order' => 3, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+            }
+        }
+        $receivableId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', ['1200', '121'])->where('is_active', true)->orderByRaw("CASE WHEN code = '1200' THEN 0 ELSE 1 END")->value('id');
+        if ($receivableId) {
+            $name = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('code', 'WALLET')->value('name');
+            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'WALLET'], ['name' => $name ?? 'محفظة العميل', 'type' => 'wallet', 'financial_account_id' => $receivableId, 'financial_location_id' => null, 'is_active' => true, 'sort_order' => 4, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+        }
+    }
+
+    /**
      * Provisioning default only: a branch with NO shift close destination gets
      * the tenant's protected global MAIN-SAFE, so a freshly provisioned branch
      * can run a closable shift. An explicit destination is never replaced, and
@@ -313,10 +349,9 @@ class FinancialSetupService
                 if ($hasConfiguredColumn) DB::table('branches')->where('id', $branchId)->update(['pos_cash_financial_location_id' => $id, 'updated_at' => now()]);
                 return $id;
             }
-            $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1010')
-                ->where('is_active', true)->whereNull('deleted_at')->value('id');
+            $accountId = app(FinanceAccountMap::class)->account($tenantId, 'cash.drawer')->id ?? null;
             if (! $accountId) {
-                throw new \RuntimeException("Tenant {$tenantId} has no active cash account 1010.");
+                throw new \RuntimeException("Tenant {$tenantId} has no active cash drawer account mapped (cash.drawer).");
             }
             $id = (int) DB::table('financial_locations')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $branchId, 'financial_account_id' => $accountId,

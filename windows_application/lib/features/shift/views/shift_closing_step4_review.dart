@@ -204,9 +204,14 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
               tone: ShiftTone.warning,
               message: ShiftStrings.varianceWillPost(
                 ShiftFormat.signedMoney(cash.difference),
-                state.preview?.varianceAccountCode ?? '6180',
-                state.preview?.varianceAccountName ??
-                    ShiftStrings.cashVarianceDefaultAccountName,
+                cash.difference > 0
+                    ? (state.preview?.overAccountCode ?? '4040')
+                    : (state.preview?.varianceAccountCode ?? '6180'),
+                cash.difference > 0
+                    ? (state.preview?.overAccountName ??
+                          ShiftStrings.cashOverDefaultAccountName)
+                    : (state.preview?.varianceAccountName ??
+                          ShiftStrings.cashVarianceDefaultAccountName),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),

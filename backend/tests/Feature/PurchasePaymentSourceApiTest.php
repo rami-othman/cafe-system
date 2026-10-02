@@ -122,6 +122,11 @@ class PurchasePaymentSourceApiTest extends TestCase
         $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => '200.00'], $cashierHeaders)->assertCreated();
         $methodId = $this->cashMethodId($tenant);
 
+        $options = $this->getJson('/api/v1/finance/cash-source-options?branchId='.$branchId, $headers)->assertOk();
+        $allowedIds = collect($options->json('data.allowedCashLocations'))->pluck('id')->all();
+        $this->assertNotContains($this->drawer($branchId), $allowedIds);
+        $this->assertContains($this->mainSafe($tenant), $allowedIds);
+
         // An owner explicitly trying to pay from the branch drawer while a cashier's shift owns it is rejected.
         $response = $this->postJson('/api/v1/finance/supplier-payments', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'paymentDate' => '2026-09-01', 'amount' => '25.00',

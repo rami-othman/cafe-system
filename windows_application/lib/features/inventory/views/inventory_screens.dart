@@ -19,10 +19,12 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../../finance_inventory_setup/models/finance_setup_models.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 import '../controllers/inventory_cubit.dart';
 import '../controllers/inventory_state.dart';
 import '../models/inventory_models.dart';
 import '../widgets/warehouse_dropdown.dart';
+import '../widgets/opening_inventory_dialog.dart';
 
 String _number(String value, {int digits = 2}) =>
     NumberFormat.decimalPatternDigits(
@@ -1277,6 +1279,20 @@ class _InventoryMovementsState extends State<InventoryMovementsScreen> {
                     title: 'حركات المخزون',
                     subtitle: 'سجل كامل قابل للتدقيق لجميع نشاطات المخزون.',
                     actions: <Widget>[
+                      if (context.watch<AuthSessionCubit>().state.session?.user.role == 'owner')
+                        AppButton(
+                          label: 'بضاعة أول المدة',
+                          icon: Icons.inventory_2_outlined,
+                          variant: AppButtonVariant.outlined,
+                          onPressed: () async {
+                            final saved = await showDialog<bool>(context: context,
+                              builder: (_) => OpeningInventoryDialog(repository: context.read<InventoryCubit>().repository));
+                            if (saved == true && context.mounted) {
+                              _load();
+                              context.read<InventoryCubit>().loadBalances(branchId: activeInventoryBranchId(context));
+                            }
+                          },
+                        ),
                       AppButton(
                         label: 'إضافة حركة',
                         icon: Icons.add,

@@ -39,6 +39,7 @@ class BranchController extends Controller
         unset($data['warehouseName']);
         $data['branch_type'] = $data['branchType'] ?? 'cafe';
         unset($data['branchType']);
+        $this->mapVarianceAccounts($tenantId, $data);
         $branch = DB::transaction(function () use ($data, $tenantId, $financialSetup, $warehouseName, $request): Branch {
             $branch = Branch::query()->create([
                 ...$data,
@@ -117,25 +118,7 @@ class BranchController extends Controller
             $data['shift_close_destination_financial_location_id'] = $data['shiftCloseDestinationFinancialLocationId'];
             unset($data['shiftCloseDestinationFinancialLocationId']);
         }
-        if (array_key_exists('cashVarianceAccountId', $data)) {
-            if ($data['cashVarianceAccountId'] !== null) {
-                $accountId = (int) $data['cashVarianceAccountId'];
-                $isCashLocationAccount = DB::table('financial_locations')
-                    ->where('tenant_id', $branch->tenant_id)->where('financial_account_id', $accountId)->exists();
-                $isValidAccount = DB::table('financial_accounts')
-                    ->where('tenant_id', $branch->tenant_id)->where('id', $accountId)
-                    ->where('is_active', true)->whereNull('deleted_at')->exists();
-                if (! $isValidAccount || $isCashLocationAccount) {
-                    throw ValidationException::withMessages([
-                        'cashVarianceAccountId' => $isCashLocationAccount
-                            ? 'حساب فروقات الصندوق لا يمكن أن يكون صندوقاً أو خزنة.'
-                            : 'الحساب المحدد غير صالح.',
-                    ]);
-                }
-            }
-            $data['cash_variance_account_id'] = $data['cashVarianceAccountId'];
-            unset($data['cashVarianceAccountId']);
-        }
+        $this->mapVarianceAccounts((int) $branch->tenant_id, $data);
         foreach (['shiftClosingFloatAmount' => 'shift_closing_float_amount', 'shiftCloseTime' => 'shift_close_time'] as $input => $column) {
             if (array_key_exists($input, $data)) {
                 $data[$column] = $data[$input];
@@ -185,5 +168,41 @@ class BranchController extends Controller
     private function withPosWarehouses(Branch $branch): Branch
     {
         return $branch->load(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->where('is_active', true)->whereNull('deleted_at')->orderBy('name')]);
+    }
+
+    /**
+     * Maps the shortage / overage account inputs to columns. Shortage must be an expense account and overage a
+     * revenue account (each its own account), and both must be active leaf accounts that are not a cash box.
+     */
+    private function mapVarianceAccounts(int $tenantId, array &$data): void
+    {
+        foreach (['cashVarianceAccountId' => ['cash_variance_account_id', 'حساب عجز الصندوق', 'expenses'], 'cashOverAccountId' => ['cash_over_account_id', 'حساب زيادة الصندوق', 'revenue']] as $input => [$column, $label, $group]) {
+            if (! array_key_exists($input, $data)) {
+                continue;
+            }
+            if ($data[$input] !== null) {
+                $accountId = (int) $data[$input];
+                $isCashLocationAccount = DB::table('financial_locations')
+                    ->where('tenant_id', $tenantId)->where('financial_account_id', $accountId)->exists();
+                $account = DB::table('financial_accounts')
+                    ->where('tenant_id', $tenantId)->where('id', $accountId)
+                    ->where('is_active', true)->whereNull('deleted_at')->first(['id', 'account_group']);
+                if (! $account || $isCashLocationAccount) {
+                    throw ValidationException::withMessages([
+                        $input => $isCashLocationAccount
+                            ? $label.' لا يمكن أن يكون صندوقاً أو خزنة.'
+                            : 'الحساب المحدد غير صالح.',
+                    ]);
+                }
+                if ($account->account_group !== $group) {
+                    throw ValidationException::withMessages([$input => $label.($group === 'expenses' ? ' يجب أن يكون من حسابات المصاريف.' : ' يجب أن يكون من حسابات الإيرادات.')]);
+                }
+                if (DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('parent_account_id', $accountId)->whereNull('deleted_at')->exists()) {
+                    throw ValidationException::withMessages([$input => $label.' يجب أن يكون حساباً فرعياً (نهائياً) وليس حساباً رئيسياً.']);
+                }
+            }
+            $data[$column] = $data[$input];
+            unset($data[$input]);
+        }
     }
 }

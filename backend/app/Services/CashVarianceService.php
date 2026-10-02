@@ -9,16 +9,34 @@ use Illuminate\Validation\ValidationException;
 
 final class CashVarianceService
 {
-    public function __construct(private readonly AccountingPostingService $posting) {}
+    public function __construct(private readonly AccountingPostingService $posting, private readonly FinanceAccountMap $accountMap) {}
 
-    /** الحساب المحدد من المدير للفرع، وإلا 6180. */
+    /** حساب العجز (مصروف): المحدد من المدير للفرع، وإلا المربوط في إعدادات الحسابات (cash.short). */
     public function account(int $tenantId, int $branchId): object
     {
-        $id = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('cash_variance_account_id');
-        $query = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at');
-        $account = $id ? (clone $query)->where('id', $id)->first() : (clone $query)->where('code', '6180')->first();
+        return $this->resolve($tenantId, $branchId, 'cash_variance_account_id', 'cash.short', 'cashVarianceAccount');
+    }
+
+    /** حساب الزيادة (إيراد): المحدد من المدير للفرع، وإلا المربوط في إعدادات الحسابات (cash.over). الزيادة لا تُخلط بالعجز في حساب واحد. */
+    public function overAccount(int $tenantId, int $branchId): object
+    {
+        return $this->resolve($tenantId, $branchId, 'cash_over_account_id', 'cash.over', 'cashOverAccount');
+    }
+
+    /** الحساب المناسب لإشارة الفرق: سالب = عجز، موجب = زيادة. */
+    public function accountFor(int $tenantId, int $branchId, int $differenceCents): object
+    {
+        return $differenceCents > 0 ? $this->overAccount($tenantId, $branchId) : $this->account($tenantId, $branchId);
+    }
+
+    private function resolve(int $tenantId, int $branchId, string $column, string $defaultKey, string $field): object
+    {
+        $id = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value($column);
+        $account = $id
+            ? DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')->where('id', $id)->first()
+            : $this->accountMap->account($tenantId, $defaultKey);
         if (! $account) {
-            throw ValidationException::withMessages(['cashVarianceAccount' => __('shifts.variance_account_missing')]);
+            throw ValidationException::withMessages([$field => __($field === 'cashOverAccount' ? 'shifts.over_account_missing' : 'shifts.variance_account_missing')]);
         }
 
         return $account;
@@ -42,7 +60,7 @@ final class CashVarianceService
         if ($differenceCents === 0) {
             return null;
         }
-        $account = $this->account($tenantId, $branchId);
+        $account = $this->accountFor($tenantId, $branchId, $differenceCents);
         $locationAccountCode = DB::table('financial_locations as l')
             ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
             ->where('l.tenant_id', $tenantId)->where('l.id', $locationId)->value('a.code');

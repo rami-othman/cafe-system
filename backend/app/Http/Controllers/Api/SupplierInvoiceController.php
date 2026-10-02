@@ -112,7 +112,10 @@ class SupplierInvoiceController extends Controller
             'invoiceNumber' => ['nullable', 'string', 'max:80'],
             'supplierInvoiceNumber' => ['nullable', 'string', 'max:80'],
             'invoiceDate' => ['required', 'date'],
-            'dueDate' => ['required', 'date'],
+            // The due date only has meaning for a credit (آجل) invoice; cash / Sham Cash invoices are due on their date.
+            'paymentTerms' => ['nullable', 'in:cash,credit,sham_cash'],
+            'paymentReference' => ['nullable', 'string', 'max:120'],
+            'dueDate' => ['required_unless:paymentTerms,cash,sham_cash', 'nullable', 'date'],
             // invoiceType remains accepted for older clients; new clients select a configured type.
             'invoiceTypeId' => ['nullable', 'integer', 'required_without:invoiceType'],
             'invoiceType' => ['nullable', 'in:expense,inventory,other'],
@@ -263,6 +266,8 @@ class SupplierInvoiceController extends Controller
             'branchName' => $row->branch_name,
             'invoiceDate' => $row->invoice_date,
             'dueDate' => $row->due_date,
+            'paymentTerms' => $row->payment_terms ?: 'credit',
+            'paymentReference' => $row->payment_reference,
             'invoiceType' => $row->invoice_type,
             'invoiceTypeId' => $row->invoice_type_id ? (int) $row->invoice_type_id : null,
             'invoiceTypeName' => $row->configured_type_name,

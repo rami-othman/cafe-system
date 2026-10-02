@@ -74,6 +74,8 @@ final class ShiftSnapshotService
 
     private function channel(?string $value): string
     {
+        $value = match ($value) { 'sham_cash' => 'transfer', 'wallet' => 'customer_credit', default => $value };
+
         return in_array($value, ['cash', 'card', 'transfer', 'customer_credit'], true) ? ($value === 'customer_credit' ? 'customerCredit' : $value) : 'other';
     }
 

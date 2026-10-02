@@ -781,6 +781,108 @@ class SaleAccountingApiTest extends TestCase
         DB::table('published_menu_versions')->where('id', $versionId)->update(['payload_json' => $json, 'checksum' => hash('sha256', $json)]);
     }
 
+    public function test_pos_sale_and_refund_for_a_supplier_customer_appear_on_its_single_account(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $owner = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id');
+        $supplier = $this->postJson('/api/v1/finance/suppliers', ['name' => 'معمل ياسمين'], $headers)->assertCreated();
+        $customerId = (int) $supplier->json('data.customerId');
+        $accountId = (int) $supplier->json('data.financialAccountId');
+        $product = $this->stockTrackedProduct($tenant, 'Supplier buys', '10.00');
+        $order = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $orderId = $order->json('data.id');
+        DB::table('orders')->where('id', $orderId)->update(['customer_id' => $customerId]);
+        $total = $order->json('data.totals.total');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $total, 'idempotencyKey' => 'supplier-buys'], $headers)->assertOk();
+
+        $lines = DB::table('journal_entry_lines')->where('financial_account_id', $accountId)->orderBy('id')->get();
+        $this->assertCount(2, $lines);
+        $this->assertSame((float) $total, (float) $lines[0]->debit);
+        $this->assertSame((float) $total, (float) $lines[1]->credit);
+        $ledger = $this->getJson("/api/v1/finance/accounts/{$accountId}/transactions", $headers)->assertOk();
+        $this->assertCount(2, $ledger->json('data'));
+        $this->assertSame('0.00', $this->getJson("/api/v1/finance/accounts/{$accountId}", $headers)->json('data.balance'));
+
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", ['type' => 'full', 'reason' => 'اختبار', 'idempotencyKey' => 'supplier-refund'], $headers)->assertCreated();
+        $this->assertSame(4, DB::table('journal_entry_lines')->where('financial_account_id', $accountId)->count());
+        $entries = DB::table('journal_entries')->whereIn('id', DB::table('journal_entry_lines')->where('financial_account_id', $accountId)->pluck('journal_entry_id'))->get();
+        foreach ($entries as $entry) {
+            $sums = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->selectRaw('SUM(debit) d, SUM(credit) c')->first();
+            $this->assertSame((float) $sums->d, (float) $sums->c);
+        }
+    }
+
+    public function test_wallet_payment_is_settled_from_the_customers_single_account_and_needs_a_customer(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $supplier = $this->postJson('/api/v1/finance/suppliers', ['name' => 'مورد المحفظة'], $headers)->assertCreated();
+        $customerId = (int) $supplier->json('data.customerId');
+        $accountId = (int) $supplier->json('data.financialAccountId');
+        $product = $this->stockTrackedProduct($tenant, 'Wallet sale', '10.00');
+        $order = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $orderId = $order->json('data.id');
+        $total = $order->json('data.totals.total');
+
+        // Anonymous order: wallet is not offered and is rejected.
+        $this->getJson("/api/v1/orders/{$orderId}/payment-summary", $headers)->assertOk();
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'wallet', 'amount' => $total, 'idempotencyKey' => 'wallet-anon'], $headers)
+            ->assertUnprocessable();
+        $this->assertSame(0, DB::table('payments')->where('order_id', $orderId)->count());
+
+        DB::table('orders')->where('id', $orderId)->update(['customer_id' => $customerId]);
+        // No funds and no owner-set limit: the wallet cannot pay.
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'wallet', 'amount' => $total, 'idempotencyKey' => 'wallet-nolimit'], $headers)->assertUnprocessable();
+        $this->assertSame(0, DB::table('payments')->where('order_id', $orderId)->count());
+        $this->patchJson("/api/v1/finance/customers/{$customerId}", ['walletCreditLimit' => '1000.00'], $headers)->assertOk()
+            ->assertJsonPath('data.walletCreditLimit', '1000.00')->assertJsonPath('data.walletBalance', '0.00');
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'wallet', 'amount' => $total, 'idempotencyKey' => 'wallet-ok'], $headers)->assertOk();
+        $this->getJson("/api/v1/finance/customers/{$customerId}", $headers)->assertOk()
+            ->assertJsonPath('data.walletBalance', '-'.number_format((float) $total, 2, '.', ''));
+
+        // One debit on the customer's single account; no placeholder receivable line, no cash line.
+        $lines = DB::table('journal_entry_lines')->where('financial_account_id', $accountId)->get();
+        $this->assertCount(1, $lines);
+        $this->assertSame((float) $total, (float) $lines[0]->debit);
+        // A supplier-side (credit-normal) account debited by a sale shows the customer's debt as a negative payable.
+        $this->assertSame('-'.number_format((float) $total, 2, '.', ''), $this->getJson("/api/v1/finance/accounts/{$accountId}", $headers)->json('data.balance'));
+
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", ['type' => 'full', 'reason' => 'اختبار', 'idempotencyKey' => 'wallet-refund'], $headers)->assertCreated();
+        $this->assertSame('0.00', $this->getJson("/api/v1/finance/accounts/{$accountId}", $headers)->json('data.balance'));
+    }
+
+    public function test_sham_cash_payment_requires_a_transaction_number_and_lands_in_the_sham_cash_box(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $product = $this->stockTrackedProduct($tenant, 'Sham sale', '10.00');
+        $order = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $orderId = $order->json('data.id');
+        $total = $order->json('data.totals.total');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'sham_cash', 'amount' => $total, 'idempotencyKey' => 'sham-no-ref'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('reference');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'sham_cash', 'amount' => $total, 'reference' => 'SC-998877', 'idempotencyKey' => 'sham-ok'], $headers)->assertOk();
+
+        $this->assertSame('SC-998877', DB::table('payments')->where('order_id', $orderId)->value('reference_number'));
+        $shamLocation = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'SHAM-CASH')->value('id');
+        $shamAccount = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1040')->value('id');
+        $this->assertDatabaseHas('journal_entry_lines', ['financial_account_id' => $shamAccount, 'financial_location_id' => $shamLocation, 'debit' => number_format((float) $total, 2, '.', '')]);
+        // It is not drawer cash: the sale's own journal entry never touches the drawer account.
+        $entryId = (int) DB::table('journal_entry_lines')->where('financial_account_id', $shamAccount)->value('journal_entry_id');
+        $drawerAccount = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
+        $this->assertSame(0, DB::table('journal_entry_lines')->where('journal_entry_id', $entryId)->where('financial_account_id', $drawerAccount)->count());
+    }
+
     private function createOrderFromSnapshot(int $tenant, int $branchId, array $headers, int $productId, array $snapshot, array $modifierOptionIds = [])
     {
         $shiftId = $this->openShift($tenant, $branchId, $headers);
@@ -970,5 +1072,60 @@ class SaleAccountingApiTest extends TestCase
         DB::table('api_tokens')->updateOrInsert(['tenant_id' => $tenantId, 'user_id' => $userId, 'name' => 'sale-accounting-test'], ['token_hash' => hash('sha256', $plainToken), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]);
 
         return ['Authorization' => "Bearer $plainToken", 'X-Tenant-Id' => $tenantId];
+    }
+
+    public function test_available_methods_before_an_order_exists_match_what_finance_activated(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $supplier = $this->postJson('/api/v1/finance/suppliers', ['name' => 'مورد الطرق'], $headers)->assertCreated();
+        $customerId = (int) $supplier->json('data.customerId');
+
+        $anonymous = $this->getJson('/api/v1/payment-methods/available', $headers)->assertOk()->json('data.methods');
+        $this->assertContains('cash', $anonymous);
+        $this->assertContains('sham_cash', $anonymous);
+        $this->assertNotContains('wallet', $anonymous, 'the wallet needs an identified customer');
+        $this->assertContains('wallet', $this->getJson("/api/v1/payment-methods/available?customerId={$customerId}", $headers)->assertOk()->json('data.methods'));
+
+        DB::table('payment_methods')->where('tenant_id', $tenant)->where('type', 'sham_cash')->update(['is_active' => false]);
+        $this->assertNotContains('sham_cash', $this->getJson('/api/v1/payment-methods/available', $headers)->json('data.methods'));
+    }
+
+    public function test_after_the_phinix_remap_sales_post_to_the_new_chart_and_legacy_balances_move_over(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $beans = $this->stockIn($tenant, $branch, $headers, '2.0000', '100.000');
+        $product = $this->stockTrackedProduct($tenant, 'Remap latte', '10.00');
+        $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '2.000']]);
+
+        // A sale made while the tenant still lives on the legacy accounts.
+        $first = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $this->postJson('/api/v1/orders/'.$first->json('data.id').'/pay', ['method' => 'cash', 'amount' => $first->json('data.totals.total'), 'idempotencyKey' => 'remap-before'], $headers)->assertOk();
+
+        $this->artisan('finance:import-phinix-accounts', ['tenantId' => $tenant, '--apply' => true])->assertExitCode(0);
+        $this->artisan('finance:remap-to-phinix', ['tenantId' => $tenant, '--apply' => true, '--balances' => true])->assertExitCode(0);
+
+        $net = fn (string $code): float => (float) DB::table('journal_entry_lines as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+            ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')->where('e.tenant_id', $tenant)->where('e.status', 'posted')
+            ->where('a.tenant_id', $tenant)->where('a.code', $code)->selectRaw('COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as n')->value('n');
+        foreach (['1010', '1100', '4000', '5000'] as $legacy) {
+            $this->assertEqualsWithDelta(0.0, $net($legacy), 0.001, "legacy {$legacy} is emptied by the reclassification");
+        }
+        $this->assertGreaterThan(0.0, $net('131'), 'cash moved to the new cash account');
+        $this->assertLessThan(0.0, $net('41'), 'revenue moved to the new sales account');
+
+        $second = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $this->postJson('/api/v1/orders/'.$second->json('data.id').'/pay', ['method' => 'cash', 'amount' => $second->json('data.totals.total'), 'idempotencyKey' => 'remap-after'], $headers)->assertOk();
+        $codes = DB::table('journal_entry_lines as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+            ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')->where('e.tenant_id', $tenant)->where('e.source_event', 'POS_ORDER_PAID')
+            ->where('e.source_id', $second->json('data.id'))->pluck('a.code')->all();
+        foreach (['131', '41', '36', '124'] as $expected) {
+            $this->assertContains($expected, $codes);
+        }
+        $this->assertSame([], array_values(array_intersect($codes, ['1010', '4000', '5000', '1100', '2010'])), 'no posting line uses a legacy account any more');
     }
 }

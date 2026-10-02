@@ -8,6 +8,8 @@ import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../finance_inventory_setup/models/finance_setup_models.dart' show FinancialAccount;
+import '../../finance_inventory_setup/widgets/account_picker_field.dart';
 import '../controllers/cafe_configuration_cubits.dart';
 import '../controllers/cafe_configuration_overview_cubit.dart';
 import '../models/cafe_configuration_models.dart';
@@ -600,37 +602,22 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             .errors['shiftCloseDestinationFinancialLocationId'],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      const Text('حساب فروقات الصندوق (عجز / زيادة)'),
-                      DropdownButtonFormField<int?>(
+                      const Text('حسابا فروقات الصندوق (العجز والزيادة منفصلان)'),
+                      AccountPickerField(
                         key: const Key('branch-cash-variance-account'),
-                        initialValue:
-                            state.cashVarianceAccounts.any(
+                        label: 'حساب العجز (مصروف)',
+                        hint: 'الافتراضي من إعدادات الحسابات — أو ابحث لتحديد حساب',
+                        allowClear: true,
+                        accounts: _varianceAccounts(state),
+                        where: (FinancialAccount a) => a.accountGroup == 'expenses',
+                        value: state.cashVarianceAccounts.any(
                               (account) =>
                                   account.id ==
                                   state.draft.cashVarianceAccountId,
                             )
                             ? state.draft.cashVarianceAccountId
                             : null,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'حساب فروقات الصندوق',
-                        ),
-                        items: <DropdownMenuItem<int?>>[
-                          const DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text('الافتراضي: 6180 عجز وزيادة الصندوق'),
-                          ),
-                          ...state.cashVarianceAccounts.map(
-                            (account) => DropdownMenuItem<int?>(
-                              value: account.id,
-                              child: Text(
-                                account.label,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) => cubit.update(
+                        onChanged: (int? value) => cubit.update(
                           state.draft.copyWith(
                             cashVarianceAccountId: value,
                             clearCashVarianceAccountId: value == null,
@@ -638,6 +625,28 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                         ),
                       ),
                       _FieldError(state.errors['cashVarianceAccountId']),
+                      const SizedBox(height: AppSpacing.md),
+                      AccountPickerField(
+                        key: const Key('branch-cash-over-account'),
+                        label: 'حساب الزيادة (إيراد)',
+                        hint: 'الافتراضي من إعدادات الحسابات — أو ابحث لتحديد حساب',
+                        allowClear: true,
+                        accounts: _varianceAccounts(state),
+                        where: (FinancialAccount a) => a.accountGroup == 'revenue',
+                        value: state.cashVarianceAccounts.any(
+                              (account) =>
+                                  account.id == state.draft.cashOverAccountId,
+                            )
+                            ? state.draft.cashOverAccountId
+                            : null,
+                        onChanged: (int? value) => cubit.update(
+                          state.draft.copyWith(
+                            cashOverAccountId: value,
+                            clearCashOverAccountId: value == null,
+                          ),
+                        ),
+                      ),
+                      _FieldError(state.errors['cashOverAccountId']),
                       TextFormField(
                         initialValue: state.draft.shiftClosingFloatAmount,
                         decoration: const InputDecoration(
@@ -1180,3 +1189,20 @@ class _Copy {
       context.maybeL10n?.cafeConfigurationBranchSaved ?? 'Branch saved.';
   String get edit => context.maybeL10n?.commonEdit ?? 'Edit';
 }
+
+/// Adapts the lightweight branch account options to the shared account picker.
+List<FinancialAccount> _varianceAccounts(BranchEditorState state) => state
+    .cashVarianceAccounts
+    .map(
+      (BranchFinancialAccountOption o) => FinancialAccount(
+        id: o.id,
+        code: o.code,
+        nameAr: o.nameAr,
+        nameEn: o.nameAr,
+        accountGroup: o.accountGroup,
+        normalBalance: o.normalBalance,
+        isActive: true,
+        isSystemProtected: false,
+      ),
+    )
+    .toList(growable: false);

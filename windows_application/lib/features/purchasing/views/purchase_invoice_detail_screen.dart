@@ -81,6 +81,7 @@ class _PurchaseInvoiceDetailScreenState
         widget.purchaseId,
         'purchase-post-${widget.purchaseId}-${DateTime.now().millisecondsSinceEpoch}',
         financialLocationId: choice.financialLocationId,
+        paymentMethodId: choice.paymentMethodId,
         paidAmount: choice.paidAmount,
         paymentDate: choice.paymentDate,
         receiptDate: choice.receiptDate,
@@ -275,7 +276,21 @@ class _PurchaseInvoiceDetailScreenState
                   p.isBackdated ? '${p.invoiceDate} (بتاريخ سابق)' : p.invoiceDate,
                 ),
                 FinanceInfoItem('تاريخ الإنشاء', p.createdAt ?? '—'),
-                FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
+                FinanceInfoItem(
+                  'طريقة الدفع',
+                  switch (p.paymentTerms) {
+                    'cash' => 'كاش',
+                    'sham_cash' => 'شام كاش',
+                    _ => 'أجل',
+                  },
+                ),
+                if (p.paymentTerms == 'sham_cash')
+                  FinanceInfoItem(
+                    'رقم عملية شام كاش',
+                    p.paymentReference ?? '—',
+                  ),
+                if (p.isCreditTerms)
+                  FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
                 FinanceInfoItem(
                   'الحساب',
                   '${p.debitAccountCode ?? ''} ${p.debitAccountName ?? ''}'

@@ -64,9 +64,21 @@ final class FinancialReportQueryService
     public function balanceSheet(array $ctx, string $asOf): array
     {
         $rows = $this->accountRows($ctx, null, $asOf, false);
+        $partyAccountIds = DB::table('customers')->where('tenant_id', $ctx['tenantId'])
+            ->whereNotNull('financial_account_id')->pluck('financial_account_id')->mapWithKeys(fn ($id) => [(int) $id => true])->all();
         $groups = ['assets' => [], 'liabilities' => [], 'equity' => []];
         $totals = ['assets' => 0, 'liabilities' => 0, 'equity' => 0];
         foreach ($rows as $row) {
+            // A person account (customer and/or supplier) holds one net position: a balance on
+            // the side opposite to its normal side is shown on the other side of the sheet
+            // (customer credit → liability, supplier debit → asset).
+            if (isset($partyAccountIds[$row['id']]) && $row['normalisedCents'] < 0
+                && in_array($row['group'], ['assets', 'liabilities'], true)) {
+                $row['reclassifiedFrom'] = $row['group'];
+                $row['group'] = $row['group'] === 'assets' ? 'liabilities' : 'assets';
+                $row['normalisedCents'] = -$row['normalisedCents'];
+                $row['normalisedBalance'] = Money::decimal($row['normalisedCents']);
+            }
             if (! isset($groups[$row['group']])) continue;
             $groups[$row['group']][] = $row;
             $totals[$row['group']] += $row['normalisedCents'];
@@ -203,7 +215,18 @@ final class FinancialReportQueryService
     }
 
     private function profitAndLossRange(array $ctx, string $from, string $to): array { $rows = $this->accountRows($ctx, $from, $to, false); $sections = ['revenue' => [], 'costOfSales' => [], 'operatingExpenses' => []]; $totals = ['revenue' => 0, 'costOfSales' => 0, 'operatingExpenses' => 0]; foreach ($rows as $row) { $key = match ($row['group']) { 'revenue' => 'revenue', 'cost_of_sales' => 'costOfSales', 'expenses', 'expense' => 'operatingExpenses', default => null }; if (! $key) continue; $amount = $this->incomeStatementAmount($row); $row['normalisedCents'] = $amount; $row['normalisedBalance'] = Money::decimal($amount); $sections[$key][] = $row; $totals[$key] += $amount; } $totals['grossProfit'] = $totals['revenue'] - $totals['costOfSales']; $totals['netOperatingProfit'] = $totals['grossProfit'] - $totals['operatingExpenses']; return ['dateFrom' => $from, 'dateTo' => $to, 'sections' => array_map(fn ($rows) => array_map(fn ($r) => $this->withoutCents($r), $rows), $sections), 'totals' => $this->decimalMap($totals)]; }
-    private function accountRows(array $ctx, ?string $from, string $to, bool $withOpening): array { $accounts = DB::table('financial_accounts')->where('tenant_id', $ctx['tenantId'])->whereNull('deleted_at')->orderBy('account_group')->orderBy('code')->get(); $period = $this->accountAggregates($ctx, $from, $to); $opening = $withOpening && $from ? $this->accountAggregates($ctx, null, now()->parse($from)->subDay()->toDateString()) : collect(); $all = $withOpening ? $this->accountAggregates($ctx, null, $to) : collect(); return $accounts->map(function (object $a) use ($period, $opening, $all): array { $p = $period[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $o = $opening[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $c = $all[$a->id] ?? $p; $pd = Money::cents($p->debit); $pc = Money::cents($p->credit); $od = Money::cents($o->debit); $oc = Money::cents($o->credit); $cd = Money::cents($c->debit); $cc = Money::cents($c->credit); return ['id' => (int) $a->id, 'code' => $a->code, 'name' => $a->name_en, 'group' => $a->account_group, 'normalBalance' => $a->normal_balance, 'parentAccountId' => $a->parent_account_id ? (int) $a->parent_account_id : null, 'debit' => Money::decimal($pd), 'credit' => Money::decimal($pc), 'normalisedBalance' => Money::decimal($this->normalised($a->normal_balance, $pd, $pc)), 'normalisedCents' => $this->normalised($a->normal_balance, $pd, $pc), 'openingDebit' => Money::decimal($od), 'openingCredit' => Money::decimal($oc), 'periodDebit' => Money::decimal($pd), 'periodCredit' => Money::decimal($pc), 'closingDebit' => Money::decimal(max(0, $cd - $cc)), 'closingCredit' => Money::decimal(max(0, $cc - $cd)), 'closingDebitCents' => max(0, $cd - $cc), 'closingCreditCents' => max(0, $cc - $cd)]; })->all(); }
+    private function accountRows(array $ctx, ?string $from, string $to, bool $withOpening): array { $accounts = $this->reportableAccounts($ctx)->orderBy('account_group')->orderBy('code')->get(); $period = $this->accountAggregates($ctx, $from, $to); $opening = $withOpening && $from ? $this->accountAggregates($ctx, null, now()->parse($from)->subDay()->toDateString()) : collect(); $all = $withOpening ? $this->accountAggregates($ctx, null, $to) : collect(); return $accounts->map(function (object $a) use ($period, $opening, $all): array { $p = $period[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $o = $opening[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $c = $all[$a->id] ?? $p; $pd = Money::cents($p->debit); $pc = Money::cents($p->credit); $od = Money::cents($o->debit); $oc = Money::cents($o->credit); $cd = Money::cents($c->debit); $cc = Money::cents($c->credit); return ['id' => (int) $a->id, 'code' => $a->code, 'name' => $a->name_en, 'group' => $a->account_group, 'normalBalance' => $a->normal_balance, 'parentAccountId' => $a->parent_account_id ? (int) $a->parent_account_id : null, 'debit' => Money::decimal($pd), 'credit' => Money::decimal($pc), 'normalisedBalance' => Money::decimal($this->normalised($a->normal_balance, $pd, $pc)), 'normalisedCents' => $this->normalised($a->normal_balance, $pd, $pc), 'openingDebit' => Money::decimal($od), 'openingCredit' => Money::decimal($oc), 'periodDebit' => Money::decimal($pd), 'periodCredit' => Money::decimal($pc), 'closingDebit' => Money::decimal(max(0, $cd - $cc)), 'closingCredit' => Money::decimal(max(0, $cc - $cd)), 'closingDebitCents' => max(0, $cd - $cc), 'closingCreditCents' => max(0, $cc - $cd)]; })->all(); }
+    private function reportableAccounts(array $ctx): Builder
+    {
+        return DB::table('financial_accounts')->where('tenant_id', $ctx['tenantId'])->whereNull('deleted_at')
+            ->where(fn (Builder $query) => $query->where('is_active', true)
+                ->orWhereExists(fn (Builder $lines) => $lines->selectRaw('1')->from('journal_entry_lines as lines')
+                    ->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')
+                    ->whereColumn('lines.financial_account_id', 'financial_accounts.id')
+                    ->where('lines.tenant_id', $ctx['tenantId'])->where('entries.tenant_id', $ctx['tenantId'])
+                    ->where('entries.status', 'posted')));
+    }
+
     private function accountAggregates(array $ctx, ?string $from, string $to) { $q = $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->whereDate('entries.entry_date', '<=', $to); if ($from) $q->whereDate('entries.entry_date', '>=', $from); return $q->groupBy('lines.financial_account_id')->selectRaw('lines.financial_account_id, SUM(lines.debit) debit, SUM(lines.credit) credit')->get()->keyBy('financial_account_id'); }
     private function posted(array $ctx): Builder { $q = DB::table('journal_entries as entries')->where('entries.tenant_id', $ctx['tenantId'])->where('entries.status', 'posted'); \App\Support\InternalReportingScope::journals($q, $ctx); return BranchScope::apply($q, 'entries.branch_id', $ctx['branchId'], $ctx['authorizedBranchIds']); }
     private function ledgerLines(array $ctx, int $account): Builder { return $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->where('lines.financial_account_id', $account)->select('lines.id', 'lines.journal_entry_id', 'lines.debit', 'lines.credit', 'lines.description as line_description', 'entries.id as entry_id', 'entries.entry_date', 'entries.entry_number', 'entries.source_type', 'entries.source_id', 'entries.description as entry_description'); }

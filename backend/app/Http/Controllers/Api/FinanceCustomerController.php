@@ -53,7 +53,15 @@ final class FinanceCustomerController extends Controller
     public function update(Request $request, int $customer): JsonResponse
     {
         $tenant = TenantContext::id($request); $actor = FinancialActor::id($request, $tenant); $before = \App\Support\DataScope::find($request, $tenant, 'customers', $customer);
+        $limit = $request->validate(['walletCreditLimit' => ['sometimes', 'nullable', 'regex:/^\d+(\.\d{1,2})?$/']]);
+        if (array_key_exists('walletCreditLimit', $limit)) {
+            // Only the owner decides how far a customer's wallet may go below zero.
+            abort_unless(DB::table('users')->where('tenant_id', $tenant)->where('id', $actor)->where('role', 'owner')->whereNull('deleted_at')->exists(), 403, 'Owner access required.');
+            DB::table('customers')->where('tenant_id', $tenant)->where('id', $customer)->update(['wallet_credit_limit' => $limit['walletCreditLimit'] ?? '0', 'updated_at' => now()]);
+            $this->audit->record($request, $tenant, 'sales.customer.wallet_limit_changed', 'customer', $customer, ['limit' => $before->wallet_credit_limit ?? '0'], ['limit' => $limit['walletCreditLimit'] ?? '0'], null, $actor);
+        }
         $after = $this->customers->update($tenant, $customer, $actor, $this->data($request, false));
+        $after = \App\Support\DataScope::find($request, $tenant, 'customers', $customer);
         $this->audit->record($request, $tenant, 'sales.customer.updated', 'customer', $customer, ['name' => $before->name, 'isActive' => (bool) $before->is_active], ['name' => $after->name, 'isActive' => (bool) $after->is_active], null, $actor);
         return response()->json(['data' => $this->serialize($after) + ['allowedActions' => $this->actions(array_fill_keys(FinanceAccess::capabilities($request), true))]]);
     }
@@ -66,7 +74,15 @@ final class FinanceCustomerController extends Controller
             'taxNumber' => ['nullable', 'string', 'max:128'], 'defaultCreditTermsDays' => ['nullable', 'integer', 'min:0', 'max:365'], 'notes' => ['nullable', 'string', 'max:5000'], 'isActive' => ['sometimes', 'boolean'],
         ]);
     }
-    private function serialize(object $c): array { return ['id' => (int) $c->id, 'customerNumber' => $c->customer_number, 'isInternal' => (bool) $c->is_internal, 'internalBranchId' => $c->internal_branch_id ? (int) $c->internal_branch_id : null, 'name' => $c->name, 'customerType' => $c->customer_type, 'phone' => $c->phone, 'email' => $c->email, 'taxNumber' => $c->tax_number, 'defaultCreditTermsDays' => (int) $c->default_credit_terms_days, 'notes' => $c->notes, 'isActive' => (bool) $c->is_active, 'isWalkIn' => (bool) $c->is_walk_in, 'isSystemProtected' => (bool) $c->is_system_protected]; }
+    private function serialize(object $c): array { return ['id' => (int) $c->id, 'financialAccountId' => $c->financial_account_id ? (int) $c->financial_account_id : null, 'customerNumber' => $c->customer_number, 'isInternal' => (bool) $c->is_internal, 'internalBranchId' => $c->internal_branch_id ? (int) $c->internal_branch_id : null, 'name' => $c->name, 'customerType' => $c->customer_type, 'phone' => $c->phone, 'email' => $c->email, 'taxNumber' => $c->tax_number, 'defaultCreditTermsDays' => (int) $c->default_credit_terms_days, 'notes' => $c->notes, 'isActive' => (bool) $c->is_active, 'isWalkIn' => (bool) $c->is_walk_in, 'isSystemProtected' => (bool) $c->is_system_protected] + $this->wallet($c); }
+    /** Wallet card data: funds held for the customer and the owner-set credit limit. */
+    private function wallet(object $c): array
+    {
+        $state = app(\App\Services\PartyAccountService::class)->walletState((int) $c->tenant_id, (int) $c->id);
+
+        return ['walletBalance' => \App\Support\Money::decimal($state['fundsCents']), 'walletCreditLimit' => \App\Support\Money::decimal($state['limitCents']), 'walletAvailable' => \App\Support\Money::decimal($state['availableCents'])];
+    }
+
     private function actions(array $p): array { return array_values(array_filter(['edit' => isset($p['finance.customers.edit']) ? 'edit' : null])); }
     private function perPage(Request $request): int { return min(max((int) $request->query('perPage', 50), 1), 100); }
     private function meta($p): array { return ['currentPage' => $p->currentPage(), 'perPage' => $p->perPage(), 'total' => $p->total(), 'lastPage' => $p->lastPage()]; }

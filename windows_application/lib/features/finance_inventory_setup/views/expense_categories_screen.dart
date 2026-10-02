@@ -8,6 +8,7 @@ import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
+import '../widgets/account_picker_field.dart';
 
 class ExpenseCategoriesScreen extends StatefulWidget {
   const ExpenseCategoriesScreen({super.key});
@@ -154,18 +155,11 @@ class _ExpenseCategoriesScreenState extends State<ExpenseCategoriesScreen> {
                 controller: name,
                 decoration: const InputDecoration(labelText: 'الاسم'),
               ),
-              DropdownButtonFormField<int>(
-                initialValue: account,
-                decoration: const InputDecoration(labelText: 'حساب المصروف'),
-                items: _accounts
-                    .map(
-                      (x) => DropdownMenuItem(
-                        value: x.id,
-                        child: Text('${x.code} - ${x.nameAr}'),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) => set(() => account = v!),
+              AccountPickerField(
+                label: 'حساب المصروف',
+                accounts: _accounts,
+                value: account,
+                onChanged: (v) => set(() => account = v ?? account),
               ),
               TextField(
                 controller: sortOrder,

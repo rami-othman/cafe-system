@@ -32,6 +32,8 @@ class ShiftClosePreview extends Equatable {
     this.destinationName,
     this.varianceAccountCode,
     this.varianceAccountName,
+    this.overAccountCode,
+    this.overAccountName,
   });
 
   final ShiftSnapshot snapshot;
@@ -60,6 +62,10 @@ class ShiftClosePreview extends Equatable {
   final String? varianceAccountCode;
   final String? varianceAccountName;
 
+  /// Account a counted surplus posts to (income, separate from the shortage account).
+  final String? overAccountCode;
+  final String? overAccountName;
+
   bool get canClose => issues.isEmpty;
 
   @override
@@ -83,5 +89,7 @@ class ShiftClosePreview extends Equatable {
     destinationName,
     varianceAccountCode,
     varianceAccountName,
+    overAccountCode,
+    overAccountName,
   ];
 }

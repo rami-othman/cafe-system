@@ -23,11 +23,17 @@ class FinancialAccountRequest extends FormRequest
         }
 
         return [
-            'code' => ['required', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/', $code],
+            // On create the code is optional: a blank or already-used code is replaced by the
+            // next free one under the parent (see FinancialAccountService::resolveCreateCode()).
+            'code' => $accountId
+                ? ['required', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/', $code]
+                : ['nullable', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/'],
             'nameAr' => ['required', 'string', 'max:255'],
             'nameEn' => ['required', 'string', 'max:255'],
-            'accountGroup' => ['required', Rule::in(['assets', 'liabilities', 'equity', 'revenue', 'cost_of_sales', 'expenses'])],
-            'normalBalance' => ['required', Rule::in(['debit', 'credit'])],
+            'accountGroup' => ['required_without:parentAccountId', Rule::in(['assets', 'liabilities', 'equity', 'revenue', 'cost_of_sales', 'expenses'])],
+            'normalBalance' => ['required_without:parentAccountId', Rule::in(['debit', 'credit'])],
+            'isContra' => ['sometimes', 'boolean'],
+            'categoryOverride' => ['sometimes', 'boolean'],
             'parentAccountId' => ['nullable', 'integer'],
             'isActive' => ['required', 'boolean'],
         ];

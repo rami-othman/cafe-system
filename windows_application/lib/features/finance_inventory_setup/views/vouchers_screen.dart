@@ -15,6 +15,7 @@ import '../widgets/cash_source_field.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_design.dart';
 import '../widgets/finance_paginated_table.dart';
+import '../widgets/account_picker_field.dart';
 
 /// Receipt/payment documents intentionally use their own API. Journal entries
 /// and cash transfers below stay linked to their established workflows.
@@ -105,8 +106,36 @@ class _VouchersScreenState extends State<VouchersScreen> {
 
   DataRow _row(FinanceVoucher item) => DataRow(cells: <DataCell>[
     DataCell(Text(item.documentNumber)), DataCell(Text(item.documentType == 'receipt' ? 'سند قبض' : 'سند دفع')), DataCell(Text(item.documentDate)), DataCell(Text(item.branchName ?? '—')), DataCell(Text(item.financialLocationName ?? '—')), DataCell(Text(item.description ?? '—')), DataCell(FinanceAmount(value: item.amount)), DataCell(ManagementBadge(label: item.status == 'draft' ? 'مسودة' : item.status == 'posted' ? 'مرحل' : 'معكوس', tone: item.status == 'draft' ? ManagementTone.warning : item.status == 'posted' ? ManagementTone.success : ManagementTone.danger)),
-    DataCell(PopupMenuButton<String>(onSelected: (action) async { if (action == 'post') await _repository.postVoucher(item.id); if (action == 'reverse') await _repository.reverseVoucher(item.id, 'عكس بواسطة المستخدم'); if (mounted) _load(); }, itemBuilder: (_) => <PopupMenuEntry<String>>[if (item.allowedActions.contains('post')) const PopupMenuItem(value: 'post', child: Text('ترحيل')), if (item.allowedActions.contains('reverse')) const PopupMenuItem(value: 'reverse', child: Text('عكس'))])),
+    DataCell(PopupMenuButton<String>(onSelected: (action) => _act(item, action), itemBuilder: (_) => <PopupMenuEntry<String>>[
+      if (item.allowedActions.contains('post')) const PopupMenuItem(value: 'post', child: Text('ترحيل')),
+      if (item.allowedActions.contains('reverse')) const PopupMenuItem(value: 'reverse', child: Text('عكس')),
+      if (item.allowedActions.contains('delete')) const PopupMenuItem(value: 'delete', child: Text('حذف')),
+    ])),
   ]);
+
+  Future<void> _act(FinanceVoucher item, String action) async {
+    if (action == 'delete') {
+      final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+        title: const Text('حذف السند؟'),
+        content: Text(item.status == 'posted'
+            ? 'السند ${item.documentNumber} مرحّل. عند الحذف يُنشأ قيد عكسي يلغي أثره على الحسابات والصندوق (القيد الأصلي يبقى في السجل للمراجعة)، ثم ينتقل السند إلى سلة المحذوفات.'
+            : 'السند ${item.documentNumber} سيُنقل إلى سلة المحذوفات ويمكن استعادته.'),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('حذف')),
+        ],
+      ));
+      if (confirmed != true) return;
+    }
+    try {
+      if (action == 'post') await _repository.postVoucher(item.id);
+      if (action == 'reverse') await _repository.reverseVoucher(item.id, 'عكس بواسطة المستخدم');
+      if (action == 'delete') await _repository.deleteVoucher(item.id);
+      if (mounted) await _load();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
 }
 
 class _VoucherDialog extends StatefulWidget {
@@ -249,7 +278,7 @@ class _VoucherDialogState extends State<_VoucherDialog> {
       if (mounted) {
         setState(() {
           _error = _draftId != null
-              ? 'تم حفظ السند كمسودة رقم $_draftId لكن تعذر ترحيله: $error. يمكنك إعادة محاولة «حفظ وترحيل» دون تكرار السند.'
+              ? 'تم حفظ السند كمسودة رقم $_draftId لكن تعذر ترحيله: $error. يمكنك إعادة محاولة «ترحيل» دون تكرار السند.'
               : '$error';
           _saving = false;
         });
@@ -274,14 +303,13 @@ class _VoucherDialogState extends State<_VoucherDialog> {
       Text(_isPayment ? 'الحساب المدين (Dr)' : 'الحساب الدائن (Cr)', style: FinanceText.label),
       const SizedBox(height: 4),
       ..._lines.asMap().entries.map((entry) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Row(children: <Widget>[
-        Expanded(child: LayoutBuilder(builder: (context, constraints) => DropdownMenu<int>(
-          initialSelection: entry.value.accountId,
-          width: constraints.maxWidth,
-          menuHeight: 5 * 48,
-          hintText: 'اختر الحساب',
-          dropdownMenuEntries: _distributionAccounts.map((a) => DropdownMenuEntry(value: a.id, label: '${a.code} — ${a.nameAr}')).toList(),
-          onSelected: (x) => setState(() => entry.value.accountId = x),
-        ))),
+        Expanded(child: AccountPickerField(
+          label: 'الحساب',
+          hint: 'ابحث بالاسم أو الرقم',
+          accounts: _distributionAccounts,
+          value: entry.value.accountId,
+          onChanged: (x) => setState(() => entry.value.accountId = x),
+        )),
         const SizedBox(width: AppSpacing.sm),
         SizedBox(width: 120, child: TextField(controller: entry.value.amount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'المبلغ'), onChanged: (_) => setState(() {}))),
         IconButton(onPressed: _lines.length == 1 ? null : () => setState(() { entry.value.dispose(); _lines.removeAt(entry.key); }), icon: const Icon(Icons.delete_outline)),
@@ -294,7 +322,7 @@ class _VoucherDialogState extends State<_VoucherDialog> {
     actions: <Widget>[
       TextButton(onPressed: _saving ? null : () => Navigator.pop(context), child: const Text('إلغاء')),
       AppButton(label: 'حفظ كمسودة', variant: AppButtonVariant.outlined, onPressed: _saving ? null : _saveDraft),
-      AppButton(label: 'حفظ وترحيل', onPressed: _saving ? null : _saveAndPost),
+      AppButton(label: 'ترحيل', onPressed: _saving ? null : _saveAndPost),
     ],
   );
 

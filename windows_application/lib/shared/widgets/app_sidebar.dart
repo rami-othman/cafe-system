@@ -277,6 +277,14 @@ class AppSidebar extends StatelessWidget {
                               ? null
                               : () => context.guardedGo(destination.routePath!),
                         ),
+                      if (!pinSettings && actorRole == 'owner')
+                        AppSidebarItem(
+                          icon: Icons.delete_outline,
+                          label: 'سلة المحذوفات',
+                          isCollapsed: isCollapsed,
+                          isActive: activeLabel == 'trash',
+                          onTap: () => context.guardedGo('/trash'),
+                        ),
                       if (!pinSettings)
                         AppSidebarItem(
                           icon: Icons.settings_outlined,
@@ -288,6 +296,14 @@ class AppSidebar extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (pinSettings && actorRole == 'owner')
+                  AppSidebarItem(
+                    icon: Icons.delete_outline,
+                    label: 'سلة المحذوفات',
+                    isCollapsed: isCollapsed,
+                    isActive: activeLabel == 'trash',
+                    onTap: () => context.guardedGo('/trash'),
+                  ),
                 if (pinSettings)
                   AppSidebarItem(
                     icon: Icons.settings_outlined,

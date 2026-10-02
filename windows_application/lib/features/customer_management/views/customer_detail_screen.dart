@@ -9,6 +9,7 @@ import '../controllers/customer_detail_state.dart';
 import '../models/customer_models.dart';
 import '../repositories/customer_management_repository.dart';
 import '../widgets/customer_detail_sections.dart';
+import '../widgets/customer_wallet_card.dart';
 import '../widgets/customer_lifecycle_actions.dart';
 import '../widgets/customer_management_state_panel.dart';
 import '../widgets/customer_management_visual_tokens.dart';
@@ -147,6 +148,13 @@ class _CustomerProfile extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
+        if (customer.walletBalance != null) ...<Widget>[
+          CustomerWalletCard(
+            customer: customer,
+            onSaved: () => context.read<CustomerDetailCubit>().load(customer.id),
+          ),
+          const SizedBox(height: 16),
+        ],
         CustomerDetailSections(
           customer: customer,
           overview: overview,

@@ -20,6 +20,118 @@ final class FinanceVoucherApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_can_soft_delete_and_restore_a_draft_voucher(): void
+    {
+        [$tenant, $branch] = $this->tenantWithBranch();
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
+        $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
+        $id = (int) $this->postJson('/api/v1/finance/vouchers', [
+            'documentType' => 'payment', 'documentDate' => now()->toDateString(),
+            'branchId' => $branch, 'financialLocationId' => $this->cashLocation($tenant, $branch, '1010'),
+            'amount' => '25.00', 'lines' => [['accountId' => $this->accountId($tenant, '6100'), 'amount' => '25.00']],
+        ], $headers)->assertCreated()->json('data.id');
+
+        $this->deleteJson("/api/v1/finance/vouchers/$id", [], $headers)->assertNoContent();
+        $this->assertNotNull(DB::table('finance_documents')->where('id', $id)->value('deleted_at'));
+        $this->getJson('/api/v1/finance/vouchers', $headers)->assertJsonMissing(['id' => $id]);
+        $this->getJson('/api/v1/finance/trash/vouchers', $headers)->assertJsonPath('data.0.id', $id);
+        $this->postJson("/api/v1/finance/vouchers/$id/post", [], $headers)->assertNotFound();
+        $this->postJson("/api/v1/finance/trash/vouchers/$id/restore", [], $headers)->assertOk();
+        $this->assertNull(DB::table('finance_documents')->where('id', $id)->value('deleted_at'));
+    }
+
+    public function test_owner_deleting_a_posted_voucher_reverses_it_and_hides_it_in_one_step_and_the_global_trash_lists_it(): void
+    {
+        [$tenant, $branch] = $this->tenantWithBranch();
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
+        $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
+        $id = (int) $this->postJson('/api/v1/finance/vouchers', [
+            'documentType' => 'payment', 'documentDate' => now()->toDateString(),
+            'branchId' => $branch, 'financialLocationId' => $this->cashLocation($tenant, $branch, '1010'),
+            'amount' => '25.00', 'lines' => [['accountId' => $this->accountId($tenant, '6100'), 'amount' => '25.00']],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$id/post", [], $headers)->assertOk();
+
+        $this->deleteJson("/api/v1/finance/vouchers/$id", [], $headers)->assertNoContent();
+        $row = DB::table('finance_documents')->where('id', $id)->first();
+        $this->assertNotNull($row->deleted_at);
+        $this->assertSame('reversed', $row->status);
+        $this->assertNotNull($row->reversal_journal_entry_id);
+        $this->assertSame(2, DB::table('journal_entries')->where('tenant_id', $tenant)->count());
+
+        $trash = $this->getJson('/api/v1/trash', $headers)->assertOk();
+        $trash->assertJsonPath('data.0.type', 'vouchers')->assertJsonPath('data.0.id', $id);
+        $this->getJson('/api/v1/trash?type=customers', $headers)->assertOk()->assertJsonCount(0, 'data');
+        $counts = array_column($trash->json('types'), 'count', 'type');
+        $this->assertSame(1, $counts['vouchers']);
+        $this->assertSame(0, $counts['customers']);
+        $this->postJson("/api/v1/trash/vouchers/$id/restore", [], $headers)->assertOk();
+        $row = DB::table('finance_documents')->where('id', $id)->first();
+        $this->assertNull($row->deleted_at);
+        $this->assertSame('reversed', $row->status, 'restoring never brings back a live posted voucher');
+    }
+
+    public function test_global_trash_restores_other_entities_and_is_owner_only(): void
+    {
+        [$tenant] = $this->tenantWithBranch();
+        $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
+        $category = DB::table('categories')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'تصنيف محذوف', 'created_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
+        ]);
+        $this->getJson('/api/v1/trash?search=محذوف', $headers)->assertOk()
+            ->assertJsonPath('data.0.type', 'categories')->assertJsonPath('data.0.title', 'تصنيف محذوف');
+        $this->postJson("/api/v1/trash/categories/$category/restore", [], $headers)->assertOk();
+        $this->assertNull(DB::table('categories')->where('id', $category)->value('deleted_at'));
+        $this->postJson("/api/v1/trash/nonsense/1/restore", [], $headers)->assertUnprocessable();
+    }
+
+    public function test_owner_can_delete_a_posted_voucher_that_belongs_to_a_closed_shift(): void
+    {
+        [$tenant, $branch] = $this->tenantWithBranch();
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
+        $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
+        $location = $this->cashLocation($tenant, $branch, '1010');
+        $id = (int) $this->postJson('/api/v1/finance/vouchers', [
+            'documentType' => 'receipt', 'documentDate' => now()->toDateString(),
+            'branchId' => $branch, 'financialLocationId' => $location,
+            'amount' => '40.00', 'lines' => [['accountId' => $this->accountId($tenant, '4030'), 'amount' => '40.00']],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$id/post", [], $headers)->assertOk();
+        $owner = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id');
+        $shift = (int) DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $owner, 'financial_location_id' => $location,
+            'shift_number' => 'SH-CLOSED-1', 'opening_cash' => '0.00', 'status' => 'closed', 'opened_at' => now()->subHours(3), 'closed_at' => now()->subHour(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('finance_documents')->where('id', $id)->update(['shift_id' => $shift]);
+
+        // Reversing it directly is still refused; the owner's delete is the one allowed way.
+        $this->postJson("/api/v1/finance/vouchers/$id/reverse", ['reason' => 'x'], $headers)->assertUnprocessable();
+        $this->deleteJson("/api/v1/finance/vouchers/$id", [], $headers)->assertNoContent();
+        $row = DB::table('finance_documents')->where('id', $id)->first();
+        $this->assertNotNull($row->deleted_at);
+        $this->assertSame('reversed', $row->status);
+        $this->assertSame(0, DB::table('shift_cash_movements')->where('shift_id', $shift)->where('source_type', 'finance_document_reversal')->count());
+    }
+
+    public function test_restoring_an_archived_product_from_the_trash_makes_it_active_again(): void
+    {
+        [$tenant] = $this->tenantWithBranch();
+        $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
+        $product = (int) DB::table('products')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'قهوة محذوفة', 'price' => 10, 'is_active' => false,
+            'created_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
+        ]);
+        DB::table('product_variants')->insert([
+            'tenant_id' => $tenant, 'product_id' => $product, 'name' => 'عادي', 'base_price' => 10, 'is_default' => true, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->postJson("/api/v1/trash/products/$product/restore", [], $headers)->assertOk();
+        $row = DB::table('products')->where('id', $product)->first();
+        $this->assertNull($row->deleted_at);
+        $this->assertTrue((bool) $row->is_active, 'a restored product must be active again, not hidden under "inactive"');
+    }
+
     public function test_payment_voucher_starts_with_no_default_distribution_account_and_posts_debit_distribution_credit_cash(): void
     {
         [$tenant, $branch] = $this->tenantWithBranch();

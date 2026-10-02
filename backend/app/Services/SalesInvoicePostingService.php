@@ -18,6 +18,7 @@ final class SalesInvoicePostingService
         private readonly SalesInvoiceInventoryConsumptionService $inventory,
         private readonly AccountingPostingService $posting,
         private readonly OperationalAuditService $audit,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     /**
@@ -40,6 +41,11 @@ final class SalesInvoicePostingService
         $totals = $this->snapshotTotals($invoice, $lines->all(), $charges->all());
         if (Money::cents($invoice->subtotal) !== $totals['subtotal'] || Money::cents($invoice->discount_total) !== $totals['discount'] || Money::cents($invoice->tax_total) !== $totals['tax'] || Money::cents($invoice->total) !== $totals['total']) throw ValidationException::withMessages(['totals' => 'The stored invoice totals no longer match its immutable line snapshots.']);
         $accounts = $this->accounts->postingAccounts($tenantId, ! $customer->is_walk_in);
+        if (! $customer->is_walk_in && $customer->financial_account_id) {
+            $partyCode = DB::table('financial_accounts')->where('tenant_id', $tenantId)
+                ->where('id', $customer->financial_account_id)->value('code');
+            if ($partyCode) $accounts['accountsReceivable'] = $partyCode;
+        }
         $costs = $this->inventory->preview($tenantId, $invoice, $lines);
         $cogs = array_sum(array_map(fn (array $line): int => $line['cogsCents'], $costs));
         $details = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', array_values($accounts))->get(['id', 'code', 'name_ar', 'name_en'])->keyBy('code');
@@ -67,7 +73,11 @@ final class SalesInvoicePostingService
             if (! $customer) throw ValidationException::withMessages(['customerId' => 'Select an active customer.']);
             if ($customer->is_walk_in && ! $directSettlement) throw ValidationException::withMessages(['payment' => 'العميل النقدي يحتاج إلى دفع كامل ومصدر دفع عند الترحيل.']);
             if (! $customer->is_walk_in && $directSettlement) throw ValidationException::withMessages(['payment' => 'الفاتورة الآجلة تستخدم مسار الذمم القائم.']);
-            \App\Support\BackdatePolicy::reason($invoice->branch_id, $invoice->invoice_date, $invoice->backdate_reason);
+            // An old draft without a reason can be posted once the user supplies one (kept on the invoice).
+            $backdateReason = \App\Support\BackdatePolicy::reason($invoice->branch_id, $invoice->invoice_date, $invoice->backdate_reason ?: ($data['backdateReason'] ?? null));
+            if ($backdateReason !== null && ! $invoice->backdate_reason) {
+                DB::table('sales_invoices')->where('id', $invoiceId)->update(['backdate_reason' => $backdateReason, 'backdated_by' => $actorId]);
+            }
             $this->periods->assertPostingAllowed($tenantId, $invoice->invoice_date);
             $lines = DB::table('sales_invoice_lines')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('line_number')->get();
             if ($lines->isEmpty()) throw ValidationException::withMessages(['lines' => 'A sales invoice requires at least one line before posting.']);
@@ -79,9 +89,10 @@ final class SalesInvoicePostingService
             $accounts = $this->accounts->postingAccounts($tenantId, ! $customer->is_walk_in);
             $costs = $this->inventory->consume($request, $tenantId, $invoice, $lines, $actorId, $invoice->invoice_date);
             $cogs = array_sum(array_map(fn (array $line): int => $line['cogsCents'], $costs));
+            $partyCode = $customer->is_walk_in ? null : $this->partyAccounts->codeForCustomer($tenantId, (int) $customer->id, $actorId);
             $journalLines = [$customer->is_walk_in
                 ? ['accountCode' => $directSettlement['accountCode'], 'debit' => Money::decimal($totals['total']), 'financialLocationId' => $directSettlement['locationId'], 'description' => 'تحصيل بيع مباشر']
-                : ['accountCode' => $accounts['accountsReceivable'], 'debit' => Money::decimal($totals['total']), 'description' => 'الذمم المدينة']];
+                : ['accountCode' => $partyCode, 'debit' => Money::decimal($totals['total']), 'description' => 'الذمم المدينة']];
             if ($totals['subtotal'] > 0) $journalLines[] = ['accountCode' => $accounts['revenue'], 'credit' => Money::decimal($totals['subtotal']), 'description' => 'إيرادات المبيعات'];
             if ($totals['charges'] > 0) $journalLines[] = ['accountCode' => $accounts['additionalChargeRevenue'], 'credit' => Money::decimal($totals['charges']), 'description' => 'إيرادات الرسوم المحمّلة على العميل'];
             if ($totals['adjustment'] > 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'credit' => Money::decimal($totals['adjustment']), 'description' => 'تسوية تجارية'];

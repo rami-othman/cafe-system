@@ -41,6 +41,7 @@ class PaymentDialog extends StatefulWidget {
 
 class _PaymentDialogState extends State<PaymentDialog> {
   late final TextEditingController _amountController;
+  late final TextEditingController _referenceController;
   late final FocusNode _amountFocusNode;
   PaymentMethod _selectedMethod = PaymentMethod.cash;
   bool _hasEditedCashAmount = false;
@@ -53,6 +54,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
       text: _formatAmount(widget.totalDue),
     );
     _amountFocusNode = FocusNode();
+    _referenceController = TextEditingController();
     if (!widget.availableMethods.contains(_selectedMethod) &&
         widget.availableMethods.isNotEmpty) {
       _selectedMethod = widget.availableMethods.first;
@@ -62,6 +64,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
   @override
   void dispose() {
     _amountController.dispose();
+    _referenceController.dispose();
     _amountFocusNode.dispose();
     super.dispose();
   }
@@ -107,9 +110,12 @@ class _PaymentDialogState extends State<PaymentDialog> {
     return switch (_selectedMethod) {
       PaymentMethod.cash => (_amountReceived ?? -1) >= widget.totalDue,
       PaymentMethod.card || PaymentMethod.wallet => true,
+      PaymentMethod.shamCash => _referenceController.text.trim().isNotEmpty,
       PaymentMethod.split => false,
     };
   }
+
+  void _onReferenceChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +228,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
     final double amountReceived = switch (_selectedMethod) {
       PaymentMethod.cash => _amountReceived ?? 0,
-      PaymentMethod.card || PaymentMethod.wallet => widget.totalDue,
+      PaymentMethod.card ||
+      PaymentMethod.wallet ||
+      PaymentMethod.shamCash => widget.totalDue,
       PaymentMethod.split => 0,
     };
 
@@ -231,6 +239,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
       totalDue: widget.totalDue,
       amountReceived: amountReceived,
       changeDue: _selectedMethod == PaymentMethod.cash ? _changeDue : 0,
+      reference: _selectedMethod == PaymentMethod.shamCash
+          ? _referenceController.text.trim()
+          : null,
     );
 
     if (widget.onSubmit == null) {
@@ -358,9 +369,32 @@ class _MethodDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state._selectedMethod) {
       PaymentMethod.cash => _CashDetails(state: state),
-      PaymentMethod.card || PaymentMethod.wallet => _PaymentNote(
+      PaymentMethod.card => _PaymentNote(
         message: context.l10n.posExternalTerminalPending,
         icon: Icons.info_outline,
+      ),
+      PaymentMethod.wallet => const _PaymentNote(
+        message: 'سيُسجَّل المبلغ على حساب العميل المرتبط بالطلب (محفظة العميل).',
+        icon: Icons.account_balance_wallet_outlined,
+      ),
+      PaymentMethod.shamCash => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const _PaymentNote(
+            message: 'يُسجَّل المبلغ في صندوق الشام كاش. أدخل رقم العملية كما يظهر في التطبيق.',
+            icon: Icons.qr_code_2,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            key: const Key('sham-cash-reference'),
+            controller: state._referenceController,
+            onChanged: (_) => state._onReferenceChanged(),
+            decoration: const InputDecoration(
+              labelText: 'رقم عملية الشام كاش',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
       ),
       PaymentMethod.split => _PaymentNote(
         message: context.l10n.posSplitUnavailable,

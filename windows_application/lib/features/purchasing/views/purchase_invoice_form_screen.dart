@@ -23,6 +23,7 @@ import '../widgets/inventory_item_search_field.dart';
 import '../widgets/purchase_error_messages.dart';
 import '../widgets/purchase_type_label.dart';
 import '../widgets/purchase_posting_dialog.dart';
+import '../../finance_inventory_setup/widgets/account_picker_field.dart';
 
 /// Create/edit a purchase invoice (`/finance/purchases/new`,
 /// `/finance/purchases/:id/edit`). This posts to the exact same
@@ -155,6 +156,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   final TextEditingController _backdateReason = TextEditingController();
   final TextEditingController _paidNow = TextEditingController(text: '0');
   String _receiptMode = 'immediate';
+  String _paymentTerms = 'credit';
+  final TextEditingController _paymentReference = TextEditingController();
   DateTime _invoiceDate = DateTime.now();
   DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
   int? _supplierId;
@@ -245,6 +248,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     _notes.dispose();
     _backdateReason.dispose();
     _paidNow.dispose();
+    _paymentReference.dispose();
     _invoiceDiscountValue.dispose();
     for (final _LineDraft line in _lines) {
       line.dispose();
@@ -363,6 +367,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                     .firstOrNull
                     ?.id ??
                 (candidates.length == 1 ? candidates.single.id : null);
+            if (_receiptMode == 'immediate') {
+              for (final line in _lines) {
+                if (line.lineType == 'inventory' && line.warehouseId == null) {
+                  line.warehouseId = _destinationWarehouseId;
+                }
+              }
+            }
           }
         }
         if (_isEdit) {
@@ -413,6 +424,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     _invoiceDate = DateTime.tryParse(p.invoiceDate) ?? _invoiceDate;
     _backdateReason.text = p.backdateReason ?? '';
     _dueDate = DateTime.tryParse(p.dueDate) ?? _dueDate;
+    _paymentTerms = p.paymentTerms;
+    _paymentReference.text = p.paymentReference ?? '';
     _supplierId = p.supplierId;
     _branchId = p.branchId;
     _receiptMode = p.receiptMode ?? 'receive_later';
@@ -567,7 +580,11 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   }
 
   String? _validate({bool forPosting = false}) {
+    if (_paymentTerms == 'sham_cash' && _paymentReference.text.trim().isEmpty) {
+      return 'أدخل رقم عملية شام كاش.';
+    }
     if (forPosting &&
+        _paymentTerms == 'credit' &&
         ((double.tryParse(_paidNow.text.trim()) ?? -1) < 0 ||
             (double.tryParse(_paidNow.text.trim()) ?? 0) >
                 _grandTotalPreview * (_isFactory ? _currency.multiplier : 1) +
@@ -676,7 +693,12 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         if (_invoiceNumber.text.trim().isNotEmpty)
           'supplierInvoiceNumber': _invoiceNumber.text.trim(),
         'invoiceDate': _isoDate(_invoiceDate),
-        'dueDate': _isoDate(_dueDate),
+        'paymentTerms': _paymentTerms,
+        // الاستحقاق للأجل فقط؛ الدفع الفوري يستحق بتاريخ الفاتورة.
+        if (_paymentTerms == 'credit') 'dueDate': _isoDate(_dueDate),
+        'paymentReference': _paymentTerms == 'sham_cash'
+            ? _paymentReference.text.trim()
+            : null,
         if (_backdateReason.text.trim().isNotEmpty)
           'backdateReason': _backdateReason.text.trim(),
         'invoiceType': _purchaseType == 'inventory'
@@ -745,8 +767,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       );
       if (!mounted) return;
       if (postAfterSave) {
-        final String paidAmount = _paidNow.text.trim();
-        final bool hasPayment = (double.tryParse(paidAmount) ?? 0) > 0;
+        final bool immediatePay = _paymentTerms != 'credit';
+        final String paidAmount = immediatePay ? '' : _paidNow.text.trim();
+        final bool hasPayment =
+            immediatePay || (double.tryParse(paidAmount) ?? 0) > 0;
         PurchasePostingChoice? choice;
         if (hasPayment) {
           final PurchasePostingPreview preview = await _cubit.repository
@@ -757,16 +781,19 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             preview: preview,
             branchName: _selectedBranchName,
             invoiceDate: _isoDate(_invoiceDate),
-            paidAmount: paidAmount,
+            paidAmount: immediatePay ? null : paidAmount,
           );
         }
         if (!hasPayment || choice != null) {
-          final (PurchaseInvoice posted, List<Map<String, dynamic>> warnings) =
-              await _cubit.repository.postPurchase(
+          final (
+            PurchaseInvoice posted,
+            List<Map<String, dynamic>> warnings,
+          ) = await _cubit.repository.postPurchase(
             saved.id,
             'purchase-post-${saved.id}-${DateTime.now().microsecondsSinceEpoch}',
             financialLocationId: choice?.financialLocationId,
-            paidAmount: paidAmount,
+            paymentMethodId: choice?.paymentMethodId,
+            paidAmount: immediatePay ? choice?.paidAmount : paidAmount,
             paymentDate: choice?.paymentDate,
             receiptDate: choice?.receiptDate,
           );
@@ -876,6 +903,12 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               invoiceNumber: _invoiceNumber,
               invoiceDate: _invoiceDate,
               dueDate: _dueDate,
+              paymentTerms: _paymentTerms,
+              paymentReference: _paymentReference,
+              onPaymentTermsChanged: (String v) => setState(() {
+                _paymentTerms = v;
+                if (v != 'credit') _paidNow.text = '0';
+              }),
               notes: _notes,
               onSupplierChanged: (int? v) => setState(() => _supplierId = v),
               onBranchChanged: (int? v) => setState(() {
@@ -1063,23 +1096,31 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 }),
               ),
             ],
-            Text('المدفوع الآن', style: FinanceText.page),
-            SizedBox(
-              width: 260,
-              child: TextField(
-                controller: _paidNow,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+            if (_paymentTerms == 'credit') ...<Widget>[
+              Text('المدفوع الآن', style: FinanceText.page),
+              SizedBox(
+                width: 260,
+                child: TextField(
+                  controller: _paidNow,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'المبلغ المدفوع الآن بالليرة السورية SYP',
+                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'المبلغ المدفوع الآن بالليرة السورية SYP',
-                ),
-                onChanged: (_) => setState(() {}),
               ),
-            ),
-            Text(
-              'المتبقي: ${(_grandTotalPreview * (_isFactory ? _currency.multiplier : 1) - (double.tryParse(_paidNow.text) ?? 0)).clamp(0, double.infinity).toStringAsFixed(2)} SYP',
-            ),
+              Text(
+                'المتبقي: ${(_grandTotalPreview * (_isFactory ? _currency.multiplier : 1) - (double.tryParse(_paidNow.text) ?? 0)).clamp(0, double.infinity).toStringAsFixed(2)} SYP',
+              ),
+            ] else
+              Text(
+                _paymentTerms == 'sham_cash'
+                    ? 'يُدفع كامل المبلغ من صندوق الشام كاش عند الترحيل.'
+                    : 'يُدفع كامل المبلغ من الصندوق عند الترحيل.',
+                style: FinanceText.body,
+              ),
             const SizedBox(height: FinanceSpace.md),
             Wrap(
               spacing: FinanceSpace.sm,
@@ -1118,23 +1159,11 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     onChanged: (int? v) => setState(() => _expenseCategoryId = v),
   );
 
-  Widget _accountDropdown() => DropdownButtonFormField<int>(
+  Widget _accountDropdown() => AccountPickerField(
     key: const ValueKey<String>('purchase-asset-account-dropdown'),
-    initialValue: _assetAccountId,
-    isExpanded: true,
-    decoration: InputDecoration(
-      labelText: _purchaseType == 'asset'
-          ? 'حساب الأصل الثابت'
-          : 'الحساب المحاسبي',
-    ),
-    items: _accounts
-        .map(
-          (FinancialAccount a) => DropdownMenuItem<int>(
-            value: a.id,
-            child: Text('${a.code} — ${a.nameAr}'),
-          ),
-        )
-        .toList(growable: false),
+    label: _purchaseType == 'asset' ? 'حساب الأصل الثابت' : 'الحساب المحاسبي',
+    accounts: _accounts,
+    value: _assetAccountId,
     onChanged: (int? v) => setState(() => _assetAccountId = v),
   );
 }
@@ -1154,6 +1183,9 @@ class _HeaderSection extends StatelessWidget {
     required this.invoiceNumber,
     required this.invoiceDate,
     required this.dueDate,
+    required this.paymentTerms,
+    required this.paymentReference,
+    required this.onPaymentTermsChanged,
     required this.notes,
     required this.onSupplierChanged,
     required this.onBranchChanged,
@@ -1172,6 +1204,9 @@ class _HeaderSection extends StatelessWidget {
   final TextEditingController invoiceNumber;
   final DateTime invoiceDate;
   final DateTime dueDate;
+  final String paymentTerms;
+  final TextEditingController paymentReference;
+  final ValueChanged<String> onPaymentTermsChanged;
   final TextEditingController notes;
   final ValueChanged<int?> onSupplierChanged;
   final ValueChanged<int?> onBranchChanged;
@@ -1265,12 +1300,36 @@ class _HeaderSection extends StatelessWidget {
         ),
         SizedBox(
           width: 200,
-          child: OutlinedButton.icon(
-            onPressed: onPickDueDate,
-            icon: const Icon(Icons.event_outlined, size: 15),
-            label: Text('تاريخ الاستحقاق: ${_isoDate(dueDate)}'),
+          child: DropdownButtonFormField<String>(
+            initialValue: paymentTerms,
+            decoration: const InputDecoration(labelText: 'طريقة الدفع'),
+            items: const <DropdownMenuItem<String>>[
+              DropdownMenuItem(value: 'cash', child: Text('كاش')),
+              DropdownMenuItem(value: 'credit', child: Text('أجل')),
+              DropdownMenuItem(value: 'sham_cash', child: Text('شام كاش')),
+            ],
+            onChanged: (String? v) => onPaymentTermsChanged(v ?? 'credit'),
           ),
         ),
+        if (paymentTerms == 'sham_cash')
+          SizedBox(
+            width: 220,
+            child: TextField(
+              controller: paymentReference,
+              decoration: const InputDecoration(
+                labelText: 'رقم عملية شام كاش',
+              ),
+            ),
+          ),
+        if (paymentTerms == 'credit')
+          SizedBox(
+            width: 200,
+            child: OutlinedButton.icon(
+              onPressed: onPickDueDate,
+              icon: const Icon(Icons.event_outlined, size: 15),
+              label: Text('تاريخ الاستحقاق: ${_isoDate(dueDate)}'),
+            ),
+          ),
         SizedBox(
           width: 320,
           child: TextField(

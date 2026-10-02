@@ -35,6 +35,7 @@ final class SalesCreditNotePostingService
         private readonly SalesInventoryMovementService $movements,
         private readonly OperationalAuditService $audit,
         private readonly CustomerPaymentService $payments,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     /**
@@ -48,6 +49,15 @@ final class SalesCreditNotePostingService
     {
         $plan = $this->computePlan($tenantId, $creditNoteId, lock: false);
         $accounts = $plan['accounts'];
+        $partyCode = DB::table('customers as customers')
+            ->join('financial_accounts as account', 'account.id', '=', 'customers.financial_account_id')
+            ->where('customers.tenant_id', $tenantId)
+            ->where('customers.id', $plan['invoice']->customer_id)
+            ->value('account.code');
+        if ($partyCode) {
+            $accounts['accountsReceivable'] = $partyCode;
+            $accounts['customerCredit'] = $partyCode;
+        }
         $details = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', array_values($accounts))->get(['id', 'code', 'name_ar', 'name_en'])->keyBy('code');
         $account = fn (string $code): array => ['id' => (int) $details[$code]->id, 'code' => $code, 'name' => $details[$code]->name_ar ?: $details[$code]->name_en];
 
@@ -150,8 +160,9 @@ final class SalesCreditNotePostingService
             if ($isDirectCash) {
                 if ($plan['refundCents'] > 0) $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'رد نقد أو بنك', 'financialLocationId' => $refundSource['location']->id];
             } else {
-                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'الذمم المدينة'];
-                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'رصيد العميل الدائن'];
+                $partyCode = $this->partyAccounts->codeForCustomer($tenantId, (int) $plan['invoice']->customer_id, $actorId);
+                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $partyCode, 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'الذمم المدينة'];
+                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $partyCode, 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'رصيد العميل الدائن'];
             }
             if ($plan['cogsCents'] > 0) {
                 $journalLines[] = ['accountCode' => $accounts['inventory'], 'debit' => Money::decimal($plan['cogsCents']), 'description' => 'أصل المخزون'];

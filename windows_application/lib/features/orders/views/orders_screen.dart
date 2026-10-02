@@ -438,6 +438,7 @@ class OrdersScreen extends StatelessWidget {
         'cash' => PaymentMethod.cash,
         'card' => PaymentMethod.card,
         'wallet' => PaymentMethod.wallet,
+        'sham_cash' => PaymentMethod.shamCash,
         'split' => PaymentMethod.split,
         _ => null,
       };

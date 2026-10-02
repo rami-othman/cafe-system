@@ -16,11 +16,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class InventoryAccountingMapper
 {
-    private const INVENTORY_ASSET_CODE = '1100';
-
-    private const VARIANCE_CODE = '5010';
-
-    public function __construct(private readonly AccountingPostingService $posting, private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly AccountingPostingService $posting, private readonly OperationalAuditService $audit, private readonly \App\Services\FinanceAccountMap $accountMap) {}
 
     /** Posts a required financial impact while the originating inventory transaction is still open. */
     public function postForFinalMovement(Request $request, int $tenantId, object $movement, ?int $actorId): array
@@ -118,9 +114,10 @@ final class InventoryAccountingMapper
 
     private function accounts(int $tenantId, bool $throw): ?array
     {
-        $codes = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', [self::INVENTORY_ASSET_CODE, self::VARIANCE_CODE])->where('is_active', true)->whereNull('deleted_at')->pluck('code')->all();
-        if (in_array(self::INVENTORY_ASSET_CODE, $codes, true) && in_array(self::VARIANCE_CODE, $codes, true)) {
-            return ['inventory' => self::INVENTORY_ASSET_CODE, 'variance' => self::VARIANCE_CODE];
+        $inventory = $this->accountMap->account($tenantId, 'sales.inventory_asset');
+        $variance = $this->accountMap->account($tenantId, 'inventory.variance');
+        if ($inventory && $variance) {
+            return ['inventory' => (string) $inventory->code, 'variance' => (string) $variance->code];
         }
         if ($throw) {
             throw ValidationException::withMessages(['finance' => 'Inventory Asset or Inventory Variance account is not configured.']);

@@ -373,9 +373,11 @@ class PurchasePostingPreview {
     this.allowedCashLocations = const [],
     this.shiftId,
     this.shiftNumber,
+    this.shamCashMethods = const [],
   });
 
   final String amount;
+  final List<PurchaseCashLocation> shamCashMethods;
   final int branchId;
   final int? financialLocationId;
   final String? financialLocationName;
@@ -399,11 +401,28 @@ class PurchasePostingPreview {
                   ),
                 )
                 .toList(growable: false),
+        shamCashMethods:
+            (json['shamCashMethods'] as List<dynamic>? ?? const [])
+                .map(
+                  (value) => PurchaseCashLocation.fromJson(
+                    Map<String, dynamic>.from(value as Map)
+                      ..['name'] = _shamMethodLabel(
+                        Map<String, dynamic>.from(value),
+                      ),
+                  ),
+                )
+                .toList(growable: false),
         shiftId: readInt(json['shiftId']),
         shiftNumber: readString(json['shiftNumber']).isEmpty
             ? null
             : readString(json['shiftNumber']),
       );
+}
+
+String _shamMethodLabel(Map<String, dynamic> json) {
+  final String name = readString(json['name']);
+  final String location = readString(json['locationName']);
+  return location.isEmpty || location == name ? name : '$name — $location';
 }
 
 class PurchaseCashLocation {
@@ -476,6 +495,8 @@ class PurchaseInvoice {
     this.lines = const <PurchaseInvoiceLine>[],
     this.payments = const <PurchasePayment>[],
     this.receipts = const <PurchaseReceiptSummary>[],
+    this.paymentTerms = 'credit',
+    this.paymentReference,
   });
 
   final Map<String, dynamic>? factoryCurrency;
@@ -492,6 +513,11 @@ class PurchaseInvoice {
   final String? warehouseName;
   final String invoiceDate;
   final String dueDate;
+
+  /// cash | credit | sham_cash
+  final String paymentTerms;
+  final String? paymentReference;
+  bool get isCreditTerms => paymentTerms == 'credit';
 
   /// inventory | expense | asset | other — derived server-side from the
   /// invoice's lines when present, else its legacy header invoice type.
@@ -573,6 +599,12 @@ class PurchaseInvoice {
         : readString(json['warehouseName']),
     invoiceDate: readString(json['invoiceDate']),
     dueDate: readString(json['dueDate']),
+    paymentTerms: readString(json['paymentTerms']).isEmpty
+        ? 'credit'
+        : readString(json['paymentTerms']),
+    paymentReference: readString(json['paymentReference']).isEmpty
+        ? null
+        : readString(json['paymentReference']),
     purchaseType: readString(json['purchaseType']),
     invoiceTypeId: readInt(json['invoiceTypeId']),
     invoiceTypeName: readString(json['invoiceTypeName']).isEmpty

@@ -1168,6 +1168,7 @@ class PosCubit extends Cubit<PosState> {
         method: requestedPayment.method.apiValue,
         amount: requestedPayment.amountReceived,
         idempotencyKey: idempotencyKey,
+        reference: requestedPayment.reference,
         totalDue: totalDue,
       );
       if (isClosed) {

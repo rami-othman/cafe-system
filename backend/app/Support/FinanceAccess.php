@@ -45,6 +45,8 @@ final class FinanceAccess
             // purchases or sales list/show endpoints, which stay a
             // per-tenant grant (see CashierDashboardApiTest).
             'finance.vouchers.create', 'finance.vouchers.post',
+            // Reverse only (never delete); the voucher reverse endpoint limits a cashier to their own open shift.
+            'finance.vouchers.reverse',
             'finance.receipts.create', 'finance.payments.create',
             'finance.purchases.create', 'finance.purchases.edit', 'finance.purchases.post', 'finance.purchases.receive',
             'finance.supplier_invoices.view', 'finance.supplier_invoices.create', 'finance.supplier_invoices.edit', 'finance.supplier_invoices.post',

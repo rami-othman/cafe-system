@@ -10,6 +10,7 @@ import 'customer_management_route_locations.dart';
 import 'shift_route_locations.dart';
 
 import '../core/services/service_locator.dart';
+import '../core/network/dio_api_client.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
 import '../features/discounts/models/discount_list_item.dart';
@@ -53,6 +54,7 @@ import '../features/finance_inventory_setup/views/expenses_screen.dart';
 import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
 import '../features/finance_inventory_setup/views/invoice_type_catalog_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
+import '../features/finance_inventory_setup/views/account_mappings_screen.dart';
 import '../features/finance_inventory_setup/views/finance_operations_screen.dart';
 import '../features/finance_inventory_setup/views/finance_overview.dart';
 import '../features/finance_inventory_setup/views/finance_transactions.dart';
@@ -152,6 +154,7 @@ import '../features/cashier_dashboard/controllers/cashier_inventory_cubit.dart';
 import '../features/cashier_dashboard/views/cashier_dashboard_screen.dart';
 import '../features/cashier_dashboard/views/cashier_inventory_screen.dart';
 import '../features/auth/views/settings_screen.dart';
+import '../features/trash/views/trash_screen.dart';
 import '../features/auth/controllers/auth_session_cubit.dart';
 import '../features/auth/models/auth_session.dart';
 import '../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
@@ -345,6 +348,16 @@ final GoRouter appRouter = GoRouter(
         final bool isManufacturing = state.uri.path.startsWith(
           AppRoutes.manufacturing,
         );
+        final bool isFactoryUser =
+            serviceLocator<AuthSessionCubit>()
+                .state
+                .session
+                ?.user
+                .isFactoryUser ??
+            false;
+        if (!isManufacturing && !isFactoryUser) {
+          serviceLocator<DioApiClient>().scopeBranchId = null;
+        }
         final bool isCustomerManagement = state.uri.path.startsWith(
           CustomerManagementRouteLocations.customers,
         );
@@ -1803,6 +1816,13 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
+          path: AppRoutes.financeAccountMappings,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const AccountMappingsScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.financeAccountsCanonical,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
@@ -2344,6 +2364,11 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
+          path: AppRoutes.trash,
+          redirect: _ownerOnlyRedirect,
+          builder: (context, state) => const TrashScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.cafeConfiguration,
           redirect: (_, _) => AppRoutes.cafeConfigurationOverview,
         ),
@@ -2568,7 +2593,10 @@ String _financeActiveTabFor(String path) {
     return 'closing';
   }
   if (path.startsWith(AppRoutes.financeReportsCanonical)) return 'reports';
-  if (path.startsWith(AppRoutes.financeAccountsCanonical)) return 'accounts';
+  if (path.startsWith(AppRoutes.financeAccountsCanonical) ||
+      path.startsWith(AppRoutes.financeAccountMappings)) {
+    return 'accounts';
+  }
   if (path.startsWith(AppRoutes.financeAccountingPeriods)) return 'periods';
   if (path.startsWith(AppRoutes.financePaymentMethods)) return 'settings';
   if (path.startsWith(AppRoutes.financeWarehouses)) return 'settings';
@@ -2684,18 +2712,18 @@ String _activeDestinationFor(GoRouterState state) {
         : 'manufacturing';
   }
   if (state.uri.path.startsWith(AppRoutes.finance)) {
-    final branchState = serviceLocator.isRegistered<OperationalBranchCubit>()
-        ? serviceLocator<OperationalBranchCubit>().state
-        : null;
-    final factoryUser = serviceLocator.isRegistered<AuthSessionCubit>() &&
-        (serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ?? false);
-    final factoryBranch = branchState?.branches.any(
-          (branch) => branch.id == branchState.selectedBranchId && branch.isFactory,
-        ) ?? false;
-    if (factoryUser || factoryBranch) {
+    final factoryUser =
+        serviceLocator.isRegistered<AuthSessionCubit>() &&
+        (serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+            false);
+    if (factoryUser) {
       if (state.uri.path.startsWith(AppRoutes.financeSales)) return 'sales';
-      if (state.uri.path.startsWith(AppRoutes.financePurchases)) return 'purchases';
-      if (state.uri.path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
+      if (state.uri.path.startsWith(AppRoutes.financePurchases)) {
+        return 'purchases';
+      }
+      if (state.uri.path.startsWith(AppRoutes.financeSuppliers)) {
+        return 'suppliers';
+      }
     }
     return 'finance';
   }
@@ -2714,6 +2742,7 @@ String _activeDestinationFor(GoRouterState state) {
     AppRoutes.orders => 'orders',
     _ when state.uri.path.startsWith(AppRoutes.reports) => 'reports',
     AppRoutes.settings => 'settings',
+    AppRoutes.trash => 'trash',
     _ => 'pos',
   };
 }
@@ -2742,6 +2771,7 @@ abstract final class AppRoutes {
   static const String shiftHistory = ShiftRouteLocations.history;
   static const String shiftClosing = ShiftRouteLocations.closing;
   static const String settings = '/settings';
+  static const String trash = '/trash';
   static const String cafeConfiguration = '/cafe-configuration';
   static const String cafeConfigurationOverview =
       '/cafe-configuration/overview';
@@ -2916,6 +2946,7 @@ abstract final class AppRoutes {
   static const String financeTransactions = '/finance/transactions';
   static const String financeVouchers = '/finance/vouchers';
   static const String financeAccountsCanonical = '/finance/accounts';
+  static const String financeAccountMappings = '/finance/account-mappings';
   static const String financeAccountDetail = '/finance/accounts/:accountId';
   static const String financeJournalEntriesCanonical =
       '/finance/journal-entries';
@@ -3101,6 +3132,12 @@ String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState state) {
 
   return AppRoutes.pos;
 }
+
+/// سلة المحذوفات العامة للمالك فقط.
+String? _ownerOnlyRedirect(BuildContext _, GoRouterState state) =>
+    serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'
+    ? null
+    : AppRoutes.pos;
 
 String? _customerManagementAccessRedirect(BuildContext _, GoRouterState _) =>
     CustomerManagementAccess.allows(

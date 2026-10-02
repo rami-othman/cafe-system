@@ -50,10 +50,37 @@ typedef FinanceOverviewLoader =
 /// Canonical dashboard consumer. Laravel supplies every financial figure;
 /// this widget only maps that already-authorized payload into presentation.
 class FinanceOverview extends StatefulWidget {
-  const FinanceOverview({super.key, required this.loader});
+  const FinanceOverview({
+    super.key,
+    required this.loader,
+    this.fiscalYearStartLoader,
+    this.unclosedYearLoader,
+  });
 
   factory FinanceOverview.fromRepository(FinanceSetupRepository repository) =>
       FinanceOverview(
+        fiscalYearStartLoader: () async {
+          try {
+            final periods = await repository.getFinanceList(
+              'finance/accounting-periods',
+              queryParameters: const <String, dynamic>{'perPage': 100},
+            );
+            return FinancePeriod.fiscalStartFromPeriods(periods);
+          } catch (_) {
+            return null;
+          }
+        },
+        unclosedYearLoader: () async {
+          try {
+            final periods = await repository.getFinanceList(
+              'finance/accounting-periods',
+              queryParameters: const <String, dynamic>{'perPage': 100},
+            );
+            return FinancePeriod.expiredOpenYearFromPeriods(periods);
+          } catch (_) {
+            return null;
+          }
+        },
         loader: (FinanceOverviewQuery query) async {
           final List<Map<String, dynamic>> values =
               await Future.wait(<Future<Map<String, dynamic>>>[
@@ -79,6 +106,8 @@ class FinanceOverview extends StatefulWidget {
       );
 
   final FinanceOverviewLoader loader;
+  final Future<DateTime?> Function()? fiscalYearStartLoader;
+  final Future<Map<String, dynamic>?> Function()? unclosedYearLoader;
   @override
   State<FinanceOverview> createState() => _FinanceOverviewState();
 }
@@ -87,6 +116,9 @@ class _FinanceOverviewState extends State<FinanceOverview> {
   late FinanceOverviewQuery _query;
   late Future<FinanceOverviewPayload> _future;
   int _requestVersion = 0;
+  String _selectedPeriod = FinancePeriod.thisMonth;
+  DateTime? _fiscalYearStart;
+  Map<String, dynamic>? _unclosedYear;
 
   @override
   void initState() {
@@ -97,6 +129,22 @@ class _FinanceOverviewState extends State<FinanceOverview> {
       dateTo: today,
     );
     _future = _load();
+    _loadFiscalYearStart();
+    _loadUnclosedYear();
+  }
+
+  Future<void> _loadUnclosedYear() async {
+    final loader = widget.unclosedYearLoader;
+    if (loader == null) return;
+    final year = await loader();
+    if (mounted) setState(() => _unclosedYear = year);
+  }
+
+  Future<void> _loadFiscalYearStart() async {
+    final loader = widget.fiscalYearStartLoader;
+    if (loader == null) return;
+    final start = await loader();
+    if (mounted) setState(() => _fiscalYearStart = start);
   }
 
   Future<FinanceOverviewPayload> _load() => widget.loader(_query);
@@ -114,7 +162,7 @@ class _FinanceOverviewState extends State<FinanceOverview> {
   }
 
   void _setPeriod(String period) async {
-    if (period == 'مخصص') {
+    if (period == FinancePeriod.custom) {
       final DateTime today = DateUtils.dateOnly(DateTime.now());
       final DateTimeRange? range = await showDateRangePicker(
         context: context,
@@ -127,6 +175,7 @@ class _FinanceOverviewState extends State<FinanceOverview> {
         helpText: 'اختيار فترة مالية',
       );
       if (range == null || !mounted) return;
+      setState(() => _selectedPeriod = FinancePeriod.custom);
       _reload(
         FinanceOverviewQuery(
           dateFrom: range.start,
@@ -137,7 +186,12 @@ class _FinanceOverviewState extends State<FinanceOverview> {
       );
       return;
     }
-    final DateTimeRange range = FinancePeriod.presetRange(period);
+    if (period == FinancePeriod.fiscalYear && _fiscalYearStart == null) return;
+    final DateTimeRange range = FinancePeriod.presetRange(
+      period,
+      fiscalYearStart: _fiscalYearStart,
+    );
+    setState(() => _selectedPeriod = period);
     _reload(
       FinanceOverviewQuery(
         dateFrom: range.start,
@@ -181,11 +235,42 @@ class _FinanceOverviewState extends State<FinanceOverview> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                FinanceGlobalContext(
-                  selectedPeriod: FinancePeriod.labelFor(
-                    _query.dateFrom,
-                    _query.dateTo,
+                if (_unclosedYear != null) ...<Widget>[
+                  Card(
+                    color: const Color(0xFFFFF0E8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(children: <Widget>[
+                        const Icon(Icons.lock_clock_outlined, color: FinanceColors.danger),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(
+                          'السنة المحاسبية ${_unclosedYear!['name']} انتهت في ${_unclosedYear!['endDate']}. يجب إقفالها قبل ترحيل عمليات جديدة.',
+                        )),
+                        TextButton(
+                          onPressed: () => context.go(AppRoutes.financeAccountingPeriodDetailPath(int.parse('${_unclosedYear!['id']}'))),
+                          child: const Text('إقفال السنة'),
+                        ),
+                      ]),
+                    ),
                   ),
+                  const SizedBox(height: FinanceSpace.md),
+                ],
+                FinanceGlobalContext(
+                  selectedPeriod: _selectedPeriod,
+                  periodOptions: const <String>[
+                    FinancePeriod.today,
+                    FinancePeriod.thisWeek,
+                    FinancePeriod.thisMonth,
+                    FinancePeriod.yearToDate,
+                    FinancePeriod.fourMonths,
+                    FinancePeriod.sixMonths,
+                    FinancePeriod.oneYear,
+                    FinancePeriod.fiscalYear,
+                    FinancePeriod.custom,
+                  ],
+                  disabledPeriods: _fiscalYearStart == null
+                      ? const <String>{FinancePeriod.fiscalYear}
+                      : const <String>{},
                   onPeriod: _setPeriod,
                   branches: branches,
                   selectedBranchId: _query.branchId,

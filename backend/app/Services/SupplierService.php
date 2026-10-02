@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierService
 {
-    public function __construct(private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly OperationalAuditService $audit, private readonly PartyAccountService $partyAccounts) {}
 
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
@@ -22,6 +22,17 @@ class SupplierService
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            if (isset($data['customerId'])) {
+                $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'])
+                    ->whereNull('deleted_at')->where('is_active', true)->first();
+                if (! $customer || $customer->is_walk_in || DB::table('suppliers')->where('tenant_id', $tenantId)->where('customer_id', $customer->id)->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['customerId' => 'اختر عميلًا نشطًا غير مرتبط بمورد آخر.']);
+                }
+                DB::table('suppliers')->where('id', $id)->update(['customer_id' => $customer->id]);
+                $this->partyAccounts->ensureForCustomer($tenantId, (int) $customer->id, $actorId);
+            } else {
+                $this->partyAccounts->customerForSupplier($tenantId, $id, $actorId);
+            }
             $this->audit->record($request, $tenantId, 'supplier.created', 'supplier', $id, [], (array) $this->find($tenantId, $id), null, $actorId);
 
             return $id;
@@ -35,8 +46,26 @@ class SupplierService
             \App\Support\DataScope::assertOwned($before, \App\Support\DataScope::resolve($request));
             $internal = \App\Support\InternalCounterparty::values($request, $tenantId, 'supplier', $before->owner_branch_id ? (int) $before->owner_branch_id : null, $data);
             DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $id)->update(\App\Support\DataScope::stamp($this->payload($data), \App\Support\DataScope::resolve($request)) + $internal + ['updated_by' => $actorId, 'updated_at' => now()]);
+            $this->syncPartyName($tenantId, $before, (string) $data['name']);
             $this->audit->record($request, $tenantId, 'supplier.updated', 'supplier', $id, (array) $before, (array) $this->find($tenantId, $id), null, $actorId);
         });
+    }
+
+    /** The supplier, its customer record and its single ledger account carry the same name. */
+    private function syncPartyName(int $tenantId, object $supplier, string $name): void
+    {
+        if (! $supplier->customer_id || $supplier->name === $name) {
+            return;
+        }
+        $normalized = \App\Domain\Customer\CustomerNameNormalizer::normalize($name);
+        DB::table('customers')->where('tenant_id', $tenantId)->where('id', $supplier->customer_id)->update([
+            'name' => $normalized['displayName'], 'normalized_name' => $normalized['normalizedName'], 'updated_at' => now(),
+        ]);
+        $accountId = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $supplier->customer_id)->value('financial_account_id');
+        if ($accountId) {
+            DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)
+                ->update(['name_ar' => $normalized['displayName'], 'name_en' => $normalized['displayName'], 'updated_at' => now()]);
+        }
     }
 
     public function status(Request $request, int $tenantId, int $id, bool $active, ?int $actorId): void

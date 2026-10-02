@@ -40,7 +40,10 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->assertSame($initialAccountCount, DB::table('financial_accounts')->where('tenant_id', $tenantId)->count());
 
         $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000']), $this->headers($tenantId))->assertCreated();
-        $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000', 'nameAr' => 'حساب مكرر']), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('code');
+        // A taken code is no longer an error: the system assigns the next free one automatically.
+        $duplicate = $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000', 'nameAr' => 'حساب مكرر']), $this->headers($tenantId))->assertCreated();
+        $this->assertNotSame('9000', $duplicate->json('data.code'));
+        $this->assertSame(1, DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '9000')->count());
 
         $tenantB = $this->createTenant('unique-code-tenant');
         app(FinancialSetupService::class)->ensureForTenant($tenantB);
@@ -63,6 +66,27 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->putJson('/api/v1/finance/journal-entries/'.$entryId, [], $this->headers($tenantId))->assertMethodNotAllowed();
         $this->deleteJson('/api/v1/finance/journal-entries/'.$entryId, [], $this->headers($tenantId))->assertMethodNotAllowed();
         $this->assertDatabaseHas('activity_logs', ['tenant_id' => $tenantId, 'entity_type' => 'journal_entry', 'entity_id' => $entryId, 'action' => 'journal_entry.posted']);
+    }
+
+    public function test_account_detail_lists_only_posted_movements_with_running_balance_and_pagination(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $cash = (int) $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9901', 'accountGroup' => 'assets', 'normalBalance' => 'debit']), $this->headers($tenantId))->assertCreated()->json('data.id');
+        $equity = (int) DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '3000')->value('id');
+        $first = $this->postJson('/api/v1/finance/journal-entries', $this->journalPayload($cash, $equity), $this->headers($tenantId))->assertCreated();
+        $this->postJson('/api/v1/finance/journal-entries/'.$first->json('data.id').'/post', [], $this->headers($tenantId))->assertOk();
+        $second = $this->postJson('/api/v1/finance/journal-entries', $this->journalPayload($cash, $equity), $this->headers($tenantId))->assertCreated();
+        $this->postJson('/api/v1/finance/journal-entries/'.$second->json('data.id').'/post', [], $this->headers($tenantId))->assertOk();
+        $this->postJson('/api/v1/finance/journal-entries', $this->journalPayload($cash, $equity), $this->headers($tenantId))->assertCreated();
+
+        $page = $this->getJson('/api/v1/finance/accounts/'.$cash.'/transactions?perPage=1&page=2', $this->headers($tenantId))
+            ->assertOk()->assertJsonPath('meta.total', 2)->assertJsonPath('meta.lastPage', 2)->assertJsonCount(1, 'data');
+        $this->assertSame('200.00', $page->json('data.0.runningBalance'));
+        $this->assertSame((int) $second->json('data.id'), $page->json('data.0.journalEntryId'));
+
+        $otherTenant = $this->createTenant('account-movement-isolation');
+        $this->getJson('/api/v1/finance/accounts/'.$cash.'/transactions', $this->headers($otherTenant))->assertNotFound();
     }
 
     public function test_posted_journal_entry_can_be_reversed_exactly_once_with_swapped_balanced_lines(): void
@@ -280,6 +304,53 @@ class FinancialInventoryFoundationApiTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('parentAccountId');
         $this->patchJson('/api/v1/finance/accounts/'.$child->json('data.id').'/status', ['isActive' => false], $this->headers($tenantId))->assertOk()->assertJsonPath('data.isActive', false);
         $this->patchJson('/api/v1/finance/accounts/'.DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1010')->value('id').'/status', ['isActive' => false], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('isActive');
+    }
+
+    public function test_new_child_inherits_classification_and_requires_explicit_contra_or_category_exception(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $headers = $this->headers($tenantId);
+        $parent = $this->postJson('/api/v1/finance/accounts', $this->accountPayload([
+            'code' => '9900', 'nameAr' => 'أصل اختبار', 'accountGroup' => 'assets', 'normalBalance' => 'debit',
+        ]), $headers)->assertCreated();
+        $parentId = $parent->json('data.id');
+
+        $this->postJson('/api/v1/finance/accounts', [
+            'code' => '9901', 'nameAr' => 'أصل فرعي', 'nameEn' => 'Child Asset',
+            'parentAccountId' => $parentId, 'isActive' => true,
+        ], $headers)->assertCreated()
+            ->assertJsonPath('data.accountGroup', 'assets')
+            ->assertJsonPath('data.normalBalance', 'debit');
+
+        $this->postJson('/api/v1/finance/accounts', $this->accountPayload([
+            'code' => '9902', 'nameAr' => 'تصنيف خاطئ', 'parentAccountId' => $parentId,
+            'accountGroup' => 'expenses',
+        ]), $headers)->assertUnprocessable()->assertJsonValidationErrors('accountGroup');
+
+        $contra = $this->postJson('/api/v1/finance/accounts', $this->accountPayload([
+            'code' => '9903', 'nameAr' => 'مجمع اهتلاك', 'parentAccountId' => $parentId,
+            'accountGroup' => 'assets', 'normalBalance' => 'credit', 'isContra' => true,
+        ]), $headers)->assertCreated()->assertJsonPath('data.isContra', true)
+            ->assertJsonPath('data.normalBalance', 'credit');
+
+        $this->postJson('/api/v1/finance/accounts', $this->accountPayload([
+            'code' => '9904', 'nameAr' => 'استثناء تصنيف', 'parentAccountId' => $parentId,
+            'accountGroup' => 'equity', 'normalBalance' => 'credit', 'categoryOverride' => true,
+        ]), $headers)->assertCreated()->assertJsonPath('data.categoryOverride', true)
+            ->assertJsonPath('data.accountGroup', 'equity');
+
+        $catalog = collect($this->getJson('/api/v1/finance/accounts/catalog', $headers)->assertOk()->json('data'))->keyBy('code');
+        $this->assertTrue($catalog['9903']['isContra']);
+        $this->assertTrue($catalog['9904']['categoryOverride']);
+        $this->patchJson('/api/v1/finance/accounts/'.$contra->json('data.id'), [
+            'code' => '9903', 'nameAr' => 'مجمع اهتلاك معدل', 'nameEn' => 'Accumulated Depreciation',
+            'parentAccountId' => $parentId, 'isActive' => true,
+        ], $headers)->assertOk()->assertJsonPath('data.isContra', true);
+
+        $this->patchJson('/api/v1/finance/accounts/'.$parentId, $this->accountPayload([
+            'code' => '9900', 'nameAr' => 'أصل اختبار', 'accountGroup' => 'expenses',
+        ]), $headers)->assertUnprocessable()->assertJsonValidationErrors('accountGroup');
     }
 
     public function test_journal_search_and_foundation_counts_are_real_and_tenant_scoped(): void

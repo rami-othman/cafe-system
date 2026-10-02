@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
+import '../widgets/account_picker_field.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 import '../models/finance_setup_models.dart';
@@ -57,6 +59,14 @@ class _JournalState extends State<JournalEntriesScreen> {
             subtitle:
                 'القيود المُرحّلة لا تُعدّل؛ تصحيحها يكون بعكسها مع الاحتفاظ بالسجل.',
             actions: <Widget>[
+              if (context.watch<AuthSessionCubit>().state.session?.user.role == 'owner')
+                AppButton(
+                  label: 'قيد افتتاحي',
+                  icon: Icons.account_balance_outlined,
+                  variant: AppButtonVariant.outlined,
+                  onPressed: state.accounts.where((a) => a.isActive).length < 2
+                      ? null : () => _chooseOpeningPeriod(state),
+                ),
               AppButton(
                 label: 'إضافة مسودة',
                 icon: Icons.add,
@@ -337,7 +347,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                           : 'لم يُعكس',
                     ),
                     Text(
-                      'أنشأه: ${entry.createdBy ?? '—'}   رحّله: ${entry.postedBy ?? '—'}',
+                      'أنشأه: ${entry.createdByName ?? entry.createdBy ?? '—'}   رحّله: ${entry.postedByName ?? entry.postedBy ?? '—'}',
                     ),
                     Text(
                       'الإنشاء: ${entry.createdAt ?? '—'}   التحديث: ${entry.updatedAt ?? '—'}',
@@ -388,11 +398,41 @@ class _JournalState extends State<JournalEntriesScreen> {
     );
   }
 
-  Future<void> _draft(FinanceSetupState state) async {
+  Future<void> _chooseOpeningPeriod(FinanceSetupState state) async {
+    try {
+      final page = await context.read<FinanceSetupCubit>().repository.getFinancePage(
+        'finance/accounting-periods', queryParameters: <String, dynamic>{'perPage': 100},
+      );
+      if (!mounted) return;
+      final periods = page.items.where((row) => row['status'] == 'open').toList();
+      if (periods.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('أنشئ سنة محاسبية مفتوحة أولًا.')));
+        return;
+      }
+      final selected = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('اختر السنة المحاسبية'),
+          content: SizedBox(width: 420, child: ListView(shrinkWrap: true, children: periods.map((row) => ListTile(
+            title: Text('${row['name']}'),
+            subtitle: Text('${row['startDate']} — ${row['endDate']}'),
+            onTap: () => Navigator.pop(dialog, row),
+          )).toList())),
+        ),
+      );
+      if (selected != null && mounted) {
+        await _draft(state, openingPeriodId: selected['id'] as int, openingStartDate: '${selected['startDate']}');
+      }
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+
+  Future<void> _draft(FinanceSetupState state, {int? openingPeriodId, String? openingStartDate}) async {
     final accounts = state.accounts.where((a) => a.isActive).toList();
     final description = TextEditingController();
     final date = TextEditingController(
-      text: DateTime.now().toIso8601String().substring(0, 10),
+      text: openingStartDate ?? DateTime.now().toIso8601String().substring(0, 10),
     );
     final lines = <_DraftLine>[
       _DraftLine(accounts.first.id),
@@ -404,7 +444,7 @@ class _JournalState extends State<JournalEntriesScreen> {
       builder: (dialog) => StatefulBuilder(
         builder: (context, setDialog) {
           return AlertDialog(
-            title: const Text('إضافة مسودة قيد'),
+            title: Text(openingPeriodId == null ? 'إضافة مسودة قيد' : 'إضافة قيد افتتاحي'),
             content: SizedBox(
               width: 720,
               child: SingleChildScrollView(
@@ -413,6 +453,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                   children: <Widget>[
                     TextField(
                       controller: date,
+                      readOnly: openingPeriodId != null,
                       decoration: const InputDecoration(
                         labelText: 'التاريخ (YYYY-MM-DD)',
                       ),
@@ -427,18 +468,12 @@ class _JournalState extends State<JournalEntriesScreen> {
                       return Row(
                         children: <Widget>[
                           Expanded(
-                            child: DropdownButtonFormField<int>(
-                              initialValue: line.accountId,
-                              items: accounts
-                                  .map(
-                                    (a) => DropdownMenuItem(
-                                      value: a.id,
-                                      child: Text('${a.code} - ${a.nameAr}'),
-                                    ),
-                                  )
-                                  .toList(),
+                            child: AccountPickerField(
+                              label: 'الحساب',
+                              accounts: accounts,
+                              value: line.accountId,
                               onChanged: (value) =>
-                                  setDialog(() => line.accountId = value!),
+                                  setDialog(() => line.accountId = value ?? line.accountId),
                             ),
                           ),
                           const SizedBox(width: AppSpacing.sm),
@@ -514,9 +549,9 @@ class _JournalState extends State<JournalEntriesScreen> {
                     );
                     return;
                   }
-                  final ok = await context
-                      .read<FinanceSetupCubit>()
-                      .createDraft(payload);
+                  final ok = openingPeriodId == null
+                      ? await context.read<FinanceSetupCubit>().createDraft(payload)
+                      : await context.read<FinanceSetupCubit>().createOpeningDraft(openingPeriodId, payload);
                   if (ok && dialog.mounted) {
                     Navigator.pop(dialog);
                   } else if (dialog.mounted) {

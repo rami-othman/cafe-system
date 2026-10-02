@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
+import '../../../core/network/api_exception.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
@@ -15,6 +16,7 @@ import '../widgets/finance_design.dart';
 import '../widgets/finance_journal_drawer.dart';
 import '../widgets/finance_shell.dart';
 import 'suppliers_screen.dart' show SupplierActiveBadge;
+import '../widgets/account_picker_field.dart';
 
 /// Supplier Profile (`/finance/suppliers/:id`) — Phase 6.
 /// Invoice/payment lifecycle and every balance shown here are computed by
@@ -134,13 +136,6 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
     title: 'الموردون والمستحقات',
     subtitle: 'ملف المورد وحركاته المالية',
     showContext: false,
-    actions: <Widget>[
-      IconButton(
-        tooltip: 'العودة إلى الموردين',
-        icon: const Icon(Icons.arrow_forward),
-        onPressed: () => context.go(AppRoutes.financeSuppliers),
-      ),
-    ],
     child: _buildBody(),
   );
 
@@ -169,6 +164,14 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
             actions: <Widget>[
               SupplierActiveBadge(active: supplier.isActive),
               const SizedBox(width: FinanceSpace.sm),
+              if (supplier.financialAccountId != null) ...<Widget>[
+                OutlinedButton.icon(
+                  onPressed: () => context.go(AppRoutes.financeAccountDetailPath(supplier.financialAccountId!)),
+                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+                  label: const Text('الحساب المالي المشترك'),
+                ),
+                const SizedBox(width: FinanceSpace.sm),
+              ],
               OutlinedButton(
                 onPressed: () => _tabs.animateTo(2),
                 child: const Text('كشف حساب المورد'),
@@ -957,23 +960,10 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   ],
                   if (_type == 'other') ...<Widget>[
                     const SizedBox(height: FinanceSpace.md),
-                    DropdownButtonFormField<int?>(
-                      initialValue: _debitAccountId,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'الحساب المدين',
-                      ),
-                      items: _accounts
-                          .map(
-                            (FinancialAccount a) => DropdownMenuItem<int?>(
-                              value: a.id,
-                              child: Text(
-                                '${a.code} - ${a.nameAr}',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                    AccountPickerField(
+                      label: 'الحساب المدين',
+                      accounts: _accounts,
+                      value: _debitAccountId,
                       onChanged: (int? v) =>
                           setState(() => _debitAccountId = v),
                     ),
@@ -1346,7 +1336,9 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
           // no ambiguity to ask the user to resolve. Any other count (zero,
           // or more than one — e.g. a branch drawer alongside a shared Main
           // Safe) requires an explicit pick, never a default.
-          if (options.mode == 'selectable' && options.allowed.length == 1) {
+          if (options.mode == 'selectable' &&
+              options.allowed.length == 1 &&
+              options.allowed.first.branchId == branchId) {
             _cashLocationId = options.allowed.first.id;
           }
         });
@@ -1535,7 +1527,12 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error = '$error';
+          final ApiException? apiError = error is ApiException ? error : null;
+          _error =
+              apiError?.validationErrors?.values
+                  .expand((messages) => messages)
+                  .firstOrNull ??
+              '$error';
           _submitting = false;
         });
       }

@@ -14,12 +14,16 @@ class FinancePaginatedTable extends StatefulWidget {
     required this.rows,
     required this.minWidth,
     this.emptyMessage,
+    this.rowCount,
+    this.rowBuilder,
   });
 
   static const int rowsPerPage = 10;
 
   final List<DataColumn> columns;
   final List<DataRow> rows;
+  final int? rowCount;
+  final DataRow Function(int index)? rowBuilder;
   final double minWidth;
   final String? emptyMessage;
 
@@ -33,14 +37,16 @@ class _FinancePaginatedTableState extends State<FinancePaginatedTable> {
   @override
   void didUpdateWidget(covariant FinancePaginatedTable oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.rows, widget.rows)) {
+    if (!identical(oldWidget.rows, widget.rows) ||
+        oldWidget.rowCount != widget.rowCount ||
+        !identical(oldWidget.rowBuilder, widget.rowBuilder)) {
       _page = 1;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final int total = widget.rows.length;
+    final int total = widget.rowCount ?? widget.rows.length;
     final int lastPage = (total / FinancePaginatedTable.rowsPerPage)
         .ceil()
         .clamp(1, 1 << 31)
@@ -68,7 +74,12 @@ class _FinancePaginatedTableState extends State<FinancePaginatedTable> {
                   color: FinanceColors.brown,
                 ),
                 columns: widget.columns,
-                rows: widget.rows.sublist(start, end),
+                rows: widget.rowBuilder == null
+                    ? widget.rows.sublist(start, end)
+                    : List<DataRow>.generate(
+                        end - start,
+                        (index) => widget.rowBuilder!(start + index),
+                      ),
               ),
               FinancePagination(
                 meta: FinancePageMeta(

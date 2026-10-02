@@ -8,6 +8,14 @@ import 'package:windows_application/features/pos/models/order_type.dart';
 import 'package:windows_application/features/pos/repositories/pos_repository.dart';
 
 void main() {
+  test('cafe branches exclude the factory branch', () async {
+    final branches = await PosRepository(
+      apiClient: _FakePosApiClient(),
+    ).getBranches();
+
+    expect(branches.map((branch) => branch.id), <int>[1]);
+  });
+
   test(
     'maps products to category names when product payload has categoryId',
     () async {
@@ -156,6 +164,10 @@ class _FakePosApiClient extends DioApiClient {
       ];
     }
     return switch (path) {
+      'branches' => <Map<String, Object?>>[
+        <String, Object?>{'id': 1, 'name': 'Cafe', 'branchType': 'cafe'},
+        <String, Object?>{'id': 6, 'name': 'Factory', 'branchType': 'factory'},
+      ],
       'menu/categories' => <Map<String, Object?>>[
         <String, Object?>{'id': 1, 'name': 'Coffee'},
       ],

@@ -251,6 +251,7 @@ class BranchEditorState extends Equatable {
     draft.posCashFinancialLocationId,
     draft.shiftCloseDestinationFinancialLocationId,
     draft.cashVarianceAccountId,
+    draft.cashOverAccountId,
     draft.shiftClosingFloatAmount,
     draft.shiftCloseTime,
     draft.printerConfig,
@@ -267,15 +268,32 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
     : super(BranchEditorState(branchId: branchId));
   final CafeConfigurationRepository _repository;
   final int? branchId;
+
+  /// Shortage accounts are expenses and overage accounts are revenue, so only
+  /// those two groups are loaded. Failure degrades to the configured default.
+  Future<List<BranchFinancialAccountOption>> _loadVarianceAccounts() async {
+    try {
+      final List<BranchFinancialAccountOption> expenses = await _repository
+          .getFinancialAccounts(group: 'expenses');
+      final List<BranchFinancialAccountOption> revenue = await _repository
+          .getFinancialAccounts(group: 'revenue');
+      return <BranchFinancialAccountOption>[...expenses, ...revenue];
+    } catch (_) {
+      return const <BranchFinancialAccountOption>[];
+    }
+  }
   Future<void> initialize({String timezone = 'UTC'}) async {
     if (branchId == null) {
       emit(const BranchEditorState());
+      final List<BranchFinancialAccountOption> varianceAccounts =
+          await _loadVarianceAccounts();
       try {
         final CafeProfile profile = await _repository.getProfile();
         emit(
           BranchEditorState(
             status: CafeConfigurationLoadStatus.ready,
             draft: BranchDraft(timezone: profile.timezone),
+            cashVarianceAccounts: varianceAccounts,
           ),
         );
       } catch (_) {
@@ -283,6 +301,7 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
           BranchEditorState(
             status: CafeConfigurationLoadStatus.ready,
             draft: BranchDraft(timezone: timezone),
+            cashVarianceAccounts: varianceAccounts,
           ),
         );
       }
@@ -293,14 +312,8 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
       final CafeConfigurationBranch branch = await _repository.getBranch(
         branchId!,
       );
-      List<BranchFinancialAccountOption> accounts =
-          const <BranchFinancialAccountOption>[];
-      try {
-        accounts = await _repository.getFinancialAccounts();
-      } catch (_) {
-        // The variance-account dropdown degrades to "default 6180" when the
-        // accounts list cannot be fetched; it must not block loading the branch.
-      }
+      final List<BranchFinancialAccountOption> accounts =
+          await _loadVarianceAccounts();
       emit(
         BranchEditorState(
           status: CafeConfigurationLoadStatus.ready,
@@ -413,6 +426,7 @@ bool _differentBranch(BranchDraft draft, CafeConfigurationBranch? branch) =>
     draft.shiftCloseDestinationFinancialLocationId !=
         branch.shiftCloseDestinationFinancialLocationId ||
     draft.cashVarianceAccountId != branch.cashVarianceAccountId ||
+    draft.cashOverAccountId != branch.cashOverAccountId ||
     draft.shiftClosingFloatAmount != branch.shiftClosingFloatAmount ||
     draft.shiftCloseTime != branch.shiftCloseTime ||
     draft.printerConfig != branch.printerConfig ||

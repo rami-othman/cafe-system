@@ -209,6 +209,7 @@ class PurchaseController extends Controller
             'paidAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentDate' => ['nullable', 'date_format:Y-m-d'],
             'receiptDate' => ['nullable', 'date_format:Y-m-d'],
+            'paymentMethodId' => ['nullable', 'integer'],
         ]);
         $tenant = TenantContext::id($request);
         $before = $this->invoices->find($tenant, $purchase);
@@ -222,6 +223,7 @@ class PurchaseController extends Controller
             $data['paidAmount'] ?? null,
             $data['paymentDate'] ?? null,
             $data['receiptDate'] ?? null,
+            isset($data['paymentMethodId']) ? (int) $data['paymentMethodId'] : null,
         );
         $warning = \App\Support\BackdatePolicy::closedDayWarning($tenant, $before->branch_id ? (int) $before->branch_id : null, $before->invoice_date);
         if ($warning === null) {

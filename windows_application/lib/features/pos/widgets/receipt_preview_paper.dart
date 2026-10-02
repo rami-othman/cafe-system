@@ -135,6 +135,12 @@ class ReceiptPreviewPaper extends StatelessWidget {
               label: context.l10n.posReceiptPaidVia,
               value: receipt.payment.method.localizedLabel(context.l10n),
             ),
+            if (receipt.payment.method == PaymentMethod.shamCash &&
+                (receipt.payment.reference ?? '').isNotEmpty)
+              _ReceiptInfoRow(
+                label: 'رقم العملية',
+                value: receipt.payment.reference!,
+              ),
             if (receipt.payment.method == PaymentMethod.card ||
                 receipt.payment.method == PaymentMethod.wallet)
               _ReceiptInfoRow(

@@ -184,6 +184,11 @@ class _FakeRepository implements CafeConfigurationRepository {
   Future<List<CafeConfigurationBranch>> getBranches() async =>
       const <CafeConfigurationBranch>[];
   @override
+  Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
+    String status = 'active',
+    String? group,
+  }) async => const <BranchFinancialAccountOption>[];
+  @override
   Future<CafeConfigurationBranch> getBranch(int id) async =>
       const CafeConfigurationBranch(
         id: 4,

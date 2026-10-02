@@ -45,7 +45,10 @@ class PosRepository {
     }
 
     final dynamic response = await apiClient!.get('branches');
-    return _mapList(response).map(Branch.fromJson).toList(growable: false);
+    return _mapList(response)
+        .map(Branch.fromJson)
+        .where((branch) => !branch.isFactory)
+        .toList(growable: false);
   }
 
   Future<Shift?> getCurrentShift({required int branchId}) async {
@@ -334,6 +337,21 @@ class PosRepository {
       queryParameters: query,
     );
     return PaymentSummary.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  /// Payment types Finance has activated, used before the order exists on the
+  /// server so the cashier is never offered a method the server will reject.
+  Future<List<String>> getAvailablePaymentMethods({int? customerId}) async {
+    final dynamic response = await apiClient!.get(
+      'payment-methods/available',
+      queryParameters: <String, dynamic>{'customerId': ?customerId},
+    );
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response as Map,
+    );
+    return (data['methods'] as List? ?? const <Object?>[])
+        .map((Object? value) => value.toString())
+        .toList(growable: false);
   }
 
   Future<PaymentResult> payOrder({

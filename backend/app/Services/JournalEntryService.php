@@ -12,6 +12,34 @@ class JournalEntryService
 {
     public function __construct(private readonly OperationalAuditService $audit, private readonly AccountingPeriodGuard $periods) {}
 
+    public function createOpeningDraft(Request $request, int $tenantId, int $periodId, array $data, int $actorId): int
+    {
+        return DB::transaction(function () use ($request, $tenantId, $periodId, $data, $actorId): int {
+            $period = DB::table('accounting_periods')->where('tenant_id', $tenantId)
+                ->where('id', $periodId)->lockForUpdate()->first();
+            abort_unless($period, 404, 'Accounting period not found.');
+            if ($period->status !== 'open') {
+                throw ValidationException::withMessages(['period' => 'القيد الافتتاحي يحتاج إلى سنة محاسبية مفتوحة.']);
+            }
+            if ($data['entryDate'] !== $period->start_date) {
+                throw ValidationException::withMessages(['entryDate' => 'تاريخ القيد الافتتاحي يجب أن يساوي أول يوم في السنة المحاسبية.']);
+            }
+            if (DB::table('journal_entries')->where('tenant_id', $tenantId)->where('source_type', 'opening_balance')
+                ->where('source_id', $periodId)->exists()) {
+                throw ValidationException::withMessages(['period' => 'يوجد قيد افتتاحي لهذه السنة المحاسبية مسبقًا.']);
+            }
+
+            return $this->createDraft($request, $tenantId, [
+                'entryDate' => $period->start_date,
+                'branchId' => null,
+                'sourceType' => 'opening_balance',
+                'sourceId' => $periodId,
+                'description' => $data['description'] ?? 'قيد افتتاحي — '.$period->name,
+                'lines' => $data['lines'],
+            ], $actorId);
+        });
+    }
+
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
         $this->assertBranch($tenantId, $data['branchId'] ?? null, $actorId);
@@ -197,11 +225,12 @@ class JournalEntryService
     }
 
     /** @return array{0:int,1:int} */
-    public function totals(int $tenantId, int $entryId): array
+    public function totals(int $tenantId, int $entryId, array $excludeAccountIds = []): array
     {
         $debit = 0;
         $credit = 0;
-        DB::table('journal_entry_lines')->where('tenant_id', $tenantId)->where('journal_entry_id', $entryId)->orderBy('line_number')->get()->each(function (object $line) use (&$debit, &$credit): void {
+        DB::table('journal_entry_lines')->where('tenant_id', $tenantId)->where('journal_entry_id', $entryId)
+            ->when($excludeAccountIds !== [], fn ($q) => $q->whereNotIn('financial_account_id', $excludeAccountIds))->orderBy('line_number')->get()->each(function (object $line) use (&$debit, &$credit): void {
             $debit += Money::cents($line->debit, 'debit');
             $credit += Money::cents($line->credit, 'credit');
         });

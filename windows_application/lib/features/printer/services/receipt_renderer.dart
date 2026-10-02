@@ -309,6 +309,7 @@ class ReceiptRenderer {
               'cash' => rtl ? 'نقداً' : 'Cash',
               'card' => rtl ? 'بطاقة' : 'Card',
               'wallet' => rtl ? 'محفظة' : 'Wallet',
+              'sham_cash' => rtl ? 'شام كاش' : 'Sham Cash',
               'split' => rtl ? 'دفع مقسم' : 'Split',
               _ => method,
             };

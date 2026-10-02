@@ -21,8 +21,12 @@ final class CashVarianceAccountTest extends TestCase
         app(FinancialSetupService::class)->ensureForTenant($tenant, $branch);
 
         $this->assertDatabaseHas('financial_accounts', [
-            'tenant_id' => $tenant, 'code' => '6180', 'name_ar' => 'عجز وزيادة الصندوق',
+            'tenant_id' => $tenant, 'code' => '6180', 'name_ar' => 'عجز الصندوق',
             'account_group' => 'expenses', 'normal_balance' => 'debit', 'is_active' => true,
+        ]);
+        $this->assertDatabaseHas('financial_accounts', [
+            'tenant_id' => $tenant, 'code' => '4040', 'name_ar' => 'زيادة الصندوق',
+            'account_group' => 'revenue', 'normal_balance' => 'credit', 'is_active' => true,
         ]);
     }
 
@@ -68,7 +72,8 @@ final class CashVarianceAccountTest extends TestCase
 
         $surplusEntry = $service->post(Request::create('/'), $tenant, $branch, $safeId, 500, '2026-09-28', 'shift_cash_variance', 1002, 'زيادة اختبارية', $owner);
         $this->assertNotNull($surplusEntry);
-        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $surplusEntry, 'financial_account_id' => $variance6180, 'debit' => '0.00', 'credit' => '5.00']);
+        $over4040 = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '4040')->value('id');
+        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $surplusEntry, 'financial_account_id' => $over4040, 'debit' => '0.00', 'credit' => '5.00']);
         $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $surplusEntry, 'financial_account_id' => $safeAccountId, 'debit' => '5.00', 'credit' => '0.00']);
 
         $this->assertNull($service->post(Request::create('/'), $tenant, $branch, $safeId, 0, '2026-09-28', 'shift_cash_variance', 1003, 'لا فرق', $owner));

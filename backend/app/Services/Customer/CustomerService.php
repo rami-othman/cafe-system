@@ -10,6 +10,7 @@ use App\Domain\Customer\CustomerPhoneNormalizer;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Services\OperationalAuditService;
+use App\Services\PartyAccountService;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerService
 {
-    public function __construct(private readonly CustomerAccess $access, private readonly CustomerNumberGenerator $numbers, private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly CustomerAccess $access, private readonly CustomerNumberGenerator $numbers, private readonly OperationalAuditService $audit, private readonly PartyAccountService $partyAccounts) {}
 
     public function create(Request $request, array $data): Customer
     {
@@ -40,6 +41,7 @@ class CustomerService
                 'notes' => $data['notes'] ?? null,
                 'is_active' => (bool) ($data['isActive'] ?? true),
             ]);
+            $this->partyAccounts->ensureForCustomer($tenantId, $customer->id, $this->access->actor($request)->id);
             if (array_key_exists('phones', $data)) {
                 $this->replacePhones($tenantId, $customer->id, $data['phones']);
             }
@@ -109,6 +111,7 @@ class CustomerService
                 'notes' => $data['notes'] ?? null,
                 'is_active' => true,
             ]);
+            $this->partyAccounts->ensureForCustomer($tenantId, $customer->id, $this->access->actor($request)->id);
             DB::table('customer_phones')->insert(['tenant_id' => $tenantId, 'customer_id' => $customer->id, 'raw_number' => $phone['rawNumber'], 'normalized_number' => $phone['normalizedNumber'], 'type' => 'mobile', 'is_primary' => true, 'validation_status' => $phone['validationStatus'], 'created_at' => now(), 'updated_at' => now()]);
             if (array_key_exists('groupIds', $data)) {
                 $this->replaceGroups($request, $tenantId, $customer->id, $data['groupIds']);

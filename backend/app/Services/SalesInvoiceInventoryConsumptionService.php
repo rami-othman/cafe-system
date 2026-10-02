@@ -63,7 +63,7 @@ if ($components->isEmpty()) {
 
                 continue;
             }
-            $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id);
+            $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id, $invoice->warehouse_id ?? null);
             if (! $warehouse) {
                 throw ValidationException::withMessages(['inventory' => "Product {$product->name} has no active selling warehouse for this branch."]);
             }
@@ -108,7 +108,7 @@ if ($components->isEmpty()) {
     {
         $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->where('is_active', true)->whereNull('deleted_at')->first();
         if (! $material || ! RecipeMaterialEligibility::allows($material)) throw ValidationException::withMessages(['inventory' => 'The sold inventory material is unavailable.']);
-        $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id);
+        $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id, $invoice->warehouse_id ?? null);
         if (! $warehouse) throw ValidationException::withMessages(['inventory' => 'No active selling warehouse exists for this branch.']);
         $this->assignments->assertAssigned($tenantId, (int) $material->id, (int) $warehouse->id, 'inventory');
         $quantity = InventoryDecimal::units($line->base_quantity);
@@ -154,8 +154,12 @@ if ($components->isEmpty()) {
     }
 
     /** No "main"/"primary" warehouse concept — same resolution POS uses (App\Services\PosInventoryWarehouseResolver). */
-    private function warehouse(int $tenantId, int $branchId): ?object
+    private function warehouse(int $tenantId, int $branchId, mixed $chosenId = null): ?object
     {
+        // The invoice names its own warehouse: that choice wins over the branch default.
+        if ($chosenId) {
+            return DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', (int) $chosenId)->where('is_active', true)->whereNull('deleted_at')->first();
+        }
         if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) return app(FactoryInventoryWarehouseResolver::class)->forBranch($tenantId, $branchId);
         try {
             return $this->warehouseResolver->forBranch($tenantId, $branchId);

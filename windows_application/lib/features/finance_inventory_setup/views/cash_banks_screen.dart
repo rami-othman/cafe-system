@@ -17,6 +17,7 @@ import '../widgets/finance_journal_drawer.dart';
 import '../widgets/finance_pagination.dart';
 import '../widgets/finance_shell.dart';
 import '../widgets/finance_transaction_type.dart';
+import '../widgets/account_picker_field.dart';
 
 /// Canonical `/finance/cash-banks` screen. Laravel remains the sole source of
 /// balances, incoming/outgoing activity, movement history, and transfer
@@ -252,6 +253,7 @@ class _CashBanksScreenState extends State<CashBanksScreen> {
   Future<void> _openAccountForm([FinancialLocation? current]) async {
     final bool? saved = await showDialog<bool>(
       context: context,
+      useRootNavigator: false,
       builder: (BuildContext dialog) => _AccountFormDialog(
         current: current,
         ledgerAccounts: _ledgerAccounts,
@@ -868,17 +870,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
               onChanged: (String? v) => setState(() => _type = v!),
             ),
             const SizedBox(height: FinanceSpace.md),
-            _FormDropdown<int>(
+            AccountPickerField(
               label: 'حساب الأستاذ',
+              accounts: widget.ledgerAccounts,
               value: _accountId,
-              items: widget.ledgerAccounts
-                  .map(
-                    (FinancialAccount a) => DropdownMenuItem<int>(
-                      value: a.id,
-                      child: Text('${a.code} — ${a.nameAr}'),
-                    ),
-                  )
-                  .toList(),
               onChanged: (int? v) => setState(() => _accountId = v),
             ),
             const SizedBox(height: FinanceSpace.md),

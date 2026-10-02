@@ -465,6 +465,8 @@ class _SupplierFormDialog extends StatefulWidget {
 }
 
 class _SupplierFormDialogState extends State<_SupplierFormDialog> {
+  int? _customerId;
+  String? _customerName;
   late final TextEditingController _name;
   late final TextEditingController _phone;
   late final TextEditingController _email;
@@ -516,6 +518,7 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
     try {
       await widget.onSubmit(<String, dynamic>{
         ..._internalValues,
+        if (widget.current == null && _customerId != null) 'customerId': _customerId,
         'name': _name.text.trim(),
         'phone': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
         'email': _email.text.trim().isEmpty ? null : _email.text.trim(),
@@ -534,6 +537,72 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
         });
       }
     }
+  }
+
+  Future<void> _chooseCustomer() async {
+    final TextEditingController search = TextEditingController();
+    Timer? searchDebounce;
+    String query = '';
+    final FinanceSetupRepository repository = context.read<FinanceSetupCubit>().repository;
+    final int? selected = await showDialog<int>(
+      context: context,
+      builder: (BuildContext dialog) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter update) => AlertDialog(
+          title: const Text('ربط بعميل موجود'),
+          content: SizedBox(
+            width: 440,
+            height: 370,
+            child: Column(children: <Widget>[
+              TextField(
+                controller: search,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'ابحث بالاسم أو الهاتف أو الرمز'),
+                onChanged: (String value) {
+                  searchDebounce?.cancel();
+                  searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                    if (dialog.mounted) update(() => query = value.trim());
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              Expanded(child: FutureBuilder<FinancePage<Map<String, dynamic>>>(
+                future: repository.getFinancePage('finance/customers', queryParameters: <String, dynamic>{
+                  if (query.isNotEmpty) 'search': query,
+                  'status': 'active', 'perPage': 50,
+                }),
+                builder: (BuildContext context, snapshot) {
+                  if (snapshot.hasError) return Center(child: Text('تعذّر جلب العملاء: ${snapshot.error}'));
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final customers = snapshot.data!.items;
+                  if (customers.isEmpty) return const Center(child: Text('لا يوجد عميل مطابق.'));
+                  return ListView.builder(
+                    itemCount: customers.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final row = customers[index];
+                      if (row['isWalkIn'] == true) return const SizedBox.shrink();
+                      return ListTile(
+                        title: Text('${row['name']}'),
+                        subtitle: Text('${row['customerNumber'] ?? ''} · ${row['phone'] ?? ''}'),
+                        onTap: () {
+                          _customerName = '${row['name']}';
+                          Navigator.of(dialog).pop(int.tryParse('${row['id']}'));
+                        },
+                      );
+                    },
+                  );
+                },
+              )),
+            ]),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('إلغاء')),
+          ],
+        ),
+      ),
+    );
+    searchDebounce?.cancel();
+    search.dispose();
+    if (mounted && selected != null) setState(() => _customerId = selected);
   }
 
   @override
@@ -565,6 +634,15 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           TextField(controller: _name, decoration: const InputDecoration(labelText: 'الاسم')),
+          if (widget.current == null) ...<Widget>[
+            const SizedBox(height: FinanceSpace.sm),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _chooseCustomer,
+              icon: const Icon(Icons.link),
+              label: Text(_customerName == null ? 'ربط بعميل موجود (اختياري)' : 'العميل المرتبط: $_customerName'),
+            ),
+            const Text('إذا لم تختر عميلًا، سيُنشأ سجل عميل وحساب مالي واحد للمورّد تلقائيًا.'),
+          ],
           InternalPartyFields(customer: false, initialInternal: widget.current?.isInternal ?? false, initialBranchId: widget.current?.internalBranchId, onChanged: (internal, branch) => _internalValues = {'isInternal': internal, 'internalBranchId': branch}),
           const SizedBox(height: FinanceSpace.md),
           TextField(controller: _phone, decoration: const InputDecoration(labelText: 'الهاتف')),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/localization/app_locale_cubit.dart';
 import '../../app/localization/localization_extensions.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/navigation/app_route_history.dart';
 
 
 
@@ -124,6 +125,16 @@ class _AppTopBarState extends State<AppTopBar> {
           padding: padding,
           child: Row(
             children: <Widget>[
+              AnimatedBuilder(
+                animation: appRouteHistory,
+                builder: (context, _) => IconButton(
+                  key: const Key('app-global-back'),
+                  tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'رجوع' : 'Back',
+                  onPressed: appRouteHistory.canGoBack ? () => appRouteHistory.goBack(context) : null,
+                  icon: const Icon(Icons.arrow_back),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: showFactoryTabs
                     ? ListView(

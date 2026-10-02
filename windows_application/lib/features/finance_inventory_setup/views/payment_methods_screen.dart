@@ -8,6 +8,7 @@ import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
+import '../widgets/account_picker_field.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -179,29 +180,33 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                       const <String>[
                             'cash',
                             'card',
+                            'wallet',
+                            'sham_cash',
                             'bank_transfer',
                             'delivery_app',
                             'customer_credit',
                             'other',
                           ]
                           .map(
-                            (v) => DropdownMenuItem(value: v, child: Text(v)),
+                            (v) => DropdownMenuItem(
+                              value: v,
+                              child: Text(switch (v) {
+                                'cash' => 'نقدي (cash)',
+                                'card' => 'بطاقة (card)',
+                                'wallet' => 'محفظة العميل (wallet)',
+                                'sham_cash' => 'شام كاش (sham_cash)',
+                                _ => v,
+                              }),
+                            ),
                           )
                           .toList(),
                   onChanged: (v) => set(() => type = v!),
                 ),
-                DropdownButtonFormField<int>(
-                  isExpanded: true,
-                  initialValue: account,
-                  items: accounts
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text('${a.code} - ${a.nameAr}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => set(() => account = v!),
+                AccountPickerField(
+                  label: 'حساب الأستاذ',
+                  accounts: accounts,
+                  value: account,
+                  onChanged: (v) => set(() => account = v ?? account),
                 ),
                 DropdownButtonFormField<int?>(
                   isExpanded: true,

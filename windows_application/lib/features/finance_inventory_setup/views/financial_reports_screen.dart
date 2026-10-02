@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
+import '../../../core/utils/arabic_search.dart';
 import '../../auth/controllers/auth_session_cubit.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
@@ -61,6 +64,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   int? _branchId;
   int? _accountId;
   int? _supplierId;
+  String? _accountLabel;
+  String? _supplierLabel;
   late String _from;
   late String _to;
   bool _includeZero = false;
@@ -102,10 +107,16 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
             _accountId ??= _type == 'general-ledger' && _accounts.isNotEmpty
                 ? _accounts.first.id
                 : _accountId;
+            _accountLabel = _accounts.where((a) => a.id == _accountId).firstOrNull == null
+                ? null
+                : '${_accounts.firstWhere((a) => a.id == _accountId).code} — ${_accounts.firstWhere((a) => a.id == _accountId).nameAr}';
             _supplierId ??=
                 _type == 'supplier-statement' && _suppliers.isNotEmpty
                 ? _suppliers.first.id
                 : _supplierId;
+            _supplierLabel = _suppliers.where((s) => s.id == _supplierId).firstOrNull == null
+                ? null
+                : '${_suppliers.firstWhere((s) => s.id == _supplierId).supplierNumber} — ${_suppliers.firstWhere((s) => s.id == _supplierId).name}';
           });
           _load();
           return results;
@@ -207,6 +218,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
     setState(() {
       _type = 'general-ledger';
       _accountId = accountId;
+      final account = _accounts.where((a) => a.id == accountId).firstOrNull;
+      _accountLabel = account == null ? null : '${account.code} — ${account.nameAr}';
     });
     _load();
   }
@@ -215,6 +228,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
     setState(() {
       _type = 'supplier-statement';
       _supplierId = supplierId;
+      final supplier = _suppliers.where((s) => s.id == supplierId).firstOrNull;
+      _supplierLabel = supplier == null ? null : '${supplier.supplierNumber} — ${supplier.name}';
     });
     _load();
   }
@@ -355,8 +370,13 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
                 )
                 .toList(),
             selectedId: _accountId,
-            onSelected: (int id) {
-              setState(() => _accountId = id);
+            selectedLabel: _accountLabel,
+            searchHint: 'ابحث برمز الحساب أو اسمه',
+            loadItems: (String search) async => (await _repo.getAccounts(search: search, status: 'active'))
+                .map((a) => _ChipItem(id: a.id, label: '${a.code} — ${a.nameAr}'))
+                .toList(growable: false),
+            onSelected: (_ChipItem item) {
+              setState(() { _accountId = item.id; _accountLabel = item.label; });
               _load();
             },
           ),
@@ -372,8 +392,13 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
                 )
                 .toList(),
             selectedId: _supplierId,
-            onSelected: (int id) {
-              setState(() => _supplierId = id);
+            selectedLabel: _supplierLabel,
+            searchHint: 'ابحث باسم المورد أو رمزه',
+            loadItems: (String search) async => (await _repo.getSuppliers(filters: <String, dynamic>{'search': search}))
+                .map((s) => _ChipItem(id: s.id, label: '${s.supplierNumber} — ${s.name}'))
+                .toList(growable: false),
+            onSelected: (_ChipItem item) {
+              setState(() { _supplierId = item.id; _supplierLabel = item.label; });
               _load();
             },
           ),
@@ -510,29 +535,157 @@ class _ChipPicker extends StatelessWidget {
     required this.label,
     required this.items,
     required this.selectedId,
+    required this.selectedLabel,
+    required this.searchHint,
+    required this.loadItems,
     required this.onSelected,
   });
   final String label;
   final List<_ChipItem> items;
   final int? selectedId;
-  final ValueChanged<int> onSelected;
+  final String? selectedLabel;
+  final String searchHint;
+  final Future<List<_ChipItem>> Function(String search) loadItems;
+  final ValueChanged<_ChipItem> onSelected;
+
+  static List<String> _fieldsOf(_ChipItem item) {
+    final int split = item.label.indexOf(' — ');
+    return split < 0
+        ? <String>['', item.label]
+        : <String>[item.label.substring(0, split), item.label.substring(split + 3)];
+  }
+
+  Future<void> _open(BuildContext context) async {
+    final search = TextEditingController();
+    // Instant, typo-tolerant filtering of the rows already loaded; the server is
+    // asked in parallel for rows beyond the loaded page and merged after them.
+    final index = ArabicSearchIndex<_ChipItem>(items, _fieldsOf);
+    Timer? debounce;
+    String query = '';
+    List<_ChipItem> remote = const <_ChipItem>[];
+    bool loading = false;
+    bool failed = false;
+    int serial = 0;
+    final picked = await showDialog<_ChipItem>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, update) {
+          final List<_ChipItem> local = query.isEmpty ? items.take(50).toList() : index.search(query);
+          final Set<int> seen = local.map((_ChipItem i) => i.id).toSet();
+          final List<_ChipItem> shown = <_ChipItem>[
+            ...local,
+            ...remote.where((_ChipItem i) => !seen.contains(i.id)),
+          ];
+          return AlertDialog(
+            title: Text('اختيار $label'),
+            content: SizedBox(
+              width: 560,
+              height: 490,
+              child: Column(children: <Widget>[
+                TextField(
+                  controller: search,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: searchHint,
+                    prefixIcon: const Icon(Icons.search),
+                    border: const OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    debounce?.cancel();
+                    final String text = value.trim();
+                    final int ticket = ++serial;
+                    update(() {
+                      query = text;
+                      remote = const <_ChipItem>[];
+                      failed = false;
+                      loading = text.isNotEmpty;
+                    });
+                    if (text.isEmpty) return;
+                    debounce = Timer(const Duration(milliseconds: 300), () async {
+                      try {
+                        final List<_ChipItem> found = await loadItems(text);
+                        if (!dialogContext.mounted || ticket != serial) return;
+                        update(() {
+                          remote = found;
+                          loading = false;
+                        });
+                      } catch (_) {
+                        if (!dialogContext.mounted || ticket != serial) return;
+                        update(() {
+                          failed = true;
+                          loading = false;
+                        });
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: FinanceSpace.sm),
+                if (loading) const LinearProgressIndicator(minHeight: 2),
+                Expanded(
+                  child: shown.isEmpty && loading
+                      ? const SizedBox.shrink()
+                      : shown.isEmpty && failed
+                      ? const Center(child: Text('تعذّر البحث. حاول مرة أخرى.'))
+                      : _results(dialogContext, shown),
+                ),
+                if (query.isEmpty && items.length > 50)
+                  Text('تظهر أول 50 نتيجة. استخدم البحث للوصول إلى بقية الحسابات.', style: FinanceText.small),
+              ]),
+            ),
+            actions: <Widget>[
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('إلغاء')),
+            ],
+          );
+        },
+      ),
+    );
+    debounce?.cancel();
+    search.dispose();
+    if (picked != null) onSelected(picked);
+  }
+
+  Widget _results(BuildContext dialogContext, List<_ChipItem> options) {
+    if (options.isEmpty) return const Center(child: Text('لا توجد نتائج مطابقة.'));
+    return ListView.builder(
+      itemCount: options.length,
+      itemBuilder: (context, index) {
+        final item = options[index];
+        return ListTile(
+          selected: item.id == selectedId,
+          title: Text(item.label, maxLines: 2, overflow: TextOverflow.ellipsis),
+          trailing: item.id == selectedId ? const Icon(Icons.check) : null,
+          onTap: () => Navigator.of(dialogContext).pop(item),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: FinanceSpace.sm,
-      runSpacing: FinanceSpace.sm,
-      children: <Widget>[
-        Text(label, style: FinanceText.label),
-        ...items.map(
-          (_ChipItem item) => _SelectorChip(
-            label: item.label,
-            selected: item.id == selectedId,
-            onTap: () => onSelected(item.id),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 520),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(label, style: FinanceText.label),
+          const SizedBox(height: FinanceSpace.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _open(context),
+              icon: const Icon(Icons.search, size: 18),
+              label: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  selectedLabel ?? (selectedId == null ? 'اختر من القائمة' : 'الحساب رقم $selectedId'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

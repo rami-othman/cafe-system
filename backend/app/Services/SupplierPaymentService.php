@@ -27,6 +27,7 @@ class SupplierPaymentService
         private readonly SupplierPayableQueryService $payable,
         private readonly OperationalAuditService $audit,
         private readonly CashSourceResolver $cashSources,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     public function pay(Request $request, int $tenantId, array $data, ?int $actorId, ?object $trustedCashSource = null): object
@@ -156,7 +157,7 @@ class SupplierPaymentService
                     'entryDate' => $data['paymentDate'],
                     'description' => "دفعة مورد — {$supplier->name}",
                     'lines' => [
-                        ['accountCode' => '2000', 'debit' => Money::decimal($amountCents), 'credit' => '0.00'],
+                        ['accountCode' => $this->partyAccounts->codeForSupplier($tenantId, (int) $supplier->id, $actorId), 'debit' => Money::decimal($amountCents), 'credit' => '0.00'],
                         ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($amountCents), 'financialLocationId' => $location->id],
                     ],
                 ], $actorId);

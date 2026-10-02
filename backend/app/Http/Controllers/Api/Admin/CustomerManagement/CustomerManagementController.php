@@ -57,6 +57,23 @@ class CustomerManagementController extends Controller
         return new CustomerManagementResource($this->customers->update($request, $customer, $request->validated()));
     }
 
+    /** Only the owner decides how far a customer's wallet may go below zero. */
+    public function setWalletLimit(Request $request, int $customer): CustomerManagementResource
+    {
+        $tenantId = \App\Support\TenantContext::id($request);
+        $actor = $request->attributes->get('auth_user');
+        abort_unless($actor && $actor->isOwner(), 403, 'Owner access required.');
+        $data = $request->validate(['walletCreditLimit' => ['required', 'regex:/^\d+(\.\d{1,2})?$/']]);
+        $row = \App\Models\Customer::query()->where('tenant_id', $tenantId)->whereKey($customer)->firstOrFail();
+        $before = (string) ($row->wallet_credit_limit ?? '0');
+        \Illuminate\Support\Facades\DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customer)
+            ->update(['wallet_credit_limit' => $data['walletCreditLimit'], 'updated_at' => now()]);
+        app(\App\Services\OperationalAuditService::class)->record($request, $tenantId, 'sales.customer.wallet_limit_changed', 'customer', $customer,
+            ['limit' => $before], ['limit' => $data['walletCreditLimit']], null, (int) $actor->id);
+
+        return new CustomerManagementResource($row->fresh());
+    }
+
     public function activate(Request $request, int $customer): CustomerManagementResource
     {
         return new CustomerManagementResource($this->customers->activate($request, $customer));

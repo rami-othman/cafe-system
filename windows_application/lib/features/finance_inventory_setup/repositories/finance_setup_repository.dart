@@ -83,12 +83,22 @@ class FinanceSetupRepository {
       }),
     ),
   ).map(FinancialAccount.fromJson).toList(growable: false);
+  Future<List<FinancialAccount>> getAccountCatalog() async => readMapList(
+    await _api.get('finance/accounts/catalog'),
+  ).map(FinancialAccount.fromJson).toList(growable: false);
   Future<FinancialAccount> getAccount(int id) async =>
       FinancialAccount.fromJson(
         Map<String, dynamic>.from(
           await _api.get('finance/accounts/$id') as Map,
         ),
       );
+  Future<FinancePage<Map<String, dynamic>>> getAccountMovements(
+    int id, {
+    int page = 1,
+  }) => getFinancePage(
+    'finance/accounts/$id/transactions',
+    queryParameters: <String, dynamic>{'page': page, 'perPage': 50},
+  );
   Future<List<JournalEntry>> getJournalEntries({
     String? search,
     String? status,
@@ -156,6 +166,10 @@ class FinanceSetupRepository {
           await _api.post('finance/journal-entries', data: payload) as Map,
         ),
       );
+  Future<JournalEntry> createOpeningDraft(int periodId, Map<String, dynamic> payload) async =>
+      JournalEntry.fromJson(Map<String, dynamic>.from(
+        await _api.post('finance/accounting-periods/$periodId/opening-entry', data: payload) as Map,
+      ));
   Future<JournalEntry> getJournalEntry(int id) async => JournalEntry.fromJson(
     Map<String, dynamic>.from(
       await _api.get('finance/journal-entries/$id') as Map,
@@ -180,29 +194,42 @@ class FinanceSetupRepository {
       ).map(FinancialLocation.fromJson).toList(growable: false);
 
   Future<CashSourceOptions> getCashSourceOptions(int branchId) async =>
-      CashSourceOptions.fromJson(Map<String, dynamic>.from(
-        await _api.get('finance/cash-source-options', queryParameters: {'branchId': branchId}) as Map,
-      ));
+      CashSourceOptions.fromJson(
+        Map<String, dynamic>.from(
+          await _api.get(
+                'finance/cash-source-options',
+                queryParameters: {'branchId': branchId},
+              )
+              as Map,
+        ),
+      );
 
   /// Minimal, branch-scoped reference data for the voucher form. This avoids
   /// giving a cashier access to the Accounts or Cash/Banks workspaces.
-  Future<({List<FinancialAccount> accounts, List<FinancialLocation> locations, List<Branch> branches})>
+  Future<
+    ({
+      List<FinancialAccount> accounts,
+      List<FinancialLocation> locations,
+      List<Branch> branches,
+    })
+  >
   getCashierVoucherOptions() async {
     final Map<String, dynamic> response = Map<String, dynamic>.from(
       await _api.get('finance/cashier/voucher-options') as Map,
     );
     return (
-      accounts: readMapList(response['accounts'])
-          .map(FinancialAccount.fromJson)
-          .toList(growable: false),
-      locations: readMapList(response['locations'])
-          .map(FinancialLocation.fromJson)
-          .toList(growable: false),
-      branches: readMapList(response['branchRows'])
-          .map(Branch.fromJson)
-          .toList(growable: false),
+      accounts: readMapList(
+        response['accounts'],
+      ).map(FinancialAccount.fromJson).toList(growable: false),
+      locations: readMapList(
+        response['locations'],
+      ).map(FinancialLocation.fromJson).toList(growable: false),
+      branches: readMapList(
+        response['branchRows'],
+      ).map(Branch.fromJson).toList(growable: false),
     );
   }
+
   Future<void> createCashTransfer(Map<String, dynamic> payload) =>
       _api.post('finance/cash-transfers', data: payload);
   Future<Map<String, dynamic>> saveFinancialLocation(
@@ -466,17 +493,42 @@ class FinanceSetupRepository {
   Future<void> reverseSupplierPayment(int id) =>
       _api.post('finance/supplier-payments/$id/reverse');
 
-  Future<List<FinanceVoucher>> getVouchers({Map<String, dynamic>? filters}) async =>
-      readMapList(await _api.get('finance/vouchers', queryParameters: filters))
-          .map(FinanceVoucher.fromJson).toList(growable: false);
+  Future<List<FinanceVoucher>> getVouchers({
+    Map<String, dynamic>? filters,
+  }) async => readMapList(
+    await _api.get('finance/vouchers', queryParameters: filters),
+  ).map(FinanceVoucher.fromJson).toList(growable: false);
   Future<FinanceVoucher> getVoucher(int id) async => FinanceVoucher.fromJson(
-      Map<String, dynamic>.from(await _api.get('finance/vouchers/$id') as Map));
-  Future<FinanceVoucher> createVoucher(Map<String, dynamic> payload) async => FinanceVoucher.fromJson(
-      Map<String, dynamic>.from(await _api.post('finance/vouchers', data: payload) as Map));
+    Map<String, dynamic>.from(await _api.get('finance/vouchers/$id') as Map),
+  );
+  Future<FinanceVoucher> createVoucher(Map<String, dynamic> payload) async =>
+      FinanceVoucher.fromJson(
+        Map<String, dynamic>.from(
+          await _api.post('finance/vouchers', data: payload) as Map,
+        ),
+      );
   Future<FinanceVoucher> postVoucher(int id) async => FinanceVoucher.fromJson(
-      Map<String, dynamic>.from(await _api.post('finance/vouchers/$id/post') as Map));
-  Future<FinanceVoucher> reverseVoucher(int id, String reason) async => FinanceVoucher.fromJson(
-      Map<String, dynamic>.from(await _api.post('finance/vouchers/$id/reverse', data: <String, dynamic>{'reason': reason}) as Map));
+    Map<String, dynamic>.from(
+      await _api.post('finance/vouchers/$id/post') as Map,
+    ),
+  );
+  Future<FinanceVoucher> reverseVoucher(int id, String reason) async =>
+      FinanceVoucher.fromJson(
+        Map<String, dynamic>.from(
+          await _api.post(
+                'finance/vouchers/$id/reverse',
+                data: <String, dynamic>{'reason': reason},
+              )
+              as Map,
+        ),
+      );
+  Future<void> deleteVoucher(int id) async =>
+      _api.delete('finance/vouchers/$id');
+  Future<List<FinanceVoucher>> getDeletedVouchers() async => readMapList(
+    await _api.get('finance/trash/vouchers'),
+  ).map(FinanceVoucher.fromJson).toList(growable: false);
+  Future<void> restoreVoucher(int id) async =>
+      _api.post('finance/trash/vouchers/$id/restore');
 
   Future<ProfitAndLossReport> getProfitAndLoss({
     Map<String, dynamic>? filters,

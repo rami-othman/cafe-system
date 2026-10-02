@@ -317,6 +317,14 @@ class InventoryRepository {
   Future<void> postMovement(Map<String, dynamic> payload) async {
     await _api.post('inventory/movements', data: payload);
   }
+  Future<List<Map<String, dynamic>>> openingPeriods() async => readMapList(
+    await _api.get('finance/accounting-periods', queryParameters: <String, dynamic>{'perPage': 100}),
+  ).where((row) => row['status'] == 'open').toList(growable: false);
+
+  Future<void> postOpeningInventory(int periodId, List<Map<String, dynamic>> lines) async {
+    await _api.post('inventory/accounting-periods/$periodId/opening-inventory',
+      data: <String, dynamic>{'lines': lines});
+  }
 
   Future<InventoryCount> createCount(Map<String, dynamic> payload) async =>
       InventoryCount.fromJson(

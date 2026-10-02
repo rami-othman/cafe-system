@@ -34,6 +34,7 @@ final class CustomerPaymentService
         private readonly CustomerReceivableQueryService $receivables,
         private readonly OperationalAuditService $audit,
         private readonly CashSourceResolver $cashSources,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     public function pay(Request $request, int $tenantId, array $data, ?int $actorId): object
@@ -76,7 +77,7 @@ final class CustomerPaymentService
                 }
 
                 $allocations = $this->validatedAllocations($tenantId, (int) $customer->id, $data['allocations'] ?? [], $amountCents, lock: true);
-                $arCode = $this->accounts->accountsReceivable($tenantId);
+                $arCode = $this->partyAccounts->codeForCustomer($tenantId, (int) $customer->id, $actorId);
 
                 $now = now();
                 $paymentId = DB::table('customer_payments')->insertGetId([

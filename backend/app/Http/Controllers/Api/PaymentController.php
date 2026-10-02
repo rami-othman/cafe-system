@@ -9,6 +9,7 @@ use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
+use App\Services\PartyAccountService;
 use App\Services\PosPricingService;
 use App\Services\PosCashLocationResolver;
 use App\Services\SaleConsumptionService;
@@ -35,7 +36,39 @@ class PaymentController extends Controller
         private readonly PaymentPerformanceProbe $performance,
         private readonly PosCashLocationResolver $cashLocations,
         private readonly ShiftLockService $shiftLocks,
+        private readonly PartyAccountService $partyAccounts,
+        private readonly \App\Services\FinanceAccountMap $accountMap,
     ) {}
+
+    /** The payment types Finance has actually configured and activated (the single source for what a cashier may offer). */
+    private function availableMethodTypes(int $tenantId, bool $identifiedCustomer): \Illuminate\Support\Collection
+    {
+        $methods = DB::table('payment_methods as pm')
+            ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
+            ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)
+            ->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
+            ->whereIn('pm.type', ['cash', 'card', 'wallet', 'sham_cash'])
+            ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
+            ->unique()->values();
+
+        return $identifiedCustomer ? $methods : $methods->reject(fn ($type) => $type === 'wallet')->values();
+    }
+
+    private function isIdentifiedCustomer(int $tenantId, int $customerId): bool
+    {
+        return DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)
+            ->where('is_active', true)->where('is_walk_in', false)->whereNull('deleted_at')->exists();
+    }
+
+    /** Methods offered before the order exists on the server (published-menu carts are created at payment time). */
+    public function availableMethods(Request $request): JsonResponse
+    {
+        $data = $request->validate(['customerId' => ['nullable', 'integer']]);
+        $tenantId = TenantContext::id($request);
+        $identified = isset($data['customerId']) && $this->isIdentifiedCustomer($tenantId, (int) $data['customerId']);
+
+        return response()->json(['data' => ['methods' => $this->availableMethodTypes($tenantId, $identified)]]);
+    }
 
     public function summary(Request $request, int $order): JsonResponse
     {
@@ -69,13 +102,9 @@ class PaymentController extends Controller
         $warehouseBlocker = $lifecycleCanPay
             ? $this->consumption->preflightWarehouseConfiguration($tenantId, $row)
             : null;
-        $methods = DB::table('payment_methods as pm')
-            ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
-            ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)
-            ->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
-            ->whereIn('pm.type', ['cash', 'card'])
-            ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
-            ->unique()->values();
+        // The wallet is the customer's own account: offered only when the order belongs to a real customer.
+        $hasIdentifiedCustomer = $row->customer_id && $this->isIdentifiedCustomer($tenantId, (int) $row->customer_id);
+        $methods = $this->availableMethodTypes($tenantId, (bool) $hasIdentifiedCustomer);
         $isZeroBalanceCompletion = Money::cents($total) === 0 && $itemCount > 0;
         $canPay = $lifecycleCanPay &&
             ! $completedPaymentExists &&
@@ -112,7 +141,7 @@ class PaymentController extends Controller
         $data = $request->validate([
             // A zero-balance order is completed without a tender. Keep the
             // normal tender contract strict below once totals are recalculated.
-            'method' => ['nullable', 'in:cash,card,wallet,split'],
+            'method' => ['nullable', 'in:cash,card,wallet,sham_cash,split'],
             'paymentMethodId' => ['nullable', 'integer'],
             'amount' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string'], 'note' => ['nullable', 'string'],
@@ -165,6 +194,20 @@ class PaymentController extends Controller
                 }
                 if ($resolvedMethod->type !== $data['method']) {
                     throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
+                }
+                if ($resolvedMethod->type === 'wallet'
+                    && $this->partyAccounts->codeForOrderCustomer($tenantId, $row->customer_id, $actorId) === null) {
+                    throw ValidationException::withMessages(['paymentMethodId' => 'الدفع من المحفظة يتطلب ربط الطلب بعميل مسجّل.']);
+                }
+                if ($resolvedMethod->type === 'wallet' && $row->customer_id) {
+                    // The wallet pays only from funds the customer holds plus the limit the owner set for them.
+                    $wallet = $this->partyAccounts->walletState($tenantId, (int) $row->customer_id, lock: true);
+                    if (\App\Support\Money::cents((string) $row->total) > $wallet['availableCents']) {
+                        throw ValidationException::withMessages(['paymentMethodId' => 'رصيد محفظة العميل (مع حد الائتمان) لا يكفي لهذا المبلغ. المتاح: '.\App\Support\Money::decimal(max(0, $wallet['availableCents'])).'.']);
+                    }
+                }
+                if ($resolvedMethod->type === 'sham_cash' && trim((string) ($data['reference'] ?? '')) === '') {
+                    throw ValidationException::withMessages(['reference' => 'أدخل رقم عملية الشام كاش.']);
                 }
                 if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
                     $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
@@ -276,23 +319,39 @@ class PaymentController extends Controller
         // A zero-balance completion deliberately has no tender line. Its
         // discount debit offsets revenue; inventory/COGS stays balanced too.
         $lines = [];
+        $partyCode = $method !== null && $total > 0
+            ? $this->partyAccounts->codeForOrderCustomer($tenantId, $order->customer_id, $actorId)
+            : null;
+        $walletSale = $method?->type === 'wallet' && $partyCode !== null;
         if ($method !== null) {
-            $tender = ['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)];
+            // A wallet payment is settled from the customer's own single account (their balance / receivable).
+            $tender = ['accountCode' => $walletSale ? $partyCode : $method->accountCode, 'debit' => Money::decimal($total)];
+            if ($walletSale) {
+                $tender['description'] = "دفع من محفظة العميل — طلب رقم {$order->order_number}";
+            }
             if ($method->type === 'cash') {
                 $tender['financialLocationId'] = $this->cashLocations->forSale($tenantId, $order, $method->accountCode);
+            } elseif ($method->type === 'sham_cash' && ($method->financialLocationId ?? null) !== null) {
+                $tender['financialLocationId'] = $method->financialLocationId;
             }
             $lines[] = $tender;
         }
-        if ($discount > 0) {
-            $lines[] = ['accountCode' => '4010', 'debit' => Money::decimal($discount)];
+        // An identified customer (a supplier is also a customer) gets the sale and the till
+        // collection on the person's own single account: net zero, but fully visible in its ledger.
+        if ($partyCode !== null && ! $walletSale) {
+            $lines[] = ['accountCode' => $partyCode, 'debit' => Money::decimal($total), 'description' => "بيع نقطة البيع — طلب رقم {$order->order_number}"];
+            $lines[] = ['accountCode' => $partyCode, 'credit' => Money::decimal($total), 'description' => "تحصيل عند الدفع — طلب رقم {$order->order_number}"];
         }
-        $lines[] = ['accountCode' => '4000', 'credit' => Money::decimal($subtotal)];
+        if ($discount > 0) {
+            $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.discount_given'), 'debit' => Money::decimal($discount)];
+        }
+        $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.revenue'), 'credit' => Money::decimal($subtotal)];
         if ($tax > 0) {
-            $lines[] = ['accountCode' => '2010', 'credit' => Money::decimal($tax)];
+            $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.tax_payable'), 'credit' => Money::decimal($tax)];
         }
         if ($cogsCents > 0) {
-            $lines[] = ['accountCode' => '5000', 'debit' => Money::decimal($cogsCents)];
-            $lines[] = ['accountCode' => '1100', 'credit' => Money::decimal($cogsCents)];
+            $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.cost_of_goods_sold'), 'debit' => Money::decimal($cogsCents)];
+            $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.inventory_asset'), 'credit' => Money::decimal($cogsCents)];
         }
 
         $this->posting->postSale($request, $tenantId, [

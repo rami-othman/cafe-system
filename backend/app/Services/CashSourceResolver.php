@@ -27,6 +27,16 @@ final class CashSourceResolver
             $join->on('a.id', '=', 'l.financial_account_id')->where('a.tenant_id', '=', $tenantId);
         })->where('l.tenant_id', $tenantId)->where('l.kind', 'cash')->where('l.is_active', true)
             ->where('a.is_active', true)->whereNull('a.deleted_at')
+            ->where(function ($query) use ($tenantId): void {
+                $query->where('l.type', '!=', 'cash_drawer')
+                    ->orWhereNotExists(function ($shifts) use ($tenantId): void {
+                        $shifts->selectRaw('1')->from('shifts as open_shift')
+                            ->whereColumn('open_shift.financial_location_id', 'l.id')
+                            ->where('open_shift.tenant_id', $tenantId)
+                            ->where('open_shift.status', 'open')
+                            ->whereNull('open_shift.deleted_at');
+                    });
+            })
             ->where(function ($q) use ($branchId, $tenantId): void {
                 if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) {
                     $q->where('l.branch_id', $branchId);
@@ -77,14 +87,16 @@ final class CashSourceResolver
             ->select('l.*', 'a.code as account_code');
         if ($lock) $query->lockForUpdate();
         $location = $query->first();
-        if (! $location || ($mode === 'shift' && ((int) $location->branch_id !== $branchId || $location->type !== 'cash_drawer'))
-            || ($mode === 'selectable' && ! collect($this->allowedLocations($tenantId, $actorId, $branchId))->contains('id', (int) $location->id))) {
+        if (! $location || ($mode === 'shift' && ((int) $location->branch_id !== $branchId || $location->type !== 'cash_drawer'))) {
             throw ValidationException::withMessages(['financialLocationId' => 'الصندوق المحدد غير متاح لهذا الفرع.']);
         }
         if ($mode === 'selectable' && $location->type === 'cash_drawer'
             && DB::table('shifts')->where('tenant_id', $tenantId)->where('financial_location_id', $location->id)
                 ->where('status', 'open')->whereNull('deleted_at')->exists()) {
             throw ValidationException::withMessages(['financialLocationId' => 'هذا الصندوق مرتبط بوردية مفتوحة. استخدم حركة نقدية معتمدة مرتبطة بالوردية.']);
+        }
+        if ($mode === 'selectable' && ! collect($this->allowedLocations($tenantId, $actorId, $branchId))->contains('id', (int) $location->id)) {
+            throw ValidationException::withMessages(['financialLocationId' => 'الصندوق المحدد غير متاح لهذا الفرع.']);
         }
         return (object) ['location' => $location, 'shift' => $shift, 'mode' => $mode];
     }

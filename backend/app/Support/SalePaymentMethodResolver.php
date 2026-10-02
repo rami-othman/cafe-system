@@ -67,7 +67,7 @@ final class SalePaymentMethodResolver
             ->where('pm.is_active', true)
             ->where('a.is_active', true)
             ->whereNull('a.deleted_at')
-            ->select('pm.id', 'pm.code', 'pm.name', 'pm.type', 'a.code as account_code');
+            ->select('pm.id', 'pm.code', 'pm.name', 'pm.type', 'pm.financial_location_id', 'a.code as account_code');
         $constrain($query);
 
         $row = $query->first();
@@ -78,6 +78,7 @@ final class SalePaymentMethodResolver
             'name' => $row->name,
             'type' => $row->type,
             'accountCode' => $row->account_code,
+            'financialLocationId' => $row->financial_location_id ? (int) $row->financial_location_id : null,
         ];
     }
 }

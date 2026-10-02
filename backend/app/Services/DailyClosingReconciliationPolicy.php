@@ -90,7 +90,7 @@ final class DailyClosingReconciliationPolicy
 
         return DB::table('payments as p')->join('payment_methods as pm', 'pm.id', '=', 'p.payment_method_id')
             ->where('p.tenant_id', $tenant)->where('p.branch_id', $branch)->where('p.status', 'completed')
-            ->whereNull('p.deleted_at')->where('pm.type', 'card')
+            ->whereNull('p.deleted_at')->whereIn('pm.type', ['card', 'sham_cash'])
             ->whereBetween('p.paid_at', [$range['start'], $range['end']])
             ->distinct()->pluck('pm.financial_account_id')->all();
     }

@@ -121,7 +121,9 @@ class FinancialAccountBalanceQuery
     public function transactions(int $tenantId, int $accountId, ?string $from = null, ?string $to = null, ?string $search = null, ?int $locationId = null): array
     {
         $account = $this->account($tenantId, $accountId);
-        $opening = $this->summary($tenantId, $accountId, null, $from ? now()->parse($from)->subDay()->toDateString() : null, $locationId)['balance'];
+        $opening = $from
+            ? $this->summary($tenantId, $accountId, null, now()->parse($from)->subDay()->toDateString(), $locationId)['balance']
+            : '0.00';
         $running = Money::cents($opening);
         $query = $this->baseLines($tenantId, $accountId, $from, $to, $locationId);
         if ($search) {

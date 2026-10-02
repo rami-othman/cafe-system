@@ -14,6 +14,7 @@ import '../widgets/finance_pagination.dart';
 import '../widgets/finance_period.dart';
 import '../widgets/finance_shell.dart';
 import '../widgets/finance_transaction_type.dart';
+import '../widgets/account_picker_field.dart';
 
 /// Local, screen-only filters. Kept separate from the global period/branch
 /// context so "Clear filters" never resets the shared Finance context.
@@ -559,17 +560,12 @@ class _FiltersBar extends StatelessWidget {
         ],
         onChanged: onStatus,
       ),
-      _FilterDropdown<int>(
+      AccountPickerField(
         label: 'الحساب',
+        accounts: accounts,
         value: filters.accountId,
-        items: accounts
-            .map(
-              (FinancialAccount account) => DropdownMenuItem<int>(
-                value: account.id,
-                child: Text('${account.code} — ${account.nameAr}'),
-              ),
-            )
-            .toList(),
+        allowClear: true,
+        width: 240,
         onChanged: onAccount,
       ),
       _FilterDropdown<int>(

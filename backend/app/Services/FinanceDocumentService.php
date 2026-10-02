@@ -20,6 +20,7 @@ final class FinanceDocumentService
         private readonly JournalEntryService $entries,
         private readonly OperationalAuditService $audit,
         private readonly CashSourceResolver $cashSources,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): object
@@ -113,7 +114,8 @@ final class FinanceDocumentService
         }
 
         $location = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $payment->financial_location_id)->first();
-        $payableAccountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '2000')->where('is_active', true)->value('id');
+        $partyCode = $this->partyAccounts->codeForSupplier($tenantId, (int) $payment->supplier_id, $actorId);
+        $payableAccountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', $partyCode)->where('is_active', true)->value('id');
         if (! $location || ! $payableAccountId || ! $payment->journal_entry_id) {
             throw ValidationException::withMessages(['payment' => 'تعذر إنشاء سند الدفع التلقائي بسبب إعدادات مالية غير مكتملة.']);
         }
@@ -175,7 +177,7 @@ final class FinanceDocumentService
     public function post(Request $request, int $tenantId, int $id, ?int $actorId): object
     {
         return DB::transaction(function () use ($request, $tenantId, $id, $actorId): object {
-            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->lockForUpdate()->first();
+            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->whereNull('deleted_at')->lockForUpdate()->first();
             abort_unless($document, 404, 'Finance document not found.');
             if ($document->status !== 'draft') {
                 throw ValidationException::withMessages(['document' => 'Only draft vouchers can be posted.']);
@@ -217,10 +219,10 @@ final class FinanceDocumentService
         });
     }
 
-    public function reverse(Request $request, int $tenantId, int $id, string $reason, ?int $actorId): object
+    public function reverse(Request $request, int $tenantId, int $id, string $reason, ?int $actorId, bool $ownOpenShiftOnly = false, bool $allowClosedShift = false): object
     {
-        return DB::transaction(function () use ($request, $tenantId, $id, $reason, $actorId): object {
-            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->lockForUpdate()->first();
+        return DB::transaction(function () use ($request, $tenantId, $id, $reason, $actorId, $ownOpenShiftOnly, $allowClosedShift): object {
+            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->whereNull('deleted_at')->lockForUpdate()->first();
             abort_unless($document, 404, 'Finance document not found.');
             if ($document->status !== 'posted' || ! $document->journal_entry_id || $document->reversal_journal_entry_id) {
                 throw ValidationException::withMessages(['document' => 'Only an unreversed posted voucher can be reversed.']);
@@ -229,17 +231,28 @@ final class FinanceDocumentService
                 throw ValidationException::withMessages(['document' => 'Reverse the linked supplier payment so its invoice allocation and voucher remain consistent.']);
             }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
+            if ($ownOpenShiftOnly) {
+                // A cashier may reverse (never delete) only inside their own open shift.
+                $ownShift = $document->shift_id ? DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
+                    ->where('user_id', $actorId)->where('status', 'open')->whereNull('deleted_at')->exists() : false;
+                if (! $ownShift) {
+                    throw ValidationException::withMessages(['document' => 'يمكنك عكس السندات الخاصة بورديتك المفتوحة فقط.']);
+                }
+            }
+            $shiftIsOpen = true;
             if ($document->shift_id) {
                 $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
                     ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
-                if (! $shift) throw ValidationException::withMessages(['shift' => 'A voucher assigned to a closed shift requires an approved correction procedure.']);
+                $shiftIsOpen = $shift !== null;
+                // Only the owner's delete may undo a voucher of a closed shift: the reversal is posted today, the closed shift keeps its history.
+                if (! $shift && ! $allowClosedShift) throw ValidationException::withMessages(['shift' => 'A voucher assigned to a closed shift requires an approved correction procedure.']);
             }
             $reversal = $this->entries->reverse($request, $tenantId, (int) $document->journal_entry_id, $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update([
                 'status' => 'reversed', 'reversal_journal_entry_id' => $reversal,
                 'reversed_at' => now(), 'reversed_by' => $actorId, 'reversal_reason' => $reason, 'updated_at' => now(),
             ]);
-            if ($document->shift_id) $this->recordShiftMovement($tenantId, $document, $actorId, true);
+            if ($document->shift_id && $shiftIsOpen) $this->recordShiftMovement($tenantId, $document, $actorId, true);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.reversed', 'finance_document', $id, [], ['number' => $result->document_number, 'reversalJournalEntryId' => $reversal, 'reason' => $reason], $result->branch_id, $actorId);
 
@@ -249,10 +262,52 @@ final class FinanceDocumentService
 
     public function find(int $tenantId, int $id): object
     {
-        $row = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->first();
+        $row = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->whereNull('deleted_at')->first();
         abort_unless($row, 404, 'Finance document not found.');
 
         return $row;
+    }
+
+    public function delete(Request $request, int $tenantId, int $id, int $actorId): void
+    {
+        DB::transaction(function () use ($request, $tenantId, $id, $actorId): void {
+            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)
+                ->where('id', $id)->whereNull('deleted_at')->lockForUpdate()->first();
+            abort_unless($document, 404, 'Finance document not found.');
+            FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
+            if ($document->source_type !== null) {
+                throw ValidationException::withMessages(['document' => 'هذا السند مرتبط بعملية أخرى؛ يجب تعديل العملية الأصلية.']);
+            }
+            if ($document->status === 'posted') {
+                // The owner deletes in one step: the posting is reversed (the books net to zero and the history is kept)
+                // and the voucher then goes to the trash. Restoring it brings back a reversed voucher, never a live one.
+                $this->reverse($request, $tenantId, $id, 'حذف السند من المالك', $actorId, false, true);
+            }
+            DB::table('finance_documents')->where('id', $id)->update([
+                'deleted_at' => now(), 'deleted_by' => $actorId, 'updated_at' => now(),
+            ]);
+            $this->audit->record($request, $tenantId, 'finance_document.deleted', 'finance_document', $id,
+                ['number' => $document->document_number, 'status' => $document->status], [],
+                $document->branch_id ? (int) $document->branch_id : null, $actorId);
+        });
+    }
+
+    public function restore(Request $request, int $tenantId, int $id, int $actorId): object
+    {
+        return DB::transaction(function () use ($request, $tenantId, $id, $actorId): object {
+            $document = DB::table('finance_documents')->where('tenant_id', $tenantId)
+                ->where('id', $id)->whereNotNull('deleted_at')->lockForUpdate()->first();
+            abort_unless($document, 404, 'Deleted finance document not found.');
+            FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
+            DB::table('finance_documents')->where('id', $id)->update([
+                'deleted_at' => null, 'deleted_by' => null, 'updated_at' => now(),
+            ]);
+            $this->audit->record($request, $tenantId, 'finance_document.restored', 'finance_document', $id,
+                [], ['number' => $document->document_number, 'status' => $document->status],
+                $document->branch_id ? (int) $document->branch_id : null, $actorId);
+
+            return $this->find($tenantId, $id);
+        });
     }
 
     private function recordShiftMovement(int $tenantId, object $document, ?int $actorId, bool $reversed): void

@@ -38,6 +38,7 @@ return [
     'close_destination_invalid' => 'The close destination must be an active cash location for this tenant, different from the shift drawer.',
     'drawer_ledger_mismatch' => 'The drawer ledger balance does not match counted cash. Reconcile the opening cash and posted cash movements before closing.',
     'close_transfer_exists' => 'A close transfer is already recorded for this shift.',
-    'variance_account_missing' => 'No cash variance account configured. Set one in branch settings or activate account 6180.',
+    'variance_account_missing' => 'No cash shortage account configured. Set one in branch settings or activate account 6180.',
+    'over_account_missing' => 'No cash overage account configured. Set one in branch settings or activate account 4040.',
     'difference_reason_required' => 'Counted cash differs from expected cash. Choose a reason for the difference so it can be posted to the cash variance account.',
 ];

@@ -39,6 +39,32 @@ void main() {
       expect(find.text('Main Warehouse'), findsNothing);
     },
   );
+  testWidgets(
+    'default receipt warehouse is also assigned to the first inventory line',
+    (tester) async {
+      final backend = _FakeBackend(withWarehouses: true, factory: true);
+      await _pump(tester, backend, factory: true, preselectedSupplierId: 1);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'الصنف'),
+        'Arabica',
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Arabica beans').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'إجمالي البند'),
+        '220',
+      );
+      await tester.tap(find.text('حفظ كمسودة'));
+      await tester.pumpAndSettle();
+
+      expect(backend.lastCreatePayload, isNotNull);
+      final lines = backend.lastCreatePayload!['lines'] as List<dynamic>;
+      expect((lines.single as Map<String, dynamic>)['warehouseId'], 2);
+    },
+  );
   setUp(() {
     if (serviceLocator.isRegistered<InventoryRepository>()) {
       serviceLocator.unregister<InventoryRepository>();

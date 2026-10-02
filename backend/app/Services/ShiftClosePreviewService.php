@@ -81,11 +81,16 @@ final class ShiftClosePreviewService
         }
         $snapshot['drawer']['expectedCash'] = $expected;
         $varianceAccount = null;
+        $overAccount = null;
         try {
             $varianceAccount = $this->variance->account($tenant, (int) $shift->branch_id);
         } catch (ValidationException) {
             // No variance account configured yet; the preview still renders,
             // just without a named destination for the difference.
+        }
+        try {
+            $overAccount = $this->variance->overAccount($tenant, (int) $shift->branch_id);
+        } catch (ValidationException) {
         }
         $metadata = [
             'closingDate' => $period->date, 'timezone' => $period->timezone,
@@ -103,6 +108,8 @@ final class ShiftClosePreviewService
             'destinationName' => $destination->name ?? null,
             'varianceAccountCode' => $varianceAccount->code ?? null,
             'varianceAccountName' => $varianceAccount->name_ar ?? null,
+            'overAccountCode' => $overAccount->code ?? null,
+            'overAccountName' => $overAccount->name_ar ?? null,
             'laterRecords' => $later, 'willContinue' => $historical && (array_sum($later) > 0 || $transfer > 0),
             'issues' => array_values(array_unique($issues)), 'canClose' => $issues === [],
         ];

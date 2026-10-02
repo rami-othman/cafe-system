@@ -94,6 +94,7 @@ final class CustomerPaymentController extends Controller
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'paymentIdempotencyKey' => ['required', 'string', 'max:120'],
+            'backdateReason' => ['nullable', 'string', 'max:1000'],
             'allocations' => ['sometimes', 'array', 'min:1'],
             'allocations.*.invoiceId' => ['required', 'integer'],
             'allocations.*.amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -105,7 +106,7 @@ final class CustomerPaymentController extends Controller
         abort_unless($invoiceRow, 404, 'Sales invoice not found.');
         FinancialActor::assertBranchAccess($actor, $tenant, (int) $invoiceRow->branch_id);
 
-        $result = $this->postAndCollect->postAndCollect($request, $tenant, $invoice, $actor, ['idempotencyKey' => $data['postIdempotencyKey']], [
+        $result = $this->postAndCollect->postAndCollect($request, $tenant, $invoice, $actor, ['idempotencyKey' => $data['postIdempotencyKey']] + (isset($data['backdateReason']) ? ['backdateReason' => $data['backdateReason']] : []), [
             'branchId' => (int) $invoiceRow->branch_id, 'customerId' => (int) $invoiceRow->customer_id, 'paymentDate' => $data['paymentDate'], 'amount' => $data['amount'],
             'paymentMethodId' => $data['paymentMethodId'], 'financialLocationId' => $data['financialLocationId'] ?? null, 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
             'idempotencyKey' => $data['paymentIdempotencyKey'], 'allocations' => $data['allocations'] ?? [],

@@ -40,6 +40,8 @@ class SupplierInvoiceService
         private readonly OperationalAuditService $audit,
         private readonly UnitConversionResolver $unitConversion,
         private readonly PosNumberGenerator $numbers,
+        private readonly PartyAccountService $partyAccounts,
+        private readonly FinanceAccountMap $accountMap,
     ) {}
 
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): object
@@ -248,7 +250,7 @@ class SupplierInvoiceService
         foreach ($expenseTotalsByCode as $code => $cents) {
             $lines[] = ['accountCode' => $code, 'debit' => Money::decimal($cents), 'credit' => '0.00'];
         }
-        $lines[] = ['accountCode' => '2000', 'debit' => '0.00', 'credit' => Money::decimal($total)];
+        $lines[] = ['accountCode' => $this->partyAccounts->codeForSupplier($tenantId, (int) $invoice->supplier_id), 'debit' => '0.00', 'credit' => Money::decimal($total)];
 
         return $lines;
     }
@@ -754,7 +756,9 @@ class SupplierInvoiceService
             // system PI number and invoice_number for the supplier reference.
             'invoice_number' => $data['supplierInvoiceNumber'] ?? $data['invoiceNumber'] ?? null,
             'invoice_date' => $data['invoiceDate'],
-            'due_date' => $data['dueDate'],
+            'payment_terms' => $data['paymentTerms'] ?? null,
+            'payment_reference' => ($data['paymentTerms'] ?? null) === 'sham_cash' ? (trim((string) ($data['paymentReference'] ?? '')) ?: null) : null,
+            'due_date' => in_array($data['paymentTerms'] ?? null, ['cash', 'sham_cash'], true) ? $data['invoiceDate'] : ($data['dueDate'] ?? $data['invoiceDate']),
             'invoice_type' => $data['invoiceType'],
             'invoice_type_id' => $data['invoiceTypeId'],
             'expense_category_id' => $data['invoiceType'] === 'expense' ? (int) $data['expenseCategoryId'] : null,
@@ -788,7 +792,7 @@ class SupplierInvoiceService
         }
 
         if ($type === 'inventory') {
-            $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1100')->where('is_active', true)->whereNull('deleted_at')->first();
+            $account = $this->accountMap->account($tenantId, 'sales.inventory_asset');
             if (! $account) {
                 throw ValidationException::withMessages(['invoiceType' => 'The Inventory Asset account is not active for this tenant.']);
             }
@@ -800,7 +804,7 @@ class SupplierInvoiceService
             $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $data['debitAccountId'] ?? null)
                 ->where('is_active', true)->whereNull('deleted_at')
                 ->whereIn('account_group', ['expenses', 'assets', 'cost_of_sales'])
-                ->where('code', '!=', '1100')
+                ->where('id', '!=', (int) ($this->accountMap->account($tenantId, 'sales.inventory_asset')->id ?? 0))
                 ->first();
             if (! $account) {
                 throw ValidationException::withMessages(['debitAccountId' => 'Select an active tenant expense, asset, or cost-of-sales account (not Inventory Asset — use invoice type "inventory" for that).']);
@@ -810,7 +814,7 @@ class SupplierInvoiceService
         }
 
         if ($type === 'none') {
-            $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1100')->where('is_active', true)->whereNull('deleted_at')->first();
+            $account = $this->accountMap->account($tenantId, 'sales.inventory_asset');
             if (! $account) {
                 throw ValidationException::withMessages(['invoiceTypeId' => 'A non-financial invoice requires the active Inventory Asset system account.']);
             }

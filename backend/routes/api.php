@@ -78,6 +78,7 @@ use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\StockCountController;
 use App\Http\Controllers\Api\StockMovementController;
+use App\Http\Controllers\Api\OpeningInventoryController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierInvoiceController;
 use App\Http\Controllers\Api\SupplierPaymentController;
@@ -182,6 +183,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{customer}', 'show')->whereNumber('customer');
             Route::get('{customer}/orders', 'orders')->whereNumber('customer');
             Route::put('{customer}', 'update')->whereNumber('customer');
+            Route::put('{customer}/wallet-limit', 'setWalletLimit')->whereNumber('customer');
             Route::post('{customer}/activate', 'activate')->whereNumber('customer');
             Route::post('{customer}/deactivate', 'deactivate')->whereNumber('customer');
             Route::post('{customer}/archive', 'archive')->whereNumber('customer');
@@ -218,6 +220,12 @@ Route::prefix('v1')->group(function (): void {
     // opaque bearer token; X-Tenant-Id is legacy-only and is never authority
     // inside this group. The public image endpoint above intentionally stays
     // public because Flutter image widgets cannot attach the API bearer header.
+    // One global trash for every entity (owner only; the controller enforces it).
+    Route::middleware(['api.token', 'password.changed'])->prefix('trash')->group(function (): void {
+        Route::get('/', [\App\Http\Controllers\Api\TrashController::class, 'index']);
+        Route::post('{type}/{id}/restore', [\App\Http\Controllers\Api\TrashController::class, 'restore'])->whereNumber('id');
+    });
+
     Route::middleware(['api.token', 'password.changed', 'branch.access'])->group(function (): void {
 
         Route::middleware('menu.management')->prefix('admin/catalog')->group(function (): void {
@@ -447,6 +455,7 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('orders/{order}/discount', [PosOrderController::class, 'removeDiscount'])->middleware('discount.permission:discounts.apply_manual');
             Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');
             Route::delete('orders/{order}/discounts', [DiscountController::class, 'remove'])->middleware('discount.permission:discounts.apply_configured');
+            Route::get('payment-methods/available', [PaymentController::class, 'availableMethods']);
             Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
             Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
             Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
@@ -484,6 +493,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('conversion-items', [InventoryItemController::class, 'conversionItems'])->middleware('inventory.permission:inventory.view');
             Route::get('movements', [StockMovementController::class, 'index'])->middleware('inventory.permission:inventory.view');
             Route::post('movements', [StockMovementController::class, 'store'])->middleware('inventory.permission:inventory.adjustments.create');
+            Route::post('accounting-periods/{period}/opening-inventory', [OpeningInventoryController::class, 'store'])->middleware('inventory.permission:inventory.adjustments.create');
             Route::get('movements/{movement}', [StockMovementController::class, 'show'])->middleware('inventory.permission:inventory.view');
             Route::get('counts', [StockCountController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
             Route::post('counts', [StockCountController::class, 'store'])->middleware('inventory.permission:inventory.counts.create');
@@ -535,12 +545,15 @@ Route::prefix('v1')->group(function (): void {
             Route::get('reports/customer-statement', [FinancialReportController::class, 'customerStatement'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/sales-profitability', [SalesReportController::class, 'salesProfitability'])->middleware('finance.permission:finance.reports.view');
             Route::get('accounts', [FinancialAccountController::class, 'index'])->middleware('finance.permission:finance.accounts.view');
+            Route::get('accounts/catalog', [FinancialAccountController::class, 'catalog'])->middleware('finance.permission:finance.accounts.view');
+            Route::get('accounts/{account}/transactions', [FinancialAccountController::class, 'transactions'])->middleware('finance.permission:finance.accounts.view');
             Route::post('accounts', [FinancialAccountController::class, 'store'])->middleware('finance.permission:finance.accounts.manage');
             Route::patch('accounts/{account}/status', [FinancialAccountController::class, 'status'])->middleware('finance.permission:finance.accounts.manage');
             Route::patch('accounts/{account}', [FinancialAccountController::class, 'update'])->middleware('finance.permission:finance.accounts.manage');
             Route::get('accounts/{account}', [FinancialAccountController::class, 'show'])->middleware('finance.permission:finance.accounts.view');
             Route::get('journal-entries', [JournalEntryController::class, 'index'])->middleware('finance.permission:finance.journals.view');
             Route::post('journal-entries', [JournalEntryController::class, 'store'])->middleware('finance.permission:finance.journals.create');
+            Route::post('accounting-periods/{period}/opening-entry', [JournalEntryController::class, 'opening'])->middleware('finance.permission:finance.journals.create');
             Route::get('journal-entries/{entry}', [JournalEntryController::class, 'show'])->middleware('finance.permission:finance.journals.view');
             Route::post('journal-entries/{entry}/post', [JournalEntryController::class, 'post'])->middleware('finance.permission:finance.journals.post');
             Route::post('journal-entries/{entry}/reverse', [JournalEntryController::class, 'reverse'])->middleware('finance.permission:finance.journals.reverse');
@@ -558,12 +571,18 @@ Route::prefix('v1')->group(function (): void {
             }
             Route::post('cash-transfers', [FinancialLocationController::class, 'transfer'])->middleware('finance.permission:finance.cash_transfer.create');
             Route::post('cash-transfers/{transfer}/reverse', [FinancialLocationController::class, 'reverseTransfer'])->middleware('finance.permission:finance.cash_transfer.reverse');
+            Route::get('account-mappings', [\App\Http\Controllers\Api\AccountMappingController::class, 'index'])->middleware('finance.permission:finance.settings.view');
+            Route::put('account-mappings/{key}', [\App\Http\Controllers\Api\AccountMappingController::class, 'update'])->middleware('finance.permission:finance.settings.manage');
+            Route::post('account-mappings/defaults', [\App\Http\Controllers\Api\AccountMappingController::class, 'applyDefaults'])->middleware('finance.permission:finance.settings.manage');
             Route::get('vouchers', [FinanceDocumentController::class, 'index'])->middleware('finance.permission:finance.vouchers.view');
             Route::get('cashier/voucher-options', [CashierFinanceOptionsController::class, 'vouchers'])->middleware('finance.permission:finance.vouchers.create');
             Route::post('vouchers', [FinanceDocumentController::class, 'store'])->middleware('finance.permission:finance.vouchers.create');
             Route::get('vouchers/{document}', [FinanceDocumentController::class, 'show'])->middleware('finance.permission:finance.vouchers.view');
             Route::post('vouchers/{document}/post', [FinanceDocumentController::class, 'post'])->middleware('finance.permission:finance.vouchers.post');
             Route::post('vouchers/{document}/reverse', [FinanceDocumentController::class, 'reverse'])->middleware('finance.permission:finance.vouchers.reverse');
+            Route::get('trash/vouchers', [FinanceDocumentController::class, 'trash'])->middleware('finance.permission:finance.vouchers.view');
+            Route::delete('vouchers/{document}', [FinanceDocumentController::class, 'destroy'])->middleware('finance.permission:finance.vouchers.view');
+            Route::post('trash/vouchers/{document}/restore', [FinanceDocumentController::class, 'restore'])->middleware('finance.permission:finance.vouchers.view');
             Route::get('reconciliations', [FinancialReconciliationController::class, 'index'])->middleware('finance.permission:finance.reconciliation.view');
             Route::post('reconciliations', [FinancialReconciliationController::class, 'store'])->middleware('finance.permission:finance.reconciliation.manage');
             Route::get('reconciliations/{reconciliation}', [FinancialReconciliationController::class, 'show'])->middleware('finance.permission:finance.reconciliation.view');

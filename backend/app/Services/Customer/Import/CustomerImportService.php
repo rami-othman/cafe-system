@@ -10,6 +10,7 @@ use App\Models\CustomerGroup;
 use App\Models\CustomerImport;
 use App\Models\CustomerImportRow;
 use App\Services\OperationalAuditService;
+use App\Services\PartyAccountService;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -29,6 +30,7 @@ final class CustomerImportService
         private readonly CustomerCsvImportParser $parser,
         private readonly CustomerNumberGenerator $numbers,
         private readonly OperationalAuditService $audit,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     public function preview(Request $request, UploadedFile $file): CustomerImport
@@ -320,6 +322,7 @@ final class CustomerImportService
                     'phone' => null,
                     'is_active' => true,
                 ]);
+                $this->partyAccounts->ensureForCustomer($tenantId, $customer->id, $actorId);
                 $primaryRaw = null;
                 foreach ($payload['phones'] ?? [] as $phone) {
                     $primary = (bool) ($phone['isPrimary'] ?? false);

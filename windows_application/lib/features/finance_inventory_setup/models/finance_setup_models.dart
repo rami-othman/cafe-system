@@ -466,6 +466,8 @@ class FinancialAccount {
     required this.nameEn,
     required this.accountGroup,
     required this.normalBalance,
+    this.isContra = false,
+    this.categoryOverride = false,
     required this.isActive,
     required this.isSystemProtected,
     this.parentAccountId,
@@ -485,6 +487,8 @@ class FinancialAccount {
   final String nameEn;
   final String accountGroup;
   final String normalBalance;
+  final bool isContra;
+  final bool categoryOverride;
   final bool isActive;
   final bool isSystemProtected;
 
@@ -510,6 +514,8 @@ class FinancialAccount {
         nameEn: readString(json['nameEn']),
         accountGroup: readString(json['accountGroup']),
         normalBalance: readString(json['normalBalance']),
+        isContra: readBool(json['isContra']),
+        categoryOverride: readBool(json['categoryOverride']),
         isActive: readBool(json['isActive']),
         isSystemProtected: readBool(json['isSystemProtected']),
         balance: readString(json['balance'], fallback: '0.00'),
@@ -571,6 +577,8 @@ class JournalEntry {
     this.postedAt,
     this.createdBy,
     this.postedBy,
+    this.createdByName,
+    this.postedByName,
   });
   final int id;
   final String entryNumber;
@@ -591,6 +599,8 @@ class JournalEntry {
   final String? postedAt;
   final int? createdBy;
   final int? postedBy;
+  final String? createdByName;
+  final String? postedByName;
   final List<JournalLine> lines;
 
   factory JournalEntry.fromJson(Map<String, dynamic> json) => JournalEntry(
@@ -625,6 +635,12 @@ class JournalEntry {
         : readString(json['postedAt']),
     createdBy: readInt(json['createdBy']),
     postedBy: readInt(json['postedBy']),
+    createdByName: readString(json['createdByName']).isEmpty
+        ? null
+        : readString(json['createdByName']),
+    postedByName: readString(json['postedByName']).isEmpty
+        ? null
+        : readString(json['postedByName']),
     lines: readMapList(
       json['lines'],
     ).map(JournalLine.fromJson).toList(growable: false),
@@ -634,6 +650,8 @@ class JournalEntry {
 class Supplier {
   const Supplier({
     required this.id,
+    this.customerId,
+    this.financialAccountId,
     required this.supplierNumber,
     required this.name,
     required this.isActive,
@@ -655,6 +673,8 @@ class Supplier {
     this.allowedActions = const <String>[],
   });
   final int id;
+  final int? customerId;
+  final int? financialAccountId;
   final String supplierNumber;
   final bool isInternal;
   final int? internalBranchId;
@@ -676,6 +696,8 @@ class Supplier {
   final List<String> allowedActions;
   factory Supplier.fromJson(Map<String, dynamic> json) => Supplier(
     id: readInt(json['id']) ?? 0,
+    customerId: readInt(json['customerId']),
+    financialAccountId: readInt(json['financialAccountId']),
     supplierNumber: readString(json['supplierNumber']),
     isInternal: readBool(json['isInternal']),
     internalBranchId: readInt(json['internalBranchId']),
@@ -1734,13 +1756,19 @@ Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
 
 class CashSourceLocation {
-  const CashSourceLocation({required this.id, required this.name});
+  const CashSourceLocation({
+    required this.id,
+    required this.name,
+    this.branchId,
+  });
   final int id;
   final String name;
+  final int? branchId;
   factory CashSourceLocation.fromJson(Map<String, dynamic> json) =>
       CashSourceLocation(
         id: readInt(json['id']) ?? 0,
         name: readString(json['name']),
+        branchId: readInt(json['branchId']),
       );
 }
 

@@ -123,6 +123,9 @@ class Customer extends Equatable {
     this.email,
     this.birthDate,
     this.notes,
+    this.walletBalance,
+    this.walletCreditLimit,
+    this.walletAvailable,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -135,6 +138,9 @@ class Customer extends Equatable {
     email: json['email'] as String?,
     birthDate: _calendarDate(json['birthDate']),
     notes: json['notes'] as String?,
+    walletBalance: json['walletBalance']?.toString(),
+    walletCreditLimit: json['walletCreditLimit']?.toString(),
+    walletAvailable: json['walletAvailable']?.toString(),
     phones: _requiredList(json, 'phones')
         .map((dynamic value) => CustomerPhone.fromJson(_map(value, 'phone')))
         .toList(growable: false),
@@ -156,6 +162,12 @@ class Customer extends Equatable {
   final String? email;
   final DateTime? birthDate;
   final String? notes;
+
+  /// Wallet funds held for the customer (negative = they owe), the owner-set
+  /// credit limit, and what the wallet may still pay. Only on a single customer.
+  final String? walletBalance;
+  final String? walletCreditLimit;
+  final String? walletAvailable;
   final List<CustomerPhone> phones;
   final List<CustomerGroupSummary> groups;
   final Set<String> allowedActions;

@@ -296,12 +296,33 @@ class PosCartPanel extends StatelessWidget {
       }
     } else {
       // No backend order yet (published-menu carts create it at payment
-      // time), so there is nothing to query. Offer the standard methods and
-      // let the server reject an invalid one when the order is submitted.
-      availableMethods = const <PaymentMethod>[
-        PaymentMethod.cash,
-        PaymentMethod.card,
-      ];
+      // time): ask the server which methods Finance has activated, so the
+      // list is the same before and after the order exists. The wallet is
+      // offered only when an identified customer is attached to the cart.
+      try {
+        final List<String> types = await cubit.repository
+            .getAvailablePaymentMethods(
+              customerId: state.selectedCustomer?.backendId,
+            );
+        availableMethods = types
+            .map((String value) => _paymentMethodForApiValue(value))
+            .whereType<PaymentMethod>()
+            .toList(growable: false);
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
+        }
+        return;
+      }
+      if (!context.mounted) return;
+      if (availableMethods.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.posNoPaymentMethods)),
+        );
+        return;
+      }
     }
 
     final PaymentResult? result = await showDialog<PaymentResult>(

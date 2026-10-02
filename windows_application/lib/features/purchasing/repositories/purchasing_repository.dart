@@ -62,8 +62,10 @@ class PurchasingRepository {
     String? paidAmount,
     String? paymentDate,
     String? receiptDate,
+    int? paymentMethodId,
   }) async {
     final data = <String, dynamic>{'idempotencyKey': idempotencyKey};
+    if (paymentMethodId != null) data['paymentMethodId'] = paymentMethodId;
     if (financialLocationId != null) data['financialLocationId'] = financialLocationId;
     if (paidAmount != null) data['paidAmount'] = paidAmount;
     if (paymentDate != null) data['paymentDate'] = paymentDate;

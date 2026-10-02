@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 
 final class CustomerManagementService
 {
+    public function __construct(private readonly PartyAccountService $partyAccounts) {}
+
     public function create(int $tenantId, int $actorId, array $data, ?\Illuminate\Http\Request $request = null): object
     {
         return DB::transaction(function () use ($tenantId, $actorId, $data, $request): object {
@@ -28,6 +30,7 @@ final class CustomerManagementService
                 'is_active' => true, 'is_walk_in' => false, 'is_system_protected' => false,
                 'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
             ]);
+            $this->partyAccounts->ensureForCustomer($tenantId, (int) $id, $actorId);
             return $this->find($tenantId, $id);
         });
     }
@@ -49,7 +52,13 @@ final class CustomerManagementService
         if (array_key_exists('name', $data)) {
             $values['normalized_name'] = CustomerNameNormalizer::normalize($data['name'])['normalizedName'];
         }
-        if ($values !== []) DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->update($values + ['updated_by' => $actorId, 'updated_at' => now()]);
+        if ($values !== []) DB::transaction(function () use ($tenantId, $customerId, $customer, $actorId, $values): void {
+            DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->update($values + ['updated_by' => $actorId, 'updated_at' => now()]);
+            if (isset($values['name']) && $customer->financial_account_id) {
+                DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $customer->financial_account_id)
+                    ->update(['name_ar' => $values['name'], 'name_en' => $values['name'], 'updated_at' => now()]);
+            }
+        });
         return $this->find($tenantId, $customerId);
     }
 

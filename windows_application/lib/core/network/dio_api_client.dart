@@ -272,10 +272,14 @@ class DioApiClient {
     }
 
     if (statusCode == 422) {
+      final Map<String, List<String>>? fieldErrors = _validationErrorsFromBody(body);
       return ApiException(
-        message: responseMessage ?? 'The submitted data was invalid.',
+        message: _withFirstDetail(
+          responseMessage ?? 'The submitted data was invalid.',
+          fieldErrors,
+        ),
         statusCode: statusCode,
-        validationErrors: _validationErrorsFromBody(body),
+        validationErrors: fieldErrors,
         code: responseCode,
         type: ApiErrorType.validation,
       );
@@ -370,6 +374,24 @@ class DioApiClient {
     }
 
     return null;
+  }
+
+  /// The server's generic "please correct the data" message hides the actual
+  /// reason; append the first field error so the user sees what to fix.
+  String _withFirstDetail(String message, Map<String, List<String>>? errors) {
+    if (errors == null || errors.isEmpty) return message;
+    String? detail;
+    for (final List<String> messages in errors.values) {
+      for (final String candidate in messages) {
+        if (candidate.trim().isNotEmpty) {
+          detail = candidate.trim();
+          break;
+        }
+      }
+      if (detail != null) break;
+    }
+    if (detail == null || message.contains(detail)) return message;
+    return '$message — $detail';
   }
 
   String? _codeFromBody(dynamic body) {

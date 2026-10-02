@@ -31,10 +31,12 @@ final class SalesInvoiceService
             if (! $customer->is_walk_in) $this->assertAccountsReceivableMapping($tenantId);
             $lines = $this->pricedLines($tenantId, $data['lines']); $charges = $this->charges($data['charges'] ?? []); $totals = $this->totals($lines, $charges, $data);
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
-            $due = ! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString();
+            $terms = $this->paymentTerms($customer, $data['paymentTerms'] ?? null);
+            $due = $terms !== 'credit' ? $date : (! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString());
+            $warehouseId = $this->warehouseId($tenantId, (int) $data['branchId'], $data['warehouseId'] ?? null);
             $year = CarbonImmutable::parse($date)->year; $sequence = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('invoice_number', 'like', "%SI-{$year}-%")->count() + 1;
             $backdateReason = \App\Support\BackdatePolicy::reason((int) $data['branchId'], $date, $data['backdateReason'] ?? null);
-            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals) + \App\Support\FactoryCurrency::columns($data) + ['backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null]);
+            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals) + \App\Support\FactoryCurrency::columns($data) + ['backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null, 'payment_terms' => $terms, 'payment_reference' => $terms === 'sham_cash' ? $this->reference($data['paymentReference'] ?? null) : null, 'warehouse_id' => $warehouseId]);
             $this->replaceLines($tenantId, $id, $lines); $this->replaceCharges($tenantId, $id, $charges, $totals['rate']);
             return $this->find($tenantId, $id);
         });
@@ -56,9 +58,10 @@ final class SalesInvoiceService
             $charges = array_key_exists('charges', $data) ? $this->charges($data['charges']) : $this->currentCharges($invoiceId);
             $totals = $this->totals($lines, $charges, ['invoiceDiscountType' => $data['invoiceDiscountType'] ?? $invoice->invoice_discount_type, 'invoiceDiscountValue' => $data['invoiceDiscountValue'] ?? $invoice->invoice_discount_value, 'manualAdjustment' => $data['manualAdjustment'] ?? $invoice->manual_adjustment]);
             $date = array_key_exists('invoiceDate', $data) ? CarbonImmutable::parse($data['invoiceDate'])->toDateString() : $invoice->invoice_date;
-            $due = array_key_exists('dueDate', $data) ? (! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString()) : $invoice->due_date;
+            $terms = $this->paymentTerms($customer, array_key_exists('paymentTerms', $data) ? $data['paymentTerms'] : $invoice->payment_terms);
+            $due = $terms !== 'credit' ? $date : (array_key_exists('dueDate', $data) ? (! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString()) : ($invoice->due_date && $invoice->payment_terms === 'credit' ? $invoice->due_date : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString()));
             $backdateReason = \App\Support\BackdatePolicy::reason((int) ($data['branchId'] ?? $invoice->branch_id), $date, $data['backdateReason'] ?? $invoice->backdate_reason);
-            $values = $this->totalValues($totals) + ['customer_id' => $customer->id, 'invoice_date' => $date, 'due_date' => $due, 'backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null, 'updated_by' => $actorId, 'updated_at' => now()];
+            $values = $this->totalValues($totals) + ['customer_id' => $customer->id, 'invoice_date' => $date, 'due_date' => $due, 'backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null, 'payment_terms' => $terms, 'payment_reference' => $terms === 'sham_cash' ? $this->reference(array_key_exists('paymentReference', $data) ? $data['paymentReference'] : $invoice->payment_reference) : null, 'warehouse_id' => array_key_exists('warehouseId', $data) ? $this->warehouseId($tenantId, (int) ($data['branchId'] ?? $invoice->branch_id), $data['warehouseId']) : $invoice->warehouse_id, 'updated_by' => $actorId, 'updated_at' => now()];
             foreach (['branchId' => 'branch_id', 'reference' => 'reference', 'notes' => 'notes'] as $input => $column) if (array_key_exists($input, $data)) $values[$column] = $data[$input];
             DB::table('sales_invoices')->where('id', $invoiceId)->update($values + \App\Support\FactoryCurrency::columns($data));
             if (array_key_exists('lines', $data)) { DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoiceId)->delete(); $this->replaceLines($tenantId, $invoiceId, $lines); }
@@ -85,6 +88,25 @@ final class SalesInvoiceService
     { return $this->totalValues($totals) + ['tenant_id' => $tenant, 'branch_id' => $data['branchId'], 'customer_id' => $customer->id, 'invoice_number' => \App\Support\DataScope::documentNumber($tenant, (int) $data['branchId'], sprintf('SI-%d-%06d', $year, $sequence)), 'invoice_date' => $date, 'due_date' => $due, 'currency_code' => 'SYP', 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null, 'status' => 'draft', 'idempotency_key' => $data['idempotencyKey'] ?? null, 'request_fingerprint' => $fingerprint, 'created_by' => $actor, 'updated_by' => $actor, 'created_at' => now(), 'updated_at' => now()]; }
     private function totalValues(array $t): array
     { return ['tax_rate' => $this->rateDecimal($t['rate']), 'gross_subtotal' => Money::decimal($t['gross']), 'line_discount_total' => Money::decimal($t['lineDiscount']), 'invoice_discount_type' => $t['invoiceDiscountType'], 'invoice_discount_value' => Money::decimal($t['invoiceDiscountValue']), 'invoice_discount_total' => Money::decimal($t['invoiceDiscount']), 'additional_charges_total' => Money::decimal($t['charges']), 'manual_adjustment' => Money::decimal($t['adjustment']), 'taxable_amount' => Money::decimal($t['taxable']), 'subtotal' => Money::decimal($t['netProducts']), 'discount_total' => Money::decimal($t['lineDiscount'] + $t['invoiceDiscount']), 'tax_total' => Money::decimal($t['tax']), 'total' => Money::decimal($t['total'])]; }
+    /** cash | credit | sham_cash. A walk-in customer pays at once, so credit is impossible for it. */
+    private function paymentTerms(object $customer, mixed $input): string
+    {
+        $terms = $input === null || $input === '' ? ($customer->is_walk_in ? 'cash' : 'credit') : (string) $input;
+        if (! in_array($terms, ['cash', 'credit', 'sham_cash'], true)) throw ValidationException::withMessages(['paymentTerms' => 'طريقة الدفع يجب أن تكون نقدي أو آجل أو شام كاش.']);
+        if ($terms === 'credit' && $customer->is_walk_in) throw ValidationException::withMessages(['paymentTerms' => 'العميل النقدي لا يمكن أن تكون فاتورته آجلة. اختر نقدي أو شام كاش، أو اختر عميلاً مسجلاً.']);
+
+        return $terms;
+    }
+    private function reference(mixed $value): ?string { $v = trim((string) $value); return $v === '' ? null : mb_substr($v, 0, 120); }
+    /** The warehouse the goods leave from; null means "the branch's selling warehouse" (the same rule POS uses). */
+    private function warehouseId(int $tenant, int $branchId, mixed $input): ?int
+    {
+        if ($input === null || $input === '') return null;
+        $warehouse = DB::table('warehouses')->where('tenant_id', $tenant)->where('id', (int) $input)->where('is_active', true)->whereNull('deleted_at')->first();
+        if (! $warehouse || ($warehouse->branch_id !== null && (int) $warehouse->branch_id !== $branchId)) throw ValidationException::withMessages(['warehouseId' => 'اختر مستودعاً فعالاً تابعاً لفرع الفاتورة.']);
+
+        return (int) $warehouse->id;
+    }
     private function customer(int $tenant, int $id): object { $c = DB::table('customers')->where('tenant_id', $tenant)->where('id', $id)->where('is_active', true)->whereNull('deleted_at')->first(); if (! $c) throw ValidationException::withMessages(['customerId' => 'Select an active customer belonging to this tenant.']); return $c; }
     private function assertAccountsReceivableMapping(int $tenant): void { $m = DB::table('sales_account_mappings as m')->join('financial_accounts as a', 'a.id', '=', 'm.financial_account_id')->where('m.tenant_id', $tenant)->where('m.mapping_key', 'sales.accounts_receivable')->where('a.tenant_id', $tenant)->where('a.is_active', true)->whereNull('a.deleted_at')->select('a.account_group', 'a.normal_balance')->first(); if (! $m || $m->account_group !== 'assets' || $m->normal_balance !== 'debit') throw ValidationException::withMessages(['accountsReceivable' => 'Configure an active tenant Accounts Receivable asset account before creating sales invoices.']); }
 

@@ -22,6 +22,8 @@ class StoreBranchRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:5000'],
             'phone' => ['nullable', 'string', 'max:255'],
             'timezone' => ['required', 'string', 'timezone:all'],
+            'cashVarianceAccountId' => ['sometimes', 'nullable', 'integer'],
+            'cashOverAccountId' => ['sometimes', 'nullable', 'integer'],
             'tenantId' => ['prohibited'],
             'tenant_id' => ['prohibited'],
             'ownerId' => ['prohibited'],

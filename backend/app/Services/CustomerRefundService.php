@@ -26,6 +26,7 @@ final class CustomerRefundService
         private readonly CustomerCreditQueryService $credit,
         private readonly OperationalAuditService $audit,
         private readonly CashSourceResolver $cashSources,
+        private readonly PartyAccountService $partyAccounts,
     ) {}
 
     public function pay(Request $request, int $tenantId, array $data, ?int $actorId): object
@@ -70,7 +71,7 @@ final class CustomerRefundService
                     throw ValidationException::withMessages(['amount' => 'مبلغ المرتجع يتجاوز رصيد العميل المتاح وقدره '.Money::decimal($availableCents).'.']);
                 }
 
-                $customerCreditCode = $this->accounts->customerCredit($tenantId);
+                $customerCreditCode = $this->partyAccounts->codeForCustomer($tenantId, (int) $customer->id, $actorId);
                 $now = now();
                 $refundId = DB::table('customer_refunds')->insertGetId([
                     'tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'customer_id' => $customer->id,
@@ -125,7 +126,11 @@ final class CustomerRefundService
         if ($amountCents > $availableCents) {
             throw ValidationException::withMessages(['amount' => 'مبلغ المرتجع يتجاوز رصيد العميل المتاح وقدره '.Money::decimal($availableCents).'.']);
         }
-        $customerCreditCode = $this->accounts->customerCredit($tenantId);
+        $customerCreditCode = $customer->financial_account_id
+            ? DB::table('financial_accounts')->where('tenant_id', $tenantId)
+                ->where('id', $customer->financial_account_id)->value('code')
+            : null;
+        $customerCreditCode ??= $this->accounts->customerCredit($tenantId);
 
         return [
             'customer' => ['id' => (int) $customer->id, 'name' => $customer->name],

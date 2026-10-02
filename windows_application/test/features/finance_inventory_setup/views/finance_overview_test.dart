@@ -5,9 +5,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:windows_application/features/finance_inventory_setup/views/finance_overview.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_shell.dart';
+import 'package:windows_application/features/finance_inventory_setup/widgets/finance_period.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
+  test('finance period presets use exact calendar boundaries', () {
+    final now = DateTime(2026, 9, 30);
+    expect(FinancePeriod.presetRange(FinancePeriod.yearToDate, now: now).start, DateTime(2026, 1, 1));
+    expect(FinancePeriod.presetRange(FinancePeriod.fourMonths, now: now).start, DateTime(2026, 6, 1));
+    expect(FinancePeriod.presetRange(FinancePeriod.sixMonths, now: now).start, DateTime(2026, 4, 1));
+    expect(FinancePeriod.presetRange(FinancePeriod.oneYear, now: now).start, DateTime(2025, 10, 1));
+    expect(FinancePeriod.presetRange(FinancePeriod.fiscalYear, now: now, fiscalYearStart: DateTime(2026, 2, 15)).start, DateTime(2026, 2, 15));
+    expect(FinancePeriod.fiscalStartFromPeriods(<Map<String, dynamic>>[
+      <String, dynamic>{'startDate': '2026-01-01', 'endDate': '2026-12-31'},
+      <String, dynamic>{'startDate': '2026-09-01', 'endDate': '2026-09-30'},
+    ], now: now), DateTime(2026, 1, 1));
+    expect(FinancePeriod.expiredOpenYearFromPeriods(<Map<String, dynamic>>[
+      <String, dynamic>{'id': 1, 'name': 'شهري', 'status': 'open', 'startDate': '2026-08-01', 'endDate': '2026-08-31'},
+      <String, dynamic>{'id': 2, 'name': '2025', 'status': 'open', 'startDate': '2025-01-01', 'endDate': '2025-12-31'},
+    ], now: now)?['id'], 2);
+  });
   Future<FinanceOverviewPayload> data(FinanceOverviewQuery _) async =>
       _payload();
 
@@ -42,6 +59,18 @@ void main() {
     expect(find.text('أداء الفروع'), findsOneWidget);
     expect(find.text('أحدث الحركات المالية'), findsOneWidget);
     expect(find.text('مصاريف تشغيل'), findsOneWidget);
+  });
+
+  testWidgets('shows the unclosed fiscal year and directs the owner to close it', (tester) async {
+    await tester.pumpWidget(app(FinanceOverview(
+      loader: data,
+      unclosedYearLoader: () async => <String, dynamic>{
+        'id': 7, 'name': '2025', 'endDate': '2025-12-31',
+      },
+    )));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('السنة المحاسبية 2025 انتهت'), findsOneWidget);
+    expect(find.text('إقفال السنة'), findsOneWidget);
   });
 
   testWidgets(

@@ -31,23 +31,32 @@ final class PurchasePostingOrchestrator
         $invoice = $this->invoice($tenantId, $invoiceId);
         $branchId = $this->requiredBranchId($invoice);
         $mode = $this->cashSources->mode($tenantId, $actorId);
+        if (($invoice->payment_terms ?? null) === 'sham_cash') {
+            // Sham Cash pays from its own box, never the drawer, so no shift or drawer is needed to preview it.
+            return ['invoiceId' => $invoiceId, 'amount' => Money::decimal($this->payable->invoiceRemainingCents($tenantId, $invoiceId)),
+                'branchId' => $branchId, 'financialLocationId' => null, 'financialLocationName' => null,
+                'shiftId' => null, 'shiftNumber' => null, 'cashSourceMode' => 'sham_cash', 'allowedCashLocations' => [],
+                'shamCashMethods' => $this->shamCashMethods($tenantId)];
+        }
         if ($mode === 'selectable' && $selectedLocationId === null) {
             return ['invoiceId' => $invoiceId, 'amount' => Money::decimal($this->payable->invoiceRemainingCents($tenantId, $invoiceId)),
                 'branchId' => $branchId, 'financialLocationId' => null, 'financialLocationName' => null,
                 'shiftId' => null, 'shiftNumber' => null, 'cashSourceMode' => $mode,
-                'allowedCashLocations' => $this->cashSources->allowedLocations($tenantId, $actorId, $branchId)];
+                'allowedCashLocations' => $this->cashSources->allowedLocations($tenantId, $actorId, $branchId),
+                'shamCashMethods' => $this->shamCashMethods($tenantId)];
         }
         $source = $this->cashSources->resolve($tenantId, $actorId, $branchId, selectedLocationId: $selectedLocationId);
 
         return $this->summary($invoice, $source, $this->payable->invoiceRemainingCents($tenantId, $invoiceId))
-            + ['cashSourceMode' => $mode, 'allowedCashLocations' => $mode === 'selectable' ? $this->cashSources->allowedLocations($tenantId, $actorId, $branchId) : []];
+            + ['cashSourceMode' => $mode, 'allowedCashLocations' => $mode === 'selectable' ? $this->cashSources->allowedLocations($tenantId, $actorId, $branchId) : [],
+                'shamCashMethods' => $this->shamCashMethods($tenantId)];
     }
 
-    public function post(Request $request, int $tenantId, int $invoiceId, string $key, int $actorId, ?int $selectedLocationId = null, ?string $paidAmount = null, ?string $paymentDate = null, ?string $receiptDate = null): object
+    public function post(Request $request, int $tenantId, int $invoiceId, string $key, int $actorId, ?int $selectedLocationId = null, ?string $paidAmount = null, ?string $paymentDate = null, ?string $receiptDate = null, ?int $shamMethodId = null): object
     {
         $this->authorize($request, $tenantId, $invoiceId, $paidAmount === null || Money::cents($paidAmount, 'paidAmount') > 0);
 
-        return DB::transaction(function () use ($request, $tenantId, $invoiceId, $key, $actorId, $selectedLocationId, $paidAmount, $paymentDate, $receiptDate): object {
+        return DB::transaction(function () use ($request, $tenantId, $invoiceId, $key, $actorId, $selectedLocationId, $paidAmount, $paymentDate, $receiptDate, $shamMethodId): object {
             $invoice = $this->invoice($tenantId, $invoiceId, true);
             $wasDraft = $invoice->status === 'draft';
             $branchId = $this->requiredBranchId($invoice);
@@ -65,9 +74,16 @@ final class PurchasePostingOrchestrator
                 throw ValidationException::withMessages(['paidAmount' => 'الدفعة تتجاوز المبلغ المتبقي على الفاتورة.']);
             }
 
-            $source = $paymentCents > 0
-                ? $this->cashSources->resolve($tenantId, $actorId, $branchId, lock: true, selectedLocationId: $selectedLocationId)
-                : null;
+            // A Sham Cash purchase is paid from the Sham Cash box (not the drawer) and must carry its transaction number.
+            $isSham = $paymentCents > 0 && ($invoice->payment_terms ?? null) === 'sham_cash';
+            if ($isSham && trim((string) $invoice->payment_reference) === '') {
+                throw ValidationException::withMessages(['paymentReference' => 'أدخل رقم عملية الشام كاش على فاتورة الشراء.']);
+            }
+            $source = $isSham
+                ? $this->shamCashSource($tenantId, $shamMethodId)
+                : ($paymentCents > 0
+                    ? $this->cashSources->resolve($tenantId, $actorId, $branchId, lock: true, selectedLocationId: $selectedLocationId)
+                    : null);
             if ($invoice->status === 'draft') {
                 $invoice = $this->invoices->post($request, $tenantId, $invoiceId, [
                     'idempotencyKey' => "purchase-post:{$invoiceId}:invoice",
@@ -104,7 +120,7 @@ final class PurchasePostingOrchestrator
                 'paymentMethodId' => (int) $source->method->id,
                 'financialLocationId' => (int) $source->location->id,
                 'shiftId' => $source->shift ? (int) $source->shift->id : null,
-                'externalReference' => $invoice->internal_reference,
+                'externalReference' => $isSham ? $invoice->payment_reference : $invoice->internal_reference,
                 'notes' => "دفع تلقائي لفاتورة الشراء {$invoice->internal_reference}",
                 'idempotencyKey' => "purchase-post:{$invoiceId}:payment",
                 'allocations' => [['invoiceId' => $invoiceId, 'amount' => Money::decimal($paymentCents)]],
@@ -130,6 +146,30 @@ final class PurchasePostingOrchestrator
 
             return $this->result($tenantId, $invoiceId, (int) $payment->id);
         }, 3);
+    }
+
+    /** Active Sham Cash payment methods with the box each one pays into, for the posting dialog. */
+    private function shamCashMethods(int $tenantId): array
+    {
+        return DB::table('payment_methods as m')->join('financial_locations as l', 'l.id', '=', 'm.financial_location_id')
+            ->where('m.tenant_id', $tenantId)->where('m.type', 'sham_cash')->where('m.is_active', true)->where('l.is_active', true)
+            ->orderBy('m.sort_order')->orderBy('m.id')->get(['m.id', 'm.name', 'l.name as location_name'])
+            ->map(fn ($row) => ['id' => (int) $row->id, 'name' => $row->name, 'locationName' => $row->location_name])->all();
+    }
+
+    /** @return object{location:object,method:object,shift:null,mode:string} */
+    private function shamCashSource(int $tenantId, ?int $methodId = null): object
+    {
+        // Every Sham Cash box is its own payment method (method = box), so choosing the method chooses the box.
+        $method = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('type', 'sham_cash')->where('is_active', true)
+            ->whereNotNull('financial_location_id')->when($methodId !== null, fn ($q) => $q->where('id', $methodId))
+            ->orderBy('sort_order')->orderBy('id')->lockForUpdate()->first();
+        $location = $method ? DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $method->financial_location_id)->where('is_active', true)->first() : null;
+        if (! $method || ! $location) {
+            throw ValidationException::withMessages(['paymentMethodId' => 'طريقة دفع الشام كاش أو صندوقها غير مفعّلين.']);
+        }
+
+        return (object) ['location' => $location, 'method' => $method, 'shift' => null, 'mode' => 'sham_cash'];
     }
 
     private function receiveRemainingInventory(Request $request, int $tenantId, object $invoice, int $actorId, string $receiptDate): void

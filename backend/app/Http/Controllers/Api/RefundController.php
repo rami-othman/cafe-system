@@ -27,6 +27,8 @@ class RefundController extends Controller
         private readonly AccountingPostingService $posting,
         private readonly OperationalAuditService $audit,
         private readonly PosCashLocationResolver $cashLocations,
+        private readonly \App\Services\PartyAccountService $partyAccounts,
+        private readonly \App\Services\FinanceAccountMap $accountMap,
     ) {}
 
     public function store(Request $request, int $order): JsonResponse
@@ -84,6 +86,16 @@ class RefundController extends Controller
                 }
             }
 
+            // A cashier can refund (reverse) only a sale taken in their own still-open shift; managers and owners are not limited.
+            $role = app(\App\Services\DefaultTenantRoleService::class)->canonicalLegacyRole(\App\Support\FinanceAccess::actor($request)->effectiveRoleCode());
+            if ($role === 'cashier') {
+                $ownOpenShift = $payment->shift_id !== null && DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $payment->shift_id)
+                    ->where('user_id', $actorId)->where('status', 'open')->whereNull('deleted_at')->exists();
+                if (! $ownOpenShift) {
+                    throw new OrderLifecycleException('REFUND_OWN_OPEN_SHIFT_ONLY', 'يمكنك عكس مبيعات ورديتك المفتوحة فقط.');
+                }
+            }
+
             $now = now();
             $refundId = DB::table('payment_refunds')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'order_id' => $orderRow->id,
@@ -118,9 +130,15 @@ class RefundController extends Controller
                 $cashLocationId = $payment->method === 'cash' && $resolvedMethod->type === 'cash'
                     ? $this->cashLocations->forRefund($tenantId, $orderRow, $payment, $resolvedMethod->accountCode)
                     : null;
-                $settlementLine = ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)];
+                $walletParty = $resolvedMethod->type === 'wallet'
+                    ? $this->partyAccounts->codeForOrderCustomer($tenantId, $orderRow->customer_id, $actorId)
+                    : null;
+                // A wallet refund goes back to the customer's own account, not to a shared placeholder.
+                $settlementLine = ['accountCode' => $walletParty ?? $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)];
                 if ($cashLocationId !== null) {
                     $settlementLine['financialLocationId'] = $cashLocationId;
+                } elseif ($resolvedMethod->type === 'sham_cash' && ($resolvedMethod->financialLocationId ?? null) !== null) {
+                    $settlementLine['financialLocationId'] = $resolvedMethod->financialLocationId;
                 }
                 $this->posting->postRefund($request, $tenantId, [
                     'branchId' => $orderRow->branch_id,
@@ -129,9 +147,10 @@ class RefundController extends Controller
                     'entryDate' => BranchLocalDate::today($orderRow->branch_id ? (int) $orderRow->branch_id : null),
                     'description' => "مرتجع — {$data['reason']}",
                     'lines' => array_values(array_filter([
-                        $amountCents > $taxCents ? ['accountCode' => '4020', 'debit' => Money::decimal($amountCents - $taxCents)] : null,
-                        $taxCents > 0 ? ['accountCode' => '2010', 'debit' => Money::decimal($taxCents)] : null,
+                        $amountCents > $taxCents ? ['accountCode' => $this->accountMap->code($tenantId, 'sales.sales_returns'), 'debit' => Money::decimal($amountCents - $taxCents)] : null,
+                        $taxCents > 0 ? ['accountCode' => $this->accountMap->code($tenantId, 'sales.tax_payable'), 'debit' => Money::decimal($taxCents)] : null,
                         $settlementLine,
+                        ...($walletParty === null ? $this->partyRefundLines($tenantId, $orderRow, $amountCents, $actorId) : []),
                     ])),
                 ], $actorId);
             } else {
@@ -142,6 +161,20 @@ class RefundController extends Controller
         }, 3);
 
         return response()->json(['data' => $this->serialize($refund)], 201);
+    }
+
+    /** Mirror of the sale: the refund also appears on the customer's own account (net zero). */
+    private function partyRefundLines(int $tenantId, object $order, int $amountCents, int $actorId): array
+    {
+        $code = $this->partyAccounts->codeForOrderCustomer($tenantId, $order->customer_id, $actorId);
+        if ($code === null) {
+            return [];
+        }
+
+        return [
+            ['accountCode' => $code, 'credit' => Money::decimal($amountCents), 'description' => "مرتجع — طلب رقم {$order->order_number}"],
+            ['accountCode' => $code, 'debit' => Money::decimal($amountCents), 'description' => "رد المبلغ — طلب رقم {$order->order_number}"],
+        ];
     }
 
     private function payloadHash(array $data): string

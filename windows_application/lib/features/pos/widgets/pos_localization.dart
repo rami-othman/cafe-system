@@ -1,3 +1,4 @@
+import '../../../core/network/api_exception.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../models/applied_discount.dart';
@@ -9,6 +10,7 @@ extension PaymentMethodLocalization on PaymentMethod {
     PaymentMethod.cash => l10n.posPaymentMethodCash,
     PaymentMethod.card => l10n.posPaymentMethodCard,
     PaymentMethod.wallet => l10n.posPaymentMethodWallet,
+    PaymentMethod.shamCash => l10n.localeName.startsWith('ar') ? 'شام كاش' : 'Sham Cash',
     PaymentMethod.split => l10n.posPaymentMethodSplit,
   };
 }
@@ -40,6 +42,13 @@ String localizedPosFailure(AppLocalizations l10n, Object? failure) {
   if (message.contains('ORDER_NOT_RESUMABLE')) return l10n.posHeldOrderRequired;
   if (message == 'pos.holdRetryable') return localizedPosHoldRetryable(l10n);
   if (message == 'pos.holdUncertain') return localizedPosHoldUncertain(l10n);
+  // The server's own (already Arabic) message says what actually went wrong,
+  // instead of hiding it behind a generic failure line.
+  if (failure is ApiException &&
+      failure.statusCode != null &&
+      failure.message.trim().isNotEmpty) {
+    return failure.message;
+  }
   return l10n.posOperationFailed;
 }
 

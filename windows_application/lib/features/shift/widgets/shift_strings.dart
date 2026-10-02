@@ -122,7 +122,8 @@ abstract final class ShiftStrings {
   static String unexplainedCashWarning(String amount) =>
       'حركات على الصندوق غير مرتبطة بهذه الوردية: $amount — راجع كشف حساب الصندوق';
   static const String openDrawerLedger = 'كشف حساب الصندوق';
-  static const String cashVarianceDefaultAccountName = 'عجز وزيادة الصندوق';
+  static const String cashVarianceDefaultAccountName = 'عجز الصندوق';
+  static const String cashOverDefaultAccountName = 'زيادة الصندوق';
   static const String cashDifferenceAccount = 'حساب فرق الصندوق';
   static const String closeTransferDestination = 'وجهة تحويل الإغلاق';
   static const String closeTransferAmount = 'مبلغ التحويل';

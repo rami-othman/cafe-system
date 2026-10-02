@@ -19,6 +19,48 @@ void main() {
   });
 
   testWidgets(
+    'Account tree searches live and opens a child form with its parent',
+    (WidgetTester tester) async {
+      final api = _Phase10Api();
+      final cubit = FinanceSetupCubit(repository: api.repository());
+      await tester.binding.setSurfaceSize(const Size(1280, 900));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              body: BlocProvider<FinanceSetupCubit>.value(
+                value: cubit,
+                child: const FinancialAccountsScreen(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('الأصول'), findsWidgets);
+      expect(find.text('صندوق المقهى'), findsOneWidget);
+      expect(find.text('في التفاصيل'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'صندوق المقهى');
+      await tester.pumpAndSettle();
+      expect(find.text('صندوق المقهى'), findsWidgets);
+      expect(find.textContaining('1 حساب'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('خيارات الحساب').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إضافة حساب فرعي').last);
+      await tester.pumpAndSettle();
+      expect(find.text('101 — صندوق المقهى'), findsOneWidget);
+      expect(find.text('معاينة الحساب'), findsOneWidget);
+      expect(find.text('التصنيف في الشجرة'), findsOneWidget);
+      expect(find.text('مدين'), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await tester.binding.setSurfaceSize(null);
+    },
+  );
+
+  testWidgets(
     'Account Detail is RTL, overflow-free, and opens General Ledger at every desktop width',
     (WidgetTester tester) async {
       final _Phase10Api api = _Phase10Api();
@@ -47,6 +89,8 @@ void main() {
 
         expect(find.textContaining(_Phase10Api.longAccountName), findsWidgets);
         expect(find.text('عرض دفتر الأستاذ'), findsOneWidget);
+        expect(find.text('الحركات المالية (1)'), findsOneWidget);
+        expect(find.text('JE-0001'), findsOneWidget);
         expect(
           Directionality.of(tester.element(find.text('عرض دفتر الأستاذ'))),
           TextDirection.rtl,
@@ -221,8 +265,63 @@ class _Phase10Api {
     if (path == 'finance/accounts' && method == 'GET') {
       return _ok(options, <Map<String, dynamic>>[_account(), _cashAccount()]);
     }
+    if (path == 'finance/accounts/catalog' && method == 'GET') {
+      return _ok(options, <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 20,
+          'code': '1',
+          'nameAr': 'الأصول',
+          'nameEn': 'Assets',
+          'accountGroup': 'assets',
+          'normalBalance': 'debit',
+          'isActive': true,
+          'isSystemProtected': false,
+        },
+        <String, dynamic>{
+          'id': 21,
+          'code': '101',
+          'nameAr': 'صندوق المقهى',
+          'nameEn': 'Cafe Cash',
+          'parentAccountId': 20,
+          'parentCode': '1',
+          'parentNameAr': 'الأصول',
+          'accountGroup': 'assets',
+          'normalBalance': 'debit',
+          'isActive': true,
+          'isSystemProtected': false,
+        },
+      ]);
+    }
     if (path == 'finance/accounts/1' && method == 'GET') {
       return _ok(options, _account());
+    }
+    if (path == 'finance/accounts/1/transactions' && method == 'GET') {
+      return Response<dynamic>(
+        requestOptions: options,
+        statusCode: 200,
+        data: <String, dynamic>{
+          'data': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 90,
+              'date': '2026-09-29',
+              'journalEntryId': 11,
+              'entryNumber': 'JE-0001',
+              'sourceType': 'manual_journal',
+              'description': 'قيد تجريبي',
+              'debit': '100.00',
+              'credit': '0.00',
+              'runningBalance': '100.00',
+              'status': 'posted',
+            },
+          ],
+          'meta': <String, dynamic>{
+            'currentPage': 1,
+            'perPage': 50,
+            'total': 1,
+            'lastPage': 1,
+          },
+        },
+      );
     }
     if (path == 'finance/accounting-periods/9' && method == 'GET') {
       return _ok(options, _period());

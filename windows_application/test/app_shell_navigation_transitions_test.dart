@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
+import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
 // Route-scoped widget tests elsewhere in this suite all call
@@ -34,6 +35,36 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('cafe finance navigation clears the factory data scope', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const App());
+    await tester.pumpAndSettle();
+
+    serviceLocator<DioApiClient>().scopeBranchId = 6;
+    appRouter.go(AppRoutes.financeSuppliers);
+    await tester.pumpAndSettle();
+
+    expect(serviceLocator<DioApiClient>().scopeBranchId, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('global Back returns to the immediately previous screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const App());
+    await tester.pumpAndSettle();
+    appRouter.go(AppRoutes.finance);
+    await tester.pumpAndSettle();
+    appRouter.go(AppRoutes.financeSuppliers);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('app-global-back')));
+    await tester.pumpAndSettle();
+    expect(appRouter.routeInformationProvider.value.uri.path, AppRoutes.finance);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'navigating between every main-shell module within a running app never throws',

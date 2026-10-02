@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/branding/app_brand.dart';
 import '../core/network/dio_api_client.dart';
+import '../core/navigation/app_route_history.dart';
 import '../core/services/service_locator.dart';
 import '../core/branding/brand_title_synchronizer.dart';
 import '../core/constants/app_sizes.dart';
@@ -118,6 +120,11 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      appRouteHistory.attach(GoRouter.of(context));
+    } catch (_) {
+      // Standalone shell previews may not have a router.
+    }
     final AuthSession? session = context
         .watch<AuthSessionCubit>()
         .state

@@ -15,6 +15,45 @@ class FinancialReportsAndPeriodsTest extends TestCase
     use RefreshDatabase;
     use DailyClosingFixtures;
 
+    public function test_opening_entry_uses_fiscal_start_and_is_unique_per_period(): void
+    {
+        $this->seed();
+        $tenant = $this->tenantId();
+        $headers = $this->headers($tenant, 'owner', 'opening-entry');
+        $period = (int) $this->postJson('/api/v1/finance/accounting-periods', [
+            'name' => '2032', 'startDate' => '2032-01-01', 'endDate' => '2032-12-31',
+        ], $headers)->assertCreated()->json('data.id');
+        $payload = ['entryDate' => '2032-01-01', 'lines' => [
+            ['accountId' => $this->accountId($tenant, '1010'), 'debit' => '100.00'],
+            ['accountId' => $this->accountId($tenant, '3000'), 'credit' => '100.00'],
+        ]];
+        $id = (int) $this->postJson("/api/v1/finance/accounting-periods/$period/opening-entry", $payload, $headers)
+            ->assertCreated()->assertJsonPath('data.sourceType', 'opening_balance')->json('data.id');
+        $this->assertSame($period, (int) DB::table('journal_entries')->where('id', $id)->value('source_id'));
+        $this->postJson("/api/v1/finance/accounting-periods/$period/opening-entry", $payload, $headers)->assertUnprocessable();
+        $this->postJson("/api/v1/finance/journal-entries/$id/post", [], $headers)->assertOk();
+    }
+
+    public function test_posting_after_an_unclosed_fiscal_year_requires_closing_it(): void
+    {
+        $this->seed();
+        $tenant = $this->tenantId();
+        $headers = $this->headers($tenant, 'owner', 'unclosed-year');
+        $period = (int) $this->postJson('/api/v1/finance/accounting-periods', [
+            'name' => '2030', 'startDate' => '2030-01-01', 'endDate' => '2030-12-31',
+        ], $headers)->assertCreated()->json('data.id');
+        $draft = (int) $this->postJson('/api/v1/finance/journal-entries', [
+            'entryDate' => '2031-01-01', 'lines' => [
+                ['accountId' => $this->accountId($tenant, '1010'), 'debit' => '10.00'],
+                ['accountId' => $this->accountId($tenant, '3000'), 'credit' => '10.00'],
+            ],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/journal-entries/$draft/post", [], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('accountingPeriod');
+        $this->postJson("/api/v1/finance/accounting-periods/$period/close", [], $headers)->assertOk();
+        $this->postJson("/api/v1/finance/journal-entries/$draft/post", [], $headers)->assertOk();
+    }
+
     public function test_accounting_periods_reject_overlap_close_idempotently_and_lock(): void
     {
         $this->seed(); $tenant = $this->tenantId(); $headers = $this->headers($tenant, 'owner', 'period-life');

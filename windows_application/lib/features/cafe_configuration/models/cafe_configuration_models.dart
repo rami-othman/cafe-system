@@ -81,6 +81,7 @@ class CafeConfigurationBranch {
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
     this.cashVarianceAccountId,
+    this.cashOverAccountId,
     this.shiftClosingFloatAmount = '0.00',
     this.shiftCloseTime,
     this.availableShiftCloseDestinations = const <BranchCashLocationOption>[],
@@ -104,6 +105,7 @@ class CafeConfigurationBranch {
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
   final int? cashVarianceAccountId;
+  final int? cashOverAccountId;
   final String shiftClosingFloatAmount;
   final String? shiftCloseTime;
   final List<BranchCashLocationOption> availableShiftCloseDestinations;
@@ -131,6 +133,7 @@ class CafeConfigurationBranch {
     shiftCloseDestinationFinancialLocationId:
         (json['shiftCloseDestinationFinancialLocationId'] as num?)?.toInt(),
     cashVarianceAccountId: (json['cashVarianceAccountId'] as num?)?.toInt(),
+    cashOverAccountId: (json['cashOverAccountId'] as num?)?.toInt(),
     shiftClosingFloatAmount:
         json['shiftClosingFloatAmount']?.toString() ?? '0.00',
     shiftCloseTime: json['shiftCloseTime'] as String?,
@@ -191,16 +194,22 @@ class BranchFinancialAccountOption {
     required this.id,
     required this.code,
     required this.nameAr,
+    this.accountGroup = '',
+    this.normalBalance = '',
   });
   final int id;
   final String code;
   final String nameAr;
+  final String accountGroup;
+  final String normalBalance;
   String get label => '$code — $nameAr';
   factory BranchFinancialAccountOption.fromJson(Map<String, dynamic> json) =>
       BranchFinancialAccountOption(
         id: (json['id'] as num).toInt(),
         code: json['code'] as String? ?? '',
         nameAr: json['nameAr'] as String? ?? '',
+        accountGroup: json['accountGroup'] as String? ?? '',
+        normalBalance: json['normalBalance'] as String? ?? '',
       );
 }
 
@@ -233,6 +242,7 @@ class BranchDraft {
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
     this.cashVarianceAccountId,
+    this.cashOverAccountId,
     this.shiftClosingFloatAmount = '0.00',
     this.shiftCloseTime,
     this.printerConfig = const PrinterConfig(),
@@ -252,6 +262,7 @@ class BranchDraft {
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
   final int? cashVarianceAccountId;
+  final int? cashOverAccountId;
   final String shiftClosingFloatAmount;
   final String? shiftCloseTime;
   final PrinterConfig printerConfig;
@@ -268,6 +279,7 @@ class BranchDraft {
     shiftCloseDestinationFinancialLocationId:
         branch.shiftCloseDestinationFinancialLocationId,
     cashVarianceAccountId: branch.cashVarianceAccountId,
+    cashOverAccountId: branch.cashOverAccountId,
     shiftClosingFloatAmount: branch.shiftClosingFloatAmount,
     shiftCloseTime: branch.shiftCloseTime,
     printerConfig: branch.printerConfig,
@@ -285,6 +297,8 @@ class BranchDraft {
     int? posCashFinancialLocationId,
     int? shiftCloseDestinationFinancialLocationId,
     int? cashVarianceAccountId,
+    int? cashOverAccountId,
+    bool clearCashOverAccountId = false,
     String? shiftClosingFloatAmount,
     String? shiftCloseTime,
     PrinterConfig? printerConfig,
@@ -309,6 +323,9 @@ class BranchDraft {
     cashVarianceAccountId: clearCashVarianceAccountId
         ? null
         : cashVarianceAccountId ?? this.cashVarianceAccountId,
+    cashOverAccountId: clearCashOverAccountId
+        ? null
+        : cashOverAccountId ?? this.cashOverAccountId,
     shiftClosingFloatAmount:
         shiftClosingFloatAmount ?? this.shiftClosingFloatAmount,
     shiftCloseTime: shiftCloseTime ?? this.shiftCloseTime,
@@ -329,6 +346,7 @@ class BranchDraft {
     'shiftCloseDestinationFinancialLocationId':
         shiftCloseDestinationFinancialLocationId,
     'cashVarianceAccountId': cashVarianceAccountId,
+    'cashOverAccountId': cashOverAccountId,
     'shiftClosingFloatAmount': shiftClosingFloatAmount,
     'shiftCloseTime': shiftCloseTime?.trim().isEmpty == true
         ? null

@@ -73,6 +73,13 @@ class FinanceGlobalContext extends StatelessWidget {
     this.compareEnabled = false,
     this.onCompareChanged,
     this.showCompare = true,
+    this.periodOptions = const <String>[
+      FinancePeriod.today,
+      FinancePeriod.thisWeek,
+      FinancePeriod.thisMonth,
+      FinancePeriod.custom,
+    ],
+    this.disabledPeriods = const <String>{},
   });
   final String selectedPeriod;
   final ValueChanged<String>? onPeriod;
@@ -81,10 +88,13 @@ class FinanceGlobalContext extends StatelessWidget {
   final ValueChanged<int?>? onBranch;
   final bool compareEnabled;
   final ValueChanged<bool>? onCompareChanged;
+
   /// Some lists (e.g. Financial Transactions) have no logical comparison
   /// role; hide the toggle there instead of showing a control that does
   /// nothing when disabled.
   final bool showCompare;
+  final List<String> periodOptions;
+  final Set<String> disabledPeriods;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -105,22 +115,18 @@ class FinanceGlobalContext extends StatelessWidget {
         // A Row gives the period controls their intrinsic widths and keeps
         // them adjacent, rather than letting the surrounding context layout
         // assign each control a complete line.
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          spacing: FinanceSpace.sm,
+          runSpacing: FinanceSpace.sm,
           children: <Widget>[
-            for (final String value in <String>[
-              FinancePeriod.today,
-              FinancePeriod.thisWeek,
-              FinancePeriod.thisMonth,
-              FinancePeriod.custom,
-            ]) ...<Widget>[
+            for (final String value in periodOptions) ...<Widget>[
               _ContextButton(
                 label: FinancePeriod.label(context.l10n, value),
                 selected: selectedPeriod == value,
-                onTap: onPeriod == null ? null : () => onPeriod!(value),
+                onTap: onPeriod == null || disabledPeriods.contains(value)
+                    ? null
+                    : () => onPeriod!(value),
               ),
-              if (value != FinancePeriod.custom)
-                const SizedBox(width: FinanceSpace.sm),
             ],
           ],
         ),
@@ -153,9 +159,7 @@ class FinanceGlobalContext extends StatelessWidget {
                     items: <DropdownMenuItem<int>>[
                       DropdownMenuItem<int>(
                         value: -1,
-                        child: Text(
-                          context.l10n.financeGlobalContextBranchAll,
-                        ),
+                        child: Text(context.l10n.financeGlobalContextBranchAll),
                       ),
                       ...branches.map(
                         (FinanceBranchOption branch) => DropdownMenuItem<int>(
