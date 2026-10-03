@@ -24,7 +24,6 @@ void main() {
     expect(find.text('Search products...'), findsOneWidget);
     expect(find.text('COFFEE'), findsOneWidget);
     expect(find.text('Espresso'), findsOneWidget);
-    expect(find.text('Dine-in'), findsOneWidget);
     expect(find.text('Cappuccino'), findsOneWidget);
     expect(find.text('Complete order'), findsOneWidget);
 

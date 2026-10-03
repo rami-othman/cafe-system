@@ -16339,6 +16339,1008 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Print successful'**
   String get printerTestPrintSuccessful;
+
+  /// No description provided for @ordersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Management'**
+  String get ordersTitle;
+
+  /// No description provided for @ordersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View and manage all active, held, and recent orders.'**
+  String get ordersSubtitle;
+
+  /// No description provided for @ordersNoMatchFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders match this filter yet.'**
+  String get ordersNoMatchFilter;
+
+  /// No description provided for @ordersPrintLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing will be added later.'**
+  String get ordersPrintLater;
+
+  /// No description provided for @ordersCopyLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy order will be added later.'**
+  String get ordersCopyLater;
+
+  /// No description provided for @ordersCannotResume.
+  ///
+  /// In en, this message translates to:
+  /// **'This order cannot be resumed.'**
+  String get ordersCannotResume;
+
+  /// No description provided for @ordersResumeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resume this order. Please try again.'**
+  String get ordersResumeFailed;
+
+  /// No description provided for @ordersCancelledDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancelled.'**
+  String get ordersCancelledDone;
+
+  /// No description provided for @ordersCancelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not cancel this order.'**
+  String get ordersCancelFailed;
+
+  /// No description provided for @ordersCheckStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Check status'**
+  String get ordersCheckStatus;
+
+  /// No description provided for @ordersCancellationConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancellation confirmed.'**
+  String get ordersCancellationConfirmed;
+
+  /// No description provided for @ordersStillActiveRetryCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order is still active. Retry cancellation explicitly.'**
+  String get ordersStillActiveRetryCancel;
+
+  /// No description provided for @ordersPaymentRecordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record payment. Please try again.'**
+  String get ordersPaymentRecordFailed;
+
+  /// No description provided for @ordersPaymentConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed.'**
+  String get ordersPaymentConfirmed;
+
+  /// No description provided for @ordersPaymentConfirmedNoReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed, but the receipt is unavailable.'**
+  String get ordersPaymentConfirmedNoReceipt;
+
+  /// No description provided for @ordersRetryReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry receipt'**
+  String get ordersRetryReceipt;
+
+  /// No description provided for @ordersRefundRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund recorded.'**
+  String get ordersRefundRecorded;
+
+  /// No description provided for @ordersRefundRecordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record refund. Please check the order before retrying.'**
+  String get ordersRefundRecordFailed;
+
+  /// No description provided for @ordersPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get ordersPrevious;
+
+  /// No description provided for @ordersNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get ordersNext;
+
+  /// No description provided for @ordersPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {last}'**
+  String ordersPageOf(int current, int last);
+
+  /// No description provided for @ordersTotalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{1 order} other{{total} orders}}'**
+  String ordersTotalCount(int total);
+
+  /// No description provided for @ordersReplaceCartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace current POS cart?'**
+  String get ordersReplaceCartTitle;
+
+  /// No description provided for @ordersReplaceCartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Resuming this held order will replace the current POS cart context. Unsaved local changes will be discarded.'**
+  String get ordersReplaceCartBody;
+
+  /// No description provided for @ordersKeepCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep current cart'**
+  String get ordersKeepCart;
+
+  /// No description provided for @ordersReplaceAndResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace and resume'**
+  String get ordersReplaceAndResume;
+
+  /// No description provided for @ordersCancelOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order?'**
+  String get ordersCancelOrderTitle;
+
+  /// No description provided for @ordersCancelOrderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel {number}? This cannot be undone.'**
+  String ordersCancelOrderBody(String number);
+
+  /// No description provided for @ordersKeepOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep order'**
+  String get ordersKeepOrder;
+
+  /// No description provided for @ordersCancelOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get ordersCancelOrder;
+
+  /// No description provided for @ordersCancelOrderSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order submitting'**
+  String get ordersCancelOrderSubmitting;
+
+  /// No description provided for @ordersStatusPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARING'**
+  String get ordersStatusPreparing;
+
+  /// No description provided for @ordersStatusHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'HELD'**
+  String get ordersStatusHeld;
+
+  /// No description provided for @ordersStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'READY'**
+  String get ordersStatusReady;
+
+  /// No description provided for @ordersStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'PAID'**
+  String get ordersStatusPaid;
+
+  /// No description provided for @ordersStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPLETED'**
+  String get ordersStatusCompleted;
+
+  /// No description provided for @ordersStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCELLED'**
+  String get ordersStatusCancelled;
+
+  /// No description provided for @ordersStatusRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'REFUNDED'**
+  String get ordersStatusRefunded;
+
+  /// No description provided for @ordersStatusPartiallyRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'PARTIAL REFUND'**
+  String get ordersStatusPartiallyRefunded;
+
+  /// No description provided for @ordersFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE ORDERS'**
+  String get ordersFilterActive;
+
+  /// No description provided for @ordersFilterHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'HELD ORDERS'**
+  String get ordersFilterHeld;
+
+  /// No description provided for @ordersFilterDineIn.
+  ///
+  /// In en, this message translates to:
+  /// **'DINE-IN'**
+  String get ordersFilterDineIn;
+
+  /// No description provided for @ordersFilterTakeaway.
+  ///
+  /// In en, this message translates to:
+  /// **'TAKEAWAY'**
+  String get ordersFilterTakeaway;
+
+  /// No description provided for @ordersActionResume.
+  ///
+  /// In en, this message translates to:
+  /// **'RESUME'**
+  String get ordersActionResume;
+
+  /// No description provided for @ordersActionPay.
+  ///
+  /// In en, this message translates to:
+  /// **'PAY'**
+  String get ordersActionPay;
+
+  /// No description provided for @ordersActionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get ordersActionCancel;
+
+  /// No description provided for @ordersActionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'DETAILS'**
+  String get ordersActionDetails;
+
+  /// No description provided for @ordersActionSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} order action'**
+  String ordersActionSemantics(String action);
+
+  /// No description provided for @ordersCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get ordersCustomer;
+
+  /// No description provided for @ordersWalkInCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk-in Customer'**
+  String get ordersWalkInCustomer;
+
+  /// No description provided for @ordersWalkInInitials.
+  ///
+  /// In en, this message translates to:
+  /// **'WC'**
+  String get ordersWalkInInitials;
+
+  /// No description provided for @ordersWalkIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk-in'**
+  String get ordersWalkIn;
+
+  /// No description provided for @ordersOrderItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Items'**
+  String get ordersOrderItems;
+
+  /// No description provided for @ordersNoLineItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No line items'**
+  String get ordersNoLineItems;
+
+  /// No description provided for @ordersNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: {note}'**
+  String ordersNote(String note);
+
+  /// No description provided for @ordersItemFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get ordersItemFallback;
+
+  /// No description provided for @ordersItemsOne.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Item'**
+  String ordersItemsOne(String count);
+
+  /// No description provided for @ordersItemsMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Items'**
+  String ordersItemsMany(String count);
+
+  /// No description provided for @ordersTotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals'**
+  String get ordersTotals;
+
+  /// No description provided for @ordersSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get ordersSubtotal;
+
+  /// No description provided for @ordersTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax ({percent}%)'**
+  String ordersTax(String percent);
+
+  /// No description provided for @ordersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip (15%)'**
+  String get ordersTip;
+
+  /// No description provided for @ordersRefundedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get ordersRefundedLabel;
+
+  /// No description provided for @ordersTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get ordersTotal;
+
+  /// No description provided for @ordersCloseDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Close order details'**
+  String get ordersCloseDetails;
+
+  /// No description provided for @ordersPrintTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Print order'**
+  String get ordersPrintTooltip;
+
+  /// No description provided for @ordersCopyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy order'**
+  String get ordersCopyTooltip;
+
+  /// No description provided for @ordersResumeInPos.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume in POS'**
+  String get ordersResumeInPos;
+
+  /// No description provided for @ordersDisabledSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} disabled'**
+  String ordersDisabledSemantics(String label);
+
+  /// No description provided for @ordersPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get ordersPay;
+
+  /// No description provided for @ordersRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get ordersRefund;
+
+  /// No description provided for @ordersPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get ordersPaymentTitle;
+
+  /// No description provided for @ordersPaymentAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'{status} - Auth: {auth}'**
+  String ordersPaymentAuth(String status, String auth);
+
+  /// No description provided for @ordersRefundAmountLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund {amount}'**
+  String ordersRefundAmountLine(String amount);
+
+  /// No description provided for @ordersNoPaymentYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment recorded yet.'**
+  String get ordersNoPaymentYet;
+
+  /// No description provided for @ordersMethodWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get ordersMethodWallet;
+
+  /// No description provided for @ordersMethodShamCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Sham Cash'**
+  String get ordersMethodShamCash;
+
+  /// No description provided for @ordersMethodSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get ordersMethodSplit;
+
+  /// No description provided for @ordersPaymentStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get ordersPaymentStatusPending;
+
+  /// No description provided for @ordersPaymentStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get ordersPaymentStatusCompleted;
+
+  /// No description provided for @ordersPaymentStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get ordersPaymentStatusFailed;
+
+  /// No description provided for @ordersPaymentStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get ordersPaymentStatusApproved;
+
+  /// No description provided for @ordersPaymentStatusVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get ordersPaymentStatusVoided;
+
+  /// No description provided for @ordersPaymentStatusRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get ordersPaymentStatusRefunded;
+
+  /// No description provided for @ordersTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get ordersTimeline;
+
+  /// No description provided for @ordersBackendEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'System event'**
+  String get ordersBackendEvent;
+
+  /// No description provided for @ordersEventCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Order created'**
+  String get ordersEventCreated;
+
+  /// No description provided for @ordersEventHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Order held'**
+  String get ordersEventHeld;
+
+  /// No description provided for @ordersEventClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order closed'**
+  String get ordersEventClosed;
+
+  /// No description provided for @ordersEventRefundCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund completed'**
+  String get ordersEventRefundCompleted;
+
+  /// No description provided for @ordersEventPaymentReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received'**
+  String get ordersEventPaymentReceived;
+
+  /// No description provided for @ordersEventCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Order completed'**
+  String get ordersEventCompleted;
+
+  /// No description provided for @ordersEventReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Order ready'**
+  String get ordersEventReady;
+
+  /// No description provided for @ordersEventPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Order preparing'**
+  String get ordersEventPreparing;
+
+  /// No description provided for @ordersAm.
+  ///
+  /// In en, this message translates to:
+  /// **'AM'**
+  String get ordersAm;
+
+  /// No description provided for @ordersPm.
+  ///
+  /// In en, this message translates to:
+  /// **'PM'**
+  String get ordersPm;
+
+  /// No description provided for @ordersJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get ordersJustNow;
+
+  /// No description provided for @ordersMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}m ago'**
+  String ordersMinutesAgo(String n);
+
+  /// No description provided for @ordersHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}h ago'**
+  String ordersHoursAgo(String n);
+
+  /// No description provided for @ordersDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}d ago'**
+  String ordersDaysAgo(String n);
+
+  /// No description provided for @ordersRefundReasonCustomerRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Request'**
+  String get ordersRefundReasonCustomerRequest;
+
+  /// No description provided for @ordersRefundReasonWrongItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong Item'**
+  String get ordersRefundReasonWrongItem;
+
+  /// No description provided for @ordersRefundReasonQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Item Quality Issue'**
+  String get ordersRefundReasonQuality;
+
+  /// No description provided for @ordersRefundReasonDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate Charge'**
+  String get ordersRefundReasonDuplicate;
+
+  /// No description provided for @ordersRefundReasonOrderCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Cancelled'**
+  String get ordersRefundReasonOrderCancelled;
+
+  /// No description provided for @ordersRefundReasonManagerApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager Approved'**
+  String get ordersRefundReasonManagerApproved;
+
+  /// No description provided for @ordersRefundReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get ordersRefundReasonOther;
+
+  /// No description provided for @ordersRefundTypeFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Refund'**
+  String get ordersRefundTypeFull;
+
+  /// No description provided for @ordersRefundTypePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial Refund'**
+  String get ordersRefundTypePartial;
+
+  /// No description provided for @ordersRefundCustomAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom amount'**
+  String get ordersRefundCustomAmount;
+
+  /// No description provided for @ordersRefundEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a refund amount.'**
+  String get ordersRefundEnterAmount;
+
+  /// No description provided for @ordersRefundAmountPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund amount must be greater than zero.'**
+  String get ordersRefundAmountPositive;
+
+  /// No description provided for @ordersRefundAmountExceeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund amount cannot exceed refundable balance.'**
+  String get ordersRefundAmountExceeds;
+
+  /// No description provided for @ordersRefundFieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'REFUND AMOUNT'**
+  String get ordersRefundFieldAmount;
+
+  /// No description provided for @ordersRefundFieldReason.
+  ///
+  /// In en, this message translates to:
+  /// **'REASON FOR REFUND'**
+  String get ordersRefundFieldReason;
+
+  /// No description provided for @ordersRefundFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'MANAGER NOTES (OPTIONAL)'**
+  String get ordersRefundFieldNotes;
+
+  /// No description provided for @ordersRefundNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add context for end of day reporting...'**
+  String get ordersRefundNotesHint;
+
+  /// No description provided for @ordersRefundDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund Order {number}'**
+  String ordersRefundDialogTitle(String number);
+
+  /// No description provided for @ordersRefundCloseDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Close refund dialog'**
+  String get ordersRefundCloseDialog;
+
+  /// No description provided for @ordersRefundConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Refund'**
+  String get ordersRefundConfirm;
+
+  /// No description provided for @ordersRefundOrderTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'ORDER TOTAL'**
+  String get ordersRefundOrderTotal;
+
+  /// No description provided for @ordersRefundPaidVia.
+  ///
+  /// In en, this message translates to:
+  /// **'PAID VIA'**
+  String get ordersRefundPaidVia;
+
+  /// No description provided for @ordersRefundWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety First: This action will reverse the payment and cannot be undone.\nPlease verify all details before confirming.'**
+  String get ordersRefundWarning;
+
+  /// No description provided for @ordersMsgNoActiveBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'No active branches are available.'**
+  String get ordersMsgNoActiveBranches;
+
+  /// No description provided for @ordersMsgPageRecoveryInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Order page recovery returned invalid pagination metadata.'**
+  String get ordersMsgPageRecoveryInvalid;
+
+  /// No description provided for @ordersMsgLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load orders. Check backend connection.'**
+  String get ordersMsgLoadFailed;
+
+  /// No description provided for @ordersMsgDetailsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load order details. Check backend connection.'**
+  String get ordersMsgDetailsLoadFailed;
+
+  /// No description provided for @ordersMsgResumeInvalidId.
+  ///
+  /// In en, this message translates to:
+  /// **'This order cannot be resumed because its backend id is invalid.'**
+  String get ordersMsgResumeInvalidId;
+
+  /// No description provided for @ordersMsgDifferentOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'The backend returned a different order. Refresh and try again.'**
+  String get ordersMsgDifferentOrder;
+
+  /// No description provided for @ordersMsgNotInBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'This order is not in the selected branch.'**
+  String get ordersMsgNotInBranch;
+
+  /// No description provided for @ordersMsgOnlyHeldResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an unpaid held order can be resumed.'**
+  String get ordersMsgOnlyHeldResume;
+
+  /// No description provided for @ordersMsgResumeInPosFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resume this order in POS. Please try again.'**
+  String get ordersMsgResumeInPosFailed;
+
+  /// No description provided for @ordersMsgResumeConnFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resume this order. Check backend connection.'**
+  String get ordersMsgResumeConnFailed;
+
+  /// No description provided for @ordersMsgCancelInvalidId.
+  ///
+  /// In en, this message translates to:
+  /// **'This order cannot be cancelled because its backend id is invalid.'**
+  String get ordersMsgCancelInvalidId;
+
+  /// No description provided for @ordersMsgCancelVerifyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify this order before cancellation.'**
+  String get ordersMsgCancelVerifyFailed;
+
+  /// No description provided for @ordersMsgOnlyDraftHeldCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an unpaid draft or held order can be cancelled.'**
+  String get ordersMsgOnlyDraftHeldCancel;
+
+  /// No description provided for @ordersMsgCancelNoChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not cancel this order. No changes were confirmed.'**
+  String get ordersMsgCancelNoChange;
+
+  /// No description provided for @ordersMsgOrderIdInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Order id is not a backend id.'**
+  String get ordersMsgOrderIdInvalid;
+
+  /// No description provided for @ordersMsgPaymentPrepareAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare payment. Check order access and try again.'**
+  String get ordersMsgPaymentPrepareAccess;
+
+  /// No description provided for @ordersMsgPaymentNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is not ready. Refresh the order and try again.'**
+  String get ordersMsgPaymentNotReady;
+
+  /// No description provided for @ordersMsgCannotPayState.
+  ///
+  /// In en, this message translates to:
+  /// **'This order cannot be paid in its current state.'**
+  String get ordersMsgCannotPayState;
+
+  /// No description provided for @ordersMsgPaymentPrepareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare payment. Please try again.'**
+  String get ordersMsgPaymentPrepareFailed;
+
+  /// No description provided for @ordersMsgPaymentNeedsBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment requires an authenticated backend connection.'**
+  String get ordersMsgPaymentNeedsBackend;
+
+  /// No description provided for @ordersMsgPaymentRecordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record payment. Please try again.'**
+  String get ordersMsgPaymentRecordFailed;
+
+  /// No description provided for @ordersMsgPaymentNotCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment was not completed. You can retry safely with the same operation.'**
+  String get ordersMsgPaymentNotCompleted;
+
+  /// No description provided for @ordersMsgReceiptLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment completed, but the receipt could not be loaded.'**
+  String get ordersMsgReceiptLoadFailed;
+
+  /// No description provided for @ordersMsgPaymentSummaryMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment summary did not match the selected order.'**
+  String get ordersMsgPaymentSummaryMismatch;
+
+  /// No description provided for @ordersMsgNoSupportedMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'No supported payment method is available for this order.'**
+  String get ordersMsgNoSupportedMethod;
+
+  /// No description provided for @ordersMsgPaymentUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment status could not be confirmed. Check the order before retrying.'**
+  String get ordersMsgPaymentUncertain;
+
+  /// No description provided for @ordersMsgNoRefundable.
+  ///
+  /// In en, this message translates to:
+  /// **'This order has no completed payment or refundable balance.'**
+  String get ordersMsgNoRefundable;
+
+  /// No description provided for @ordersMsgRefundPrepareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare the refund. Please try again.'**
+  String get ordersMsgRefundPrepareFailed;
+
+  /// No description provided for @ordersMsgRefundRecordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record the refund. Please try again.'**
+  String get ordersMsgRefundRecordFailed;
+
+  /// No description provided for @ordersMsgRefundNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund was not found on the server. Check the order, then retry with the same operation.'**
+  String get ordersMsgRefundNotFound;
+
+  /// No description provided for @ordersMsgRefundUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund status could not be confirmed. Check the order before retrying.'**
+  String get ordersMsgRefundUncertain;
+
+  /// No description provided for @ordersMsgCancelUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation status could not be confirmed. Check status before retrying.'**
+  String get ordersMsgCancelUncertain;
+
+  /// No description provided for @ordersMsgCancelUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation status is unresolved. Check status before retrying.'**
+  String get ordersMsgCancelUnresolved;
+
+  /// No description provided for @ordersMsgStillActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Order is still active and unpaid. Check status, then retry cancellation explicitly.'**
+  String get ordersMsgStillActive;
+
+  /// No description provided for @posSelectOrderType.
+  ///
+  /// In en, this message translates to:
+  /// **'Order type'**
+  String get posSelectOrderType;
+
+  /// No description provided for @posOrderTypeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the order type to continue.'**
+  String get posOrderTypeRequired;
+
+  /// No description provided for @posSelectDeliveryCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery company'**
+  String get posSelectDeliveryCompany;
+
+  /// No description provided for @posDeliveryCompanyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the delivery company.'**
+  String get posDeliveryCompanyRequired;
+
+  /// No description provided for @posNoDeliveryCompanies.
+  ///
+  /// In en, this message translates to:
+  /// **'No delivery company is set up. Ask the manager to add one under payment methods.'**
+  String get posNoDeliveryCompanies;
+
+  /// No description provided for @posDeliveryPaymentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount is recorded on the delivery company\'s account.'**
+  String get posDeliveryPaymentHint;
+
+  /// No description provided for @posDeliveryOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Own delivery'**
+  String get posDeliveryOwn;
+
+  /// No description provided for @posDeliveryCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get posDeliveryCollection;
+
+  /// No description provided for @posDeliveryCashNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash now'**
+  String get posDeliveryCashNow;
+
+  /// No description provided for @posDeliveryOnAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'On the company\'s account (later)'**
+  String get posDeliveryOnAccount;
 }
 
 class _AppLocalizationsDelegate

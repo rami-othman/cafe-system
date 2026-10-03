@@ -384,6 +384,18 @@ class FinanceSetupRepository {
 
   Future<Map<String, dynamic>> getAccountingPeriod(int id) =>
       getFinanceMap('finance/accounting-periods/$id');
+  Future<void> createAccountingPeriod({
+    required String name,
+    required String startDate,
+    required String endDate,
+  }) => _api.post(
+    'finance/accounting-periods',
+    data: <String, dynamic>{
+      'name': name,
+      'startDate': startDate,
+      'endDate': endDate,
+    },
+  );
   Future<void> closeAccountingPeriod(int id) =>
       _api.post('finance/accounting-periods/$id/close');
   Future<void> lockAccountingPeriod(int id) =>

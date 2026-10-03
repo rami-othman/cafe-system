@@ -1128,4 +1128,106 @@ class SaleAccountingApiTest extends TestCase
         }
         $this->assertSame([], array_values(array_intersect($codes, ['1010', '4000', '5000', '1100', '2010'])), 'no posting line uses a legacy account any more');
     }
+
+    private function deliveryCompany(int $tenant, array $headers, string $name = 'ليستا', string $accountCode = '1030'): int
+    {
+        $accountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', $accountCode)->value('id');
+
+        return (int) $this->postJson('/api/v1/finance/payment-methods', ['code' => 'DLV-'.strtoupper(substr(md5($name), 0, 5)), 'name' => $name, 'type' => 'delivery_app', 'financialAccountId' => $accountId, 'isActive' => true], $headers)
+            ->assertCreated()->json('data.id');
+    }
+
+    public function test_delivery_paid_in_cash_goes_to_the_drawer_and_only_records_the_company(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $company = $this->deliveryCompany($tenant, $headers);
+        $product = DB::table('products')->where('tenant_id', $tenant)->where('name', 'Cappuccino')->first();
+        $order = $this->createOrder($tenant, $branchId, $headers, $product->id, quantity: 1, withDefaultModifiers: true);
+        $orderId = $order->json('data.id');
+        $totals = $order->json('data.totals');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'orderType' => 'delivery', 'deliveryCompanyId' => $company, 'idempotencyKey' => 'delivery-cash'], $headers)->assertOk();
+
+        $this->assertSame('delivery', DB::table('orders')->where('id', $orderId)->value('type'));
+        $this->assertSame($company, (int) DB::table('orders')->where('id', $orderId)->value('delivery_company_id'));
+        $payment = DB::table('payments')->where('order_id', $orderId)->first();
+        $this->assertSame('cash', $payment->method);
+        $shift = DB::table('shifts')->where('id', $payment->shift_id)->first();
+        $summary = app(\App\Services\ShiftCashSummaryService::class)->summarize($tenant, $shift);
+        $this->assertSame(round((float) $totals['total'], 2), round((float) $summary['cashSales'], 2), 'the driver hands the cash over: it enters the drawer');
+
+        // The company is also a customer record on its linked account, and the order shows on that
+        // account as sale + collection (net zero), so its ledger lists everything it brought.
+        $accountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1030')->value('id');
+        $this->assertSame(1, DB::table('customers')->where('tenant_id', $tenant)->where('financial_account_id', $accountId)->count());
+        $entry = DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->first();
+        $companyLines = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->where('financial_account_id', $accountId)->get();
+        $this->assertCount(2, $companyLines);
+        $this->assertSame(round((float) $totals['total'], 2), round((float) $companyLines->sum('debit'), 2));
+        $this->assertSame(round((float) $totals['total'], 2), round((float) $companyLines->sum('credit'), 2));
+    }
+
+    public function test_delivery_left_on_the_company_account_debits_that_account_not_the_till(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $company = $this->deliveryCompany($tenant, $headers);
+        $accountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1030')->value('id');
+        $product = DB::table('products')->where('tenant_id', $tenant)->where('name', 'Cappuccino')->first();
+        $order = $this->createOrder($tenant, $branchId, $headers, $product->id, quantity: 1, withDefaultModifiers: true);
+        $orderId = $order->json('data.id');
+        $totals = $order->json('data.totals');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'orderType' => 'delivery', 'deliveryCompanyId' => $company, 'onDeliveryAccount' => true, 'idempotencyKey' => 'delivery-credit'], $headers)->assertOk();
+
+        $payment = DB::table('payments')->where('order_id', $orderId)->first();
+        $this->assertSame($company, (int) $payment->payment_method_id);
+        $entry = DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->first();
+        $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->get();
+        $this->assertSame(round((float) $totals['total'], 2), round((float) $lines->firstWhere('financial_account_id', $accountId)->debit, 2));
+        $cashAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
+        $this->assertNull($lines->firstWhere('financial_account_id', $cashAccountId));
+        $shift = DB::table('shifts')->where('id', $payment->shift_id)->first();
+        $summary = app(\App\Services\ShiftCashSummaryService::class)->summarize($tenant, $shift);
+        $this->assertSame('0.00', $summary['cashSales'], 'the company holds the money: it never enters the drawer');
+    }
+
+    public function test_company_is_optional_for_delivery_but_required_to_leave_it_on_account_and_rejected_for_other_types(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $company = $this->deliveryCompany($tenant, $headers);
+        $product = DB::table('products')->where('tenant_id', $tenant)->where('name', 'Cappuccino')->first();
+        $order = $this->createOrder($tenant, $branchId, $headers, $product->id, quantity: 1, withDefaultModifiers: true);
+        $orderId = $order->json('data.id');
+        $total = $order->json('data.totals.total');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $total, 'orderType' => 'delivery', 'onDeliveryAccount' => true, 'idempotencyKey' => 'delivery-nocompany'], $headers)->assertStatus(422)->assertJsonValidationErrors('onDeliveryAccount');
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $total, 'orderType' => 'takeaway', 'deliveryCompanyId' => $company, 'idempotencyKey' => 'delivery-wrong'], $headers)->assertStatus(422)->assertJsonValidationErrors('deliveryCompanyId');
+        $this->assertSame(0, DB::table('payments')->where('order_id', $orderId)->count());
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $total, 'orderType' => 'delivery', 'idempotencyKey' => 'own-delivery'], $headers)->assertOk();
+        $this->assertSame('delivery', DB::table('orders')->where('id', $orderId)->value('type'));
+        $this->assertNull(DB::table('orders')->where('id', $orderId)->value('delivery_company_id'));
+    }
+
+    public function test_only_active_delivery_companies_are_offered_to_the_cashier(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $first = $this->deliveryCompany($tenant, $headers, 'ليستا');
+        $second = $this->deliveryCompany($tenant, $headers, 'شركة ثانية');
+        $this->patchJson("/api/v1/finance/payment-methods/{$second}/status", ['isActive' => false], $headers)->assertOk();
+
+        $names = collect($this->getJson('/api/v1/delivery-companies', $headers)->assertOk()->json('data'))->pluck('name', 'id')->all();
+        $this->assertSame([$first => 'ليستا'], $names);
+    }
 }

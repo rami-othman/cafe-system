@@ -18,7 +18,7 @@ import '../models/applied_discount.dart';
 import '../models/available_discount.dart';
 import '../models/cart_item.dart';
 import '../models/customer.dart';
-import '../models/order_type.dart';
+import '../models/delivery_company.dart';
 import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/payment_summary.dart';
@@ -27,7 +27,6 @@ import 'cart_item_tile.dart';
 import 'discount_dialog.dart';
 import 'order_totals_panel.dart';
 import 'payment_dialog.dart';
-import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
 import 'pos_localization.dart';
 import 'pos_print_failure_dialog.dart';
@@ -57,11 +56,8 @@ class PosCartPanel extends StatelessWidget {
           child: Column(
             children: <Widget>[
               _OrderControls(
-                orderType: state.orderType,
                 selectedCustomer: state.selectedCustomer,
                 isUpdating: state.isCartMutationInProgress,
-                onOrderTypeChanged: (OrderType orderType) =>
-                    _changeOrderType(context, state, cubit, orderType),
                 onCustomerSelectorPressed: () =>
                     _showCustomerDialog(context, state, cubit),
               ),
@@ -229,15 +225,6 @@ class PosCartPanel extends StatelessWidget {
     );
   }
 
-  Future<void> _changeOrderType(
-    BuildContext context,
-    PosState state,
-    PosCubit cubit,
-    OrderType orderType,
-  ) async {
-    await cubit.changeOrderType(orderType);
-  }
-
   Future<void> _showPaymentDialog(
     BuildContext context,
     PosState state,
@@ -325,6 +312,18 @@ class PosCartPanel extends StatelessWidget {
       }
     }
 
+    // Delivery companies are Finance setup the manager controls. Failing to
+    // load them must not block dine-in / takeaway sales.
+    List<DeliveryCompany> deliveryCompanies = const <DeliveryCompany>[];
+    if (state.isBackendMode) {
+      try {
+        deliveryCompanies = await cubit.repository.getDeliveryCompanies();
+      } catch (_) {
+        deliveryCompanies = const <DeliveryCompany>[];
+      }
+      if (!context.mounted) return;
+    }
+
     final PaymentResult? result = await showDialog<PaymentResult>(
       context: context,
       barrierDismissible: true,
@@ -334,6 +333,8 @@ class PosCartPanel extends StatelessWidget {
           totalDue: state.total,
           itemCount: state.totalItems,
           availableMethods: availableMethods,
+          requireOrderType: true,
+          deliveryCompanies: deliveryCompanies,
           onSubmit: cubit.completeLocalPayment,
         );
       },
@@ -352,36 +353,23 @@ PaymentMethod? _paymentMethodForApiValue(String value) {
 
 class _OrderControls extends StatelessWidget {
   const _OrderControls({
-    required this.orderType,
     required this.selectedCustomer,
     required this.isUpdating,
-    required this.onOrderTypeChanged,
     required this.onCustomerSelectorPressed,
   });
 
-  final OrderType orderType;
   final Customer? selectedCustomer;
   final bool isUpdating;
-  final ValueChanged<OrderType> onOrderTypeChanged;
   final VoidCallback onCustomerSelectorPressed;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: AppSpacing.allMd,
-      child: Column(
-        children: <Widget>[
-          OrderTypeSelector(
-            selectedOrderType: orderType,
-            onOrderTypeSelected: onOrderTypeChanged,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _CustomerRow(
-            selectedCustomer: selectedCustomer,
-            isUpdating: isUpdating,
-            onCustomerSelectorPressed: onCustomerSelectorPressed,
-          ),
-        ],
+      child: _CustomerRow(
+        selectedCustomer: selectedCustomer,
+        isUpdating: isUpdating,
+        onCustomerSelectorPressed: onCustomerSelectorPressed,
       ),
     );
   }

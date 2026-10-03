@@ -29,6 +29,7 @@ class RefundController extends Controller
         private readonly PosCashLocationResolver $cashLocations,
         private readonly \App\Services\PartyAccountService $partyAccounts,
         private readonly \App\Services\FinanceAccountMap $accountMap,
+        private readonly \App\Services\DeliveryCompanyCustomerService $deliveryCustomers,
     ) {}
 
     public function store(Request $request, int $order): JsonResponse
@@ -151,6 +152,7 @@ class RefundController extends Controller
                         $taxCents > 0 ? ['accountCode' => $this->accountMap->code($tenantId, 'sales.tax_payable'), 'debit' => Money::decimal($taxCents)] : null,
                         $settlementLine,
                         ...($walletParty === null ? $this->partyRefundLines($tenantId, $orderRow, $amountCents, $actorId) : []),
+                        ...($resolvedMethod->type !== 'delivery_app' ? $this->deliveryRefundLines($tenantId, $orderRow, $amountCents) : []),
                     ])),
                 ], $actorId);
             } else {
@@ -161,6 +163,20 @@ class RefundController extends Controller
         }, 3);
 
         return response()->json(['data' => $this->serialize($refund)], 201);
+    }
+
+    /** Mirror of the sale: a cash delivery order's refund also appears on the delivery company's account (net zero). */
+    private function deliveryRefundLines(int $tenantId, object $order, int $amountCents): array
+    {
+        $code = $this->deliveryCustomers->accountCodeForOrder($tenantId, $order);
+        if ($code === null) {
+            return [];
+        }
+
+        return [
+            ['accountCode' => $code, 'credit' => Money::decimal($amountCents), 'description' => "مرتجع توصيل — طلب رقم {$order->order_number}"],
+            ['accountCode' => $code, 'debit' => Money::decimal($amountCents), 'description' => "رد المبلغ نقداً — طلب رقم {$order->order_number}"],
+        ];
     }
 
     /** Mirror of the sale: the refund also appears on the customer's own account (net zero). */

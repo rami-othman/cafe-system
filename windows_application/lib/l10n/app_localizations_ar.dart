@@ -9125,4 +9125,584 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get printerTestPrintSuccessful => 'تمت الطباعة بنجاح';
+
+  @override
+  String get ordersTitle => 'إدارة الطلبات';
+
+  @override
+  String get ordersSubtitle =>
+      'عرض وإدارة جميع الطلبات النشطة والمعلّقة والحديثة.';
+
+  @override
+  String get ordersNoMatchFilter => 'لا توجد طلبات تطابق هذا الفلتر حتى الآن.';
+
+  @override
+  String get ordersPrintLater => 'ستتم إضافة الطباعة لاحقاً.';
+
+  @override
+  String get ordersCopyLater => 'ستتم إضافة نسخ الطلب لاحقاً.';
+
+  @override
+  String get ordersCannotResume => 'لا يمكن استئناف هذا الطلب.';
+
+  @override
+  String get ordersResumeFailed => 'تعذّر استئناف هذا الطلب. حاول مرة أخرى.';
+
+  @override
+  String get ordersCancelledDone => 'تم إلغاء الطلب.';
+
+  @override
+  String get ordersCancelFailed => 'تعذّر إلغاء هذا الطلب.';
+
+  @override
+  String get ordersCheckStatus => 'فحص الحالة';
+
+  @override
+  String get ordersCancellationConfirmed => 'تم تأكيد إلغاء الطلب.';
+
+  @override
+  String get ordersStillActiveRetryCancel =>
+      'الطلب ما زال نشطاً. أعد محاولة الإلغاء بشكل صريح.';
+
+  @override
+  String get ordersPaymentRecordFailed => 'تعذّر تسجيل الدفعة. حاول مرة أخرى.';
+
+  @override
+  String get ordersPaymentConfirmed => 'تم تأكيد الدفع.';
+
+  @override
+  String get ordersPaymentConfirmedNoReceipt =>
+      'تم تأكيد الدفع لكن الإيصال غير متاح.';
+
+  @override
+  String get ordersRetryReceipt => 'إعادة محاولة الإيصال';
+
+  @override
+  String get ordersRefundRecorded => 'تم تسجيل الاسترداد.';
+
+  @override
+  String get ordersRefundRecordFailed =>
+      'تعذّر تسجيل الاسترداد. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersPrevious => 'السابق';
+
+  @override
+  String get ordersNext => 'التالي';
+
+  @override
+  String ordersPageOf(int current, int last) {
+    return 'صفحة $current من $last';
+  }
+
+  @override
+  String ordersTotalCount(int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total طلب',
+      many: '$total طلبًا',
+      few: '$total طلبات',
+      two: 'طلبان',
+      one: 'طلب واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordersReplaceCartTitle => 'استبدال سلة نقطة البيع الحالية؟';
+
+  @override
+  String get ordersReplaceCartBody =>
+      'استئناف هذا الطلب المعلّق سيستبدل سلة نقطة البيع الحالية، وسيتم تجاهل أي تغييرات غير محفوظة.';
+
+  @override
+  String get ordersKeepCart => 'إبقاء السلة الحالية';
+
+  @override
+  String get ordersReplaceAndResume => 'استبدال واستئناف';
+
+  @override
+  String get ordersCancelOrderTitle => 'إلغاء الطلب؟';
+
+  @override
+  String ordersCancelOrderBody(String number) {
+    return 'إلغاء $number؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
+  String get ordersKeepOrder => 'إبقاء الطلب';
+
+  @override
+  String get ordersCancelOrder => 'إلغاء الطلب';
+
+  @override
+  String get ordersCancelOrderSubmitting => 'جارٍ إلغاء الطلب';
+
+  @override
+  String get ordersStatusPreparing => 'قيد التحضير';
+
+  @override
+  String get ordersStatusHeld => 'معلّق';
+
+  @override
+  String get ordersStatusReady => 'جاهز';
+
+  @override
+  String get ordersStatusPaid => 'مدفوع';
+
+  @override
+  String get ordersStatusCompleted => 'مكتمل';
+
+  @override
+  String get ordersStatusCancelled => 'ملغى';
+
+  @override
+  String get ordersStatusRefunded => 'مُسترد';
+
+  @override
+  String get ordersStatusPartiallyRefunded => 'استرداد جزئي';
+
+  @override
+  String get ordersFilterActive => 'الطلبات النشطة';
+
+  @override
+  String get ordersFilterHeld => 'الطلبات المعلّقة';
+
+  @override
+  String get ordersFilterDineIn => 'داخل المحل';
+
+  @override
+  String get ordersFilterTakeaway => 'سفري';
+
+  @override
+  String get ordersActionResume => 'استئناف';
+
+  @override
+  String get ordersActionPay => 'دفع';
+
+  @override
+  String get ordersActionCancel => 'إلغاء';
+
+  @override
+  String get ordersActionDetails => 'التفاصيل';
+
+  @override
+  String ordersActionSemantics(String action) {
+    return 'إجراء الطلب: $action';
+  }
+
+  @override
+  String get ordersCustomer => 'العميل';
+
+  @override
+  String get ordersWalkInCustomer => 'عميل عابر';
+
+  @override
+  String get ordersWalkInInitials => 'عع';
+
+  @override
+  String get ordersWalkIn => 'عميل عابر';
+
+  @override
+  String get ordersOrderItems => 'عناصر الطلب';
+
+  @override
+  String get ordersNoLineItems => 'لا توجد عناصر';
+
+  @override
+  String ordersNote(String note) {
+    return 'ملاحظة: $note';
+  }
+
+  @override
+  String get ordersItemFallback => 'عنصر';
+
+  @override
+  String ordersItemsOne(String count) {
+    return '$count عنصر';
+  }
+
+  @override
+  String ordersItemsMany(String count) {
+    return '$count عناصر';
+  }
+
+  @override
+  String get ordersTotals => 'الإجماليات';
+
+  @override
+  String get ordersSubtotal => 'المجموع الفرعي';
+
+  @override
+  String ordersTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get ordersTip => 'البقشيش (15%)';
+
+  @override
+  String get ordersRefundedLabel => 'مُسترد';
+
+  @override
+  String get ordersTotal => 'الإجمالي';
+
+  @override
+  String get ordersCloseDetails => 'إغلاق تفاصيل الطلب';
+
+  @override
+  String get ordersPrintTooltip => 'طباعة الطلب';
+
+  @override
+  String get ordersCopyTooltip => 'نسخ الطلب';
+
+  @override
+  String get ordersResumeInPos => 'استئناف في نقطة البيع';
+
+  @override
+  String ordersDisabledSemantics(String label) {
+    return '$label (غير متاح)';
+  }
+
+  @override
+  String get ordersPay => 'دفع';
+
+  @override
+  String get ordersRefund => 'استرداد';
+
+  @override
+  String get ordersPaymentTitle => 'الدفع';
+
+  @override
+  String ordersPaymentAuth(String status, String auth) {
+    return '$status - رمز التفويض: $auth';
+  }
+
+  @override
+  String ordersRefundAmountLine(String amount) {
+    return 'استرداد $amount';
+  }
+
+  @override
+  String get ordersNoPaymentYet => 'لم تُسجَّل أي دفعة بعد.';
+
+  @override
+  String get ordersMethodWallet => 'محفظة';
+
+  @override
+  String get ordersMethodShamCash => 'شام كاش';
+
+  @override
+  String get ordersMethodSplit => 'دفع مقسّم';
+
+  @override
+  String get ordersPaymentStatusPending => 'قيد الانتظار';
+
+  @override
+  String get ordersPaymentStatusCompleted => 'مكتمل';
+
+  @override
+  String get ordersPaymentStatusFailed => 'فشل';
+
+  @override
+  String get ordersPaymentStatusApproved => 'موافق عليه';
+
+  @override
+  String get ordersPaymentStatusVoided => 'ملغى';
+
+  @override
+  String get ordersPaymentStatusRefunded => 'مُسترد';
+
+  @override
+  String get ordersTimeline => 'السجل الزمني';
+
+  @override
+  String get ordersBackendEvent => 'حدث في النظام';
+
+  @override
+  String get ordersEventCreated => 'تم إنشاء الطلب';
+
+  @override
+  String get ordersEventHeld => 'تم تعليق الطلب';
+
+  @override
+  String get ordersEventClosed => 'تم إغلاق الطلب';
+
+  @override
+  String get ordersEventRefundCompleted => 'تم الاسترداد';
+
+  @override
+  String get ordersEventPaymentReceived => 'تم استلام الدفعة';
+
+  @override
+  String get ordersEventCompleted => 'اكتمل الطلب';
+
+  @override
+  String get ordersEventReady => 'الطلب جاهز';
+
+  @override
+  String get ordersEventPreparing => 'الطلب قيد التحضير';
+
+  @override
+  String get ordersAm => 'ص';
+
+  @override
+  String get ordersPm => 'م';
+
+  @override
+  String get ordersJustNow => 'الآن';
+
+  @override
+  String ordersMinutesAgo(String n) {
+    return 'قبل $n د';
+  }
+
+  @override
+  String ordersHoursAgo(String n) {
+    return 'قبل $n س';
+  }
+
+  @override
+  String ordersDaysAgo(String n) {
+    return 'قبل $n ي';
+  }
+
+  @override
+  String get ordersRefundReasonCustomerRequest => 'طلب العميل';
+
+  @override
+  String get ordersRefundReasonWrongItem => 'صنف خاطئ';
+
+  @override
+  String get ordersRefundReasonQuality => 'مشكلة في جودة الصنف';
+
+  @override
+  String get ordersRefundReasonDuplicate => 'دفع مكرر';
+
+  @override
+  String get ordersRefundReasonOrderCancelled => 'طلب ملغى';
+
+  @override
+  String get ordersRefundReasonManagerApproved => 'بموافقة المدير';
+
+  @override
+  String get ordersRefundReasonOther => 'أخرى';
+
+  @override
+  String get ordersRefundTypeFull => 'استرداد كامل';
+
+  @override
+  String get ordersRefundTypePartial => 'استرداد جزئي';
+
+  @override
+  String get ordersRefundCustomAmount => 'مبلغ مخصص';
+
+  @override
+  String get ordersRefundEnterAmount => 'أدخل مبلغ الاسترداد.';
+
+  @override
+  String get ordersRefundAmountPositive =>
+      'يجب أن يكون مبلغ الاسترداد أكبر من الصفر.';
+
+  @override
+  String get ordersRefundAmountExceeds =>
+      'لا يمكن أن يتجاوز مبلغ الاسترداد الرصيد القابل للاسترداد.';
+
+  @override
+  String get ordersRefundFieldAmount => 'مبلغ الاسترداد';
+
+  @override
+  String get ordersRefundFieldReason => 'سبب الاسترداد';
+
+  @override
+  String get ordersRefundFieldNotes => 'ملاحظات المدير (اختياري)';
+
+  @override
+  String get ordersRefundNotesHint => 'أضف تفاصيل لتقرير نهاية اليوم...';
+
+  @override
+  String ordersRefundDialogTitle(String number) {
+    return 'استرداد الطلب $number';
+  }
+
+  @override
+  String get ordersRefundCloseDialog => 'إغلاق نافذة الاسترداد';
+
+  @override
+  String get ordersRefundConfirm => 'تأكيد الاسترداد';
+
+  @override
+  String get ordersRefundOrderTotal => 'إجمالي الطلب';
+
+  @override
+  String get ordersRefundPaidVia => 'طريقة الدفع';
+
+  @override
+  String get ordersRefundWarning =>
+      'تنبيه: سيؤدي هذا الإجراء إلى عكس الدفعة ولا يمكن التراجع عنه.\nيرجى التحقق من جميع التفاصيل قبل التأكيد.';
+
+  @override
+  String get ordersMsgNoActiveBranches => 'لا توجد فروع نشطة متاحة.';
+
+  @override
+  String get ordersMsgPageRecoveryInvalid =>
+      'أعادت استعادة صفحة الطلبات بيانات ترقيم غير صالحة.';
+
+  @override
+  String get ordersMsgLoadFailed =>
+      'تعذّر تحميل الطلبات. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgDetailsLoadFailed =>
+      'تعذّر تحميل تفاصيل الطلب. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgResumeInvalidId =>
+      'لا يمكن استئناف هذا الطلب لأن معرّفه غير صالح.';
+
+  @override
+  String get ordersMsgDifferentOrder =>
+      'أعاد الخادم طلباً مختلفاً. حدّث الصفحة وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgNotInBranch => 'هذا الطلب ليس ضمن الفرع المحدد.';
+
+  @override
+  String get ordersMsgOnlyHeldResume =>
+      'يمكن استئناف الطلب المعلّق غير المدفوع فقط.';
+
+  @override
+  String get ordersMsgResumeInPosFailed =>
+      'تعذّر استئناف الطلب في نقطة البيع. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgResumeConnFailed =>
+      'تعذّر استئناف هذا الطلب. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgCancelInvalidId =>
+      'لا يمكن إلغاء هذا الطلب لأن معرّفه غير صالح.';
+
+  @override
+  String get ordersMsgCancelVerifyFailed =>
+      'تعذّر التحقق من هذا الطلب قبل الإلغاء.';
+
+  @override
+  String get ordersMsgOnlyDraftHeldCancel =>
+      'يمكن إلغاء المسودة أو الطلب المعلّق غير المدفوع فقط.';
+
+  @override
+  String get ordersMsgCancelNoChange =>
+      'تعذّر إلغاء هذا الطلب. لم يتم تأكيد أي تغيير.';
+
+  @override
+  String get ordersMsgOrderIdInvalid => 'معرّف الطلب غير صالح.';
+
+  @override
+  String get ordersMsgPaymentPrepareAccess =>
+      'تعذّر تجهيز الدفع. تحقق من صلاحية الوصول إلى الطلب وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNotReady =>
+      'الدفع غير جاهز. حدّث الطلب وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgCannotPayState =>
+      'لا يمكن دفع هذا الطلب في حالته الحالية.';
+
+  @override
+  String get ordersMsgPaymentPrepareFailed =>
+      'تعذّر تجهيز الدفع. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNeedsBackend =>
+      'يتطلب الدفع اتصالاً موثّقاً بالخادم.';
+
+  @override
+  String get ordersMsgPaymentRecordFailed =>
+      'تعذّر تسجيل الدفعة. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNotCompleted =>
+      'لم يكتمل الدفع. يمكنك إعادة المحاولة بأمان بنفس العملية.';
+
+  @override
+  String get ordersMsgReceiptLoadFailed =>
+      'اكتمل الدفع لكن تعذّر تحميل الإيصال.';
+
+  @override
+  String get ordersMsgPaymentSummaryMismatch =>
+      'ملخص الدفع لا يطابق الطلب المحدد.';
+
+  @override
+  String get ordersMsgNoSupportedMethod =>
+      'لا توجد طريقة دفع مدعومة لهذا الطلب.';
+
+  @override
+  String get ordersMsgPaymentUncertain =>
+      'تعذّر تأكيد حالة الدفع. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgNoRefundable =>
+      'لا توجد دفعة مكتملة أو رصيد قابل للاسترداد لهذا الطلب.';
+
+  @override
+  String get ordersMsgRefundPrepareFailed =>
+      'تعذّر تجهيز الاسترداد. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgRefundRecordFailed =>
+      'تعذّر تسجيل الاسترداد. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgRefundNotFound =>
+      'لم يتم العثور على الاسترداد في الخادم. تحقق من الطلب ثم أعد المحاولة بنفس العملية.';
+
+  @override
+  String get ordersMsgRefundUncertain =>
+      'تعذّر تأكيد حالة الاسترداد. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgCancelUncertain =>
+      'تعذّر تأكيد حالة الإلغاء. افحص الحالة قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgCancelUnresolved =>
+      'حالة الإلغاء غير محسومة. افحص الحالة قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgStillActive =>
+      'الطلب ما زال نشطاً وغير مدفوع. افحص الحالة ثم أعد محاولة الإلغاء بشكل صريح.';
+
+  @override
+  String get posSelectOrderType => 'نوع الطلب';
+
+  @override
+  String get posOrderTypeRequired => 'اختر نوع الطلب للمتابعة.';
+
+  @override
+  String get posSelectDeliveryCompany => 'شركة التوصيل';
+
+  @override
+  String get posDeliveryCompanyRequired => 'اختر شركة التوصيل.';
+
+  @override
+  String get posNoDeliveryCompanies =>
+      'لا توجد شركة توصيل مُعدّة. اطلب من المدير إضافتها من طرق الدفع.';
+
+  @override
+  String get posDeliveryPaymentHint => 'يُسجَّل المبلغ على حساب شركة التوصيل.';
+
+  @override
+  String get posDeliveryOwn => 'توصيل خاص';
+
+  @override
+  String get posDeliveryCollection => 'التحصيل';
+
+  @override
+  String get posDeliveryCashNow => 'نقداً الآن';
+
+  @override
+  String get posDeliveryOnAccount => 'آجل على حساب الشركة';
 }

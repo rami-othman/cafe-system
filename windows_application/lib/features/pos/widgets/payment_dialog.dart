@@ -10,9 +10,12 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../models/delivery_company.dart';
+import '../models/order_type.dart';
 import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../controllers/pos_cubit.dart';
+import 'order_type_selector.dart';
 import 'payment_amount_input.dart';
 import 'payment_method_selector.dart';
 import 'payment_quick_amount_buttons.dart';
@@ -26,6 +29,8 @@ class PaymentDialog extends StatefulWidget {
     this.onSubmit,
     this.availableMethods = PaymentMethod.values,
     this.orderNumber,
+    this.requireOrderType = false,
+    this.deliveryCompanies = const <DeliveryCompany>[],
   });
 
   final double totalDue;
@@ -34,6 +39,12 @@ class PaymentDialog extends StatefulWidget {
   onSubmit;
   final List<PaymentMethod> availableMethods;
   final String? orderNumber;
+
+  /// When true the cashier must choose the order type (dine-in / takeaway /
+  /// delivery) here before confirming — there is no default. A delivery order
+  /// must also name the delivery company it is settled through.
+  final bool requireOrderType;
+  final List<DeliveryCompany> deliveryCompanies;
 
   @override
   State<PaymentDialog> createState() => _PaymentDialogState();
@@ -46,6 +57,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
   PaymentMethod _selectedMethod = PaymentMethod.cash;
   bool _hasEditedCashAmount = false;
   bool _isSubmitting = false;
+  OrderType? _orderType;
+  int? _deliveryCompanyId;
+  bool _onDeliveryAccount = false;
 
   @override
   void initState() {
@@ -78,7 +92,50 @@ class _PaymentDialogState extends State<PaymentDialog> {
     return math.max(amountReceived - widget.totalDue, 0);
   }
 
+  bool get _orderTypeReady {
+    if (!widget.requireOrderType) {
+      return true;
+    }
+    return _orderType != null;
+  }
+
+  void _selectOrderType(OrderType type) {
+    setState(() {
+      _orderType = type;
+      if (type != OrderType.delivery) {
+        _deliveryCompanyId = null;
+        _onDeliveryAccount = false;
+      }
+    });
+  }
+
+  /// `null` = the café's own delivery (the driver hands the cash over).
+  void _selectDeliveryCompany(int? id) {
+    setState(() {
+      _deliveryCompanyId = id;
+      if (id == null) {
+        _onDeliveryAccount = false;
+      }
+    });
+  }
+
+  void _selectDeliveryCollection({required bool onAccount}) =>
+      setState(() => _onDeliveryAccount = onAccount);
+
+  String? _orderTypeMessage(AppLocalizations l10n) {
+    if (!widget.requireOrderType) {
+      return null;
+    }
+    if (_orderType == null) {
+      return l10n.posOrderTypeRequired;
+    }
+    return null;
+  }
+
   String? _validationMessage(AppLocalizations l10n) {
+    if (_onDeliveryAccount) {
+      return null;
+    }
     if (_selectedMethod == PaymentMethod.split) {
       return l10n.posSplitUnavailable;
     }
@@ -103,8 +160,11 @@ class _PaymentDialogState extends State<PaymentDialog> {
   }
 
   bool get _canConfirm {
-    if (widget.totalDue <= 0) {
+    if (widget.totalDue <= 0 || !_orderTypeReady) {
       return false;
+    }
+    if (_onDeliveryAccount) {
+      return true;
     }
 
     return switch (_selectedMethod) {
@@ -226,6 +286,20 @@ class _PaymentDialogState extends State<PaymentDialog> {
       return;
     }
 
+    if (_onDeliveryAccount) {
+      final PaymentResult onAccount = PaymentResult(
+        method: PaymentMethod.cash,
+        totalDue: widget.totalDue,
+        amountReceived: widget.totalDue,
+        changeDue: 0,
+        orderType: _orderType,
+        deliveryCompanyId: _deliveryCompanyId,
+        onDeliveryAccount: true,
+      );
+      await _submit(onAccount);
+      return;
+    }
+
     final double amountReceived = switch (_selectedMethod) {
       PaymentMethod.cash => _amountReceived ?? 0,
       PaymentMethod.card ||
@@ -242,8 +316,17 @@ class _PaymentDialogState extends State<PaymentDialog> {
       reference: _selectedMethod == PaymentMethod.shamCash
           ? _referenceController.text.trim()
           : null,
+      orderType: widget.requireOrderType ? _orderType : null,
+      deliveryCompanyId: widget.requireOrderType &&
+              _orderType == OrderType.delivery
+          ? _deliveryCompanyId
+          : null,
     );
 
+    await _submit(result);
+  }
+
+  Future<void> _submit(PaymentResult result) async {
     if (widget.onSubmit == null) {
       Navigator.of(context).pop<PaymentResult>(result);
       return;
@@ -340,21 +423,129 @@ class _PaymentBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        if (state.widget.requireOrderType) ...<Widget>[
+          _OrderTypeSection(state: state),
+          const SizedBox(height: AppSpacing.xl),
+        ],
+        if (state._onDeliveryAccount)
+          _PaymentNote(
+            message: context.l10n.posDeliveryPaymentHint,
+            icon: Icons.delivery_dining_outlined,
+          )
+        else ...<Widget>[
+          Text(
+            context.l10n.posSelectPaymentMethod,
+            style: AppTextStyles.titleMedium.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PaymentMethodSelector(
+            selectedMethod: state._selectedMethod,
+            methods: state.widget.availableMethods,
+            onMethodSelected: state._selectMethod,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          _MethodDetails(state: state),
+        ],
+      ],
+    );
+  }
+}
+
+class _OrderTypeSection extends StatelessWidget {
+  const _OrderTypeSection({required this.state});
+
+  final _PaymentDialogState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = context.l10n;
+    final String? message = state._orderTypeMessage(l10n);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
         Text(
-          context.l10n.posSelectPaymentMethod,
+          l10n.posSelectOrderType,
           style: AppTextStyles.titleMedium.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        PaymentMethodSelector(
-          selectedMethod: state._selectedMethod,
-          methods: state.widget.availableMethods,
-          onMethodSelected: state._selectMethod,
+        OrderTypeSelector(
+          selectedOrderType: state._orderType,
+          onOrderTypeSelected: state._selectOrderType,
         ),
-        const SizedBox(height: AppSpacing.xl),
-        _MethodDetails(state: state),
+        if (state._orderType == OrderType.delivery) ...<Widget>[
+          if (state.widget.deliveryCompanies.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              l10n.posSelectDeliveryCompany,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                ChoiceChip(
+                  key: const Key('delivery-company-own'),
+                  label: Text(l10n.posDeliveryOwn),
+                  selected: state._deliveryCompanyId == null,
+                  onSelected: (_) => state._selectDeliveryCompany(null),
+                ),
+                for (final DeliveryCompany company
+                    in state.widget.deliveryCompanies)
+                  ChoiceChip(
+                    key: Key('delivery-company-${company.id}'),
+                    label: Text(company.name),
+                    selected: state._deliveryCompanyId == company.id,
+                    onSelected: (_) => state._selectDeliveryCompany(company.id),
+                  ),
+              ],
+            ),
+          ],
+          if (state._deliveryCompanyId != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              l10n.posDeliveryCollection,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                ChoiceChip(
+                  key: const Key('delivery-collect-now'),
+                  label: Text(l10n.posDeliveryCashNow),
+                  selected: !state._onDeliveryAccount,
+                  onSelected: (_) =>
+                      state._selectDeliveryCollection(onAccount: false),
+                ),
+                ChoiceChip(
+                  key: const Key('delivery-collect-on-account'),
+                  label: Text(l10n.posDeliveryOnAccount),
+                  selected: state._onDeliveryAccount,
+                  onSelected: (_) =>
+                      state._selectDeliveryCollection(onAccount: true),
+                ),
+              ],
+            ),
+          ],
+        ],
+        if (message != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          _ValidationMessage(message: message),
+        ],
       ],
     );
   }

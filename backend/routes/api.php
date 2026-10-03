@@ -456,6 +456,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');
             Route::delete('orders/{order}/discounts', [DiscountController::class, 'remove'])->middleware('discount.permission:discounts.apply_configured');
             Route::get('payment-methods/available', [PaymentController::class, 'availableMethods']);
+            Route::get('delivery-companies', [PaymentController::class, 'deliveryCompanies']);
             Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
             Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
             Route::post('orders/{order}/print', [ReceiptController::class, 'print']);

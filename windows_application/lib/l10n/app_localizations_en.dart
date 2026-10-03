@@ -9141,4 +9141,585 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get printerTestPrintSuccessful => 'Print successful';
+
+  @override
+  String get ordersTitle => 'Order Management';
+
+  @override
+  String get ordersSubtitle =>
+      'View and manage all active, held, and recent orders.';
+
+  @override
+  String get ordersNoMatchFilter => 'No orders match this filter yet.';
+
+  @override
+  String get ordersPrintLater => 'Printing will be added later.';
+
+  @override
+  String get ordersCopyLater => 'Copy order will be added later.';
+
+  @override
+  String get ordersCannotResume => 'This order cannot be resumed.';
+
+  @override
+  String get ordersResumeFailed =>
+      'Could not resume this order. Please try again.';
+
+  @override
+  String get ordersCancelledDone => 'Order cancelled.';
+
+  @override
+  String get ordersCancelFailed => 'Could not cancel this order.';
+
+  @override
+  String get ordersCheckStatus => 'Check status';
+
+  @override
+  String get ordersCancellationConfirmed => 'Order cancellation confirmed.';
+
+  @override
+  String get ordersStillActiveRetryCancel =>
+      'Order is still active. Retry cancellation explicitly.';
+
+  @override
+  String get ordersPaymentRecordFailed =>
+      'Could not record payment. Please try again.';
+
+  @override
+  String get ordersPaymentConfirmed => 'Payment confirmed.';
+
+  @override
+  String get ordersPaymentConfirmedNoReceipt =>
+      'Payment confirmed, but the receipt is unavailable.';
+
+  @override
+  String get ordersRetryReceipt => 'Retry receipt';
+
+  @override
+  String get ordersRefundRecorded => 'Refund recorded.';
+
+  @override
+  String get ordersRefundRecordFailed =>
+      'Could not record refund. Please check the order before retrying.';
+
+  @override
+  String get ordersPrevious => 'Previous';
+
+  @override
+  String get ordersNext => 'Next';
+
+  @override
+  String ordersPageOf(int current, int last) {
+    return 'Page $current of $last';
+  }
+
+  @override
+  String ordersTotalCount(int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total orders',
+      one: '1 order',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordersReplaceCartTitle => 'Replace current POS cart?';
+
+  @override
+  String get ordersReplaceCartBody =>
+      'Resuming this held order will replace the current POS cart context. Unsaved local changes will be discarded.';
+
+  @override
+  String get ordersKeepCart => 'Keep current cart';
+
+  @override
+  String get ordersReplaceAndResume => 'Replace and resume';
+
+  @override
+  String get ordersCancelOrderTitle => 'Cancel order?';
+
+  @override
+  String ordersCancelOrderBody(String number) {
+    return 'Cancel $number? This cannot be undone.';
+  }
+
+  @override
+  String get ordersKeepOrder => 'Keep order';
+
+  @override
+  String get ordersCancelOrder => 'Cancel order';
+
+  @override
+  String get ordersCancelOrderSubmitting => 'Cancel order submitting';
+
+  @override
+  String get ordersStatusPreparing => 'PREPARING';
+
+  @override
+  String get ordersStatusHeld => 'HELD';
+
+  @override
+  String get ordersStatusReady => 'READY';
+
+  @override
+  String get ordersStatusPaid => 'PAID';
+
+  @override
+  String get ordersStatusCompleted => 'COMPLETED';
+
+  @override
+  String get ordersStatusCancelled => 'CANCELLED';
+
+  @override
+  String get ordersStatusRefunded => 'REFUNDED';
+
+  @override
+  String get ordersStatusPartiallyRefunded => 'PARTIAL REFUND';
+
+  @override
+  String get ordersFilterActive => 'ACTIVE ORDERS';
+
+  @override
+  String get ordersFilterHeld => 'HELD ORDERS';
+
+  @override
+  String get ordersFilterDineIn => 'DINE-IN';
+
+  @override
+  String get ordersFilterTakeaway => 'TAKEAWAY';
+
+  @override
+  String get ordersActionResume => 'RESUME';
+
+  @override
+  String get ordersActionPay => 'PAY';
+
+  @override
+  String get ordersActionCancel => 'CANCEL';
+
+  @override
+  String get ordersActionDetails => 'DETAILS';
+
+  @override
+  String ordersActionSemantics(String action) {
+    return '$action order action';
+  }
+
+  @override
+  String get ordersCustomer => 'Customer';
+
+  @override
+  String get ordersWalkInCustomer => 'Walk-in Customer';
+
+  @override
+  String get ordersWalkInInitials => 'WC';
+
+  @override
+  String get ordersWalkIn => 'Walk-in';
+
+  @override
+  String get ordersOrderItems => 'Order Items';
+
+  @override
+  String get ordersNoLineItems => 'No line items';
+
+  @override
+  String ordersNote(String note) {
+    return 'Note: $note';
+  }
+
+  @override
+  String get ordersItemFallback => 'Item';
+
+  @override
+  String ordersItemsOne(String count) {
+    return '$count Item';
+  }
+
+  @override
+  String ordersItemsMany(String count) {
+    return '$count Items';
+  }
+
+  @override
+  String get ordersTotals => 'Totals';
+
+  @override
+  String get ordersSubtotal => 'Subtotal';
+
+  @override
+  String ordersTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get ordersTip => 'Tip (15%)';
+
+  @override
+  String get ordersRefundedLabel => 'Refunded';
+
+  @override
+  String get ordersTotal => 'Total';
+
+  @override
+  String get ordersCloseDetails => 'Close order details';
+
+  @override
+  String get ordersPrintTooltip => 'Print order';
+
+  @override
+  String get ordersCopyTooltip => 'Copy order';
+
+  @override
+  String get ordersResumeInPos => 'Resume in POS';
+
+  @override
+  String ordersDisabledSemantics(String label) {
+    return '$label disabled';
+  }
+
+  @override
+  String get ordersPay => 'Pay';
+
+  @override
+  String get ordersRefund => 'Refund';
+
+  @override
+  String get ordersPaymentTitle => 'Payment';
+
+  @override
+  String ordersPaymentAuth(String status, String auth) {
+    return '$status - Auth: $auth';
+  }
+
+  @override
+  String ordersRefundAmountLine(String amount) {
+    return 'Refund $amount';
+  }
+
+  @override
+  String get ordersNoPaymentYet => 'No payment recorded yet.';
+
+  @override
+  String get ordersMethodWallet => 'Wallet';
+
+  @override
+  String get ordersMethodShamCash => 'Sham Cash';
+
+  @override
+  String get ordersMethodSplit => 'Split';
+
+  @override
+  String get ordersPaymentStatusPending => 'Pending';
+
+  @override
+  String get ordersPaymentStatusCompleted => 'Completed';
+
+  @override
+  String get ordersPaymentStatusFailed => 'Failed';
+
+  @override
+  String get ordersPaymentStatusApproved => 'Approved';
+
+  @override
+  String get ordersPaymentStatusVoided => 'Voided';
+
+  @override
+  String get ordersPaymentStatusRefunded => 'Refunded';
+
+  @override
+  String get ordersTimeline => 'Timeline';
+
+  @override
+  String get ordersBackendEvent => 'System event';
+
+  @override
+  String get ordersEventCreated => 'Order created';
+
+  @override
+  String get ordersEventHeld => 'Order held';
+
+  @override
+  String get ordersEventClosed => 'Order closed';
+
+  @override
+  String get ordersEventRefundCompleted => 'Refund completed';
+
+  @override
+  String get ordersEventPaymentReceived => 'Payment received';
+
+  @override
+  String get ordersEventCompleted => 'Order completed';
+
+  @override
+  String get ordersEventReady => 'Order ready';
+
+  @override
+  String get ordersEventPreparing => 'Order preparing';
+
+  @override
+  String get ordersAm => 'AM';
+
+  @override
+  String get ordersPm => 'PM';
+
+  @override
+  String get ordersJustNow => 'Just now';
+
+  @override
+  String ordersMinutesAgo(String n) {
+    return '${n}m ago';
+  }
+
+  @override
+  String ordersHoursAgo(String n) {
+    return '${n}h ago';
+  }
+
+  @override
+  String ordersDaysAgo(String n) {
+    return '${n}d ago';
+  }
+
+  @override
+  String get ordersRefundReasonCustomerRequest => 'Customer Request';
+
+  @override
+  String get ordersRefundReasonWrongItem => 'Wrong Item';
+
+  @override
+  String get ordersRefundReasonQuality => 'Item Quality Issue';
+
+  @override
+  String get ordersRefundReasonDuplicate => 'Duplicate Charge';
+
+  @override
+  String get ordersRefundReasonOrderCancelled => 'Order Cancelled';
+
+  @override
+  String get ordersRefundReasonManagerApproved => 'Manager Approved';
+
+  @override
+  String get ordersRefundReasonOther => 'Other';
+
+  @override
+  String get ordersRefundTypeFull => 'Full Refund';
+
+  @override
+  String get ordersRefundTypePartial => 'Partial Refund';
+
+  @override
+  String get ordersRefundCustomAmount => 'Custom amount';
+
+  @override
+  String get ordersRefundEnterAmount => 'Enter a refund amount.';
+
+  @override
+  String get ordersRefundAmountPositive =>
+      'Refund amount must be greater than zero.';
+
+  @override
+  String get ordersRefundAmountExceeds =>
+      'Refund amount cannot exceed refundable balance.';
+
+  @override
+  String get ordersRefundFieldAmount => 'REFUND AMOUNT';
+
+  @override
+  String get ordersRefundFieldReason => 'REASON FOR REFUND';
+
+  @override
+  String get ordersRefundFieldNotes => 'MANAGER NOTES (OPTIONAL)';
+
+  @override
+  String get ordersRefundNotesHint => 'Add context for end of day reporting...';
+
+  @override
+  String ordersRefundDialogTitle(String number) {
+    return 'Refund Order $number';
+  }
+
+  @override
+  String get ordersRefundCloseDialog => 'Close refund dialog';
+
+  @override
+  String get ordersRefundConfirm => 'Confirm Refund';
+
+  @override
+  String get ordersRefundOrderTotal => 'ORDER TOTAL';
+
+  @override
+  String get ordersRefundPaidVia => 'PAID VIA';
+
+  @override
+  String get ordersRefundWarning =>
+      'Safety First: This action will reverse the payment and cannot be undone.\nPlease verify all details before confirming.';
+
+  @override
+  String get ordersMsgNoActiveBranches => 'No active branches are available.';
+
+  @override
+  String get ordersMsgPageRecoveryInvalid =>
+      'Order page recovery returned invalid pagination metadata.';
+
+  @override
+  String get ordersMsgLoadFailed =>
+      'Could not load orders. Check backend connection.';
+
+  @override
+  String get ordersMsgDetailsLoadFailed =>
+      'Could not load order details. Check backend connection.';
+
+  @override
+  String get ordersMsgResumeInvalidId =>
+      'This order cannot be resumed because its backend id is invalid.';
+
+  @override
+  String get ordersMsgDifferentOrder =>
+      'The backend returned a different order. Refresh and try again.';
+
+  @override
+  String get ordersMsgNotInBranch =>
+      'This order is not in the selected branch.';
+
+  @override
+  String get ordersMsgOnlyHeldResume =>
+      'Only an unpaid held order can be resumed.';
+
+  @override
+  String get ordersMsgResumeInPosFailed =>
+      'Could not resume this order in POS. Please try again.';
+
+  @override
+  String get ordersMsgResumeConnFailed =>
+      'Could not resume this order. Check backend connection.';
+
+  @override
+  String get ordersMsgCancelInvalidId =>
+      'This order cannot be cancelled because its backend id is invalid.';
+
+  @override
+  String get ordersMsgCancelVerifyFailed =>
+      'Could not verify this order before cancellation.';
+
+  @override
+  String get ordersMsgOnlyDraftHeldCancel =>
+      'Only an unpaid draft or held order can be cancelled.';
+
+  @override
+  String get ordersMsgCancelNoChange =>
+      'Could not cancel this order. No changes were confirmed.';
+
+  @override
+  String get ordersMsgOrderIdInvalid => 'Order id is not a backend id.';
+
+  @override
+  String get ordersMsgPaymentPrepareAccess =>
+      'Could not prepare payment. Check order access and try again.';
+
+  @override
+  String get ordersMsgPaymentNotReady =>
+      'Payment is not ready. Refresh the order and try again.';
+
+  @override
+  String get ordersMsgCannotPayState =>
+      'This order cannot be paid in its current state.';
+
+  @override
+  String get ordersMsgPaymentPrepareFailed =>
+      'Could not prepare payment. Please try again.';
+
+  @override
+  String get ordersMsgPaymentNeedsBackend =>
+      'Payment requires an authenticated backend connection.';
+
+  @override
+  String get ordersMsgPaymentRecordFailed =>
+      'Could not record payment. Please try again.';
+
+  @override
+  String get ordersMsgPaymentNotCompleted =>
+      'Payment was not completed. You can retry safely with the same operation.';
+
+  @override
+  String get ordersMsgReceiptLoadFailed =>
+      'Payment completed, but the receipt could not be loaded.';
+
+  @override
+  String get ordersMsgPaymentSummaryMismatch =>
+      'Payment summary did not match the selected order.';
+
+  @override
+  String get ordersMsgNoSupportedMethod =>
+      'No supported payment method is available for this order.';
+
+  @override
+  String get ordersMsgPaymentUncertain =>
+      'Payment status could not be confirmed. Check the order before retrying.';
+
+  @override
+  String get ordersMsgNoRefundable =>
+      'This order has no completed payment or refundable balance.';
+
+  @override
+  String get ordersMsgRefundPrepareFailed =>
+      'Could not prepare the refund. Please try again.';
+
+  @override
+  String get ordersMsgRefundRecordFailed =>
+      'Could not record the refund. Please try again.';
+
+  @override
+  String get ordersMsgRefundNotFound =>
+      'Refund was not found on the server. Check the order, then retry with the same operation.';
+
+  @override
+  String get ordersMsgRefundUncertain =>
+      'Refund status could not be confirmed. Check the order before retrying.';
+
+  @override
+  String get ordersMsgCancelUncertain =>
+      'Cancellation status could not be confirmed. Check status before retrying.';
+
+  @override
+  String get ordersMsgCancelUnresolved =>
+      'Cancellation status is unresolved. Check status before retrying.';
+
+  @override
+  String get ordersMsgStillActive =>
+      'Order is still active and unpaid. Check status, then retry cancellation explicitly.';
+
+  @override
+  String get posSelectOrderType => 'Order type';
+
+  @override
+  String get posOrderTypeRequired => 'Choose the order type to continue.';
+
+  @override
+  String get posSelectDeliveryCompany => 'Delivery company';
+
+  @override
+  String get posDeliveryCompanyRequired => 'Choose the delivery company.';
+
+  @override
+  String get posNoDeliveryCompanies =>
+      'No delivery company is set up. Ask the manager to add one under payment methods.';
+
+  @override
+  String get posDeliveryPaymentHint =>
+      'The amount is recorded on the delivery company\'s account.';
+
+  @override
+  String get posDeliveryOwn => 'Own delivery';
+
+  @override
+  String get posDeliveryCollection => 'Collection';
+
+  @override
+  String get posDeliveryCashNow => 'Cash now';
+
+  @override
+  String get posDeliveryOnAccount => 'On the company\'s account (later)';
 }

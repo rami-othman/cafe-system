@@ -16,7 +16,7 @@ class OrderTypeSelector extends StatelessWidget {
     required this.onOrderTypeSelected,
   });
 
-  final OrderType selectedOrderType;
+  final OrderType? selectedOrderType;
   final ValueChanged<OrderType> onOrderTypeSelected;
 
   static const List<OrderType> _types = <OrderType>[

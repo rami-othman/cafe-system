@@ -128,8 +128,11 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
     );
   Future<void> _form({PaymentMethodSetting? existing}) async {
     final cubit = context.read<FinanceSetupCubit>();
-    await cubit.loadAccounts();
-    final accounts = cubit.state.accounts.where((a) => a.isActive).toList();
+    // The full chart (not just the first page of 200): the chart has thousands
+    // of accounts, so a customer/delivery account would never show up otherwise.
+    final accounts = (await cubit.repository.getAccountCatalog())
+        .where((a) => a.isActive)
+        .toList();
     final List<dynamic> locationResults =
         await Future.wait<dynamic>(<Future<dynamic>>[
           cubit.repository.getFinancialLocations('cash'),
@@ -195,6 +198,10 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                                 'card' => 'بطاقة (card)',
                                 'wallet' => 'محفظة العميل (wallet)',
                                 'sham_cash' => 'شام كاش (sham_cash)',
+                                'bank_transfer' => 'تحويل بنكي (bank_transfer)',
+                                'delivery_app' => 'شركة توصيل (delivery_app)',
+                                'customer_credit' => 'رصيد العميل (customer_credit)',
+                                'other' => 'أخرى (other)',
                                 _ => v,
                               }),
                             ),

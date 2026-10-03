@@ -8,6 +8,8 @@ import '../models/backend_product_detail.dart';
 import '../models/branch.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
+import '../models/delivery_company.dart';
+import '../models/order_type.dart';
 import '../models/pos_customer_group.dart';
 import '../models/pos_quick_create_customer_request.dart';
 import '../models/json_helpers.dart';
@@ -354,6 +356,19 @@ class PosRepository {
         .toList(growable: false);
   }
 
+  /// Delivery companies the cashier may pick for a delivery order.
+  Future<List<DeliveryCompany>> getDeliveryCompanies() async {
+    final dynamic response = await apiClient!.get('delivery-companies');
+    final dynamic rows = response is Map ? response['data'] : response;
+    return (rows as List? ?? const <Object?>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map(
+          (Map<dynamic, dynamic> row) =>
+              DeliveryCompany.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
   Future<PaymentResult> payOrder({
     required int orderId,
     required String method,
@@ -361,6 +376,61 @@ class PosRepository {
     required String idempotencyKey,
     String? reference,
     required double totalDue,
+  }) => _submitPayment(
+    orderId: orderId,
+    method: method,
+    amount: amount,
+    idempotencyKey: idempotencyKey,
+    reference: reference,
+    totalDue: totalDue,
+  );
+
+  /// Same as [payOrder] but also carries the order type (and delivery company)
+  /// chosen in the payment dialog. Without either it is exactly [payOrder].
+  Future<PaymentResult> payOrderWithContext({
+    required int orderId,
+    required String method,
+    required double amount,
+    required String idempotencyKey,
+    String? reference,
+    required double totalDue,
+    OrderType? orderType,
+    int? deliveryCompanyId,
+    bool onDeliveryAccount = false,
+  }) {
+    if (orderType == null && deliveryCompanyId == null && !onDeliveryAccount) {
+      return payOrder(
+        orderId: orderId,
+        method: method,
+        amount: amount,
+        idempotencyKey: idempotencyKey,
+        reference: reference,
+        totalDue: totalDue,
+      );
+    }
+    return _submitPayment(
+      orderId: orderId,
+      method: method,
+      amount: amount,
+      idempotencyKey: idempotencyKey,
+      reference: reference,
+      totalDue: totalDue,
+      orderType: orderType,
+      deliveryCompanyId: deliveryCompanyId,
+      onDeliveryAccount: onDeliveryAccount,
+    );
+  }
+
+  Future<PaymentResult> _submitPayment({
+    required int orderId,
+    required String method,
+    required double amount,
+    required String idempotencyKey,
+    String? reference,
+    required double totalDue,
+    OrderType? orderType,
+    int? deliveryCompanyId,
+    bool onDeliveryAccount = false,
   }) async {
     final dynamic response = await apiClient!.post(
       'orders/$orderId/pay',
@@ -371,6 +441,9 @@ class PosRepository {
         'amount': amount,
         'reference': reference,
         'idempotencyKey': idempotencyKey,
+        if (orderType != null) 'orderType': orderType.apiValue,
+        if (deliveryCompanyId != null) 'deliveryCompanyId': deliveryCompanyId,
+        if (onDeliveryAccount) 'onDeliveryAccount': true,
       },
     );
     return paymentResultFromJson(

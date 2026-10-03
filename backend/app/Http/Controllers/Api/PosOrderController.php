@@ -231,6 +231,9 @@ class PosOrderController extends Controller
 
         if (array_key_exists('orderType', $data)) {
             $updates['type'] = $data['orderType'];
+            if ($data['orderType'] !== 'delivery') {
+                $updates['delivery_company_id'] = null;
+            }
         }
 
         if (array_key_exists('tableId', $data)) {

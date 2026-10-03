@@ -38,6 +38,7 @@ class PaymentController extends Controller
         private readonly ShiftLockService $shiftLocks,
         private readonly PartyAccountService $partyAccounts,
         private readonly \App\Services\FinanceAccountMap $accountMap,
+        private readonly \App\Services\DeliveryCompanyCustomerService $deliveryCustomers,
     ) {}
 
     /** The payment types Finance has actually configured and activated (the single source for what a cashier may offer). */
@@ -146,6 +147,11 @@ class PaymentController extends Controller
             'amount' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string'], 'note' => ['nullable', 'string'],
             'idempotencyKey' => ['required', 'string', 'max:120'],
+            // The order type is chosen in the payment dialog. A delivery order is settled through a delivery company.
+            'orderType' => ['nullable', 'in:dine_in,takeaway,delivery'],
+            'deliveryCompanyId' => ['nullable', 'integer'],
+            // Delivery only: leave the amount on the delivery company's account (settled later) instead of cash now.
+            'onDeliveryAccount' => ['nullable', 'boolean'],
         ]);
         $tenantId = TenantContext::id($request);
         $hash = $this->payloadHash($data);
@@ -171,6 +177,17 @@ class PaymentController extends Controller
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
             $row = $this->consumption->bindLegacyOrderWarehouse($tenantId, $row);
+            // The driver hands the cash over on delivery, so a delivery order is paid like any other
+            // sale (cash goes to the drawer); the company is only recorded on the order for reporting.
+            $deliveryMethod = null;
+            if (($data['orderType'] ?? null) !== null) {
+                $deliveryMethod = $this->applyOrderType($tenantId, $row, $data);
+                $row = $this->lockedOrder($request, $tenantId, $order);
+            }
+            $onAccount = (bool) ($data['onDeliveryAccount'] ?? false);
+            if ($onAccount && $deliveryMethod === null) {
+                throw ValidationException::withMessages(['onDeliveryAccount' => 'اختر شركة التوصيل لتسجيل الطلب آجلاً على حسابها.']);
+            }
             // Apply-time deliberately defers tender validation. Payment is the
             // authoritative second stage, including revalidation after a
             // manager changes a policy or its schedule expires.
@@ -179,7 +196,11 @@ class PaymentController extends Controller
             }
             $zeroBalance = Money::cents($row->total) === 0;
             $resolvedMethod = null;
-            if (! $zeroBalance) {
+            if (! $zeroBalance && $onAccount) {
+                // Deferred settlement: the sale debits the account the manager linked to the delivery company
+                // (it owes the café); nothing enters the drawer. No customer tender is involved.
+                $resolvedMethod = $deliveryMethod;
+            } elseif (! $zeroBalance) {
                 // A configured payment method is authoritative for both
                 // Discount eligibility and Finance posting. The legacy method
                 // remains a compatibility selector only when no ID is sent.
@@ -250,6 +271,46 @@ class PaymentController extends Controller
         return response()->json(['data' => $this->serializePayment($order, $result['payment'], $result['total'], $result['received'])]);
     }
 
+    /** Delivery companies the cashier may pick: active `delivery_app` payment methods with a valid ledger account. */
+    public function deliveryCompanies(Request $request): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        $rows = DB::table('payment_methods as pm')
+            ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
+            ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)->where('pm.type', 'delivery_app')
+            ->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
+            ->orderBy('pm.sort_order')->orderBy('pm.id')
+            ->get(['pm.id', 'pm.name', 'pm.code']);
+
+        return response()->json(['data' => $rows->map(fn ($row) => ['id' => (int) $row->id, 'name' => $row->name, 'code' => $row->code])->values()]);
+    }
+
+    /**
+     * Persists the order type chosen in the payment dialog. A delivery order may name the delivery
+     * company it came through (optional: the café's own delivery has none).
+     */
+    private function applyOrderType(int $tenantId, object $row, array $data): ?object
+    {
+        $type = $data['orderType'] ?? null;
+        $companyId = $data['deliveryCompanyId'] ?? null;
+        $method = null;
+        if ($type === 'delivery') {
+            if ($companyId !== null) {
+                $method = SalePaymentMethodResolver::resolveById($tenantId, (int) $companyId);
+                if ($method === null || $method->type !== 'delivery_app') {
+                    throw ValidationException::withMessages(['deliveryCompanyId' => 'شركة التوصيل غير مفعّلة أو غير مرتبطة بحساب.']);
+                }
+            }
+        } elseif ($companyId !== null) {
+            throw ValidationException::withMessages(['deliveryCompanyId' => 'شركة التوصيل تُحدَّد لطلبات التوصيل فقط.']);
+        }
+        DB::table('orders')->where('tenant_id', $tenantId)->where('id', $row->id)->update([
+            'type' => $type, 'delivery_company_id' => $method?->paymentMethodId, 'updated_at' => now(),
+        ]);
+
+        return $method;
+    }
+
     private function lockedOrder(Request $request, int $tenantId, int $order): object
     {
         $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
@@ -307,6 +368,8 @@ class PaymentController extends Controller
             'method' => $data['method'] ?? null, 'amount' => (string) $data['amount'],
             'paymentMethodId' => $data['paymentMethodId'] ?? null,
             'reference' => $data['reference'] ?? null, 'note' => $data['note'] ?? null,
+            'orderType' => $data['orderType'] ?? null, 'deliveryCompanyId' => $data['deliveryCompanyId'] ?? null,
+            'onDeliveryAccount' => (bool) ($data['onDeliveryAccount'] ?? false),
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -341,6 +404,16 @@ class PaymentController extends Controller
         if ($partyCode !== null && ! $walletSale) {
             $lines[] = ['accountCode' => $partyCode, 'debit' => Money::decimal($total), 'description' => "بيع نقطة البيع — طلب رقم {$order->order_number}"];
             $lines[] = ['accountCode' => $partyCode, 'credit' => Money::decimal($total), 'description' => "تحصيل عند الدفع — طلب رقم {$order->order_number}"];
+        }
+        // A delivery-company order settled in cash by the driver also appears on the company's own
+        // account (sale + collection, net zero) so that account shows every order it brought.
+        // An order left on the company's account already debits that account as its tender line.
+        $companyCode = $method !== null && $total > 0 && ($method->type ?? null) !== 'delivery_app'
+            ? $this->deliveryCustomers->accountCodeForOrder($tenantId, $order)
+            : null;
+        if ($companyCode !== null) {
+            $lines[] = ['accountCode' => $companyCode, 'debit' => Money::decimal($total), 'description' => "بيع توصيل — طلب رقم {$order->order_number}"];
+            $lines[] = ['accountCode' => $companyCode, 'credit' => Money::decimal($total), 'description' => "تحصيل نقدي من السائق — طلب رقم {$order->order_number}"];
         }
         if ($discount > 0) {
             $lines[] = ['accountCode' => $this->accountMap->code($tenantId, 'sales.discount_given'), 'debit' => Money::decimal($discount)];

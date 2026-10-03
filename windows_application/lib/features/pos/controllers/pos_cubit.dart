@@ -1094,6 +1094,12 @@ class PosCubit extends Cubit<PosState> {
       return PaymentCompletionStatus.retryableFailure;
     }
 
+    // The order type is chosen in the payment dialog: it must be on the cart
+    // before the order is created, and the /pay request re-sends it.
+    if (result.orderType != null && state.orderType != result.orderType) {
+      emit(state.copyWith(orderType: result.orderType));
+    }
+
     if (state.currentOrderId != null) {
       return completeBackendPayment(result);
     }
@@ -1163,13 +1169,16 @@ class PosCubit extends Cubit<PosState> {
       final String idempotencyKey = _paymentIdempotencyKey ??= _operationKey(
         'payment',
       );
-      final PaymentResult payment = await repository.payOrder(
+      final PaymentResult payment = await repository.payOrderWithContext(
         orderId: orderId,
         method: requestedPayment.method.apiValue,
         amount: requestedPayment.amountReceived,
         idempotencyKey: idempotencyKey,
         reference: requestedPayment.reference,
         totalDue: totalDue,
+        orderType: requestedPayment.orderType,
+        deliveryCompanyId: requestedPayment.deliveryCompanyId,
+        onDeliveryAccount: requestedPayment.onDeliveryAccount,
       );
       if (isClosed) {
         return PaymentCompletionStatus.uncertain;

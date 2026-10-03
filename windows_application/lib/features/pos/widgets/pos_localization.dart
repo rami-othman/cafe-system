@@ -42,6 +42,12 @@ String localizedPosFailure(AppLocalizations l10n, Object? failure) {
   if (message.contains('ORDER_NOT_RESUMABLE')) return l10n.posHeldOrderRequired;
   if (message == 'pos.holdRetryable') return localizedPosHoldRetryable(l10n);
   if (message == 'pos.holdUncertain') return localizedPosHoldUncertain(l10n);
+  // The cubit already turned the server's reply into a readable Arabic
+  // message (e.g. insufficient wallet balance); show it instead of hiding it
+  // behind the generic failure line.
+  if (failure is String && RegExp(r'[\u0600-\u06FF]').hasMatch(message)) {
+    return message;
+  }
   // The server's own (already Arabic) message says what actually went wrong,
   // instead of hiding it behind a generic failure line.
   if (failure is ApiException &&
