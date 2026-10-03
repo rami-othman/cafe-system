@@ -88,17 +88,9 @@ class SalesInvoicePhaseTwoApiTest extends TestCase
         $this->assertSame('4.000', DB::table('stock_movements')->where('tenant_id', $s['tenant'])->where('reference_type', 'sales_invoice_line')->where('reference_id', DB::table('sales_invoice_lines')->where('sales_invoice_id', $overridden)->value('id'))->value('quantity_out'));
     }
 
-    public function test_manual_invoice_may_sell_below_zero_stock_by_default(): void
-    {
-        $s = $this->scenario(true, '1.000'); $invoice = $this->invoice($s, $s['product'], '10');
-        $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'post-negative-ok'], $s['headers'])->assertOk();
-        $this->assertSame('posted', DB::table('sales_invoices')->where('id', $invoice)->value('status'));
-    }
-
     public function test_insufficient_stock_rolls_back_invoice_posting_ar_and_inventory_and_posted_invoice_is_immutable(): void
     {
         $s = $this->scenario(true, '1.000'); $invoice = $this->invoice($s, $s['product'], '10');
-        DB::table('tenant_settings')->updateOrInsert(['tenant_id' => $s['tenant']], ['settings' => json_encode(['allow_negative_stock_on_sale' => false]), 'updated_at' => now(), 'created_at' => now()]);
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'post-no-stock'], $s['headers'])->assertUnprocessable()->assertJsonValidationErrors('quantity');
         $this->assertSame('draft', DB::table('sales_invoices')->where('id', $invoice)->value('status')); $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $s['tenant'])->where('source_id', $invoice)->count()); $this->assertSame(0, DB::table('customer_receivables')->where('sales_invoice_id', $invoice)->count());
         $good = $this->scenario(false, '0.000'); $posted = $this->invoice($good, $good['product'], '1'); $this->postJson("/api/v1/finance/sales-invoices/{$posted}/post", ['idempotencyKey' => 'post-immutable'], $good['headers'])->assertOk();

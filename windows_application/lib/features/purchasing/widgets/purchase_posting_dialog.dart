@@ -139,7 +139,7 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
                 : () => Navigator.pop(
                     dialog,
                     PurchasePostingChoice(
-                      sham ? null : selected,
+                      (sham || !selectable) ? null : selected,
                       amountController.text,
                       paymentMethodId: sham ? shamSelected : null,
                       paymentDate: invoiceDate,

@@ -1923,8 +1923,7 @@ class PosCubit extends Cubit<PosState> {
         'ACCOUNTING_CONFIGURATION_MISSING' =>
           'إعدادات الحسابات المطلوبة لإتمام الدفع غير مكتملة.',
         'INSUFFICIENT_STOCK' => 'المخزون غير كافٍ لإتمام عملية البيع.',
-        'PAYMENT_METHOD_INVALID' =>
-          'طريقة الدفع غير فعّالة أو غير مرتبطة بحساب مالي صالح.',
+        'PAYMENT_METHOD_INVALID' => _paymentMethodMessage(error),
         'PAYMENT_ALREADY_COMPLETED' ||
         'ORDER_ALREADY_PAID' => 'تم دفع هذا الطلب مسبقاً.',
         'PAYMENT_IDEMPOTENCY_CONFLICT' =>
@@ -1939,6 +1938,18 @@ class PosCubit extends Cubit<PosState> {
     }
 
     return error.toString();
+  }
+
+  /// The server reports every paymentMethodId problem (wallet balance too low, no registered
+  /// customer, ...) under one code. Show its Arabic reason when it gave one.
+  String _paymentMethodMessage(ApiException error) {
+    final List<String>? reasons = error.validationErrors?['paymentMethodId'];
+    if (reasons != null) {
+      for (final String reason in reasons) {
+        if (RegExp(r'[\u0600-\u06FF]').hasMatch(reason)) return reason;
+      }
+    }
+    return 'طريقة الدفع غير فعّالة أو غير مرتبطة بحساب مالي صالح.';
   }
 
   bool _isMenuVersionStale(Object error) =>

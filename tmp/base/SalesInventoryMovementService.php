@@ -18,7 +18,8 @@ final class SalesInventoryMovementService
      * @param bool $allowNegativeStock Only ever set true by POS sale consumption
      *   (`SaleConsumptionService`), gated by the tenant's
      *   `allow_negative_stock_on_sale` setting. Manual Sales Invoice
-     *   consumption (`SalesInvoiceInventoryConsumptionService`) passes the same setting.
+     *   consumption never sets this — it keeps blocking on insufficient
+     *   stock exactly as before.
      */
     public function consume(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $consumptions, ?int $actorId, bool $allowNegativeStock = false, ?string $occurredAt = null): array
     {

@@ -71,7 +71,7 @@ final class PartyAccountService
 
     /**
      * The customer's wallet: funds held for them (credit balance on their single account) plus the owner-set credit limit.
-     * available = funds + limit; a wallet payment may not exceed it. A limit of 0 means unlimited.
+     * available = funds + limit; a wallet payment may not exceed it.
      *
      * @return array{fundsCents:int,limitCents:int,availableCents:int}
      */
@@ -90,11 +90,7 @@ final class PartyAccountService
         $funds = -$net;
         $limit = $customer ? \App\Support\Money::cents((string) ($customer->wallet_credit_limit ?? '0')) : 0;
 
-        // Limit 0 = no limit (the wallet may go as far into debt as needed). A positive limit caps the debt at that amount.
-        $unlimited = $limit <= 0;
-
-        return ['fundsCents' => $funds, 'limitCents' => $limit, 'unlimited' => $unlimited,
-            'availableCents' => $unlimited ? 10_000_000_000_000 : $funds + $limit];
+        return ['fundsCents' => $funds, 'limitCents' => $limit, 'availableCents' => $funds + $limit];
     }
 
     /**

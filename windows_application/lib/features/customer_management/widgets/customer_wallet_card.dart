@@ -37,7 +37,7 @@ class CustomerWalletCard extends StatelessWidget {
               TextField(
                 controller: controller,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'الحد (SYP)'),
+                decoration: const InputDecoration(labelText: 'الحد (SYP)', helperText: '0 = غير محدود. رقم موجب = أقصى دين مسموح للعميل.'),
               ),
               if (error != null) ...<Widget>[
                 const SizedBox(height: 8),
@@ -83,6 +83,7 @@ class CustomerWalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double balance = double.tryParse(customer.walletBalance ?? '0') ?? 0;
+    final bool unlimited = (double.tryParse(customer.walletCreditLimit ?? '0') ?? 0) <= 0;
     final Color balanceColor = balance > 0
         ? Colors.green.shade700
         : balance < 0
@@ -95,7 +96,7 @@ class CustomerWalletCard extends StatelessWidget {
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 4),
           Text(
-            '$value SYP',
+            value == 'غير محدود' ? value : '$value SYP',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.w700),
           ),
         ],
@@ -124,8 +125,9 @@ class CustomerWalletCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 metric('رصيد المحفظة', customer.walletBalance ?? '0.00', color: balanceColor),
-                metric('حد الائتمان', customer.walletCreditLimit ?? '0.00'),
-                metric('المتاح للدفع', customer.walletAvailable ?? '0.00'),
+                // حد الائتمان 0 = غير محدود.
+                metric('حد الائتمان', unlimited ? 'غير محدود' : (customer.walletCreditLimit ?? '0.00')),
+                metric('المتاح للدفع', unlimited ? 'غير محدود' : (customer.walletAvailable ?? '0.00')),
               ],
             ),
           ],

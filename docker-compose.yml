@@ -11,6 +11,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - backend_vendor:/var/www/html/vendor
+      - ./docker/php/development-opcache.ini:/usr/local/etc/php/conf.d/zzz-development-opcache.ini:ro
     ports:
       - "8000:8000"
     depends_on:

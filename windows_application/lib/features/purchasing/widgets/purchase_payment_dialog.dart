@@ -145,7 +145,9 @@ class _PurchasePaymentDialogState extends State<_PurchasePaymentDialog> {
       setState(() => _error = 'اختر الصندوق الذي سيُدفع منه.');
       return;
     }
-    if (_locationId == null) {
+    // A cashier (shift mode) pays cash from the open shift's drawer: the server picks it, no id is sent.
+    final bool shiftCash = method.type == 'cash' && _cashOptions?.mode == 'shift';
+    if (_locationId == null && !shiftCash) {
       setState(() => _error = 'طريقة الدفع غير مربوطة بحساب أو صندوق.');
       return;
     }

@@ -24,6 +24,13 @@ WORKDIR /var/www/html
 # bind-mount based local development workflow.
 FROM base AS development
 
+# Development bind mounts change while the PHP server stays running. Recheck
+# source files on every request so workers do not serve stale application code.
+RUN { \
+        echo 'opcache.validate_timestamps=1'; \
+        echo 'opcache.revalidate_freq=0'; \
+    } > /usr/local/etc/php/conf.d/zzz-development-opcache.ini
+
 CMD ["tail", "-f", "/dev/null"]
 
 FROM composer:2 AS vendor

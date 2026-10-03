@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 /** A read-only plan is shared by preview and the final movement writer. */
 final class SalesInvoiceInventoryConsumptionService
 {
-    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments, private readonly PosInventoryWarehouseResolver $warehouseResolver, private readonly RecipeConfigurationService $recipes, private readonly TenantSettingsService $settings) {}
+    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments, private readonly PosInventoryWarehouseResolver $warehouseResolver, private readonly RecipeConfigurationService $recipes) {}
 
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
     public function preview(int $tenantId, object $invoice, iterable $lines): array
@@ -87,11 +87,11 @@ if ($components->isEmpty()) {
                 $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $consumption['materialId']])->first();
                 $onHand = InventoryDecimal::signedUnits($balance->quantity_on_hand ?? '0.000');
                 $reserved = InventoryDecimal::units($balance->reserved_quantity ?? '0.000');
-                if ($consumption['quantity'] > $onHand - $reserved && ! $this->allowNegative($tenantId)) {
+                if ($consumption['quantity'] > $onHand - $reserved) {
                     throw ValidationException::withMessages(['quantity' => "Insufficient available stock for {$consumption['materialName']} in {$warehouse->name}."]);
                 }
                 $unitCost = InventoryDecimal::cost($balance->average_unit_cost ?? '0.0000');
-                if ($unitCost <= 0 && ! $this->allowNegative($tenantId)) {
+                if ($unitCost <= 0) {
                     throw ValidationException::withMessages(['inventory' => "Missing WAC/cost for {$consumption['materialName']} in {$warehouse->name}."]);
                 }
                 $cost = Money::cents(InventoryDecimal::totalCost($consumption['quantity'], $unitCost));
@@ -115,9 +115,9 @@ if ($components->isEmpty()) {
         if ($quantity <= 0) throw ValidationException::withMessages(['quantity' => 'Sold material quantity must be positive.']);
         $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $material->id])->first();
         $available = InventoryDecimal::signedUnits($balance->quantity_on_hand ?? '0.000') - InventoryDecimal::units($balance->reserved_quantity ?? '0.000');
-        if ($quantity > $available && ! $this->allowNegative($tenantId)) throw ValidationException::withMessages(['quantity' => "Insufficient available stock for {$material->name} in {$warehouse->name}."]);
+        if ($quantity > $available) throw ValidationException::withMessages(['quantity' => "Insufficient available stock for {$material->name} in {$warehouse->name}."]);
         $unitCost = InventoryDecimal::cost($balance->average_unit_cost ?? '0.0000');
-        if ($unitCost <= 0 && ! $this->allowNegative($tenantId)) throw ValidationException::withMessages(['inventory' => "Missing WAC/cost for {$material->name}."]);
+        if ($unitCost <= 0) throw ValidationException::withMessages(['inventory' => "Missing WAC/cost for {$material->name}."]);
         $cost = Money::cents(InventoryDecimal::totalCost($quantity, $unitCost));
         return ['cogsCents' => $cost, 'warehouseId' => (int) $warehouse->id, 'warehouseName' => $warehouse->name, 'movements' => [[
             'materialId' => (int) $material->id, 'materialName' => $material->name_ar ?: $material->name,
@@ -135,7 +135,7 @@ if ($components->isEmpty()) {
             if ($plan['movements'] === []) {
                 continue;
             }
-            $actual = $this->movements->consume($request, $tenantId, (int) $invoice->branch_id, $plan['warehouseId'], 'sales_invoice_line', $lineId, array_map(fn (array $m): array => ['materialId' => $m['materialId'], 'baseUnit' => $m['baseUnit'], 'quantity' => $m['quantity']], $plan['movements']), $actorId, allowNegativeStock: $this->allowNegative($tenantId), occurredAt: $occurredAt);
+            $actual = $this->movements->consume($request, $tenantId, (int) $invoice->branch_id, $plan['warehouseId'], 'sales_invoice_line', $lineId, array_map(fn (array $m): array => ['materialId' => $m['materialId'], 'baseUnit' => $m['baseUnit'], 'quantity' => $m['quantity']], $plan['movements']), $actorId, allowNegativeStock: false, occurredAt: $occurredAt);
             $actualByItem = collect($actual['movements'])->keyBy('itemId');
             $plans[$lineId]['cogsCents'] = $actual['cogsCents'];
             $plans[$lineId]['movements'] = array_map(function (array $planned) use ($actualByItem): array {
@@ -146,12 +146,6 @@ if ($components->isEmpty()) {
         }
 
         return $plans;
-    }
-
-    /** Same tenant setting POS uses: a manual Sales Invoice may also sell below zero stock (cost then follows the current average, 0 if none). */
-    private function allowNegative(int $tenantId): bool
-    {
-        return $this->settings->getBool($tenantId, 'allow_negative_stock_on_sale', true);
     }
 
     private function tracked(object $product): bool
