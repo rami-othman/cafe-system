@@ -49,8 +49,11 @@ class BranchResource extends JsonResource
                 ->orderBy('l.name')->get(['l.id', 'l.name'])->map(fn ($l) => ['id' => (int) $l->id, 'name' => $l->name]),
             'availablePosCashLocations' => DB::table('financial_locations as l')
                 ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
-                ->where('l.tenant_id', $this->tenant_id)->where('l.branch_id', $this->id)
-                ->where('l.kind', 'cash')->where('l.type', 'cash_drawer')->where('l.is_active', true)
+                ->where('l.tenant_id', $this->tenant_id)->where('l.kind', 'cash')->where('l.is_active', true)
+                // This branch's own drawers, plus any free box (an account under 13 not yet assigned): linking it makes it the drawer.
+                ->where(fn ($q) => $q->where(fn ($d) => $d->where('l.branch_id', $this->id)->where('l.type', 'cash_drawer'))
+                    ->orWhere(fn ($f) => $f->whereNull('l.branch_id')->where('l.type', '<>', 'cash_drawer')
+                        ->whereNotIn('l.id', DB::table('branches')->whereNotNull('shift_close_destination_financial_location_id')->select('shift_close_destination_financial_location_id'))))
                 ->where('a.tenant_id', $this->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
                 ->orderBy('l.name')->get(['l.id', 'l.name'])->map(fn ($l) => ['id' => (int) $l->id, 'name' => $l->name]),
             'posInventoryWarehouseId' => $this->pos_inventory_warehouse_id,

@@ -48,7 +48,104 @@ class _FinanceOperationScreenState extends State<FinanceOperationScreen> {
     FinanceOperationKind.period => 'finance/accounting-periods',
   };
 
-  void _refresh() => setState(() => _future = _load());
+  void _refresh() {
+    setState(() {
+      _future = _load();
+    });
+  }
+
+  String _fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _createPeriod() async {
+    final int year = DateTime.now().year;
+    final TextEditingController name = TextEditingController(
+      text: 'السنة المحاسبية $year',
+    );
+    DateTime start = DateTime(year, 1, 1);
+    DateTime end = DateTime(year, 12, 31);
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => StatefulBuilder(
+        builder: (BuildContext ctx, StateSetter set) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: const Text('سنة محاسبية جديدة'),
+            content: SizedBox(
+              width: 380,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(labelText: 'الاسم'),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('من تاريخ'),
+                    subtitle: Text(_fmt(start)),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () async {
+                      final DateTime? d = await showDatePicker(
+                        context: ctx,
+                        initialDate: start,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (d != null) set(() => start = d);
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('إلى تاريخ'),
+                    subtitle: Text(_fmt(end)),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () async {
+                      final DateTime? d = await showDatePicker(
+                        context: ctx,
+                        initialDate: end,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (d != null) set(() => end = d);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('إنشاء'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await _repo.createAccountingPeriod(
+        name: name.text.trim(),
+        startDate: _fmt(start),
+        endDate: _fmt(end),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم إنشاء السنة المحاسبية')));
+      _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
   String get _title => switch (widget.kind) {
     FinanceOperationKind.period => 'الفترات المحاسبية',
   };
@@ -74,7 +171,7 @@ class _FinanceOperationScreenState extends State<FinanceOperationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _Title(title: _title, onRefresh: _refresh),
+        _Title(title: _title, onRefresh: _refresh, onAdd: _createPeriod),
         const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: rows.isEmpty
@@ -218,9 +315,10 @@ class _FinanceOperationScreenState extends State<FinanceOperationScreen> {
 }
 
 class _Title extends StatelessWidget {
-  const _Title({required this.title, required this.onRefresh});
+  const _Title({required this.title, required this.onRefresh, this.onAdd});
   final String title;
   final VoidCallback onRefresh;
+  final VoidCallback? onAdd;
   @override
   Widget build(BuildContext context) => Row(
     children: <Widget>[
@@ -230,6 +328,12 @@ class _Title extends StatelessWidget {
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
         ),
       ),
+      if (onAdd != null)
+        FilledButton.icon(
+          onPressed: onAdd,
+          icon: const Icon(Icons.add),
+          label: const Text('سنة جديدة'),
+        ),
       IconButton(
         onPressed: () => context.go(AppRoutes.finance),
         icon: const Icon(Icons.home_outlined),

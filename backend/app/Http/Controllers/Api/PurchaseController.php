@@ -287,6 +287,11 @@ class PurchaseController extends Controller
             $actions[] = 'receive';
         }
 
+        // "pay": a posted invoice that still has a balance can be paid (in part or in full) from its own page.
+        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_payments.create')) {
+            $actions[] = 'pay';
+        }
+
         return $actions;
     }
 

@@ -25,6 +25,7 @@ import '../widgets/order_filter_tabs.dart';
 import '../widgets/order_details_panel.dart';
 import '../widgets/order_summary_card.dart';
 import '../widgets/refund_dialog.dart';
+import '../widgets/orders_localizations.dart';
 
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
@@ -71,8 +72,8 @@ class OrdersScreen extends StatelessWidget {
                                   message: state.errorMessage!,
                                   onRetry: cubit.refreshOrders,
                                 ),
-                              const AppEmptyState(
-                                message: 'No orders match this filter yet.',
+                              AppEmptyState(
+                                message: context.ordersL10n.ordersNoMatchFilter,
                                 icon: Icons.receipt_long_outlined,
                               ),
                               const SizedBox(height: AppSpacing.xl),
@@ -161,11 +162,11 @@ class OrdersScreen extends StatelessWidget {
                         onClose: cubit.closeOrderDetails,
                         onPrint: () => _showSnackBar(
                           context,
-                          'Printing will be added later.',
+                          context.ordersL10n.ordersPrintLater,
                         ),
                         onCopy: () => _showSnackBar(
                           context,
-                          'Copy order will be added later.',
+                          context.ordersL10n.ordersCopyLater,
                         ),
                         onRefund: () => _showRefundDialog(
                           context,
@@ -231,7 +232,7 @@ class OrdersScreen extends StatelessWidget {
     final PosCubit posCubit = context.read<PosCubit>();
     final int? backendId = int.tryParse(orderId);
     if (backendId == null) {
-      _showSnackBar(context, 'This order cannot be resumed.');
+      _showSnackBar(context, context.ordersL10n.ordersCannotResume);
       return;
     }
     final bool replacingAnotherContext =
@@ -271,7 +272,7 @@ class OrdersScreen extends StatelessWidget {
       context,
       cubit.state.uncertainOrderActionMessage ??
           cubit.state.orderActionErrorMessage ??
-          'Could not resume this order. Please try again.',
+          context.ordersL10n.ordersResumeFailed,
     );
   }
 
@@ -303,7 +304,7 @@ class OrdersScreen extends StatelessWidget {
     }
     if (outcome == OrdersActionOutcome.confirmed) {
       context.read<PosCubit>().clearCancelledOrderContext(int.parse(orderId));
-      _showSnackBar(context, 'Order cancelled.');
+      _showSnackBar(context, context.ordersL10n.ordersCancelledDone);
       return;
     }
 
@@ -311,10 +312,10 @@ class OrdersScreen extends StatelessWidget {
       context,
       cubit.state.uncertainOrderActionMessage ??
           cubit.state.orderActionErrorMessage ??
-          'Could not cancel this order.',
+          context.ordersL10n.ordersCancelFailed,
       action: outcome == OrdersActionOutcome.uncertain
           ? SnackBarAction(
-              label: 'Check status',
+              label: context.ordersL10n.ordersCheckStatus,
               onPressed: () async {
                 final OrdersActionOutcome checked = await cubit
                     .checkUncertainOrderActionStatus();
@@ -325,12 +326,12 @@ class OrdersScreen extends StatelessWidget {
                   context.read<PosCubit>().clearCancelledOrderContext(
                     int.parse(orderId),
                   );
-                  _showSnackBar(context, 'Order cancellation confirmed.');
+                  _showSnackBar(context, context.ordersL10n.ordersCancellationConfirmed);
                 } else if (checked == OrdersActionOutcome.retryableFailure) {
                   _showSnackBar(
                     context,
                     cubit.state.orderActionErrorMessage ??
-                        'Order is still active. Retry cancellation explicitly.',
+                        context.ordersL10n.ordersStillActiveRetryCancel,
                   );
                 }
               },
@@ -346,7 +347,12 @@ class OrdersScreen extends StatelessWidget {
   }) {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message), action: action));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(localizeOrdersMessage(context.ordersL10n, message)),
+          action: action,
+        ),
+      );
   }
 
   Future<void> _showPaymentDialog(
@@ -387,19 +393,19 @@ class OrdersScreen extends StatelessWidget {
             final String message =
                 cubit.state.uncertainPaymentMessage ??
                 cubit.state.paymentErrorMessage ??
-                'Could not record payment. Please try again.';
+                context.ordersL10n.ordersPaymentRecordFailed;
             _showSnackBar(
               context,
               message,
               action: dialogStatus == PaymentCompletionStatus.uncertain
                   ? SnackBarAction(
-                      label: 'Check status',
+                      label: context.ordersL10n.ordersCheckStatus,
                       onPressed: () async {
                         final OrdersPaymentStatus checked = await cubit
                             .checkUncertainPaymentStatus();
                         if (context.mounted &&
                             checked == OrdersPaymentStatus.confirmed) {
-                          _showSnackBar(context, 'Payment confirmed.');
+                          _showSnackBar(context, context.ordersL10n.ordersPaymentConfirmed);
                         }
                       },
                     )
@@ -419,11 +425,11 @@ class OrdersScreen extends StatelessWidget {
       _showSnackBar(
         context,
         receiptPending
-            ? 'Payment confirmed, but the receipt is unavailable.'
-            : 'Payment confirmed.',
+            ? context.ordersL10n.ordersPaymentConfirmedNoReceipt
+            : context.ordersL10n.ordersPaymentConfirmed,
         action: receiptPending
             ? SnackBarAction(
-                label: 'Retry receipt',
+                label: context.ordersL10n.ordersRetryReceipt,
                 onPressed: cubit.retryPaymentReceipt,
               )
             : null,
@@ -481,7 +487,7 @@ class OrdersScreen extends StatelessWidget {
     }
 
     if (status == RefundCompletionStatus.completed) {
-      _showSnackBar(context, 'Refund recorded.');
+      _showSnackBar(context, context.ordersL10n.ordersRefundRecorded);
       return;
     }
 
@@ -489,7 +495,7 @@ class OrdersScreen extends StatelessWidget {
       context,
       cubit.state.uncertainRefundMessage ??
           cubit.state.refundErrorMessage ??
-          'Could not record refund. Please check the order before retrying.',
+          context.ordersL10n.ordersRefundRecordFailed,
     );
   }
 }
@@ -519,9 +525,12 @@ class _OrdersErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          AppEmptyState(message: message, icon: Icons.cloud_off_outlined),
+          AppEmptyState(
+            message: localizeOrdersMessage(context.ordersL10n, message),
+            icon: Icons.cloud_off_outlined,
+          ),
           const SizedBox(height: AppSpacing.md),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+          OutlinedButton(onPressed: onRetry, child: Text(context.ordersL10n.commonRetry)),
         ],
       ),
     );
@@ -542,12 +551,12 @@ class _OrdersInlineError extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              message,
+              localizeOrdersMessage(context.ordersL10n, message),
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+          OutlinedButton(onPressed: onRetry, child: Text(context.ordersL10n.commonRetry)),
         ],
       ),
     );
@@ -586,15 +595,15 @@ class _OrdersPagination extends StatelessWidget {
         OutlinedButton(
           key: const ValueKey<String>('ordersPreviousPage'),
           onPressed: isLoading || !canGoPrevious ? null : onPrevious,
-          child: const Text('Previous'),
+          child: Text(context.ordersL10n.ordersPrevious),
         ),
-        Text('Page $currentPage of $lastPage'),
+        Text(context.ordersL10n.ordersPageOf(currentPage, lastPage)),
         OutlinedButton(
           key: const ValueKey<String>('ordersNextPage'),
           onPressed: isLoading || !canGoNext ? null : onNext,
-          child: const Text('Next'),
+          child: Text(context.ordersL10n.ordersNext),
         ),
-        if (total > 0) Text('$total orders'),
+        if (total > 0) Text(context.ordersL10n.ordersTotalCount(total)),
       ],
     );
   }
@@ -619,14 +628,14 @@ class _OrdersHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Order Management',
+              context.ordersL10n.ordersTitle,
               style: AppTextStyles.headlineMedium.copyWith(
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'View and manage all active, held, and recent orders.',
+              context.ordersL10n.ordersSubtitle,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
                 fontSize: 14,
@@ -781,7 +790,10 @@ class _OrderDetailsStatusPanel extends StatelessWidget {
                     ? Padding(
                         padding: AppSpacing.allXl,
                         child: AppEmptyState(
-                          message: message!,
+                          message: localizeOrdersMessage(
+                            context.ordersL10n,
+                            message!,
+                          ),
                           icon: Icons.cloud_off_outlined,
                         ),
                       )
@@ -826,19 +838,16 @@ class _ResumeReplacementDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Replace current POS cart?'),
-      content: const Text(
-        'Resuming this held order will replace the current POS cart context. '
-        'Unsaved local changes will be discarded.',
-      ),
+      title: Text(context.ordersL10n.ordersReplaceCartTitle),
+      content: Text(context.ordersL10n.ordersReplaceCartBody),
       actions: <Widget>[
         OutlinedButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keep current cart'),
+          child: Text(context.ordersL10n.ordersKeepCart),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Replace and resume'),
+          child: Text(context.ordersL10n.ordersReplaceAndResume),
         ),
       ],
     );
@@ -878,17 +887,19 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
     return PopScope(
       canPop: !_isSubmitting,
       child: AlertDialog(
-        title: const Text('Cancel order?'),
-        content: Text('Cancel ${widget.displayNumber}? This cannot be undone.'),
+        title: Text(context.ordersL10n.ordersCancelOrderTitle),
+        content: Text(context.ordersL10n.ordersCancelOrderBody(widget.displayNumber)),
         actions: <Widget>[
           OutlinedButton(
             onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-            child: const Text('Keep order'),
+            child: Text(context.ordersL10n.ordersKeepOrder),
           ),
           Semantics(
             button: true,
             enabled: !_isSubmitting,
-            label: _isSubmitting ? 'Cancel order submitting' : 'Cancel order',
+            label: _isSubmitting
+                ? context.ordersL10n.ordersCancelOrderSubmitting
+                : context.ordersL10n.ordersCancelOrder,
             child: FilledButton(
               onPressed: _isSubmitting ? null : _confirm,
               style: FilledButton.styleFrom(
@@ -903,7 +914,7 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Cancel order'),
+                  : Text(context.ordersL10n.ordersCancelOrder),
             ),
           ),
         ],

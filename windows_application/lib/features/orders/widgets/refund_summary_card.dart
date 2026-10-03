@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/order_detail.dart';
+import 'orders_localizations.dart';
 
 class RefundSummaryCard extends StatelessWidget {
   const RefundSummaryCard({super.key, required this.orderDetail});
@@ -24,13 +25,16 @@ class RefundSummaryCard extends StatelessWidget {
       child: Column(
         children: <Widget>[
           _SummaryRow(
-            label: 'ORDER TOTAL',
+            label: context.ordersL10n.ordersRefundOrderTotal,
             value: CurrencyFormatter.format(orderDetail.total),
           ),
           const SizedBox(height: AppSpacing.sm),
           _SummaryRow(
-            label: 'PAID VIA',
-            value: orderDetail.payment.methodLabel,
+            label: context.ordersL10n.ordersRefundPaidVia,
+            value: ordersPaymentMethodLabel(
+              context.ordersL10n,
+              orderDetail.payment,
+            ),
           ),
         ],
       ),

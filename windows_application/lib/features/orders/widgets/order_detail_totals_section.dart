@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/tax_formatter.dart';
 import '../models/order_detail.dart';
+import 'orders_localizations.dart';
 
 class OrderDetailTotalsSection extends StatelessWidget {
   const OrderDetailTotalsSection({super.key, required this.detail});
@@ -15,21 +16,23 @@ class OrderDetailTotalsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DetailSection(
-      title: 'Totals',
+      title: context.ordersL10n.ordersTotals,
       child: Column(
         children: <Widget>[
-          _TotalRow(label: 'Subtotal', amount: detail.subtotal),
+          _TotalRow(label: context.ordersL10n.ordersSubtotal, amount: detail.subtotal),
           const SizedBox(height: AppSpacing.sm),
           _TotalRow(
-            label: TaxFormatter.taxLabel(detail.taxRate),
+            label: context.ordersL10n.ordersTax(
+              TaxFormatter.percentLabel(detail.taxRate),
+            ),
             amount: detail.tax,
           ),
           const SizedBox(height: AppSpacing.sm),
-          _TotalRow(label: 'Tip (15%)', amount: detail.tip),
+          _TotalRow(label: context.ordersL10n.ordersTip, amount: detail.tip),
           if (detail.hasRefund) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             _TotalRow(
-              label: 'Refunded',
+              label: context.ordersL10n.ordersRefundedLabel,
               amount: -detail.refundedAmount,
               isDanger: true,
             ),
@@ -38,7 +41,7 @@ class OrderDetailTotalsSection extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.divider),
           ),
-          _TotalRow(label: 'Total', amount: detail.total, isStrong: true),
+          _TotalRow(label: context.ordersL10n.ordersTotal, amount: detail.total, isStrong: true),
         ],
       ),
     );

@@ -97,6 +97,9 @@ class BranchController extends Controller
         // service shift open uses, but only when one of those fields changes.
         $touchesCashConfig = array_intersect_key($data, array_flip(['posCashFinancialLocationId', 'shiftCloseDestinationFinancialLocationId', 'shiftClosingFloatAmount'])) !== [];
         if ($touchesCashConfig) {
+            if (! empty($data['posCashFinancialLocationId'])) {
+                app(\App\Services\CashBoxSyncService::class)->adoptAsDrawer((int) $branch->tenant_id, (int) $branch->id, (int) $data['posCashFinancialLocationId']);
+            }
             $drawerId = array_key_exists('posCashFinancialLocationId', $data) ? (int) $data['posCashFinancialLocationId'] : ($branch->pos_cash_financial_location_id ? (int) $branch->pos_cash_financial_location_id : null);
             $destinationId = array_key_exists('shiftCloseDestinationFinancialLocationId', $data)
                 ? ($data['shiftCloseDestinationFinancialLocationId'] === null ? null : (int) $data['shiftCloseDestinationFinancialLocationId'])

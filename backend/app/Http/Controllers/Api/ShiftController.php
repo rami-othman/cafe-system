@@ -175,7 +175,7 @@ class ShiftController extends Controller
             'barCountBasis' => ['nullable', Rule::in(['period_recorded', 'current'])],
             'closingCash' => ['required', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000'],
             'cashDifferenceReason' => ['nullable', Rule::in(self::DIFFERENCE_REASONS)], 'cashDifferenceReasonDetail' => ['nullable', 'string', 'max:4000'],
-            'barCountLines' => ['nullable', 'array'], 'barCountLines.*.inventoryItemId' => ['required_with:barCountLines', 'integer', 'distinct'], 'barCountLines.*.counted' => ['required_with:barCountLines', 'numeric', 'min:0'],
+            'barCountLines' => ['nullable', 'array'], 'barCountLines.*.inventoryItemId' => ['required_with:barCountLines', 'integer', 'distinct'], 'barCountLines.*.counted' => ['required_with:barCountLines', 'numeric'],
             'barCountLines.*.reason' => ['nullable', 'string', 'max:4000'],
         ]);
         $tenantId = TenantContext::id($request);
@@ -271,6 +271,7 @@ class ShiftController extends Controller
 
     private function submitRequiredBarCounts(Request $request, int $tenant, object $shift, array $lines, ?int $actorId): void
     {
+        $this->barCheckTemplates->ensureDefaultForBranch($tenant, (int) $shift->branch_id, $actorId);
         $templates = DB::table('bar_check_templates')->where('tenant_id', $tenant)->where('branch_id', $shift->branch_id)->where('is_active', true)->where('required_for_shift_close', true)->get();
         foreach ($templates as $template) {
             if (! $this->barCheckTemplates->isUsable($tenant, $template)) {
@@ -282,6 +283,15 @@ class ShiftController extends Controller
             }
             $countId = $this->counts->startBarCheck($request, $tenant, (int) $shift->id, (int) $template->warehouse_id, $actorId);
             foreach ($lines as $line) {
+                // A physical count is never negative. A negative figure is accepted only when it is the
+                // book quantity itself (stock that was sold before it was ever received), and it then
+                // simply confirms the system balance.
+                if ((float) $line['counted'] < 0) {
+                    $expected = DB::table('stock_count_lines')->where('tenant_id', $tenant)->where('stock_count_id', $countId)->where('inventory_item_id', $line['inventoryItemId'])->value('expected_quantity');
+                    if ($expected === null || abs((float) $line['counted'] - (float) $expected) > 0.0005) {
+                        throw ValidationException::withMessages(['barCountLines' => 'الكمية المحسوبة لا يمكن أن تكون سالبة.']);
+                    }
+                }
                 $this->counts->upsertLine($tenant, $countId, ['itemId' => $line['inventoryItemId'], 'countedQuantity' => (string) $line['counted']], $actorId);
             }
             $this->counts->transition($request, $tenant, $countId, 'submit', $actorId);

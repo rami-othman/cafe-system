@@ -76,9 +76,48 @@ final class AccountMappingApiTest extends TestCase
         foreach (['sales.revenue' => '41', 'sales.discount_given' => '43', 'sales.sales_returns' => '42', 'sales.tax_payable' => '225',
             'sales.cost_of_goods_sold' => '36', 'sales.inventory_asset' => '124', 'sales.accounts_receivable' => '121',
             'sales.customer_credit' => '226', 'inventory.variance' => '517', 'inventory.opening_equity' => '211',
-            'cash.over' => '61', 'cash.short' => '510', 'cash.drawer' => '131'] as $key => $code) {
+            'cash.over' => '65', 'cash.short' => '510', 'cash.drawer' => '131'] as $key => $code) {
             $this->assertSame($code, $after[$key]['accountCode'], $key);
             $this->assertFalse($after[$key]['needsDefault'], $key);
         }
+    }
+
+    public function test_remap_adds_the_missing_phoenix_accounts_and_moves_cash_overage_from_61_to_65(): void
+    {
+        $tenant = (int) DB::table('tenants')->insertGetId(['name' => 'Phoenix', 'slug' => 'phx-'.uniqid(), 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        $chart = [
+            '1' => [null, 'assets', 'debit'], '12' => ['1', 'assets', 'debit'], '124' => ['12', 'assets', 'debit'],
+            '13' => ['1', 'assets', 'debit'], '131' => ['13', 'assets', 'debit'],
+            '2' => [null, 'liabilities', 'credit'], '22' => ['2', 'liabilities', 'credit'],
+            '3' => [null, 'cost_of_sales', 'debit'], '4' => [null, 'revenue', 'credit'], '41' => ['4', 'revenue', 'credit'],
+            '5' => [null, 'expenses', 'debit'], '6' => [null, 'revenue', 'credit'],
+        ];
+        $ids = [];
+        foreach ($chart as $code => [$parent, $group, $normal]) {
+            $ids[$code] = (int) DB::table('financial_accounts')->insertGetId([
+                'tenant_id' => $tenant, 'parent_account_id' => $parent ? $ids[$parent] : null, 'code' => $code, 'name_ar' => 'حساب '.$code, 'name_en' => $code,
+                'account_group' => $group, 'normal_balance' => $normal, 'is_active' => true, 'is_system_protected' => false,
+                'catalog_source' => 'phinix', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        // State left by the first remap: 61 was created as "cash overage" and the mapping pointed at it.
+        $old = (int) DB::table('financial_accounts')->insertGetId([
+            'tenant_id' => $tenant, 'parent_account_id' => $ids['6'], 'code' => '61', 'name_ar' => 'إيراد زيادة صندوق', 'name_en' => 'x',
+            'account_group' => 'revenue', 'normal_balance' => 'credit', 'is_active' => true, 'is_system_protected' => true,
+            'catalog_source' => 'phinix', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('sales_account_mappings')->insert(['tenant_id' => $tenant, 'mapping_key' => 'cash.over', 'financial_account_id' => $old, 'created_at' => now(), 'updated_at' => now()]);
+
+        app(\App\Services\PhinixRemapService::class)->remapConfiguration($tenant, true);
+
+        $code = fn (string $c) => DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', $c)->first();
+        foreach (['62', '621', '629', '63', '64', '65', '7', '71'] as $c) {
+            $this->assertNotNull($code($c), $c);
+        }
+        $this->assertSame('إيرادات مختلفة', $code('61')->name_ar);
+        $this->assertSame((int) $code('62')->id, (int) $code('621')->parent_account_id);
+        $this->assertNull($code('7')->parent_account_id);
+        $this->assertSame((int) $code('7')->id, (int) $code('71')->parent_account_id);
+        $this->assertSame((int) $code('65')->id, (int) DB::table('sales_account_mappings')->where('tenant_id', $tenant)->where('mapping_key', 'cash.over')->value('financial_account_id'));
     }
 }

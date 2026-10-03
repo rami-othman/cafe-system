@@ -13,6 +13,7 @@ import '../models/purchasing_models.dart';
 import '../widgets/purchase_error_messages.dart';
 import '../widgets/purchase_type_label.dart';
 import '../widgets/purchase_posting_dialog.dart';
+import '../widgets/purchase_payment_dialog.dart';
 
 /// Purchase Invoice detail (`/finance/purchases/:id`). This is the same
 /// Supplier Invoice record shown at `/finance/suppliers/:id` — just a
@@ -113,6 +114,18 @@ class _PurchaseInvoiceDetailScreenState
     }
   }
 
+  Future<void> _pay() async {
+    final PurchaseInvoice? current = _purchase;
+    if (current == null) return;
+    final bool? paid = await showPurchasePaymentDialog(context, purchase: current);
+    if (paid != true || !mounted) return;
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم تسجيل دفعة للمورد على هذه الفاتورة.')),
+    );
+  }
+
   Future<void> _reverse() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -210,6 +223,20 @@ class _PurchaseInvoiceDetailScreenState
             label: const Text('ترحيل'),
           ),
         ],
+        if (p.allowedActions.contains('pay') &&
+            p.branchType != 'factory' &&
+            (double.tryParse(p.remainingAmount.replaceAll(',', '')) ?? 0) > 0) ...<Widget>[
+          const SizedBox(width: FinanceSpace.sm),
+          ElevatedButton.icon(
+            onPressed: _busy ? null : _pay,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinanceColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.payments_outlined, size: 16),
+            label: const Text('دفع للمورد'),
+          ),
+        ],
         if (p.allowedActions.contains('reverse')) ...<Widget>[
           const SizedBox(width: FinanceSpace.sm),
           OutlinedButton.icon(
@@ -255,86 +282,15 @@ class _PurchaseInvoiceDetailScreenState
               baseAmount: p.totalAmount,
             ),
             const SizedBox(height: FinanceSpace.lg),
-            FinanceInfoGrid(
-              items: <FinanceInfoItem>[
-                FinanceInfoItem('حالة المستند', switch (p.documentStatus) {
-                  'posted' => 'مُرحّل',
-                  'cancelled' => 'ملغي',
-                  _ => 'مسودة',
-                }),
-                FinanceInfoItem('حالة الدفع', switch (p.paymentStatus) {
-                  'paid' => 'مدفوع بالكامل',
-                  'partial' => 'مدفوع جزئياً',
-                  'unpaid' => 'غير مدفوع',
-                  _ => 'لا ينطبق',
-                }),
-                FinanceInfoItem('الفرع', p.branchName ?? 'كل الفروع'),
-                if (p.hasInventoryLines)
-                  FinanceInfoItem('المخزن', p.warehouseName ?? '—'),
-                FinanceInfoItem(
-                  'تاريخ الفاتورة',
-                  p.isBackdated ? '${p.invoiceDate} (بتاريخ سابق)' : p.invoiceDate,
-                ),
-                FinanceInfoItem('تاريخ الإنشاء', p.createdAt ?? '—'),
-                FinanceInfoItem(
-                  'طريقة الدفع',
-                  switch (p.paymentTerms) {
-                    'cash' => 'كاش',
-                    'sham_cash' => 'شام كاش',
-                    _ => 'أجل',
-                  },
-                ),
-                if (p.paymentTerms == 'sham_cash')
-                  FinanceInfoItem(
-                    'رقم عملية شام كاش',
-                    p.paymentReference ?? '—',
-                  ),
-                if (p.isCreditTerms)
-                  FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
-                FinanceInfoItem(
-                  'الحساب',
-                  '${p.debitAccountCode ?? ''} ${p.debitAccountName ?? ''}'
-                      .trim(),
-                ),
-                FinanceInfoItem('أنشأ بواسطة', p.createdByName ?? '—'),
-                FinanceInfoItem('تاريخ الترحيل', p.postedAt ?? '—'),
-                if (p.isBackdated)
-                  FinanceInfoItem(
-                    'سبب التاريخ السابق',
-                    p.backdateReason ?? '—',
-                  ),
-                if (p.hasInventoryLines)
-                  FinanceInfoItem(
-                    'حالة الاستلام',
-                    receiptStatusLabel(p.receiptStatus),
-                  ),
-              ],
+            _SummaryArea(purchase: p),
+            const SizedBox(height: FinanceSpace.xl),
+            _SectionTitle(
+              'بنود الفاتورة',
+              count: p.lines.isEmpty ? null : p.lines.length,
             ),
-            if (p.hasInventoryLines &&
-                p.receiptStatus == 'received') ...<Widget>[
-              const SizedBox(height: FinanceSpace.md),
-              Text('تم الاستلام', style: FinanceText.page),
-              Text(
-                p.lines
-                    .where((line) => line.isInventory)
-                    .map(
-                      (line) =>
-                          '${line.receivedQuantity} ${line.baseUnit ?? line.purchaseUnit ?? ''} ${line.inventoryItemName ?? line.description}',
-                    )
-                    .join('، '),
-                style: FinanceText.body,
-              ),
-              if (p.documentStatus == 'posted')
-                const Text(
-                  'لا يمكن إلغاء الفاتورة بعد استلام المخزون. يجب إرجاع حركة المخزون أولاً.',
-                  style: FinanceText.small,
-                ),
-            ],
-            const SizedBox(height: FinanceSpace.lg),
-            Text('بنود الفاتورة', style: FinanceText.page),
-            const SizedBox(height: FinanceSpace.md),
             if (p.lines.isEmpty)
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(FinanceSpace.lg),
                 decoration: BoxDecoration(
                   color: FinanceColors.card,
@@ -348,37 +304,295 @@ class _PurchaseInvoiceDetailScreenState
               )
             else
               _LinesTable(lines: p.lines),
-            if (p.hasInventoryLines) ...<Widget>[
-              const SizedBox(height: FinanceSpace.lg),
-              Text('سجل الاستلامات', style: FinanceText.page),
-              const SizedBox(height: FinanceSpace.md),
-              if (p.receipts.isEmpty)
-                const SizedBox(
-                  height: 100,
-                  child: FinanceEmptyState(
-                    message: 'لم يتم إنشاء أي استلام مخزون بعد لهذه الفاتورة',
-                  ),
-                )
-              else
-                _ReceiptsTable(receipts: p.receipts),
-            ],
-            const SizedBox(height: FinanceSpace.lg),
-            _TotalsPanel(purchase: p),
-            const SizedBox(height: FinanceSpace.lg),
-            Text('الدفعات المرتبطة', style: FinanceText.page),
-            const SizedBox(height: FinanceSpace.md),
-            if (p.payments.isEmpty)
-              const SizedBox(
-                height: 120,
-                child: FinanceEmptyState(
-                  message: 'لا توجد دفعات مسجلة على هذه الفاتورة',
-                ),
-              )
-            else
-              _PaymentsTable(payments: p.payments),
+            const SizedBox(height: FinanceSpace.xl),
+            _ReceiptsAndPayments(purchase: p),
+            const SizedBox(height: FinanceSpace.xl),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Section heading used across the page: title + optional count chip.
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {this.count});
+  final String title;
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: FinanceSpace.md),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(title, style: FinanceText.page),
+        if (count != null) ...<Widget>[
+          const SizedBox(width: FinanceSpace.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+            decoration: BoxDecoration(
+              color: FinanceColors.card,
+              border: Border.all(color: FinanceColors.border),
+              borderRadius: BorderRadius.circular(FinanceRadius.pill),
+            ),
+            child: Text('$count', style: FinanceText.small),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+/// Titled card holding label / value rows (one row per fact).
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.title,
+    required this.icon,
+    required this.items,
+    this.footer,
+  });
+  final String title;
+  final IconData icon;
+  final List<FinanceInfoItem> items;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(FinanceSpace.lg),
+    decoration: BoxDecoration(
+      color: FinanceColors.card,
+      border: Border.all(color: FinanceColors.border),
+      borderRadius: BorderRadius.circular(FinanceRadius.card),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(icon, size: 18, color: FinanceColors.primary),
+            const SizedBox(width: FinanceSpace.sm),
+            Text(title, style: FinanceText.page.copyWith(fontSize: 15.5)),
+          ],
+        ),
+        const Divider(height: FinanceSpace.xl),
+        for (int i = 0; i < items.length; i++)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: i == items.length - 1 ? 0 : FinanceSpace.md,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(
+                  width: 120,
+                  child: Text(items[i].label, style: FinanceText.label),
+                ),
+                Expanded(child: Text(items[i].value, style: FinanceText.body)),
+              ],
+            ),
+          ),
+        if (footer != null) ...<Widget>[
+          const SizedBox(height: FinanceSpace.md),
+          footer!,
+        ],
+      ],
+    ),
+  );
+}
+
+/// Top of the page: document facts + payment/receiving cards on the right,
+/// totals panel on the left (stacked on narrow windows).
+class _SummaryArea extends StatelessWidget {
+  const _SummaryArea({required this.purchase});
+  final PurchaseInvoice purchase;
+
+  @override
+  Widget build(BuildContext context) {
+    final PurchaseInvoice p = purchase;
+    final Widget documentCard = _InfoCard(
+      title: 'بيانات المستند',
+      icon: Icons.description_outlined,
+      items: <FinanceInfoItem>[
+        FinanceInfoItem('حالة المستند', switch (p.documentStatus) {
+          'posted' => 'مُرحّل',
+          'cancelled' => 'ملغي',
+          _ => 'مسودة',
+        }),
+        FinanceInfoItem('الفرع', p.branchName ?? 'كل الفروع'),
+        if (p.hasInventoryLines)
+          FinanceInfoItem('المخزن', p.warehouseName ?? '—'),
+        FinanceInfoItem(
+          'تاريخ الفاتورة',
+          p.isBackdated ? '${p.invoiceDate} (بتاريخ سابق)' : p.invoiceDate,
+        ),
+        if (p.isBackdated)
+          FinanceInfoItem('سبب التاريخ السابق', p.backdateReason ?? '—'),
+        FinanceInfoItem(
+          'الحساب',
+          '${p.debitAccountCode ?? ''} ${p.debitAccountName ?? ''}'.trim(),
+        ),
+        FinanceInfoItem('أنشأ بواسطة', p.createdByName ?? '—'),
+        FinanceInfoItem('تاريخ الإنشاء', p.createdAt ?? '—'),
+        FinanceInfoItem('تاريخ الترحيل', p.postedAt ?? '—'),
+      ],
+    );
+    final Widget paymentCard = _InfoCard(
+      title: 'الدفع',
+      icon: Icons.payments_outlined,
+      items: <FinanceInfoItem>[
+        FinanceInfoItem('طريقة الدفع', switch (p.paymentTerms) {
+          'cash' => 'كاش',
+          'sham_cash' => 'شام كاش',
+          _ => 'أجل',
+        }),
+        FinanceInfoItem('حالة الدفع', switch (p.paymentStatus) {
+          'paid' => 'مدفوع بالكامل',
+          'partial' => 'مدفوع جزئياً',
+          'unpaid' => 'غير مدفوع',
+          _ => 'لا ينطبق',
+        }),
+        if (p.paymentTerms == 'sham_cash')
+          FinanceInfoItem('رقم عملية شام كاش', p.paymentReference ?? '—'),
+        if (p.isCreditTerms) FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
+      ],
+    );
+    final Widget? receivingCard = p.hasInventoryLines
+        ? _InfoCard(
+            title: 'استلام المخزون',
+            icon: Icons.inventory_2_outlined,
+            items: <FinanceInfoItem>[
+              FinanceInfoItem(
+                'حالة الاستلام',
+                receiptStatusLabel(p.receiptStatus),
+              ),
+              if (p.receiptStatus == 'received')
+                FinanceInfoItem(
+                  'تم استلام',
+                  p.lines
+                      .where((PurchaseInvoiceLine line) => line.isInventory)
+                      .map(
+                        (PurchaseInvoiceLine line) =>
+                            '${line.receivedQuantity} ${line.baseUnit ?? line.purchaseUnit ?? ''} ${line.inventoryItemName ?? line.description}',
+                      )
+                      .join('\n'),
+                ),
+            ],
+            footer: p.receiptStatus == 'received' && p.documentStatus == 'posted'
+                ? const Text(
+                    'لا يمكن إلغاء الفاتورة بعد استلام المخزون. يجب إرجاع حركة المخزون أولاً.',
+                    style: FinanceText.small,
+                  )
+                : null,
+          )
+        : null;
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        final bool wide = box.maxWidth >= 1000;
+        final Widget totals = _TotalsPanel(purchase: p);
+        final Widget right = Column(
+          children: <Widget>[
+            paymentCard,
+            if (receivingCard != null) ...<Widget>[
+              const SizedBox(height: FinanceSpace.lg),
+              receivingCard,
+            ],
+          ],
+        );
+        if (!wide) {
+          return Column(
+            children: <Widget>[
+              totals,
+              const SizedBox(height: FinanceSpace.lg),
+              documentCard,
+              const SizedBox(height: FinanceSpace.lg),
+              right,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(flex: 5, child: documentCard),
+            const SizedBox(width: FinanceSpace.lg),
+            Expanded(flex: 4, child: right),
+            const SizedBox(width: FinanceSpace.lg),
+            SizedBox(width: 320, child: totals),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Receipts log and linked payments, side by side on wide windows.
+class _ReceiptsAndPayments extends StatelessWidget {
+  const _ReceiptsAndPayments({required this.purchase});
+  final PurchaseInvoice purchase;
+
+  @override
+  Widget build(BuildContext context) {
+    final PurchaseInvoice p = purchase;
+    final Widget receipts = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _SectionTitle(
+          'سجل الاستلامات',
+          count: p.receipts.isEmpty ? null : p.receipts.length,
+        ),
+        if (p.receipts.isEmpty)
+          const SizedBox(
+            height: 110,
+            child: FinanceEmptyState(
+              message: 'لم يتم إنشاء أي استلام مخزون بعد لهذه الفاتورة',
+            ),
+          )
+        else
+          _ReceiptsTable(receipts: p.receipts),
+      ],
+    );
+    final Widget payments = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _SectionTitle(
+          'الدفعات المرتبطة',
+          count: p.payments.isEmpty ? null : p.payments.length,
+        ),
+        if (p.payments.isEmpty)
+          const SizedBox(
+            height: 110,
+            child: FinanceEmptyState(
+              message: 'لا توجد دفعات مسجلة على هذه الفاتورة',
+            ),
+          )
+        else
+          _PaymentsTable(payments: p.payments),
+      ],
+    );
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        if (!p.hasInventoryLines) return payments;
+        if (box.maxWidth < 1100) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              receipts,
+              const SizedBox(height: FinanceSpace.xl),
+              payments,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(child: receipts),
+            const SizedBox(width: FinanceSpace.lg),
+            Expanded(child: payments),
+          ],
+        );
+      },
     );
   }
 }
@@ -442,7 +656,7 @@ class _ReceiptsTable extends StatelessWidget {
       'أنشأ بواسطة',
       'الحالة',
     ],
-    minWidth: 760,
+    minWidth: 600,
     onRowTap: (int index) => context.go(
       '${PurchaseRouteScope.of(context).receiptsPath}/${receipts[index].id}',
     ),
@@ -467,6 +681,7 @@ class _TotalsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
+    width: double.infinity,
     padding: const EdgeInsets.all(FinanceSpace.lg),
     decoration: BoxDecoration(
       color: FinanceColors.card,
@@ -474,21 +689,35 @@ class _TotalsPanel extends StatelessWidget {
       borderRadius: BorderRadius.circular(FinanceRadius.card),
     ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Icon(
+              Icons.receipt_long_outlined,
+              size: 18,
+              color: FinanceColors.primary,
+            ),
+            const SizedBox(width: FinanceSpace.sm),
+            Text('الإجماليات', style: FinanceText.page.copyWith(fontSize: 15.5)),
+          ],
+        ),
+        const Divider(height: FinanceSpace.xl),
         _totalsRow('المجموع الفرعي', purchase.subtotal),
         _totalsRow('الضريبة', purchase.taxAmount),
-        const Divider(height: FinanceSpace.lg),
+        const Divider(height: FinanceSpace.xl),
         _totalsRow('الإجمالي', purchase.totalAmount, emphasize: true),
+        const SizedBox(height: FinanceSpace.xs),
         _totalsRow('المدفوع', purchase.paidAmount),
         _totalsRow(
           'المتبقي',
           purchase.remainingAmount,
           danger: purchase.isOverdue,
         ),
-        const SizedBox(height: FinanceSpace.sm),
+        const SizedBox(height: FinanceSpace.md),
         Wrap(
           spacing: FinanceSpace.sm,
+          runSpacing: FinanceSpace.sm,
           children: <Widget>[
             FinanceStatusBadge(status: purchase.documentStatus),
             if (purchase.paymentStatus != 'not_applicable')
@@ -505,12 +734,16 @@ class _TotalsPanel extends StatelessWidget {
     bool emphasize = false,
     bool danger = false,
   }) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
+    padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        Text(label, style: emphasize ? FinanceText.page : FinanceText.label),
-        const SizedBox(width: FinanceSpace.lg),
+        Text(
+          label,
+          style: emphasize
+              ? FinanceText.page.copyWith(fontSize: 16)
+              : FinanceText.label,
+        ),
         FinanceAmount(
           value: value,
           color: danger ? FinanceColors.danger : null,
@@ -533,7 +766,7 @@ class _PaymentsTable extends StatelessWidget {
       'الحالة',
       'المبلغ',
     ],
-    minWidth: 640,
+    minWidth: 520,
     rows: payments
         .map(
           (PurchasePayment pay) => <Widget>[

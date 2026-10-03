@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_detail.dart';
+import 'orders_localizations.dart';
 
 class OrderCustomerSection extends StatelessWidget {
   const OrderCustomerSection({super.key, required this.detail});
@@ -15,11 +16,13 @@ class OrderCustomerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final String name = detail.hasCustomer
         ? detail.customerName
-        : 'Walk-in Customer';
-    final String initials = detail.hasCustomer ? _initialsFor(name) : 'WC';
+        : context.ordersL10n.ordersWalkInCustomer;
+    final String initials = detail.hasCustomer
+        ? _initialsFor(name)
+        : context.ordersL10n.ordersWalkInInitials;
 
     return _DetailSection(
-      title: 'Customer',
+      title: context.ordersL10n.ordersCustomer,
       child: Row(
         children: <Widget>[
           CircleAvatar(

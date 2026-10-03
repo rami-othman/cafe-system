@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/refund_type.dart';
+import 'orders_localizations.dart';
 
 class RefundTypeSelector extends StatelessWidget {
   const RefundTypeSelector({
@@ -36,7 +37,7 @@ class RefundTypeSelector extends StatelessWidget {
           child: _RefundTypeCard(
             type: RefundType.partial,
             isSelected: selectedType == RefundType.partial,
-            subtitle: 'Custom amount',
+            subtitle: context.ordersL10n.ordersRefundCustomAmount,
             onTap: () => onChanged(RefundType.partial),
           ),
         ),
@@ -82,7 +83,7 @@ class _RefundTypeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      type.label,
+                      ordersRefundTypeLabel(context.ordersL10n, type),
                       style: AppTextStyles.labelLarge.copyWith(
                         color: AppColors.textPrimary,
                       ),

@@ -107,14 +107,14 @@ class _CashBanksScreenState extends State<CashBanksScreen> {
         showContext: false,
         actions: <Widget>[
           OutlinedButton(
-            onPressed: () => _openAccountForm(),
+            onPressed: () => context.go('/finance/accounts'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 36),
               foregroundColor: FinanceColors.primary,
               side: const BorderSide(color: FinanceColors.border),
               backgroundColor: FinanceColors.card,
             ),
-            child: const Text('حساب جديد'),
+            child: const Text('إنشاء صندوق من دليل الحسابات'),
           ),
           const SizedBox(width: FinanceSpace.sm),
           ElevatedButton.icon(
@@ -804,7 +804,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
   Widget build(BuildContext context) {
     final bool isEdit = widget.current != null;
     return FinanceDialogShell(
-      title: isEdit ? 'تعديل الحساب' : 'حساب جديد',
+      title: isEdit ? 'إعدادات الصندوق' : 'صندوق جديد',
       actions: <Widget>[
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context, false),
@@ -833,9 +833,23 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: FinanceSpace.md),
+              padding: const EdgeInsets.all(FinanceSpace.sm),
+              decoration: BoxDecoration(
+                color: FinanceColors.card,
+                border: Border.all(color: FinanceColors.border),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'الصندوق هو حساب في دليل الحسابات (تحت «الأموال الجاهزة»). يُنشأ من هناك، وهنا تعدّل إعداداته فقط.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
             if (!isEdit)
               _FormDropdown<String>(
-                label: 'نوع الحساب',
+                label: 'النوع',
                 value: _kind,
                 items: const <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(value: 'cash', child: Text('نقدي')),
@@ -871,7 +885,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
             ),
             const SizedBox(height: FinanceSpace.md),
             AccountPickerField(
-              label: 'حساب الأستاذ',
+              label: 'الحساب في شجرة الحسابات',
               accounts: widget.ledgerAccounts,
               value: _accountId,
               onChanged: (int? v) => setState(() => _accountId = v),

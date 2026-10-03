@@ -3,6 +3,7 @@
 namespace App\Domain\Inventory;
 
 use App\Support\InventoryDecimal;
+use App\Services\PosInventoryWarehouseResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,6 +31,62 @@ final class BarCheckTemplateService
             $prepared[] = ['tenant_id' => $tenantId, 'inventory_item_id' => $item->id, 'count_unit' => $line['countUnit'], 'is_required' => $line['required'] ?? true, 'tolerance_type' => $type, 'quantity_tolerance' => InventoryDecimal::quantity($tolerance), 'manager_review_threshold' => $threshold === null ? null : InventoryDecimal::quantity($threshold), 'requires_review_when_exceeded' => $line['requiresReviewWhenExceeded'] ?? false, 'sort_order' => $order];
         }
         return ['warehouse' => $warehouse, 'lines' => $prepared];
+    }
+
+    /**
+     * A branch that has never configured a bar check still has to count what its sales consumed.
+     * The first time a shift of that branch is closed, a template is created for the POS warehouse
+     * from every material the sales already took out of it (or, before any sale, from what the warehouse holds), and it is required for shift close.
+     * Once any template exists for that warehouse (even a deactivated one) the owner is in control
+     * and nothing is created again. The owner can edit the generated template like any other.
+     */
+    public function ensureDefaultForBranch(int $tenantId, int $branchId, ?int $actorId = null): ?object
+    {
+        try {
+            $warehouse = app(PosInventoryWarehouseResolver::class)->forBranch($tenantId, $branchId);
+        } catch (\Throwable) {
+            return null;
+        }
+        $warehouseId = (int) $warehouse->id;
+        $exists = fn () => DB::table('bar_check_templates')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('warehouse_id', $warehouseId)->exists();
+        if ($exists()) {
+            return null;
+        }
+        $lines = [];
+        $itemIds = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('type', 'sale_consumption')->distinct()->pluck('inventory_item_id');
+        if ($itemIds->isEmpty()) {
+            // Nothing was consumed by a sale yet: count what the bar actually holds.
+            $itemIds = DB::table('stock_balances')->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('quantity_on_hand', '>', 0)->pluck('inventory_item_id');
+        }
+        foreach (DB::table('inventory_items')->where('tenant_id', $tenantId)->whereIn('id', $itemIds)->where('is_active', true)->whereNull('deleted_at')->orderBy('name_ar')->orderBy('id')->get() as $item) {
+            $line = ['itemId' => (int) $item->id, 'countUnit' => $item->unit, 'required' => true, 'toleranceType' => 'quantity', 'tolerance' => '0'];
+            try {
+                $this->validate($tenantId, $branchId, $warehouseId, [$line], true);
+            } catch (ValidationException) {
+                continue;
+            }
+            $lines[] = $line;
+        }
+        if ($lines === []) {
+            return null;
+        }
+        $validated = $this->validate($tenantId, $branchId, $warehouseId, $lines, true);
+
+        return DB::transaction(function () use ($tenantId, $branchId, $warehouseId, $warehouse, $validated, $actorId, $exists): ?object {
+            DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->lockForUpdate()->first();
+            if ($exists()) {
+                return null;
+            }
+            $now = now();
+            $id = (int) DB::table('bar_check_templates')->insertGetId([
+                'tenant_id' => $tenantId, 'branch_id' => $branchId, 'warehouse_id' => $warehouseId,
+                'name' => 'جرد البار - '.$warehouse->name, 'is_active' => true, 'required_for_shift_close' => true,
+                'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+            DB::table('bar_check_template_lines')->insert(array_map(fn (array $line) => $line + ['bar_check_template_id' => $id, 'created_at' => $now, 'updated_at' => $now], $validated['lines']));
+
+            return DB::table('bar_check_templates')->where('id', $id)->first();
+        });
     }
 
     /** Legacy invalid/empty templates must not permanently block shift close. */

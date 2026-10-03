@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/order_summary.dart';
 import '../models/order_summary_item.dart';
+import 'orders_localizations.dart';
 
 class OrderItemsPreview extends StatelessWidget {
   const OrderItemsPreview({super.key, required this.order});
@@ -36,7 +37,7 @@ class OrderItemsPreview extends StatelessWidget {
           ],
           if (previewItems.isEmpty)
             Text(
-              'No line items',
+              context.ordersL10n.ordersNoLineItems,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -47,7 +48,7 @@ class OrderItemsPreview extends StatelessWidget {
           Row(
             children: <Widget>[
               Text(
-                'Total',
+                context.ordersL10n.ordersTotal,
                 style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.primary,
                 ),
@@ -79,7 +80,8 @@ class _OrderItemLine extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Text(
-            '${_quantityLabel(item.quantity)}x ${item.name}',
+            '${_quantityLabel(item.quantity)}x '
+            '${ordersItemName(context.ordersL10n, item.name)}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.bodySmall.copyWith(

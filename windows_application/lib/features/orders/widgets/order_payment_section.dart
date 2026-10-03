@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/order_detail.dart';
 import '../models/order_payment_summary.dart';
+import 'orders_localizations.dart';
 
 class OrderPaymentSection extends StatelessWidget {
   const OrderPaymentSection({super.key, required this.detail});
@@ -18,7 +19,7 @@ class OrderPaymentSection extends StatelessWidget {
     final OrderPaymentSummary payment = detail.payment;
 
     return _DetailSection(
-      title: 'Payment',
+      title: context.ordersL10n.ordersPaymentTitle,
       child: Container(
         padding: AppSpacing.allMd,
         decoration: BoxDecoration(
@@ -47,7 +48,7 @@ class OrderPaymentSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    payment.methodLabel,
+                    ordersPaymentMethodLabel(context.ordersL10n, payment),
                     style: AppTextStyles.labelLarge.copyWith(
                       color: AppColors.textPrimary,
                     ),
@@ -55,7 +56,13 @@ class OrderPaymentSection extends StatelessWidget {
                   if (payment.hasPayment) ...<Widget>[
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      '${payment.statusLabel} - Auth: ${payment.authCode}',
+                      context.ordersL10n.ordersPaymentAuth(
+                        ordersPaymentStatusLabel(
+                          context.ordersL10n,
+                          payment.statusLabel,
+                        ),
+                        payment.authCode,
+                      ),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textMuted,
                         fontSize: 12,
@@ -79,7 +86,9 @@ class OrderPaymentSection extends StatelessWidget {
                 if (detail.hasRefund) ...<Widget>[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Refund ${CurrencyFormatter.format(detail.refundedAmount)}',
+                    context.ordersL10n.ordersRefundAmountLine(
+                      CurrencyFormatter.format(detail.refundedAmount),
+                    ),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.dangerStrong,
                     ),

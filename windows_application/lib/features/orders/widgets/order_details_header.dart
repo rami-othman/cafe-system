@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +8,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../models/order_detail.dart';
 import '../models/order_status.dart';
 import 'order_status_badge.dart';
+import 'orders_localizations.dart';
 
 class OrderDetailsHeader extends StatelessWidget {
   const OrderDetailsHeader({
@@ -34,8 +34,8 @@ class OrderDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String date = DateFormat('MMM d, yyyy').format(detail.createdAt);
-    final String time = DateFormat('h:mm a').format(detail.createdAt);
+    final String date = ordersFormatDate(detail.createdAt);
+    final String time = ordersFormatTime(context.ordersL10n, detail.createdAt);
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -50,19 +50,19 @@ class OrderDetailsHeader extends StatelessWidget {
             Row(
               children: <Widget>[
                 _HeaderIconButton(
-                  tooltip: 'Close order details',
+                  tooltip: context.ordersL10n.ordersCloseDetails,
                   icon: Icons.close,
                   onTap: onClose,
                 ),
                 const Spacer(),
                 _HeaderIconButton(
-                  tooltip: 'Print order',
+                  tooltip: context.ordersL10n.ordersPrintTooltip,
                   icon: Icons.print_outlined,
                   onTap: onPrint,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 _HeaderIconButton(
-                  tooltip: 'Copy order',
+                  tooltip: context.ordersL10n.ordersCopyTooltip,
                   icon: Icons.copy_outlined,
                   onTap: onCopy,
                 ),
@@ -86,9 +86,12 @@ class OrderDetailsHeader extends StatelessWidget {
                 runSpacing: AppSpacing.sm,
                 children: <Widget>[
                   if (detail.status == OrderStatus.held)
-                    _LifecycleButton(label: 'Resume in POS', onTap: onResume),
+                    _LifecycleButton(
+                      label: context.ordersL10n.ordersResumeInPos,
+                      onTap: onResume,
+                    ),
                   _LifecycleButton(
-                    label: 'Cancel order',
+                    label: context.ordersL10n.ordersCancelOrder,
                     onTap: onCancel,
                     destructive: true,
                   ),
@@ -150,7 +153,9 @@ class _LifecycleButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: onTap != null,
-      label: onTap == null ? '$label disabled' : label,
+      label: onTap == null
+          ? context.ordersL10n.ordersDisabledSemantics(label)
+          : label,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
@@ -186,7 +191,7 @@ class _PayButton extends StatelessWidget {
           padding: AppSpacing.horizontalMd,
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
         ),
-        child: const Text('Pay'),
+        child: Text(context.ordersL10n.ordersPay),
       ),
     );
   }
@@ -248,7 +253,9 @@ class _RefundButton extends StatelessWidget {
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
           padding: AppSpacing.horizontalMd,
         ),
-        child: Text(isRefunded ? 'Refunded' : 'Refund'),
+        child: Text(
+          isRefunded ? context.ordersL10n.ordersRefundedLabel : context.ordersL10n.ordersRefund,
+        ),
       ),
     );
   }

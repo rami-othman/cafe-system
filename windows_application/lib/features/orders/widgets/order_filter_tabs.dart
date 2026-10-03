@@ -6,6 +6,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../controllers/orders_state.dart';
+import 'orders_localizations.dart';
 
 class OrderFilterTabs extends StatelessWidget {
   const OrderFilterTabs({
@@ -31,7 +32,7 @@ class OrderFilterTabs extends StatelessWidget {
           final OrdersFilter filter = OrdersFilter.values[index];
 
           return _OrderFilterTab(
-            label: filter.label,
+            label: ordersFilterLabel(context.ordersL10n, filter),
             isActive: filter == selectedFilter,
             onTap: () => onFilterSelected(filter),
           );

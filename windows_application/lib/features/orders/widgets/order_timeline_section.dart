@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_timeline_event.dart';
+import 'orders_localizations.dart';
 
 class OrderTimelineSection extends StatelessWidget {
   const OrderTimelineSection({super.key, required this.events});
@@ -14,7 +14,7 @@ class OrderTimelineSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DetailSection(
-      title: 'Timeline',
+      title: context.ordersL10n.ordersTimeline,
       child: Column(
         children: <Widget>[
           for (int index = 0; index < events.length; index++)
@@ -36,7 +36,7 @@ class _TimelineEventRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String time = DateFormat('h:mm a').format(event.time);
+    final String time = ordersFormatTime(context.ordersL10n, event.time);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,14 +70,15 @@ class _TimelineEventRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  event.title,
+                  ordersTimelineTitle(context.ordersL10n, event.title),
                   style: AppTextStyles.labelLarge.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '$time - ${event.subtitle}',
+                  '$time - '
+                  '${ordersTimelineSubtitle(context.ordersL10n, event.subtitle)}',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 12,

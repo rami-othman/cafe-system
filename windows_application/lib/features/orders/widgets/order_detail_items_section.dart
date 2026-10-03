@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/order_detail.dart';
+import 'orders_localizations.dart';
 
 class OrderDetailItemsSection extends StatelessWidget {
   const OrderDetailItemsSection({super.key, required this.items});
@@ -16,12 +17,12 @@ class OrderDetailItemsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DetailSection(
-      title: 'Order Items',
+      title: context.ordersL10n.ordersOrderItems,
       child: Column(
         children: <Widget>[
           if (items.isEmpty)
             Text(
-              'No line items',
+              context.ordersL10n.ordersNoLineItems,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -73,7 +74,7 @@ class _OrderDetailItemRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                item.name,
+                ordersItemName(context.ordersL10n, item.name),
                 style: AppTextStyles.labelLarge.copyWith(
                   color: AppColors.textPrimary,
                 ),
@@ -81,7 +82,7 @@ class _OrderDetailItemRow extends StatelessWidget {
               for (final String modifier in item.modifiers) ...<Widget>[
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '- $modifier',
+                  '- ${ordersModifierLabel(context.ordersL10n, modifier)}',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 12,

@@ -32,6 +32,7 @@ class FinancialAccountService
                 'updated_at' => $now,
             ]);
             $this->audit->record($request, $tenantId, 'financial_account.created', 'financial_account', $id, [], (array) $this->find($tenantId, $id), null, $actorId);
+            app(CashBoxSyncService::class)->ensureForAccount($tenantId, $id, $actorId);
 
             return $id;
         });
@@ -101,6 +102,7 @@ class FinancialAccountService
                 }
             }
             DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)->update($payload + ['updated_at' => now()]);
+            app(CashBoxSyncService::class)->ensureForAccount($tenantId, $accountId, $actorId);
             $this->audit->record($request, $tenantId, 'financial_account.updated', 'financial_account', $accountId, (array) $before, (array) $this->find($tenantId, $accountId), null, $actorId);
         });
     }
@@ -110,6 +112,9 @@ class FinancialAccountService
         $before = $this->find($tenantId, $accountId);
         if ($before->is_system_protected && ! $isActive) {
             throw ValidationException::withMessages(['isActive' => 'لا يمكن تعطيل حساب محمي.']);
+        }
+        if (! $isActive) {
+            app(CashBoxSyncService::class)->assertCanDeactivate($tenantId, $accountId);
         }
         DB::transaction(function () use ($request, $tenantId, $accountId, $isActive, $actorId, $before): void {
             DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)->update(['is_active' => $isActive, 'updated_by' => $actorId, 'updated_at' => now()]);

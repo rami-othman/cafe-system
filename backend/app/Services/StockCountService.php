@@ -126,9 +126,18 @@ class StockCountService
             $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->where('is_active', true)->whereNull('deleted_at')->first();
             abort_unless($item, 422, 'The inventory item is no longer active.');
             InventoryItemScope::assertForBranch($tenantId, $item, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
-            $entered = InventoryDecimal::units($data['countedQuantity'], 'countedQuantity');
-            $converted = $this->conversions->resolve($tenantId, $item, $data['countedQuantity'], $data['unit'] ?? $line->entered_unit ?? $item->unit);
-            $expected = InventoryDecimal::units($line->expected_quantity);
+            $expected = InventoryDecimal::signedUnits($line->expected_quantity);
+            if (str_starts_with(trim((string) $data['countedQuantity']), '-')) {
+                // A negative count is only meaningful as "confirm the negative book balance": it must equal it.
+                $entered = InventoryDecimal::signedUnits($data['countedQuantity']);
+                if ($expected >= 0 || $entered !== $expected) {
+                    throw ValidationException::withMessages(['countedQuantity' => 'الكمية المحسوبة لا يمكن أن تكون سالبة.']);
+                }
+                $converted = ['baseQuantity' => $entered, 'inputUnit' => $line->entered_unit ?? $item->unit, 'factor' => 1000000];
+            } else {
+                $entered = InventoryDecimal::units($data['countedQuantity'], 'countedQuantity');
+                $converted = $this->conversions->resolve($tenantId, $item, $data['countedQuantity'], $data['unit'] ?? $line->entered_unit ?? $item->unit);
+            }
             $variance = $converted['baseQuantity'] - $expected;
             $status = $this->varianceStatus($line, $expected, $variance);
             $reason = array_key_exists('reason', $data) ? trim((string) ($data['reason'] ?? '')) : $line->reason;

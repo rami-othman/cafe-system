@@ -6,6 +6,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/refund_reason.dart';
+import 'orders_localizations.dart';
 
 class RefundReasonDropdown extends StatelessWidget {
   const RefundReasonDropdown({
@@ -42,7 +43,7 @@ class RefundReasonDropdown extends StatelessWidget {
                   return DropdownMenuItem<RefundReason>(
                     value: reason,
                     child: Text(
-                      reason.label,
+                      ordersRefundReasonLabel(context.ordersL10n, reason),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textPrimary,
                       ),

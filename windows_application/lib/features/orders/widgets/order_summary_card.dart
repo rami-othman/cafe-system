@@ -9,6 +9,7 @@ import '../models/order_type.dart';
 import 'order_card_actions.dart';
 import 'order_items_preview.dart';
 import 'order_status_badge.dart';
+import 'orders_localizations.dart';
 
 class OrderSummaryCard extends StatelessWidget {
   const OrderSummaryCard({
@@ -53,7 +54,8 @@ class OrderSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${order.displayNumber} • ${order.type.label}',
+                      '${order.displayNumber} • '
+                      '${ordersTypeLabel(context.ordersL10n, order.type)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.labelSmall.copyWith(
@@ -63,7 +65,10 @@ class OrderSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      order.customerName,
+                      ordersCustomerName(
+                        context.ordersL10n,
+                        order.customerName,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.titleLarge.copyWith(
@@ -83,11 +88,15 @@ class OrderSummaryCard extends StatelessWidget {
             children: <Widget>[
               _MetaLabel(
                 icon: Icons.receipt_long_outlined,
-                label:
-                    '${_quantityLabel(order.itemCount)} ${order.itemCount == 1 ? 'Item' : 'Items'}',
+                label: order.itemCount == 1
+                    ? context.ordersL10n.ordersItemsOne(_quantityLabel(order.itemCount))
+                    : context.ordersL10n.ordersItemsMany(_quantityLabel(order.itemCount)),
               ),
               const SizedBox(width: AppSpacing.lg),
-              _MetaLabel(icon: Icons.schedule_outlined, label: order.timeAgo),
+              _MetaLabel(
+                icon: Icons.schedule_outlined,
+                label: ordersTimeAgo(context.ordersL10n, order.timeAgo),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),

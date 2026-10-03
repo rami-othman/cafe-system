@@ -14,6 +14,7 @@ import 'refund_reason_dropdown.dart';
 import 'refund_summary_card.dart';
 import 'refund_type_selector.dart';
 import 'refund_warning_box.dart';
+import 'orders_localizations.dart';
 
 class RefundDialog extends StatefulWidget {
   const RefundDialog({super.key, required this.orderDetail});
@@ -56,16 +57,16 @@ class _RefundDialogState extends State<RefundDialog> {
 
   String? get _validationMessage {
     if (_amountController.text.trim().isEmpty) {
-      return 'Enter a refund amount.';
+      return context.ordersL10n.ordersRefundEnterAmount;
     }
 
     final double? amount = _amount;
     if (amount == null || amount <= 0) {
-      return 'Refund amount must be greater than zero.';
+      return context.ordersL10n.ordersRefundAmountPositive;
     }
 
     if (amount > widget.orderDetail.refundableAmount) {
-      return 'Refund amount cannot exceed refundable balance.';
+      return context.ordersL10n.ordersRefundAmountExceeds;
     }
 
     return null;
@@ -121,7 +122,7 @@ class _RefundDialogState extends State<RefundDialog> {
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           _LabeledField(
-                            label: 'REFUND AMOUNT',
+                            label: context.ordersL10n.ordersRefundFieldAmount,
                             child: _AmountInput(
                               controller: _amountController,
                               isReadOnly: _type == RefundType.full,
@@ -139,7 +140,7 @@ class _RefundDialogState extends State<RefundDialog> {
                           ],
                           const SizedBox(height: AppSpacing.lg),
                           _LabeledField(
-                            label: 'REASON FOR REFUND',
+                            label: context.ordersL10n.ordersRefundFieldReason,
                             child: RefundReasonDropdown(
                               selectedReason: _reason,
                               onChanged: (RefundReason reason) {
@@ -149,7 +150,7 @@ class _RefundDialogState extends State<RefundDialog> {
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           _LabeledField(
-                            label: 'MANAGER NOTES (OPTIONAL)',
+                            label: context.ordersL10n.ordersRefundFieldNotes,
                             child: _NotesInput(controller: _notesController),
                           ),
                         ],
@@ -233,7 +234,7 @@ class _RefundHeader extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Refund Order $orderNumber',
+                  context.ordersL10n.ordersRefundDialogTitle(orderNumber),
                   style: AppTextStyles.titleMedium.copyWith(
                     color: AppColors.primary,
                     fontSize: 16,
@@ -241,7 +242,7 @@ class _RefundHeader extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Close refund dialog',
+                tooltip: context.ordersL10n.ordersRefundCloseDialog,
                 onPressed: onClose,
                 icon: const Icon(Icons.close, size: 20),
                 color: AppColors.textMuted,
@@ -340,8 +341,8 @@ class _NotesInput extends StatelessWidget {
           maxLines: null,
           expands: true,
           textAlignVertical: TextAlignVertical.top,
-          decoration: const InputDecoration(
-            hintText: 'Add context for end of day reporting...',
+          decoration: InputDecoration(
+            hintText: context.ordersL10n.ordersRefundNotesHint,
             border: InputBorder.none,
             contentPadding: AppSpacing.allMd,
           ),
@@ -378,7 +379,10 @@ class _RefundFooter extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
-            TextButton(onPressed: onCancel, child: const Text('Cancel')),
+            TextButton(
+              onPressed: onCancel,
+              child: Text(context.ordersL10n.commonCancel),
+            ),
             const SizedBox(width: AppSpacing.md),
             ElevatedButton.icon(
               onPressed: canConfirm ? onConfirm : null,
@@ -394,7 +398,7 @@ class _RefundFooter extends StatelessWidget {
                 minimumSize: const Size(0, AppSizes.refundInputHeight),
               ),
               icon: const Icon(Icons.keyboard_return_outlined, size: 18),
-              label: const Text('Confirm Refund'),
+              label: Text(context.ordersL10n.ordersRefundConfirm),
             ),
           ],
         ),

@@ -8,6 +8,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_status.dart';
 import '../models/order_summary.dart';
+import 'orders_localizations.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OrderCardActions extends StatelessWidget {
   const OrderCardActions({
@@ -27,26 +29,27 @@ class OrderCardActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = context.ordersL10n;
     final List<_OrderAction> actions = switch (order.status) {
       OrderStatus.held => <_OrderAction>[
-        _OrderAction.outlined('RESUME', onResume),
-        _OrderAction.primary('PAY', onPay),
-        _OrderAction.danger('CANCEL', onCancel),
+        _OrderAction.outlined(l10n.ordersActionResume, onResume),
+        _OrderAction.primary(l10n.ordersActionPay, onPay),
+        _OrderAction.danger(l10n.ordersActionCancel, onCancel),
       ],
       OrderStatus.ready => <_OrderAction>[
-        _OrderAction.outlined('DETAILS', onDetails),
+        _OrderAction.outlined(l10n.ordersActionDetails, onDetails),
       ],
       OrderStatus.preparing => <_OrderAction>[
-        _OrderAction.outlined('DETAILS', onDetails),
-        _OrderAction.primary('PAY', onPay),
-        _OrderAction.danger('CANCEL', onCancel),
+        _OrderAction.outlined(l10n.ordersActionDetails, onDetails),
+        _OrderAction.primary(l10n.ordersActionPay, onPay),
+        _OrderAction.danger(l10n.ordersActionCancel, onCancel),
       ],
       OrderStatus.completed ||
       OrderStatus.paid ||
       OrderStatus.cancelled ||
       OrderStatus.refunded ||
       OrderStatus.partiallyRefunded => <_OrderAction>[
-        _OrderAction.outlined('DETAILS', onDetails),
+        _OrderAction.outlined(l10n.ordersActionDetails, onDetails),
       ],
     };
 
@@ -89,7 +92,7 @@ class _ActionButton extends StatelessWidget {
         child: Semantics(
           button: true,
           enabled: isEnabled,
-          label: '${action.label.toLowerCase()} order action',
+          label: context.ordersL10n.ordersActionSemantics(action.label),
           child: Material(
             color: isFilled && isEnabled
                 ? AppColors.tertiary

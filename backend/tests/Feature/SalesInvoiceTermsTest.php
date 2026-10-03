@@ -182,4 +182,31 @@ final class SalesInvoiceTermsTest extends TestCase
         $this->assertGreaterThan(0, (float) DB::table('journal_entry_lines')->where('tenant_id', $s['tenant'])->where('financial_location_id', $secondLocation)->sum('credit'), 'the chosen Sham Cash box is the one that pays');
         $this->assertEquals(0, DB::table('journal_entry_lines')->where('tenant_id', $s['tenant'])->where('financial_location_id', $firstLocation)->sum('credit'));
     }
+
+    public function test_a_posted_credit_purchase_can_be_paid_in_parts_from_its_own_page(): void
+    {
+        $s = $this->scenario();
+        $supplier = $this->supplierId($s['tenant']);
+        [$methodId, $locationId] = $this->method($s['tenant'], 'sham_cash');
+        $invoice = $this->postJson('/api/v1/finance/supplier-invoices', [
+            'branchId' => $s['branch'], 'supplierId' => $supplier, 'invoiceDate' => '2026-09-28', 'invoiceType' => 'inventory',
+            'subtotal' => '100.00', 'invoiceNumber' => 'PAY-FROM-PAGE', 'paymentTerms' => 'credit', 'dueDate' => '2026-10-28',
+        ], $s['headers'])->assertCreated()->json('data');
+        $this->postJson("/api/v1/finance/purchases/{$invoice['id']}/post", ['idempotencyKey' => 'pay-page-post', 'paidAmount' => '0.00'], $s['headers'])->assertOk();
+
+        $show = $this->getJson("/api/v1/finance/purchases/{$invoice['id']}", $s['headers'])->assertOk();
+        $this->assertContains('pay', $show->json('data.allowedActions'));
+        $show->assertJsonPath('data.remainingAmount', '100.00');
+
+        $this->postJson('/api/v1/finance/supplier-payments', [
+            'supplierId' => $supplier, 'branchId' => $s['branch'], 'paymentDate' => '2026-09-28', 'amount' => '40.00',
+            'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-page-1',
+            'allocations' => [['invoiceId' => $invoice['id'], 'amount' => '40.00']],
+        ], $s['headers'])->assertCreated();
+
+        $after = $this->getJson("/api/v1/finance/purchases/{$invoice['id']}", $s['headers'])->assertOk();
+        $after->assertJsonPath('data.paidAmount', '40.00')->assertJsonPath('data.remainingAmount', '60.00');
+        $this->assertCount(1, $after->json('data.payments'));
+        $this->assertContains('pay', $after->json('data.allowedActions'));
+    }
 }

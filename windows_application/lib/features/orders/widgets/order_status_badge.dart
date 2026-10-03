@@ -5,6 +5,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_status.dart';
+import 'orders_localizations.dart';
 
 class OrderStatusBadge extends StatelessWidget {
   const OrderStatusBadge({super.key, required this.status});
@@ -31,7 +32,7 @@ class OrderStatusBadge extends StatelessWidget {
           Icon(style.icon, size: 14, color: style.foreground),
           const SizedBox(width: AppSpacing.xs),
           Text(
-            status.label,
+            ordersStatusLabel(context.ordersL10n, status),
             style: AppTextStyles.labelSmall.copyWith(
               color: style.foreground,
               fontWeight: FontWeight.w800,

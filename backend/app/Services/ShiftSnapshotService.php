@@ -96,6 +96,9 @@ final class ShiftSnapshotService
 
     private function barCount(int $tenant, object $shift): array
     {
+        if (($shift->status ?? null) === 'open') {
+            app(\App\Domain\Inventory\BarCheckTemplateService::class)->ensureDefaultForBranch($tenant, (int) $shift->branch_id, isset($shift->user_id) ? (int) $shift->user_id : null);
+        }
         $template = DB::table('bar_check_templates')->where('tenant_id', $tenant)->where('branch_id', $shift->branch_id)->where('is_active', true)->orderByDesc('required_for_shift_close')->first();
         if (! $template) {
             return ['warehouseName' => '', 'lines' => [], 'lastCountedAt' => null];
@@ -110,9 +113,14 @@ final class ShiftSnapshotService
         return in_array(InventoryUnitCatalog::normalize($unit), ['gram', 'kilogram', 'milliliter', 'liter'], true) ? 2 : 0;
     }
 
+    /**
+     * The bar count is part of the closing wizard itself: the counts are sent with the close request,
+     * submitted and posted inside it, and ShiftCloseService refuses to close without a posted count.
+     * Reporting it here as a blocking "pending operation" made the close button impossible to reach.
+     */
     private function pendingBarChecks(int $tenant, object $shift): array
     {
-        return DB::table('bar_check_templates as t')->where('t.tenant_id', $tenant)->where('t.branch_id', $shift->branch_id)->where('t.is_active', true)->where('t.required_for_shift_close', true)->whereNotExists(fn ($q) => $q->selectRaw('1')->from('stock_counts as c')->whereColumn('c.bar_check_template_id', 't.id')->where('c.shift_id', $shift->id)->where('c.status', 'posted'))->get(['t.name'])->map(fn ($t) => ['kind' => 'barCount', 'reference' => $t->name, 'detail' => 'Required bar count is not complete.', 'blocking' => true])->values()->all();
+        return [];
     }
 
     private function refunds(int $tenant, int $shift, ?ShiftClosePeriod $period = null): mixed
