@@ -1,0 +1,573 @@
+import 'dart:async';
+import 'dart:ui' show PathMetric;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../app/localization/localization_extensions.dart';
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../controllers/pos_cubit.dart';
+import '../controllers/pos_print_cubit.dart';
+import '../controllers/pos_print_state.dart';
+import '../controllers/pos_state.dart';
+import '../models/applied_discount.dart';
+import '../models/available_discount.dart';
+import '../models/cart_item.dart';
+import '../models/customer.dart';
+import '../models/delivery_company.dart';
+import '../models/payment_method.dart';
+import '../models/payment_result.dart';
+import '../models/payment_summary.dart';
+import 'cart_customer_selector.dart';
+import 'cart_item_tile.dart';
+import 'discount_dialog.dart';
+import 'order_totals_panel.dart';
+import 'payment_dialog.dart';
+import 'pos_action_buttons.dart';
+import 'pos_localization.dart';
+import 'pos_print_failure_dialog.dart';
+import 'select_customer_dialog.dart';
+
+class PosCartPanel extends StatelessWidget {
+  const PosCartPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PosCubit, PosState>(
+      builder: (BuildContext context, PosState state) {
+        final PosCubit cubit = context.read<PosCubit>();
+
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            border: Border(left: BorderSide(color: AppColors.shellBorder)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Color(0x12000000),
+                offset: Offset(-2, 0),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Column(
+            children: <Widget>[
+              _OrderControls(
+                selectedCustomer: state.selectedCustomer,
+                isUpdating: state.isCartMutationInProgress,
+                onCustomerSelectorPressed: () =>
+                    _showCustomerDialog(context, state, cubit),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: AppSpacing.allLg,
+                  itemCount: state.cartItems.length + 1,
+                  separatorBuilder: (BuildContext context, int index) {
+                    return const SizedBox(height: AppSpacing.md);
+                  },
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == state.cartItems.length) {
+                      return _AddDiscountButton(
+                        isEnabled:
+                            state.hasCartItems &&
+                            !state.isCartMutationInProgress,
+                        onPressed:
+                            state.hasCartItems &&
+                                !state.isCartMutationInProgress
+                            ? () => _showDiscountDialog(context, state, cubit)
+                            : null,
+                      );
+                    }
+
+                    final CartItem item = state.cartItems[index];
+
+                    return CartItemTile(
+                      item: item,
+                      onIncreaseQuantity: () => cubit.increaseQuantity(item.id),
+                      onDecreaseQuantity: () => cubit.decreaseQuantity(item.id),
+                      onRemoveItem: () => cubit.removeCartItem(item.id),
+                      isEnabled: !state.isCartMutationInProgress,
+                    );
+                  },
+                ),
+              ),
+              BlocBuilder<PosPrintCubit, PosPrintState>(
+                builder: (BuildContext context, PosPrintState printState) =>
+                    _CartFooter(
+                      subtotal: state.subtotal,
+                      discountTotal: state.discountTotal,
+                      tax: state.tax,
+                      taxRate: state.taxRate,
+                      total: state.total,
+                      itemCount: state.totalItems,
+                      hasCartItems: state.hasCartItems,
+                      canHoldCurrentOrder: state.canHoldCurrentOrder,
+                      appliedDiscount: state.appliedDiscount,
+                      onRemoveDiscount: cubit.removeDiscount,
+                      onClearCart: cubit.clearCart,
+                      onHold: cubit.holdCurrentOrder,
+                      onPay:
+                          state.isPaymentSubmitting ||
+                              state.uncertainPaymentOrderId != null
+                          ? null
+                          : () => unawaited(
+                              _showPaymentDialog(context, state, cubit),
+                            ),
+                      onPrint: () => unawaited(_printPreBill(context)),
+                      isPrintEnabled:
+                          state.currentOrderId != null &&
+                          state.hasCartItems &&
+                          state.currentOrderPaymentStatus?.toLowerCase() !=
+                              'paid' &&
+                          state.currentOrderPaymentStatus?.toLowerCase() !=
+                              'completed' &&
+                          !state.isPaymentSubmitting &&
+                          state.uncertainPaymentOrderId == null &&
+                          !state.isCartMutationInProgress &&
+                          (!state.isBackendMode || state.isBackendReachable),
+                      isPrinting: printState.isPrinting,
+                      isSyncingOrder:
+                          state.isCartMutationInProgress ||
+                          state.isPaymentSubmitting,
+                      isBackendReachable:
+                          !state.isBackendMode || state.isBackendReachable,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _printPreBill(BuildContext context) async {
+    final PosCubit posCubit = context.read<PosCubit>();
+    final PosPrintCubit printCubit = context.read<PosPrintCubit>();
+    final Locale locale = Localizations.localeOf(context);
+    final PosPrintOutcome outcome = await printCubit.printPreBill(
+      orderState: posCubit.state,
+      locale: locale,
+    );
+    if (!context.mounted) return;
+    await showPosPrintFailure(
+      context: context,
+      outcome: outcome,
+      retry: () =>
+          printCubit.printPreBill(orderState: posCubit.state, locale: locale),
+    );
+  }
+
+  Future<void> _showDiscountDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    List<AvailableDiscount> availableDiscounts = const <AvailableDiscount>[];
+    if (state.isBackendMode) {
+      try {
+        availableDiscounts = await cubit.getAvailableDiscountsForCurrentCart();
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
+        }
+        return;
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final AppliedDiscount? discount = await showDialog<AppliedDiscount>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return DiscountDialog(
+          subtotal: state.subtotal,
+          availableDiscounts: availableDiscounts,
+        );
+      },
+    );
+
+    if (!context.mounted || discount == null) {
+      return;
+    }
+
+    await cubit.applyDiscount(discount);
+  }
+
+  Future<void> _showCustomerDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    await showDialog<Customer>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return SelectCustomerDialog(
+          customers: state.customers,
+          selectedCustomer: state.selectedCustomer,
+          onSubmit: cubit.selectCustomer,
+          onSearch: (String query) =>
+              cubit.repository.getCustomers(search: query),
+          quickCreateRepository: state.isBackendMode ? cubit.repository : null,
+          onQuickCreate: state.isBackendMode ? cubit.quickCreateCustomer : null,
+        );
+      },
+    );
+  }
+
+  Future<void> _showPaymentDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    if (!state.hasCartItems || state.total < 0) {
+      return;
+    }
+
+    if (state.total == 0) {
+      await cubit.completeBackendPayment(
+        const PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: 0,
+          amountReceived: 0,
+          changeDue: 0,
+        ),
+      );
+      return;
+    }
+
+    PaymentSummary? summary;
+    if (state.currentOrderId != null) {
+      try {
+        summary = await cubit.repository.getPaymentSummary(
+          orderId: state.currentOrderId!,
+          amountReceived: state.total,
+        );
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
+        }
+        return;
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final List<PaymentMethod> availableMethods;
+    if (state.currentOrderId != null) {
+      // Order already exists on the backend: the summary is authoritative,
+      // so an empty methods list means Finance truly has nothing usable.
+      availableMethods = (summary?.methods ?? const <String>[])
+          .map((String value) => _paymentMethodForApiValue(value))
+          .whereType<PaymentMethod>()
+          .toList(growable: false);
+      if (availableMethods.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.posNoPaymentMethods)),
+        );
+        return;
+      }
+    } else {
+      // No backend order yet (published-menu carts create it at payment
+      // time): ask the server which methods Finance has activated, so the
+      // list is the same before and after the order exists. The wallet is
+      // offered only when an identified customer is attached to the cart.
+      try {
+        final List<String> types = await cubit.repository
+            .getAvailablePaymentMethods(
+              customerId: state.selectedCustomer?.backendId,
+            );
+        availableMethods = types
+            .map((String value) => _paymentMethodForApiValue(value))
+            .whereType<PaymentMethod>()
+            .toList(growable: false);
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
+        }
+        return;
+      }
+      if (!context.mounted) return;
+      if (availableMethods.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.posNoPaymentMethods)),
+        );
+        return;
+      }
+    }
+
+    // Delivery companies are Finance setup the manager controls. Failing to
+    // load them must not block dine-in / takeaway sales.
+    List<DeliveryCompany> deliveryCompanies = const <DeliveryCompany>[];
+    if (state.isBackendMode) {
+      try {
+        deliveryCompanies = await cubit.repository.getDeliveryCompanies();
+      } catch (_) {
+        deliveryCompanies = const <DeliveryCompany>[];
+      }
+      if (!context.mounted) return;
+    }
+
+    final PaymentResult? result = await showDialog<PaymentResult>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return PaymentDialog(
+          totalDue: state.total,
+          itemCount: state.totalItems,
+          availableMethods: availableMethods,
+          requireOrderType: true,
+          deliveryCompanies: deliveryCompanies,
+          onSubmit: cubit.completeLocalPayment,
+        );
+      },
+    );
+
+    if (!context.mounted || result == null) return;
+  }
+}
+
+PaymentMethod? _paymentMethodForApiValue(String value) {
+  for (final PaymentMethod method in PaymentMethod.values) {
+    if (method.apiValue == value) return method;
+  }
+  return null;
+}
+
+class _OrderControls extends StatelessWidget {
+  const _OrderControls({
+    required this.selectedCustomer,
+    required this.isUpdating,
+    required this.onCustomerSelectorPressed,
+  });
+
+  final Customer? selectedCustomer;
+  final bool isUpdating;
+  final VoidCallback onCustomerSelectorPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: AppSpacing.allMd,
+      child: _CustomerRow(
+        selectedCustomer: selectedCustomer,
+        isUpdating: isUpdating,
+        onCustomerSelectorPressed: onCustomerSelectorPressed,
+      ),
+    );
+  }
+}
+
+class _CustomerRow extends StatelessWidget {
+  const _CustomerRow({
+    required this.selectedCustomer,
+    required this.isUpdating,
+    required this.onCustomerSelectorPressed,
+  });
+
+  final Customer? selectedCustomer;
+  final bool isUpdating;
+  final VoidCallback onCustomerSelectorPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return CartCustomerSelector(
+      customer: selectedCustomer,
+      onTap: isUpdating ? () {} : onCustomerSelectorPressed,
+      onClear: selectedCustomer == null || isUpdating
+          ? null
+          : () => context.read<PosCubit>().clearSelectedCustomer(),
+    );
+  }
+}
+
+class _AddDiscountButton extends StatelessWidget {
+  const _AddDiscountButton({required this.isEnabled, required this.onPressed});
+
+  final bool isEnabled;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color contentColor = isEnabled
+        ? AppColors.tertiary
+        : AppColors.textMuted;
+    final Color borderColor = isEnabled
+        ? AppColors.dashedBorder
+        : AppColors.border;
+
+    return MouseRegion(
+      cursor: isEnabled ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: Opacity(
+          opacity: isEnabled ? 1 : 0.55,
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: borderColor,
+              radius: AppRadius.sm,
+            ),
+            child: SizedBox(
+              height: AppSizes.cartControlHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.local_offer_outlined,
+                    color: contentColor,
+                    size: 14,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    context.l10n.posAddDiscount,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: contentColor,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CartFooter extends StatelessWidget {
+  const _CartFooter({
+    required this.subtotal,
+    required this.discountTotal,
+    required this.tax,
+    required this.taxRate,
+    required this.total,
+    required this.itemCount,
+    required this.hasCartItems,
+    required this.canHoldCurrentOrder,
+    required this.appliedDiscount,
+    required this.onRemoveDiscount,
+    required this.onClearCart,
+    required this.onHold,
+    required this.onPay,
+    required this.onPrint,
+    required this.isPrintEnabled,
+    required this.isPrinting,
+    required this.isSyncingOrder,
+    required this.isBackendReachable,
+  });
+
+  final double subtotal;
+  final double discountTotal;
+  final double tax;
+  final double taxRate;
+  final double total;
+  final int itemCount;
+  final bool hasCartItems;
+  final bool canHoldCurrentOrder;
+  final AppliedDiscount? appliedDiscount;
+  final VoidCallback onRemoveDiscount;
+  final VoidCallback onClearCart;
+  final VoidCallback onHold;
+  final VoidCallback? onPay;
+  final VoidCallback onPrint;
+  final bool isPrintEnabled;
+  final bool isPrinting;
+  final bool isSyncingOrder;
+  final bool isBackendReachable;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.shellBackground,
+        border: Border(top: BorderSide(color: AppColors.shellBorder)),
+      ),
+      child: Padding(
+        padding: AppSpacing.allLg,
+        child: Column(
+          children: <Widget>[
+            OrderTotalsPanel(
+              subtotal: subtotal,
+              discountTotal: discountTotal,
+              tax: tax,
+              taxRate: taxRate,
+              total: total,
+              appliedDiscount: appliedDiscount,
+              onRemoveDiscount: isSyncingOrder ? null : onRemoveDiscount,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            PosActionButtons(
+              total: total,
+              onCancel: isSyncingOrder ? null : onClearCart,
+              onHold: isSyncingOrder || !canHoldCurrentOrder ? null : onHold,
+              onPay: isSyncingOrder ? null : onPay,
+              onPrint: onPrint,
+              isPrintEnabled: isPrintEnabled && !isSyncingOrder,
+              isPrinting: isPrinting,
+              isPaymentEnabled:
+                  !isSyncingOrder &&
+                  isBackendReachable &&
+                  hasCartItems &&
+                  total >= 0 &&
+                  itemCount > 0,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    final RRect rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+    final Path path = Path()..addRRect(rrect);
+
+    for (final PathMetric metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final double next = (distance + AppSpacing.sm).clamp(0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance += AppSpacing.md;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.radius != radius;
+  }
+}

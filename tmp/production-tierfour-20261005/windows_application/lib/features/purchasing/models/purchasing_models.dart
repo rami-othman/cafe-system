@@ -1,0 +1,680 @@
+import '../../pos/models/json_helpers.dart';
+
+/// Purchasing Phase 1+2 line item. Subordinate to a supplier invoice — never
+/// a standalone record. `receivedQuantity`/`remainingQuantity` are cached
+/// rollups maintained transactionally by the backend's
+/// PurchaseReceivingService every time a Goods Receipt posts — never edited
+/// from Flutter directly. `remainingQuantity` is null for non-inventory
+/// lines (nothing to receive against a service/asset line).
+class PurchaseInvoiceLine {
+  const PurchaseInvoiceLine({
+    required this.id,
+    required this.lineNumber,
+    required this.lineType,
+    required this.description,
+    required this.quantity,
+    required this.unitPrice,
+    required this.discountAmount,
+    required this.taxAmount,
+    required this.lineTotal,
+    required this.receivedQuantity,
+    this.lineGrossAmount,
+    this.discountType = 'fixed',
+    this.discountValue,
+    this.allocatedDiscount = '0.00',
+    this.allocatedLandedCost = '0.00',
+    this.inventoryItemId,
+    this.inventoryItemName,
+    this.purchaseUnit,
+    this.baseUnit,
+    this.conversionFactor,
+    this.baseQuantity,
+    this.warehouseId,
+    this.remainingQuantity,
+  });
+
+  final int id;
+  final int lineNumber;
+  final String lineType;
+  final String description;
+  final int? inventoryItemId;
+  final String? inventoryItemName;
+  final String? purchaseUnit;
+  final String? baseUnit;
+  final String quantity;
+  final String? conversionFactor;
+  final String? baseQuantity;
+
+  /// Server-derived: (lineGrossAmount - discount) / quantity. Display only — never sent as input.
+  final String unitPrice;
+  final String? lineGrossAmount;
+  final String discountType;
+  final String? discountValue;
+  final String discountAmount;
+
+  /// This line's proportional share of the whole-invoice discount (by value).
+  final String allocatedDiscount;
+
+  /// This line's proportional share of any capitalized additional charge — raises unitPrice, not lineTotal.
+  final String allocatedLandedCost;
+  final String taxAmount;
+  final String lineTotal;
+  final int? warehouseId;
+  final String receivedQuantity;
+  final String? remainingQuantity;
+
+  bool get isInventory => lineType == 'inventory';
+  bool get hasRemainingToReceive =>
+      isInventory && (double.tryParse(remainingQuantity ?? '0') ?? 0) > 0;
+
+  factory PurchaseInvoiceLine.fromJson(
+    Map<String, dynamic> json,
+  ) => PurchaseInvoiceLine(
+    id: readInt(json['id']) ?? 0,
+    lineNumber: readInt(json['lineNumber']) ?? 0,
+    lineType: readString(json['lineType']),
+    description: readString(json['description']),
+    inventoryItemId: readInt(json['inventoryItemId']),
+    inventoryItemName: readString(json['inventoryItemName']).isEmpty
+        ? null
+        : readString(json['inventoryItemName']),
+    purchaseUnit: readString(json['purchaseUnit']).isEmpty
+        ? null
+        : readString(json['purchaseUnit']),
+    baseUnit: readString(json['baseUnit']).isEmpty
+        ? null
+        : readString(json['baseUnit']),
+    quantity: readString(json['quantity']),
+    conversionFactor: readString(json['conversionFactor']).isEmpty
+        ? null
+        : readString(json['conversionFactor']),
+    baseQuantity: readString(json['baseQuantity']).isEmpty
+        ? null
+        : readString(json['baseQuantity']),
+    unitPrice: readString(json['unitPrice']),
+    lineGrossAmount: json['lineGrossAmount'] == null
+        ? null
+        : readString(json['lineGrossAmount']),
+    discountType: readString(json['discountType'], fallback: 'fixed').isEmpty
+        ? 'fixed'
+        : readString(json['discountType'], fallback: 'fixed'),
+    discountValue: json['discountValue'] == null
+        ? null
+        : readString(json['discountValue']),
+    discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+    allocatedDiscount: readString(json['allocatedDiscount'], fallback: '0.00'),
+    allocatedLandedCost: readString(
+      json['allocatedLandedCost'],
+      fallback: '0.00',
+    ),
+    taxAmount: readString(json['taxAmount'], fallback: '0.00'),
+    lineTotal: readString(json['lineTotal']),
+    warehouseId: readInt(json['warehouseId']),
+    receivedQuantity: readString(json['receivedQuantity'], fallback: '0.000'),
+    remainingQuantity: json['remainingQuantity'] == null
+        ? null
+        : readString(json['remainingQuantity']),
+  );
+}
+
+/// An additional charge (freight, hospitality, ...) attached to an invoice.
+/// `treatment: capitalize` raises the eligible (inventory) lines'
+/// `allocatedLandedCost`/`unitPrice` proportionally by value; `expense`
+/// posts standalone to `expenseCategoryId`'s account and never touches
+/// inventory cost.
+class PurchaseInvoiceCharge {
+  const PurchaseInvoiceCharge({
+    this.id,
+    required this.description,
+    required this.treatment,
+    this.expenseCategoryId,
+    this.expenseCategoryName,
+    required this.amount,
+    this.taxAmount = '0.00',
+  });
+
+  final int? id;
+  final String description;
+  final String treatment; // capitalize | expense
+  final int? expenseCategoryId;
+  final String? expenseCategoryName;
+  final String amount;
+  final String taxAmount;
+
+  factory PurchaseInvoiceCharge.fromJson(Map<String, dynamic> json) =>
+      PurchaseInvoiceCharge(
+        id: readInt(json['id']),
+        description: readString(json['description']),
+        treatment: readString(json['treatment'], fallback: 'expense'),
+        expenseCategoryId: readInt(json['expenseCategoryId']),
+        expenseCategoryName: readString(json['expenseCategoryName']).isEmpty
+            ? null
+            : readString(json['expenseCategoryName']),
+        amount: readString(json['amount'], fallback: '0.00'),
+        taxAmount: readString(json['taxAmount'], fallback: '0.00'),
+      );
+}
+
+/// A single Goods Receipt line — see PurchaseReceipt.
+class PurchaseReceiptLine {
+  const PurchaseReceiptLine({
+    required this.id,
+    required this.supplierInvoiceLineId,
+    required this.inventoryItemId,
+    required this.itemName,
+    required this.warehouseId,
+    required this.warehouseName,
+    required this.receivedUnit,
+    required this.baseUnit,
+    required this.receivedQuantity,
+    required this.baseQuantity,
+    required this.unitCost,
+    this.stockMovementId,
+  });
+
+  final int id;
+  final int supplierInvoiceLineId;
+  final int inventoryItemId;
+  final String itemName;
+  final int warehouseId;
+  final String warehouseName;
+  final String receivedUnit;
+  final String baseUnit;
+  final String receivedQuantity;
+  final String baseQuantity;
+  final String unitCost;
+  final int? stockMovementId;
+
+  factory PurchaseReceiptLine.fromJson(Map<String, dynamic> json) =>
+      PurchaseReceiptLine(
+        id: readInt(json['id']) ?? 0,
+        supplierInvoiceLineId: readInt(json['supplierInvoiceLineId']) ?? 0,
+        inventoryItemId: readInt(json['inventoryItemId']) ?? 0,
+        itemName: readString(json['itemName']),
+        warehouseId: readInt(json['warehouseId']) ?? 0,
+        warehouseName: readString(json['warehouseName']),
+        receivedUnit: readString(json['receivedUnit']),
+        baseUnit: readString(json['baseUnit']),
+        receivedQuantity: readString(json['receivedQuantity']),
+        baseQuantity: readString(json['baseQuantity']),
+        unitCost: readString(json['unitCost']),
+        stockMovementId: readInt(json['stockMovementId']),
+      );
+}
+
+/// Goods Receipt — Purchasing Phase 2. An independent, auditable physical
+/// stock-in record against a posted Supplier Invoice's inventory lines. It
+/// carries zero financial/AP effect — the invoice already owns that; a
+/// receipt only ever moves physical stock via the backend's existing
+/// stock_in pathway (InventoryPostingService), which is intentionally
+/// excluded from GL posting.
+class PurchaseReceipt {
+  const PurchaseReceipt({
+    required this.id,
+    required this.receiptNumber,
+    required this.receiptDate,
+    required this.status,
+    required this.supplierInvoiceId,
+    required this.invoiceNumber,
+    required this.supplierId,
+    required this.supplierName,
+    required this.lineCount,
+    required this.allowedActions,
+    this.reference,
+    this.notes,
+    this.invoiceReference,
+    this.branchId,
+    this.branchName,
+    this.createdByName,
+    this.postedAt,
+    this.createdAt,
+    this.lines = const <PurchaseReceiptLine>[],
+  });
+
+  final int id;
+  final String receiptNumber;
+  final String receiptDate;
+
+  /// draft | posted
+  final String status;
+  final String? reference;
+  final String? notes;
+  final int supplierInvoiceId;
+  final String invoiceNumber;
+  final String? invoiceReference;
+  final int supplierId;
+  final String supplierName;
+  final int? branchId;
+  final String? branchName;
+  final int lineCount;
+  final String? createdByName;
+  final String? postedAt;
+  final String? createdAt;
+  final List<String> allowedActions;
+  final List<PurchaseReceiptLine> lines;
+
+  bool get isDraft => status == 'draft';
+
+  factory PurchaseReceipt.fromJson(Map<String, dynamic> json) =>
+      PurchaseReceipt(
+        id: readInt(json['id']) ?? 0,
+        receiptNumber: readString(json['receiptNumber']),
+        receiptDate: readString(json['receiptDate']),
+        status: readString(json['status']),
+        reference: readString(json['reference']).isEmpty
+            ? null
+            : readString(json['reference']),
+        notes: readString(json['notes']).isEmpty
+            ? null
+            : readString(json['notes']),
+        supplierInvoiceId: readInt(json['supplierInvoiceId']) ?? 0,
+        invoiceNumber: readString(json['invoiceNumber']),
+        invoiceReference: readString(json['invoiceReference']).isEmpty
+            ? null
+            : readString(json['invoiceReference']),
+        supplierId: readInt(json['supplierId']) ?? 0,
+        supplierName: readString(json['supplierName']),
+        branchId: readInt(json['branchId']),
+        branchName: readString(json['branchName']).isEmpty
+            ? null
+            : readString(json['branchName']),
+        lineCount: readInt(json['lineCount']) ?? 0,
+        createdByName: readString(json['createdByName']).isEmpty
+            ? null
+            : readString(json['createdByName']),
+        postedAt: readString(json['postedAt']).isEmpty
+            ? null
+            : readString(json['postedAt']),
+        createdAt: readString(json['createdAt']).isEmpty
+            ? null
+            : readString(json['createdAt']),
+        allowedActions: readStringList(json['allowedActions']),
+        lines: readMapList(
+          json['lines'],
+        ).map(PurchaseReceiptLine.fromJson).toList(growable: false),
+      );
+}
+
+/// Receipt-history row embedded on a Purchase detail response
+/// ("سجل الاستلامات") — a lighter shape than [PurchaseReceipt].
+class PurchaseReceiptSummary {
+  const PurchaseReceiptSummary({
+    required this.id,
+    required this.receiptNumber,
+    required this.receiptDate,
+    required this.status,
+    required this.branchName,
+    required this.lineCount,
+    this.createdByName,
+  });
+
+  final int id;
+  final String receiptNumber;
+  final String receiptDate;
+  final String status;
+  final String branchName;
+  final int lineCount;
+  final String? createdByName;
+
+  factory PurchaseReceiptSummary.fromJson(Map<String, dynamic> json) =>
+      PurchaseReceiptSummary(
+        id: readInt(json['id']) ?? 0,
+        receiptNumber: readString(json['receiptNumber']),
+        receiptDate: readString(json['receiptDate']),
+        status: readString(json['status']),
+        branchName: readString(json['branchName']),
+        lineCount: readInt(json['lineCount']) ?? 0,
+        createdByName: readString(json['createdByName']).isEmpty
+            ? null
+            : readString(json['createdByName']),
+      );
+}
+
+class PurchasePayment {
+  const PurchasePayment({
+    required this.paymentId,
+    required this.paymentNumber,
+    required this.paymentDate,
+    required this.status,
+    required this.amount,
+    this.voucherId,
+    this.voucherNumber,
+  });
+
+  final int paymentId;
+  final String paymentNumber;
+  final String paymentDate;
+  final String status;
+  final String amount;
+  final int? voucherId;
+  final String? voucherNumber;
+
+  factory PurchasePayment.fromJson(Map<String, dynamic> json) =>
+      PurchasePayment(
+        paymentId: readInt(json['paymentId']) ?? 0,
+        paymentNumber: readString(json['paymentNumber']),
+        paymentDate: readString(json['paymentDate']),
+        status: readString(json['status']),
+        amount: readString(json['amount']),
+        voucherId: readInt(json['voucherId']),
+        voucherNumber: readString(json['voucherNumber']).isEmpty
+            ? null
+            : readString(json['voucherNumber']),
+      );
+}
+
+class PurchasePostingPreview {
+  const PurchasePostingPreview({
+    required this.amount,
+    required this.branchId,
+    required this.financialLocationId,
+    required this.financialLocationName,
+    this.cashSourceMode = 'shift',
+    this.allowedCashLocations = const [],
+    this.shiftId,
+    this.shiftNumber,
+    this.shamCashMethods = const [],
+  });
+
+  final String amount;
+  final List<PurchaseCashLocation> shamCashMethods;
+  final int branchId;
+  final int? financialLocationId;
+  final String? financialLocationName;
+  final String cashSourceMode;
+  final List<PurchaseCashLocation> allowedCashLocations;
+  final int? shiftId;
+  final String? shiftNumber;
+
+  factory PurchasePostingPreview.fromJson(Map<String, dynamic> json) =>
+      PurchasePostingPreview(
+        amount: readString(json['amount']),
+        branchId: readInt(json['branchId']) ?? 0,
+        financialLocationId: readInt(json['financialLocationId']),
+        financialLocationName: json['financialLocationName']?.toString(),
+        cashSourceMode: readString(json['cashSourceMode']),
+        allowedCashLocations:
+            (json['allowedCashLocations'] as List<dynamic>? ?? const [])
+                .map(
+                  (value) => PurchaseCashLocation.fromJson(
+                    Map<String, dynamic>.from(value as Map),
+                  ),
+                )
+                .toList(growable: false),
+        shamCashMethods:
+            (json['shamCashMethods'] as List<dynamic>? ?? const [])
+                .map(
+                  (value) => PurchaseCashLocation.fromJson(
+                    Map<String, dynamic>.from(value as Map)
+                      ..['name'] = _shamMethodLabel(
+                        Map<String, dynamic>.from(value),
+                      ),
+                  ),
+                )
+                .toList(growable: false),
+        shiftId: readInt(json['shiftId']),
+        shiftNumber: readString(json['shiftNumber']).isEmpty
+            ? null
+            : readString(json['shiftNumber']),
+      );
+}
+
+String _shamMethodLabel(Map<String, dynamic> json) {
+  final String name = readString(json['name']);
+  final String location = readString(json['locationName']);
+  return location.isEmpty || location == name ? name : '$name — $location';
+}
+
+class PurchaseCashLocation {
+  const PurchaseCashLocation({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  factory PurchaseCashLocation.fromJson(Map<String, dynamic> json) =>
+      PurchaseCashLocation(
+        id: readInt(json['id']) ?? 0,
+        name: readString(json['name']),
+      );
+}
+
+/// A Purchasing Center row/detail. This is a READ shape of the existing
+/// Supplier Invoice domain (`GET /finance/purchases[/:id]`) — creating,
+/// editing, posting, and reversing all still go through the pre-existing
+/// `finance/supplier-invoices` endpoints (see PurchasingRepository). There is
+/// no separate Purchase Invoice source of truth.
+class PurchaseInvoice {
+  const PurchaseInvoice({
+    required this.id,
+    this.factoryCurrency,
+    required this.internalReference,
+    required this.invoiceNumber,
+    required this.supplierId,
+    required this.supplierName,
+    required this.invoiceDate,
+    required this.dueDate,
+    required this.purchaseType,
+    required this.subtotal,
+    required this.taxAmount,
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.remainingAmount,
+    required this.documentStatus,
+    required this.paymentStatus,
+    required this.status,
+    required this.isOverdue,
+    this.discountType = 'fixed',
+    this.discountValue,
+    this.discountAmount = '0.00',
+    this.chargesAmount = '0.00',
+    this.charges = const <PurchaseInvoiceCharge>[],
+    this.receiptStatus = 'not_applicable',
+    this.receiptMode,
+    this.supplierInvoiceNumber,
+    this.supplierInternalReference,
+    this.branchId,
+    this.branchType = 'cafe',
+    this.branchName,
+    this.warehouseName,
+    this.invoiceTypeId,
+    this.invoiceTypeName,
+    this.invoiceGroupName,
+    this.debitAccountId,
+    this.debitAccountCode,
+    this.debitAccountName,
+    this.description,
+    this.notes,
+    this.createdByName,
+    this.journalEntryId,
+    this.reversalJournalEntryId,
+    this.postedAt,
+    this.createdAt,
+    this.backdateReason,
+    this.isBackdated = false,
+    this.allowedActions = const <String>[],
+    this.lines = const <PurchaseInvoiceLine>[],
+    this.payments = const <PurchasePayment>[],
+    this.receipts = const <PurchaseReceiptSummary>[],
+    this.paymentTerms = 'credit',
+    this.paymentReference,
+  });
+
+  final Map<String, dynamic>? factoryCurrency;
+  final int id;
+  final String internalReference;
+  final String invoiceNumber;
+  final String? supplierInvoiceNumber;
+  final String? supplierInternalReference;
+  final int supplierId;
+  final String supplierName;
+  final int? branchId;
+  final String branchType;
+  final String? branchName;
+  final String? warehouseName;
+  final String invoiceDate;
+  final String dueDate;
+
+  /// cash | credit | sham_cash
+  final String paymentTerms;
+  final String? paymentReference;
+  bool get isCreditTerms => paymentTerms == 'credit';
+
+  /// inventory | expense | asset | other — derived server-side from the
+  /// invoice's lines when present, else its legacy header invoice type.
+  final String purchaseType;
+  final int? invoiceTypeId;
+  final String? invoiceTypeName;
+  final String? invoiceGroupName;
+  final int? debitAccountId;
+  final String? debitAccountCode;
+  final String? debitAccountName;
+  final String subtotal;
+  final String taxAmount;
+  final String discountType;
+  final String? discountValue;
+  final String discountAmount;
+  final String chargesAmount;
+  final List<PurchaseInvoiceCharge> charges;
+  final String totalAmount;
+  final String paidAmount;
+  final String remainingAmount;
+
+  /// draft | posted | cancelled
+  final String documentStatus;
+
+  /// not_applicable | unpaid | partial | paid
+  final String paymentStatus;
+
+  /// not_applicable | not_received | partially_received | received —
+  /// completely independent from paymentStatus, maintained by
+  /// PurchaseReceivingService as Goods Receipts are posted.
+  final String receiptStatus;
+  final String? receiptMode;
+  final String status;
+  final bool isOverdue;
+  final String? description;
+  final String? notes;
+  final String? createdByName;
+  final int? journalEntryId;
+  final int? reversalJournalEntryId;
+  final String? postedAt;
+  final String? createdAt;
+  final String? backdateReason;
+  final bool isBackdated;
+  final List<String> allowedActions;
+  final List<PurchaseInvoiceLine> lines;
+  final List<PurchasePayment> payments;
+  final List<PurchaseReceiptSummary> receipts;
+
+  bool get isDraft => documentStatus == 'draft';
+  bool get hasInventoryLines =>
+      lines.any((PurchaseInvoiceLine l) => l.isInventory);
+  bool get canReceive => allowedActions.contains('receive');
+
+  factory PurchaseInvoice.fromJson(
+    Map<String, dynamic> json,
+  ) => PurchaseInvoice(
+    id: readInt(json['id']) ?? 0,
+    factoryCurrency: json['factoryCurrency'] is Map
+        ? Map<String, dynamic>.from(json['factoryCurrency'] as Map)
+        : null,
+    internalReference: readString(json['internalReference']),
+    invoiceNumber: readString(json['invoiceNumber']),
+    supplierInvoiceNumber: readString(json['supplierInvoiceNumber']).isEmpty
+        ? null
+        : readString(json['supplierInvoiceNumber']),
+    supplierInternalReference:
+        readString(json['supplierInternalReference']).isEmpty
+        ? null
+        : readString(json['supplierInternalReference']),
+    supplierId: readInt(json['supplierId']) ?? 0,
+    supplierName: readString(json['supplierName']),
+    branchId: readInt(json['branchId']),
+    branchType: readString(json['branchType'], fallback: 'cafe'),
+    branchName: readString(json['branchName']).isEmpty
+        ? null
+        : readString(json['branchName']),
+    warehouseName: readString(json['warehouseName']).isEmpty
+        ? null
+        : readString(json['warehouseName']),
+    invoiceDate: readString(json['invoiceDate']),
+    dueDate: readString(json['dueDate']),
+    paymentTerms: readString(json['paymentTerms']).isEmpty
+        ? 'credit'
+        : readString(json['paymentTerms']),
+    paymentReference: readString(json['paymentReference']).isEmpty
+        ? null
+        : readString(json['paymentReference']),
+    purchaseType: readString(json['purchaseType']),
+    invoiceTypeId: readInt(json['invoiceTypeId']),
+    invoiceTypeName: readString(json['invoiceTypeName']).isEmpty
+        ? null
+        : readString(json['invoiceTypeName']),
+    invoiceGroupName: readString(json['invoiceGroupName']).isEmpty
+        ? null
+        : readString(json['invoiceGroupName']),
+    debitAccountId: readInt(json['debitAccountId']),
+    debitAccountCode: readString(json['debitAccountCode']).isEmpty
+        ? null
+        : readString(json['debitAccountCode']),
+    debitAccountName: readString(json['debitAccountName']).isEmpty
+        ? null
+        : readString(json['debitAccountName']),
+    subtotal: readString(json['subtotal']),
+    taxAmount: readString(json['taxAmount']),
+    discountType: readString(json['discountType'], fallback: 'fixed').isEmpty
+        ? 'fixed'
+        : readString(json['discountType'], fallback: 'fixed'),
+    discountValue: json['discountValue'] == null
+        ? null
+        : readString(json['discountValue']),
+    discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+    chargesAmount: readString(json['chargesAmount'], fallback: '0.00'),
+    charges: readMapList(
+      json['charges'],
+    ).map(PurchaseInvoiceCharge.fromJson).toList(growable: false),
+    totalAmount: readString(json['totalAmount']),
+    paidAmount: readString(json['paidAmount'], fallback: '0.00'),
+    remainingAmount: readString(json['remainingAmount']),
+    documentStatus: readString(json['documentStatus']),
+    paymentStatus: readString(json['paymentStatus']),
+    receiptStatus: readString(
+      json['receiptStatus'],
+      fallback: 'not_applicable',
+    ),
+    receiptMode: json['receiptMode'] == null
+        ? null
+        : readString(json['receiptMode']),
+    status: readString(json['status']),
+    isOverdue: readBool(json['isOverdue']),
+    description: readString(json['description']).isEmpty
+        ? null
+        : readString(json['description']),
+    notes: readString(json['notes']).isEmpty ? null : readString(json['notes']),
+    createdByName: readString(json['createdByName']).isEmpty
+        ? null
+        : readString(json['createdByName']),
+    journalEntryId: readInt(json['journalEntryId']),
+    reversalJournalEntryId: readInt(json['reversalJournalEntryId']),
+    postedAt: readString(json['postedAt']).isEmpty
+        ? null
+        : readString(json['postedAt']),
+    createdAt: readString(json['createdAt']).isEmpty
+        ? null
+        : readString(json['createdAt']),
+    backdateReason: readString(json['backdateReason']).isEmpty
+        ? null
+        : readString(json['backdateReason']),
+    isBackdated: readBool(json['isBackdated']),
+    allowedActions: readStringList(json['allowedActions']),
+    lines: readMapList(
+      json['lines'],
+    ).map(PurchaseInvoiceLine.fromJson).toList(growable: false),
+    payments: readMapList(
+      json['payments'],
+    ).map(PurchasePayment.fromJson).toList(growable: false),
+    receipts: readMapList(
+      json['receipts'],
+    ).map(PurchaseReceiptSummary.fromJson).toList(growable: false),
+  );
+}

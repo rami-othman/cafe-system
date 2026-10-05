@@ -226,6 +226,18 @@ final class HistoricalShiftCloseTest extends TestCase
         $this->assertSame(1, DB::table('stock_movements')->where('tenant_id', $this->tenant)->where('type', 'stock_count_variance')->count());
     }
 
+    public function test_current_day_close_preserves_the_bar_variance_reason(): void
+    {
+        [$warehouse, $item] = $this->barFixture();
+        $data = ['closingCash' => '100.00', 'barCountLines' => [['inventoryItemId' => $item, 'counted' => '7.000']]];
+        $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $data['barCountLines'][0]['reason'] = 'Recorded current-day shortage';
+        $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertOk();
+        $this->assertDatabaseHas('stock_count_lines', ['inventory_item_id' => $item, 'reason' => 'Recorded current-day shortage']);
+        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '7.000']);
+    }
+
     public function test_today_refund_of_yesterdays_sale_belongs_only_to_the_continuation(): void
     {
         $order = $this->sale('400.00');

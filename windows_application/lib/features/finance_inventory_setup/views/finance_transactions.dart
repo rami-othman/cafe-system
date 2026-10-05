@@ -557,6 +557,7 @@ class _FiltersBar extends StatelessWidget {
         items: const <DropdownMenuItem<String>>[
           DropdownMenuItem<String>(value: 'draft', child: Text('مسودة')),
           DropdownMenuItem<String>(value: 'posted', child: Text('مرحّل')),
+          DropdownMenuItem<String>(value: 'superseded', child: Text('مستبدل بالدمج')),
         ],
         onChanged: onStatus,
       ),

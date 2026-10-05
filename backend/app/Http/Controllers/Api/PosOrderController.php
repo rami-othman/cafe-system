@@ -120,6 +120,11 @@ class PosOrderController extends Controller
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
+        $actor = $request->attributes->get('auth_user');
+        $isCashier = app(\App\Services\DefaultTenantRoleService::class)->canonicalLegacyRole($actor->effectiveRoleCode()) === 'cashier';
+        if ($isCashier && empty($data['shiftId'])) {
+            throw ValidationException::withMessages(['shiftId' => 'يجب ربط الطلب بورديتك المفتوحة.']);
+        }
         $snapshotHasConsumption = $snapshotRequested && $this->snapshotHasRecipeConsumption($tenantId, (int) $data['publishedMenuVersionId'], $data['items']);
         // A draft can still be created for legacy/untracked sales before a
         // branch has a dedicated POS bar warehouse. Stock-tracked payment is
@@ -139,7 +144,7 @@ class PosOrderController extends Controller
         }
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
-            $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse) {
+            $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse, $isCashier) {
                 $key = $data['idempotencyKey'] ?? null;
                 $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
                 if ($key && ($existing = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key)->lockForUpdate()->first())) {
@@ -155,7 +160,7 @@ class PosOrderController extends Controller
                 // transaction, so the order can never attach to a shift that
                 // shifts:reconcile-overlap is concurrently closing.
                 if (($data['shiftId'] ?? null) !== null) {
-                    $this->shiftLocks->sharedOpenShift($tenantId, (int) $data['shiftId'], (int) $data['branchId']);
+                    $this->shiftLocks->sharedOpenShift($tenantId, (int) $data['shiftId'], (int) $data['branchId'], $isCashier ? $actorId : null);
                 }
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])

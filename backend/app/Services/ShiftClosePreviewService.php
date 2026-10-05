@@ -36,9 +36,6 @@ final class ShiftClosePreviewService
         $cash = $this->cash->summarize($tenant, $shift, $historical ? $period : null);
         $expected = $historical ? $previousLedger : $ledger;
         $transfer = Money::cents($expected) - Money::cents($shift->closing_float_amount ?? '0');
-        if ($transfer < 0) {
-            $issues[] = __('shifts.counted_below_float');
-        }
         if ($transfer > Money::cents($ledger)) {
             $issues[] = __('shifts.historical_transfer_insufficient');
         }

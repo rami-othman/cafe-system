@@ -2538,8 +2538,8 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
       _snack('اختر طريقة الدفع.');
       return;
     }
-    if (unallocated.abs() > 0.004) {
-      _snack('يجب توزيع كامل مبلغ الدفعة على الفواتير قبل الترحيل.');
+    if (unallocated < -0.004) {
+      _snack('مجموع التوزيع يتجاوز مبلغ الدفعة.');
       return;
     }
     final allocations = allocation.entries
@@ -2551,10 +2551,6 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
           },
         )
         .toList();
-    if (allocations.isEmpty) {
-      _snack('حدد فاتورة واحدة على الأقل لتوزيع الدفعة عليها.');
-      return;
-    }
     final method = methods.firstWhere((m) => m.id == methodId);
     if (method.type == 'cash' &&
         cashOptions?.mode == 'selectable' &&
@@ -2771,14 +2767,25 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
                         Text(
                           'المتبقي غير الموزع: ${unallocated.toStringAsFixed(2)}',
                           style: TextStyle(
-                            color: unallocated.abs() > 0.004
+                            color: unallocated < -0.004
                                 ? Colors.red
+                                : unallocated > 0.004
+                                ? Colors.blue.shade700
                                 : Colors.green,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
+                    if (unallocated > 0.004)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          'سيُحفظ ${unallocated.toStringAsFixed(2)} كرصيد مقدّم في محفظة العميل ويُخصم من فواتيره القادمة.',
+                          key: const Key('customerPaymentAdvanceNote'),
+                          style: FinanceText.small,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -3124,6 +3131,7 @@ class _ReceiptDialogContentState extends State<_ReceiptDialogContent> {
               _row('التاريخ', p.paymentDate),
               _row('استلمنا من', p.customerName),
               _row('المبلغ', p.amount),
+              if (p.hasAdvance) _row('منه رصيد مقدّم (محفظة)', p.advanceAmount),
               _row('طريقة الدفع', p.paymentMethodName),
               _row('الصندوق / البنك', p.financialLocationName),
               _row('البيان', p.reference ?? p.notes ?? '—'),
@@ -3138,7 +3146,13 @@ class _ReceiptDialogContentState extends State<_ReceiptDialogContent> {
               const Divider(height: 24),
               Text('القيد المحاسبي', style: FinanceText.small),
               Text('مدين ${p.financialLocationName}: ${p.amount}'),
-              Text('دائن الذمم المدينة: ${p.amount}'),
+              if (p.hasAdvance) ...<Widget>[
+                Text(
+                  'دائن الذمم المدينة: ${(double.parse(p.amount) - double.parse(p.advanceAmount)).toStringAsFixed(2)}',
+                ),
+                Text('دائن رصيد العميل (مقدّم): ${p.advanceAmount}'),
+              ] else
+                Text('دائن الذمم المدينة: ${p.amount}'),
               if (reversed)
                 const Padding(
                   padding: EdgeInsets.only(top: 10),

@@ -850,6 +850,7 @@ class CustomerPayment {
     required this.paymentMethodName,
     required this.financialLocationName,
     required this.status,
+    this.advanceAmount = '0.00',
     this.reference,
     this.notes,
     this.journalEntryId,
@@ -869,6 +870,9 @@ class CustomerPayment {
   final String paymentMethodName;
   final String financialLocationName;
   final String status;
+
+  /// Part of the payment kept as credit on the customer's account (not applied to any invoice).
+  final String advanceAmount;
   final String? reference;
   final String? notes;
   final int? journalEntryId;
@@ -877,6 +881,7 @@ class CustomerPayment {
   final List<CustomerPaymentAllocation> allocations;
   final List<String> allowedActions;
   bool get canReverse => allowedActions.contains('reverse');
+  bool get hasAdvance => (double.tryParse(advanceAmount) ?? 0) > 0;
   factory CustomerPayment.fromJson(Map<String, dynamic> j) => CustomerPayment(
     id: readInt(j['id']) ?? 0,
     paymentNumber: readString(j['paymentNumber']),
@@ -889,6 +894,7 @@ class CustomerPayment {
     paymentMethodName: readString(j['paymentMethodName']),
     financialLocationName: readString(j['financialLocationName']),
     status: readString(j['status']),
+    advanceAmount: readString(j['advanceAmount'], fallback: '0.00'),
     reference: readString(j['reference']).isEmpty
         ? null
         : readString(j['reference']),

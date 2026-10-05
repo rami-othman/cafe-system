@@ -8,6 +8,7 @@ class Customer extends Equatable {
     this.tier,
     this.points,
     this.backendId,
+    this.walletBalance,
   });
 
   final String id;
@@ -16,6 +17,9 @@ class Customer extends Equatable {
   final String phone;
   final String? tier;
   final int? points;
+
+  /// Funds the customer holds on their account (negative = they owe). Null when the server did not report it.
+  final double? walletBalance;
 
   String get initials {
     final List<String> parts = name
@@ -42,5 +46,6 @@ class Customer extends Equatable {
     phone,
     tier,
     points,
+    walletBalance,
   ];
 }

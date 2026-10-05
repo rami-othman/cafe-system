@@ -8,6 +8,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/app_localizations_en.dart';
 import '../models/customer.dart';
+import 'wallet_balance_badge.dart';
 
 class CartCustomerSelector extends StatelessWidget {
   const CartCustomerSelector({
@@ -61,6 +62,7 @@ class CartCustomerSelector extends StatelessWidget {
                 ),
                 if (customer != null) ...<Widget>[
                   const SizedBox(width: AppSpacing.xs),
+                  WalletBalanceBadge(balance: customer!.walletBalance),
                   if (customer!.tier != null)
                     Text(
                       customer!.tier!,

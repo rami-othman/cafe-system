@@ -15,7 +15,7 @@ class FinancialSetupService
      */
     public function financeReadiness(int $tenantId): array
     {
-        $requiredCodes = collect($this->defaultAccounts())->pluck('code')->all();
+        $requiredCodes = $this->requiredAccountCodes($tenantId);
         $activeCodes = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')->pluck('code')->all();
         $missingAccounts = array_values(array_diff($requiredCodes, $activeCodes));
 
@@ -63,6 +63,17 @@ class FinancialSetupService
     }
 
     /** @return array<int, array<string, string|bool>> */
+    /** Active chart requirements; retired legacy codes remain only for audit. */
+    public function requiredAccountCodes(int $tenantId): array
+    {
+        $codes = array_column($this->defaultAccounts(), 'code');
+        if (app(PhinixRemapService::class)->isPhinixTenant($tenantId)) {
+            $codes = array_map(fn ($code) => PhinixRemapService::LEGACY_TO_NEW[$code] ?? $code, $codes);
+        }
+
+        return array_values(array_unique($codes));
+    }
+
     public function defaultAccounts(): array
     {
         return [

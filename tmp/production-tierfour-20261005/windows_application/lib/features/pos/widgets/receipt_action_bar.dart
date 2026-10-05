@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+
+import '../../../app/localization/localization_extensions.dart';
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
+
+class ReceiptActionBar extends StatelessWidget {
+  const ReceiptActionBar({
+    super.key,
+    required this.onSendViaWhatsApp,
+    required this.onPrintReceipt,
+    this.isPrinting = false,
+  });
+
+  final VoidCallback onSendViaWhatsApp;
+  final VoidCallback onPrintReceipt;
+  final bool isPrinting;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: AppSpacing.allLg,
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        spacing: AppSpacing.md,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          SizedBox(
+            height: AppSizes.receiptActionButtonHeight,
+            child: OutlinedButton.icon(
+              onPressed: onSendViaWhatsApp,
+              icon: const Icon(Icons.send_outlined, size: 18),
+              label: Text(context.l10n.posSendViaWhatsApp),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.border),
+                textStyle: AppTextStyles.buttonMedium,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.control,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: AppSizes.receiptActionButtonHeight,
+            child: FilledButton.icon(
+              onPressed: isPrinting ? null : onPrintReceipt,
+              icon: isPrinting
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.print_outlined, size: 18),
+              label: Text(
+                isPrinting
+                    ? context.l10n.posPrinting
+                    : context.l10n.posPrintReceipt,
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.tertiary,
+                foregroundColor: AppColors.white,
+                textStyle: AppTextStyles.buttonMedium,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.control,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

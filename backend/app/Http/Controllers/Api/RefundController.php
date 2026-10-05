@@ -128,14 +128,17 @@ class RefundController extends Controller
                 $amountCents,
             );
             if ($resolvedMethod !== null) {
+                $cashAccount = $payment->method === 'cash' && $resolvedMethod->type === 'cash'
+                    ? $this->cashLocations->accountForRefund($tenantId, $orderRow)
+                    : null;
                 $cashLocationId = $payment->method === 'cash' && $resolvedMethod->type === 'cash'
-                    ? $this->cashLocations->forRefund($tenantId, $orderRow, $payment, $resolvedMethod->accountCode)
+                    ? $this->cashLocations->forRefund($tenantId, $orderRow, $payment, $cashAccount ?? $resolvedMethod->accountCode)
                     : null;
                 $walletParty = $resolvedMethod->type === 'wallet'
                     ? $this->partyAccounts->codeForOrderCustomer($tenantId, $orderRow->customer_id, $actorId)
                     : null;
                 // A wallet refund goes back to the customer's own account, not to a shared placeholder.
-                $settlementLine = ['accountCode' => $walletParty ?? $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)];
+                $settlementLine = ['accountCode' => $walletParty ?? $cashAccount ?? $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)];
                 if ($cashLocationId !== null) {
                     $settlementLine['financialLocationId'] = $cashLocationId;
                 } elseif ($resolvedMethod->type === 'sham_cash' && ($resolvedMethod->financialLocationId ?? null) !== null) {

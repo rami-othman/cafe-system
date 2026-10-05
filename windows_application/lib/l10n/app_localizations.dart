@@ -14192,6 +14192,24 @@ abstract class AppLocalizations {
   /// **'{points} pts'**
   String posCustomerPoints(String points);
 
+  /// No description provided for @posCustomerWalletCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance {amount}'**
+  String posCustomerWalletCredit(String amount);
+
+  /// No description provided for @posCustomerWalletDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String posCustomerWalletDebt(String amount);
+
+  /// No description provided for @posWalletAutoSelectedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer\'s wallet is selected because it covers this order (balance {amount}).'**
+  String posWalletAutoSelectedNote(String amount);
+
   /// No description provided for @posWalkInCustomer.
   ///
   /// In en, this message translates to:

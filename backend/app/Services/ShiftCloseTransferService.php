@@ -30,7 +30,7 @@ final class ShiftCloseTransferService
     public function create(Request $request, int $tenantId, object $shift, int $countedCents, string $actorType, ?string $transferDate = null, ?int $currentCashCents = null, ?int $allocationShiftId = null): ?int
     {
         $floatCents = Money::cents($shift->closing_float_amount ?? '0');
-        if ($floatCents < 0 || $countedCents < 0 || $countedCents < $floatCents) {
+        if ($floatCents < 0 || $countedCents < 0) {
             throw ValidationException::withMessages(['closingCash' => __('shifts.counted_below_float')]);
         }
         if (! $shift->financial_location_id || ! $shift->close_destination_financial_location_id) {
@@ -57,7 +57,8 @@ final class ShiftCloseTransferService
             throw ValidationException::withMessages(['closingCash' => __('shifts.drawer_ledger_mismatch')]);
         }
 
-        $amount = $countedCents - $floatCents;
+        // Retain only cash actually present; an empty drawer needs no transfer.
+        $amount = max(0, $countedCents - $floatCents);
         if ($amount > $ledgerCents) {
             throw ValidationException::withMessages(['closingCash' => __('shifts.historical_transfer_insufficient')]);
         }

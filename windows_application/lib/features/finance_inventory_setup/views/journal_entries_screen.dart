@@ -12,6 +12,13 @@ import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 import '../models/finance_setup_models.dart';
 
+String _journalStatusLabel(String? status) => switch (status) {
+  'draft' => 'مسودة',
+  'posted' => 'مُرحّل',
+  'superseded' => 'مستبدل بالدمج',
+  _ => status ?? '—',
+};
+
 class JournalEntriesScreen extends StatefulWidget {
   const JournalEntriesScreen({super.key, this.initialEntryId});
   final int? initialEntryId;
@@ -95,8 +102,8 @@ class _JournalState extends State<JournalEntriesScreen> {
               _filter(
                 _status,
                 'كل الحالات',
-                const <String?>[null, 'draft', 'posted'],
-                (v) => v == 'draft' ? 'مسودة' : 'مُرحّل',
+                const <String?>[null, 'draft', 'posted', 'superseded'],
+                _journalStatusLabel,
                 (v) {
                   setState(() => _status = v);
                   _load();
@@ -209,10 +216,12 @@ class _JournalState extends State<JournalEntriesScreen> {
       DataCell(Text(entry.creditTotal)),
       DataCell(
         ManagementBadge(
-          label: entry.status == 'draft' ? 'مسودة' : 'مُرحّل',
-          tone: entry.status == 'draft'
-              ? ManagementTone.warning
-              : ManagementTone.success,
+          label: _journalStatusLabel(entry.status),
+          tone: switch (entry.status) {
+            'draft' => ManagementTone.warning,
+            'posted' => ManagementTone.success,
+            _ => ManagementTone.neutral,
+          },
         ),
       ),
       DataCell(
@@ -332,8 +341,12 @@ class _JournalState extends State<JournalEntriesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'التاريخ: ${entry.entryDate}   الحالة: ${entry.status}',
+                      'التاريخ: ${entry.entryDate}   الحالة: ${_journalStatusLabel(entry.status)}',
                     ),
+                    if (entry.status == 'superseded')
+                      const Text(
+                        'محفوظ للتدقيق ولا يؤثر على الأرصدة؛ نُقلت الحركات الأصلية إلى الحسابات الجديدة.',
+                      ),
                     Text('الوصف: ${entry.description ?? '—'}'),
                     Text(
                       'المصدر: ${entry.sourceType} / ${entry.sourceId ?? '—'} / ${entry.sourceEvent ?? '—'}',

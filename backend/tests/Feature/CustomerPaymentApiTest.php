@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Services\FinancialSetupService;
+use App\Services\PartyAccountService;
+use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -142,7 +144,7 @@ class CustomerPaymentApiTest extends TestCase
         ], $s['headers'])->assertUnprocessable()->assertJsonValidationErrors('allocations');
     }
 
-    public function test_allocation_total_must_equal_payment_amount_exactly(): void
+    public function test_unallocated_remainder_is_kept_as_an_advance_instead_of_rejected(): void
     {
         $s = $this->scenario();
         $invoiceId = $this->postedInvoice($s, '100.00');
@@ -152,8 +154,8 @@ class CustomerPaymentApiTest extends TestCase
             'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'amount' => '100.00',
             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-mismatch-1',
             'allocations' => [['invoiceId' => $invoiceId, 'amount' => '60.00']],
-        ], $s['headers'])->assertUnprocessable()->assertJsonValidationErrors('allocations');
-        $this->assertSame(0, DB::table('customer_payments')->where('tenant_id', $s['tenant'])->where('idempotency_key', 'pay-mismatch-1')->count());
+        ], $s['headers'])->assertCreated()->assertJsonPath('data.advanceAmount', '40.00');
+        $this->getJson("/api/v1/finance/sales-invoices/{$invoiceId}", $s['headers'])->assertOk()->assertJsonPath('data.remainingAmount', '40.00');
     }
 
     public function test_allocation_against_a_different_customers_invoice_is_rejected(): void
@@ -168,6 +170,58 @@ class CustomerPaymentApiTest extends TestCase
             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-wrong-customer-1',
             'allocations' => [['invoiceId' => $foreignInvoice, 'amount' => '100.00']],
         ], $s['headers'])->assertUnprocessable()->assertJsonValidationErrors('allocations');
+    }
+
+    public function test_overpayment_settles_the_invoice_and_keeps_the_excess_as_wallet_funds(): void
+    {
+        $s = $this->scenario();
+        $invoiceId = $this->postedInvoice($s, '100.00');
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+
+        $payment = $this->postJson('/api/v1/finance/customer-payments', [
+            'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'amount' => '150.00',
+            'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-advance-1',
+            'allocations' => [['invoiceId' => $invoiceId, 'amount' => '100.00']],
+        ], $s['headers'])->assertCreated()->assertJsonPath('data.amount', '150.00')->assertJsonPath('data.advanceAmount', '50.00');
+
+        $this->getJson("/api/v1/finance/sales-invoices/{$invoiceId}", $s['headers'])->assertOk()->assertJsonPath('data.remainingAmount', '0.00');
+        $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $payment->json('data.journalEntryId'))->get();
+        $this->assertSame('150.00', Money::decimal(Money::cents((string) $lines->sum('debit'))));
+        $this->assertSame('150.00', Money::decimal(Money::cents((string) $lines->sum('credit'))));
+        $this->assertSame(5000, app(PartyAccountService::class)->walletState($s['tenant'], $s['customer'])['fundsCents']);
+
+        $this->postJson("/api/v1/finance/customer-payments/{$payment->json('data.id')}/reverse", [], $s['headers'])->assertOk();
+        // The reversal takes the whole payment back: only the unpaid 100.00 invoice is left on the account.
+        $this->assertSame(-10000, app(PartyAccountService::class)->walletState($s['tenant'], $s['customer'])['fundsCents']);
+    }
+
+    public function test_payment_without_allocations_is_a_pure_advance_but_allocations_cannot_exceed_the_amount(): void
+    {
+        $s = $this->scenario();
+        $invoiceId = $this->postedInvoice($s, '100.00');
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+        $base = ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'paymentMethodId' => $methodId, 'financialLocationId' => $locationId];
+
+        $this->postJson('/api/v1/finance/customer-payments', $base + ['amount' => '80.00', 'idempotencyKey' => 'pay-advance-2', 'allocations' => [['invoiceId' => $invoiceId, 'amount' => '90.00']]], $s['headers'])
+            ->assertUnprocessable()->assertJsonValidationErrors('allocations');
+
+        $this->postJson('/api/v1/finance/customer-payments', $base + ['amount' => '80.00', 'idempotencyKey' => 'pay-advance-3', 'allocations' => []], $s['headers'])
+            ->assertCreated()->assertJsonPath('data.advanceAmount', '80.00');
+        // Wallet funds are net of what the customer still owes: 80.00 advance against the open 100.00 invoice.
+        $this->assertSame(-2000, app(PartyAccountService::class)->walletState($s['tenant'], $s['customer'])['fundsCents']);
+    }
+
+    public function test_pos_customer_lookup_returns_the_wallet_balance(): void
+    {
+        $s = $this->scenario();
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+        $this->postJson('/api/v1/finance/customer-payments', [
+            'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'amount' => '75.50',
+            'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-lookup-1', 'allocations' => [],
+        ], $s['headers'])->assertCreated();
+
+        $row = collect($this->getJson('/api/v1/customers', $s['headers'])->assertOk()->json('data'))->firstWhere('id', $s['customer']);
+        $this->assertSame('75.50', $row['walletBalance']);
     }
 
     public function test_draft_and_fully_paid_invoices_cannot_receive_allocations(): void

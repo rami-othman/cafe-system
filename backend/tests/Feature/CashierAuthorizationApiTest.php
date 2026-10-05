@@ -20,6 +20,96 @@ class CashierAuthorizationApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_cashier_cannot_write_operational_documents_without_an_open_shift(): void
+    {
+        $tenant = $this->bootTenant();
+        $branch = $this->branch($tenant);
+        $cashier = $this->assignedUser($tenant, $branch, 'employee');
+        $headers = $this->headers($tenant, $cashier);
+        foreach (['orders', 'finance/vouchers', 'finance/sales-invoices', 'finance/supplier-invoices'] as $path) {
+            $this->postJson('/api/v1/'.$path, ['branchId' => $branch], $headers)
+                ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+        }
+        $this->assertSame(0, DB::table('finance_documents')->where('tenant_id', $tenant)->count());
+        $this->getJson('/api/v1/orders', $headers)->assertOk();
+        $this->getJson("/api/v1/shifts/current?branchId=$branch", $headers)->assertOk();
+    }
+
+    public function test_cashier_documents_work_after_opening_and_stop_after_closing(): void
+    {
+        $tenant = $this->bootTenant();
+        $branch = $this->branch($tenant);
+        $cashier = $this->assignedUser($tenant, $branch, 'employee');
+        $headers = $this->headers($tenant, $cashier);
+        $shift = $this->openShift($tenant, $branch, $cashier);
+        $account = DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '4000')->value('id');
+        $payload = ['branchId' => $branch, 'documentType' => 'receipt', 'documentDate' => now()->toDateString(),
+            'amount' => '10.00', 'lines' => [['accountId' => $account, 'amount' => '10.00']]];
+        $document = $this->postJson('/api/v1/finance/vouchers', $payload, $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$document/post", [], $headers)->assertOk();
+        $this->postJson("/api/v1/shifts/$shift/close", ['closingCash' => '10.00'], $headers)->assertOk();
+        $this->postJson('/api/v1/finance/vouchers', $payload, $headers)
+            ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+        $this->patchJson('/api/v1/orders/999', [], $headers)
+            ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+    }
+
+    public function test_cashier_cannot_use_another_users_open_shift(): void
+    {
+        $tenant = $this->bootTenant();
+        $branch = $this->branch($tenant);
+        $other = $this->assignedUser($tenant, $branch, 'employee');
+        $cashier = $this->assignedUser($tenant, $branch, 'employee');
+        $this->openShift($tenant, $branch, $other);
+        $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branch], $this->headers($tenant, $cashier))
+            ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+    }
+
+    public function test_open_shift_in_another_branch_does_not_authorize_a_voucher(): void
+    {
+        $tenant = $this->bootTenant();
+        $branch = $this->branch($tenant);
+        $otherBranch = DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Second cafe',
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $cashier = $this->assignedUser($tenant, $branch, 'employee');
+        DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $cashier, 'branch_id' => $otherBranch,
+            'created_at' => now(), 'updated_at' => now()]);
+        $this->openShift($tenant, $branch, $cashier);
+        $headers = $this->headers($tenant, $cashier);
+        $this->postJson('/api/v1/finance/vouchers', ['branchId' => $otherBranch], $headers)
+            ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+        $drawer = app(FinancialSetupService::class)->ensureBranchCashDrawer($tenant, $otherBranch);
+        $account = DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '4000')->value('id');
+        $document = $this->postJson('/api/v1/finance/vouchers', [
+            'branchId' => $otherBranch, 'financialLocationId' => $drawer,
+            'documentType' => 'receipt', 'documentDate' => now()->toDateString(),
+            'amount' => '10.00', 'lines' => [['accountId' => $account, 'amount' => '10.00']],
+        ], $this->headers($tenant, $this->owner($tenant)))->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$document/post", ['branchId' => $branch], $headers)
+            ->assertUnprocessable()->assertJsonPath('code', 'NO_OPEN_SHIFT');
+        $this->assertSame('draft', DB::table('finance_documents')->where('id', $document)->value('status'));
+    }
+
+    public function test_cashier_order_requires_the_actual_open_shift_even_on_legacy_order_api(): void
+    {
+        $tenant = $this->bootTenant();
+        $branch = $this->branch($tenant);
+        $cashier = $this->assignedUser($tenant, $branch, 'employee');
+        $shift = $this->openShift($tenant, $branch, $cashier);
+        $product = DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Shift test coffee',
+            'price' => '10.00', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $variant = DB::table('product_variants')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product,
+            'name' => 'Regular', 'base_price' => '10.00', 'is_default' => true, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now()]);
+        $payload = ['branchId' => $branch, 'orderType' => 'takeaway',
+            'items' => [['productId' => $product, 'variantId' => $variant, 'quantity' => 1]]];
+        $headers = $this->headers($tenant, $cashier);
+        $this->postJson('/api/v1/orders', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('shiftId');
+        $this->assertSame(0, DB::table('orders')->where('tenant_id', $tenant)->count());
+        $this->postJson('/api/v1/orders', $payload + ['shiftId' => $shift], $headers)
+            ->assertCreated()->assertJsonPath('data.shiftId', $shift);
+    }
+
     public function test_cashier_can_access_pos_orders_customers_and_discounts(): void
     {
         $tenant = $this->bootTenant();

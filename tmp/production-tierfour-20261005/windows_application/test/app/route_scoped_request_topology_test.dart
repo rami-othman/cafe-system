@@ -1,0 +1,228 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/app/app.dart';
+import 'package:windows_application/app/app_router.dart';
+import 'package:windows_application/core/services/service_locator.dart';
+import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_form_references.dart';
+import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
+import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
+import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
+import 'package:windows_application/features/orders/controllers/orders_state.dart';
+import 'package:windows_application/features/orders/models/order_page.dart';
+import 'package:windows_application/features/orders/models/order_summary.dart';
+import 'package:windows_application/features/orders/repositories/orders_repository.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
+import 'package:windows_application/features/reports/models/reports_overview.dart';
+import 'package:windows_application/features/reports/repositories/reports_repository.dart';
+
+void main() {
+  setUp(() async {
+    await serviceLocator.reset();
+    setupServiceLocator(useBackend: false);
+  });
+
+  tearDown(() => appRouter.go(AppRoutes.pos));
+
+  testWidgets('POS does not request unvisited feature repositories', (
+    WidgetTester tester,
+  ) async {
+    final _TopologySpies spies = _installSpies();
+    appRouter.go(AppRoutes.pos);
+
+    await _pumpApp(tester);
+
+    expect(spies.orders.requests, 0);
+    expect(spies.discounts.requests, 0);
+    expect(spies.reports.requests, 0);
+    expect(spies.menu.requests, 0);
+  });
+
+  testWidgets('Orders initializes only Orders data', (
+    WidgetTester tester,
+  ) async {
+    final _TopologySpies spies = _installSpies();
+    appRouter.go(AppRoutes.orders);
+
+    await _pumpApp(tester);
+
+    expect(spies.orders.requests, greaterThan(0));
+    expect(spies.discounts.requests, 0);
+    expect(spies.reports.requests, 0);
+    expect(spies.menu.requests, 0);
+  });
+
+  testWidgets('Reports initializes only report data', (
+    WidgetTester tester,
+  ) async {
+    final _TopologySpies spies = _installSpies();
+    appRouter.go(AppRoutes.reports);
+
+    await _pumpApp(tester);
+
+    expect(spies.orders.requests, 0);
+    expect(spies.discounts.requests, 0);
+    expect(spies.reports.requests, 1);
+    expect(spies.menu.requests, 0);
+  });
+
+  testWidgets('Discounts initializes only discount-management data', (
+    WidgetTester tester,
+  ) async {
+    final _TopologySpies spies = _installSpies();
+    appRouter.go(AppRoutes.discounts);
+
+    await _pumpApp(tester);
+
+    expect(spies.orders.requests, 0);
+    expect(spies.discounts.requests, 1);
+    expect(spies.reports.requests, 0);
+    expect(spies.menu.requests, 0);
+  });
+}
+
+Future<void> _pumpApp(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(1280, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(const App());
+  await tester.pumpAndSettle();
+}
+
+_TopologySpies _installSpies() {
+  final _TopologySpies spies = _TopologySpies();
+  serviceLocator.unregister<OrdersRepository>();
+  serviceLocator.registerLazySingleton<OrdersRepository>(() => spies.orders);
+  serviceLocator.unregister<DiscountsRepository>();
+  serviceLocator.registerLazySingleton<DiscountsRepository>(
+    () => spies.discounts,
+  );
+  serviceLocator.unregister<ReportsRepository>();
+  serviceLocator.registerLazySingleton<ReportsRepository>(() => spies.reports);
+  serviceLocator.unregister<MenuCatalogRepository>();
+  serviceLocator.registerLazySingleton<MenuCatalogRepository>(() => spies.menu);
+  return spies;
+}
+
+class _TopologySpies {
+  final _SpyOrdersRepository orders = _SpyOrdersRepository();
+  final _SpyDiscountsRepository discounts = _SpyDiscountsRepository();
+  final _SpyReportsRepository reports = _SpyReportsRepository();
+  final _SpyMenuCatalogRepository menu = _SpyMenuCatalogRepository();
+}
+
+class _SpyOrdersRepository extends OrdersRepository {
+  int requests = 0;
+
+  @override
+  Future<List<Branch>> getBranches() async {
+    requests++;
+    return const <Branch>[
+      Branch(
+        id: 1,
+        name: 'Downtown',
+        currency: 'SYP',
+        timezone: 'Asia/Damascus',
+        isActive: true,
+      ),
+    ];
+  }
+
+  @override
+  Future<OrderPage> getOrders({
+    required int branchId,
+    OrdersFilter? filter,
+    int page = 1,
+    int perPage = 25,
+  }) async {
+    requests++;
+    return OrderPage.fromOrders(
+      const <OrderSummary>[],
+      page: page,
+      perPage: perPage,
+    );
+  }
+}
+
+class _SpyDiscountsRepository implements DiscountsRepository {
+  @override
+  Future<DiscountFormReferences> getFormReferences() async =>
+      const DiscountFormReferences();
+
+  int requests = 0;
+
+  @override
+  Future<List<DiscountListItem>> getDiscounts() async {
+    requests++;
+    return const <DiscountListItem>[];
+  }
+
+  @override
+  Future<List<Branch>> getBranches() async => const <Branch>[];
+
+  @override
+  Future<DiscountDetail> getDiscountDetail(String discountId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
+
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteDiscount(String discountId) => throw UnimplementedError();
+
+  @override
+  Future<DiscountListItem> setStatus(String discountId, bool isActive) =>
+      throw UnimplementedError();
+
+  @override
+  Future<DiscountListItem> updateDiscount(
+    String discountId,
+    DiscountUpsertRequest request,
+  ) => throw UnimplementedError();
+}
+
+class _SpyReportsRepository extends ReportsRepository {
+  int requests = 0;
+
+  @override
+  Future<ReportsOverview> getOverview({
+    required DateTime from,
+    required DateTime to,
+    int? branchId,
+    required bool comparePrevious,
+  }) async {
+    requests++;
+    return ReportsOverview.fromJson(<String, dynamic>{
+      'period': <String, dynamic>{
+        'from': from.toIso8601String(),
+        'to': to.toIso8601String(),
+      },
+      'currency': 'SYP',
+      'branches': const <dynamic>[],
+      'selectedBranchId': branchId,
+      'kpis': const <String, dynamic>{},
+      'salesTrend': const <dynamic>[],
+      'branchComparison': const <dynamic>[],
+      'topProducts': const <dynamic>[],
+      'recentExceptions': const <dynamic>[],
+    });
+  }
+}
+
+class _SpyMenuCatalogRepository implements MenuCatalogRepository {
+  int requests = 0;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    requests++;
+    throw UnimplementedError('Menu Management must not initialize here.');
+  }
+}

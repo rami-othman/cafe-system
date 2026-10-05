@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/reports/controllers/daily_report_cubit.dart';
+import 'package:windows_application/features/reports/views/daily_operational_report_screen.dart';
+
+// DailyOperationalReportScreen is no longer wired to the /reports route
+// (ReportsOverviewScreen is canonical there, see reports_overview_screen_test
+// and app_router.dart) but the widget itself is kept for now, so these tests
+// exercise it directly instead of through the app router.
+
+void main() {
+  testWidgets(
+    'renders the daily operational report header and actions',
+    (WidgetTester tester) async {
+      await _pumpScreen(tester, DailyReportCubit()..loadReport());
+
+      expect(find.text('Daily Operational Report'), findsOneWidget);
+      expect(find.text('Today, Oct 24, 2023'), findsOneWidget);
+      expect(find.text('Print'), findsOneWidget);
+      expect(find.text('Export Report'), findsOneWidget);
+    },
+  );
+
+  testWidgets('daily report renders all presentation data and peak bar', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, DailyReportCubit()..loadReport());
+
+    for (final String value in <String>[
+      '4,250 SYP',
+      '4,632.50 SYP',
+      '142',
+      '8.77 SYP',
+      '-125 SYP',
+      '382.50 SYP',
+      '-42.50 SYP',
+      '650 SYP',
+    ]) {
+      expect(find.text(value), findsWidgets);
+    }
+    for (final String label in <String>[
+      '6a',
+      '7a',
+      '8a',
+      '9a',
+      '10a',
+      '11a',
+      '12p',
+      '1p',
+      '2p',
+      '3p',
+    ]) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(find.byKey(const Key('hour-bar-9a')), findsOneWidget);
+    expect(find.text('Card'), findsWidgets);
+    expect(find.text('Digital Wallet'), findsOneWidget);
+    expect(find.text('DINE-IN'), findsOneWidget);
+    expect(find.text('Vanilla Latte'), findsOneWidget);
+    expect(find.text('#1042 - Wrong Item'), findsOneWidget);
+    expect(find.text('Loyalty Free Coffee'), findsOneWidget);
+    expect(find.text('#1142'), findsOneWidget);
+    expect(find.text('Paid'), findsNWidgets(4));
+    expect(find.text('Refunded'), findsOneWidget);
+    expect(find.text('34.72 SYP'), findsOneWidget);
+  });
+
+  testWidgets('print and export actions show report action messages', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, DailyReportCubit()..loadReport());
+
+    await tester.tap(find.text('Print'));
+    await tester.pump();
+    expect(
+      find.text('Print the report from your system print dialog.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Export Report'));
+    await tester.pump();
+    expect(
+      find.text('Report data is loaded from the current branch and date.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('empty and error report states render their recovery UI', (
+    WidgetTester tester,
+  ) async {
+    final DailyReportCubit cubit = DailyReportCubit()..showEmpty();
+    await _pumpScreen(tester, cubit, settle: false);
+    expect(
+      find.text('No report data is available for this date.'),
+      findsOneWidget,
+    );
+
+    cubit.showError();
+    await tester.pump();
+    expect(find.text('The report could not be loaded.'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+    'report page scrolls and remains stable at desktop and narrow widths',
+    (WidgetTester tester) async {
+      await _pumpScreen(tester, DailyReportCubit()..loadReport());
+      await tester.drag(
+        find.byKey(const Key('daily-report-scroll-view')),
+        const Offset(0, -500),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      tester.view.physicalSize = const Size(820, 800);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  DailyReportCubit cubit, {
+  bool settle = true,
+}) async {
+  tester.view.physicalSize = const Size(1280, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: BlocProvider<DailyReportCubit>.value(
+          value: cubit,
+          child: const DailyOperationalReportScreen(),
+        ),
+      ),
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  }
+}

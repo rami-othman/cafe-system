@@ -50,7 +50,7 @@ final class FinancialTransactionController extends Controller
         $data = $request->validate([
             'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'branch_id' => ['nullable', 'integer'], 'source_type' => ['nullable', Rule::in(['sale', 'refund', 'expense', 'cash_transfer', 'supplier_invoice', 'supplier_payment', 'inventory_waste', 'stock_count_variance', 'manual_journal', 'journal_reversal', 'pos_order', 'payment_refund', 'manual', 'inventory_movement'])],
-            'status' => ['nullable', Rule::in(['draft', 'posted'])], 'account_id' => ['nullable', 'integer'], 'account_code' => ['nullable', 'string', 'max:40'],
+            'status' => ['nullable', Rule::in(['draft', 'posted', 'superseded'])], 'account_id' => ['nullable', 'integer'], 'account_code' => ['nullable', 'string', 'max:40'],
             'payment_method_id' => ['nullable', 'integer'], 'search' => ['nullable', 'string', 'max:120'],
             'reversal_state' => ['nullable', Rule::in(['none', 'original_reversed', 'reversal_entry'])],
             'has_cash_effect' => ['nullable', 'boolean'],

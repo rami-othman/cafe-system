@@ -1,0 +1,408 @@
+﻿Folder PATH listing
+Volume serial number is 0000012E A6A4:1443
+C:\USERS\RAMI\DESKTOP\IMPORTANT FILES\CAFE SYSTEM\CAFE_BACKEND\WINDOWS_APPLICATION\LIB
+|   main.dart
+|   
++---app
+|   |   app.dart
+|   |   app_router.dart
+|   |   app_shell.dart
+|   |   
+|   \---localization
+|           app_locale_cubit.dart
+|           app_locale_repository.dart
+|           app_locale_state.dart
+|           localization_extensions.dart
+|           localized_backend_values.dart
+|           
++---core
+|   +---config
+|   |       api_config.dart
+|   |       tax_config.dart
+|   |       
+|   +---constants
+|   |       app_assets.dart
+|   |       app_constants.dart
+|   |       app_sizes.dart
+|   |       
+|   +---errors
+|   |       app_exception.dart
+|   |       failure.dart
+|   |       
+|   +---network
+|   |       api_exception.dart
+|   |       api_response_parser.dart
+|   |       dio_api_client.dart
+|   |       
+|   +---services
+|   |       service_locator.dart
+|   |       
+|   +---theme
+|   |       app_colors.dart
+|   |       app_radius.dart
+|   |       app_spacing.dart
+|   |       app_text_styles.dart
+|   |       app_theme.dart
+|   |       
+|   \---utils
+|           currency_formatter.dart
+|           localized_entity_text.dart
+|           localized_formatters.dart
+|           responsive.dart
+|           tax_formatter.dart
+|           
++---features
+|   +---auth
+|   |   +---controllers
+|   |   +---models
+|   |   +---repositories
+|   |   +---views
+|   |   \---widgets
+|   +---discounts
+|   |   +---controllers
+|   |   |       discounts_cubit.dart
+|   |   |       discounts_state.dart
+|   |   |       
+|   |   +---models
+|   |   |       discount_list_item.dart
+|   |   |       discount_upsert_request.dart
+|   |   |       
+|   |   +---repositories
+|   |   |       discounts_repository.dart
+|   |   |       
+|   |   +---views
+|   |   |       create_discount_policy_screen.dart
+|   |   |       discounts_list_screen.dart
+|   |   |       
+|   |   \---widgets
+|   |           discounts_table.dart
+|   |           discount_bottom_action_bar.dart
+|   |           discount_chip_selector.dart
+|   |           discount_form_section_card.dart
+|   |           discount_pos_preview_card.dart
+|   |           discount_search_controls.dart
+|   |           discount_status_badge.dart
+|   |           discount_summary_card.dart
+|   |           discount_summary_panel.dart
+|   |           discount_toggle_row.dart
+|   |           
+|   +---menu_management
+|   |   +---assignments
+|   |   |   +---controllers
+|   |   |   |       menu_assignments_cubit.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       menu_assignment_models.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           menu_assignments_screen.dart
+|   |   |           
+|   |   +---availability
+|   |   |   |   schedule_summary.dart
+|   |   |   |   
+|   |   |   +---controllers
+|   |   |   |       availability_cubit.dart
+|   |   |   |       availability_state.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       availability_models.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           availability_screen.dart
+|   |   |           
+|   |   +---controllers
+|   |   |       product_catalog_cubit.dart
+|   |   |       product_catalog_state.dart
+|   |   |       product_detail_cubit.dart
+|   |   |       product_lifecycle_cubit.dart
+|   |   |       
+|   |   +---menus
+|   |   |   +---controllers
+|   |   |   |       menu_detail_cubit.dart
+|   |   |   |       menu_editor_cubit.dart
+|   |   |   |       menu_list_cubit.dart
+|   |   |   |       product_placements_cubit.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       menu_editor_draft.dart
+|   |   |   |       menu_filter.dart
+|   |   |   |       menu_models.dart
+|   |   |   |       product_placement.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           menu_detail_screen.dart
+|   |   |           menu_editor_screen.dart
+|   |   |           menu_list_screen.dart
+|   |   |           product_placements_screen.dart
+|   |   |           
+|   |   +---models
+|   |   |       catalog_models.dart
+|   |   |       product_catalog_filter.dart
+|   |   |       
+|   |   +---modifiers
+|   |   |   +---controllers
+|   |   |   |       modifier_group_detail_cubit.dart
+|   |   |   |       modifier_group_editor_cubit.dart
+|   |   |   |       modifier_library_cubit.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       modifier_editor_drafts.dart
+|   |   |   |       modifier_models.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           modifier_group_detail_screen.dart
+|   |   |           modifier_group_editor_screen.dart
+|   |   |           modifier_library_screen.dart
+|   |   |           
+|   |   +---operational_availability
+|   |   |   |   operational_availability_formatters.dart
+|   |   |   |   
+|   |   |   +---controllers
+|   |   |   |       operational_availability_cubit.dart
+|   |   |   |       operational_availability_state.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       operational_availability_models.dart
+|   |   |   |       
+|   |   |   +---views
+|   |   |   |       operational_availability_screen.dart
+|   |   |   |       
+|   |   |   \---widgets
+|   |   |           clear_operational_override_dialog.dart
+|   |   |           operational_override_editor.dart
+|   |   |           
+|   |   +---pricing
+|   |   |   +---controllers
+|   |   |   |       variant_price_overrides_cubit.dart
+|   |   |   |       variant_price_overrides_state.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       variant_price_models.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           variant_price_overrides_screen.dart
+|   |   |           
+|   |   +---products
+|   |   |   +---controllers
+|   |   |   |       product_editor_cubit.dart
+|   |   |   |       product_editor_state.dart
+|   |   |   |       product_modifier_assignments_cubit.dart
+|   |   |   |       product_modifier_assignments_state.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       product_editor_draft.dart
+|   |   |   |       product_modifier_assignment.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           product_editor_screen.dart
+|   |   |           product_modifier_assignments_screen.dart
+|   |   |           
+|   |   +---repositories
+|   |   |       menu_catalog_repository.dart
+|   |   |       
+|   |   +---review
+|   |   |   +---controllers
+|   |   |   |       menu_review_cubit.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       review_models.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           menu_review_screen.dart
+|   |   |           
+|   |   +---variants
+|   |   |   +---controllers
+|   |   |   |       variants_cubit.dart
+|   |   |   |       variants_state.dart
+|   |   |   |       
+|   |   |   +---models
+|   |   |   |       variant_editor_draft.dart
+|   |   |   |       
+|   |   |   \---views
+|   |   |           variants_screen.dart
+|   |   |           
+|   |   +---views
+|   |   |       product_catalog_screen.dart
+|   |   |       product_detail_screen.dart
+|   |   |       
+|   |   \---widgets
+|   |           catalog_formatters.dart
+|   |           menu_management_tabs.dart
+|   |           
+|   +---orders
+|   |   +---controllers
+|   |   |       orders_cubit.dart
+|   |   |       orders_state.dart
+|   |   |       
+|   |   +---models
+|   |   |       order_detail.dart
+|   |   |       order_payment_summary.dart
+|   |   |       order_status.dart
+|   |   |       order_summary.dart
+|   |   |       order_summary_item.dart
+|   |   |       order_timeline_event.dart
+|   |   |       order_type.dart
+|   |   |       refund_reason.dart
+|   |   |       refund_request.dart
+|   |   |       refund_result.dart
+|   |   |       refund_type.dart
+|   |   |       
+|   |   +---repositories
+|   |   |       orders_repository.dart
+|   |   |       
+|   |   +---views
+|   |   |       orders_screen.dart
+|   |   |       
+|   |   \---widgets
+|   |           order_card_actions.dart
+|   |           order_customer_section.dart
+|   |           order_details_header.dart
+|   |           order_details_panel.dart
+|   |           order_detail_items_section.dart
+|   |           order_detail_totals_section.dart
+|   |           order_filter_tabs.dart
+|   |           order_items_preview.dart
+|   |           order_payment_section.dart
+|   |           order_status_badge.dart
+|   |           order_summary_card.dart
+|   |           order_timeline_section.dart
+|   |           refund_dialog.dart
+|   |           refund_reason_dropdown.dart
+|   |           refund_summary_card.dart
+|   |           refund_type_selector.dart
+|   |           refund_warning_box.dart
+|   |           
+|   +---payments
+|   |   +---controllers
+|   |   +---models
+|   |   +---repositories
+|   |   +---views
+|   |   \---widgets
+|   +---pos
+|   |   +---controllers
+|   |   |       pos_cubit.dart
+|   |   |       pos_state.dart
+|   |   |       
+|   |   +---models
+|   |   |       applied_discount.dart
+|   |   |       available_discount.dart
+|   |   |       backend_order.dart
+|   |   |       backend_order_item.dart
+|   |   |       backend_order_totals.dart
+|   |   |       backend_product_detail.dart
+|   |   |       branch.dart
+|   |   |       cart_configuration.dart
+|   |   |       cart_item.dart
+|   |   |       create_order_request.dart
+|   |   |       customer.dart
+|   |   |       json_helpers.dart
+|   |   |       modifier_group.dart
+|   |   |       modifier_option.dart
+|   |   |       order_receipt.dart
+|   |   |       order_receipt_mapper.dart
+|   |   |       order_type.dart
+|   |   |       payment_method.dart
+|   |   |       payment_result.dart
+|   |   |       payment_result_mapper.dart
+|   |   |       payment_summary.dart
+|   |   |       pos_product.dart
+|   |   |       product_customization.dart
+|   |   |       product_detail_load_result.dart
+|   |   |       product_modifier.dart
+|   |   |       receipt_line_item.dart
+|   |   |       selected_modifier.dart
+|   |   |       shift.dart
+|   |   |       update_order_item_request.dart
+|   |   |       
+|   |   +---repositories
+|   |   |       pos_repository.dart
+|   |   |       
+|   |   +---views
+|   |   |       pos_screen.dart
+|   |   |       
+|   |   \---widgets
+|   |           cart_customer_selector.dart
+|   |           cart_item_tile.dart
+|   |           cart_panel.dart
+|   |           category_tabs.dart
+|   |           coupon_code_input.dart
+|   |           customer_list_tile.dart
+|   |           customer_search_field.dart
+|   |           customization_option_tile.dart
+|   |           customization_quantity_panel.dart
+|   |           customization_section.dart
+|   |           customization_segmented_selector.dart
+|   |           discount_card.dart
+|   |           discount_dialog.dart
+|   |           order_totals_panel.dart
+|   |           order_type_selector.dart
+|   |           payment_amount_input.dart
+|   |           payment_dialog.dart
+|   |           payment_method_selector.dart
+|   |           payment_quick_amount_buttons.dart
+|   |           payment_summary_panel.dart
+|   |           pos_action_buttons.dart
+|   |           pos_cart_panel.dart
+|   |           pos_category_tabs.dart
+|   |           pos_product_area.dart
+|   |           pos_search_bar.dart
+|   |           product_card.dart
+|   |           product_customization_dialog.dart
+|   |           product_grid.dart
+|   |           quantity_stepper.dart
+|   |           receipt_action_bar.dart
+|   |           receipt_preview_dialog.dart
+|   |           receipt_preview_paper.dart
+|   |           select_customer_dialog.dart
+|   |           
+|   +---reports
+|   |   +---controllers
+|   |   |       daily_report_cubit.dart
+|   |   |       daily_report_state.dart
+|   |   |       
+|   |   +---models
+|   |   |       daily_report_data.dart
+|   |   |       
+|   |   +---repositories
+|   |   |       reports_repository.dart
+|   |   |       
+|   |   +---views
+|   |   |       daily_operational_report_screen.dart
+|   |   |       
+|   |   \---widgets
+|   |           report_analytics_cards.dart
+|   |           report_header.dart
+|   |           report_kpi_grid.dart
+|   |           report_tables.dart
+|   |           
+|   \---shifts
+|       +---controllers
+|       +---models
+|       +---repositories
+|       +---views
+|       \---widgets
++---l10n
+|       app_ar.arb
+|       app_en.arb
+|       app_localizations.dart
+|       app_localizations_ar.dart
+|       app_localizations_en.dart
+|       
+\---shared
+    +---layouts
+    |       desktop_page_layout.dart
+    |       responsive_layout.dart
+    |       
+    \---widgets
+            app_breadcrumbs.dart
+            app_button.dart
+            app_card.dart
+            app_dialog.dart
+            app_empty_state.dart
+            app_loading.dart
+            app_sidebar.dart
+            app_sidebar_item.dart
+            app_text_field.dart
+            app_top_bar.dart
+            shift_status_badge.dart
+            

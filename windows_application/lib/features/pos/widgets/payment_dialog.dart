@@ -31,6 +31,7 @@ class PaymentDialog extends StatefulWidget {
     this.orderNumber,
     this.requireOrderType = false,
     this.deliveryCompanies = const <DeliveryCompany>[],
+    this.walletBalance,
   });
 
   final double totalDue;
@@ -46,6 +47,10 @@ class PaymentDialog extends StatefulWidget {
   final bool requireOrderType;
   final List<DeliveryCompany> deliveryCompanies;
 
+  /// Funds the order's customer holds. When they cover the total the wallet is
+  /// preselected; the cashier can still switch to another method.
+  final double? walletBalance;
+
   @override
   State<PaymentDialog> createState() => _PaymentDialogState();
 }
@@ -60,6 +65,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
   OrderType? _orderType;
   int? _deliveryCompanyId;
   bool _onDeliveryAccount = false;
+  bool _walletPreselected = false;
 
   @override
   void initState() {
@@ -72,6 +78,14 @@ class _PaymentDialogState extends State<PaymentDialog> {
     if (!widget.availableMethods.contains(_selectedMethod) &&
         widget.availableMethods.isNotEmpty) {
       _selectedMethod = widget.availableMethods.first;
+    }
+    final double? funds = widget.walletBalance;
+    if (funds != null &&
+        widget.totalDue > 0 &&
+        funds >= widget.totalDue &&
+        widget.availableMethods.contains(PaymentMethod.wallet)) {
+      _selectedMethod = PaymentMethod.wallet;
+      _walletPreselected = true;
     }
   }
 
@@ -564,8 +578,15 @@ class _MethodDetails extends StatelessWidget {
         message: context.l10n.posExternalTerminalPending,
         icon: Icons.info_outline,
       ),
-      PaymentMethod.wallet => const _PaymentNote(
-        message: 'سيُسجَّل المبلغ على حساب العميل المرتبط بالطلب (محفظة العميل).',
+      PaymentMethod.wallet => _PaymentNote(
+        message: state._walletPreselected
+            ? context.l10n.posWalletAutoSelectedNote(
+                CurrencyFormatter.formatForContext(
+                  context,
+                  state.widget.walletBalance ?? 0,
+                ),
+              )
+            : 'سيُسجَّل المبلغ على حساب العميل المرتبط بالطلب (محفظة العميل).',
         icon: Icons.account_balance_wallet_outlined,
       ),
       PaymentMethod.shamCash => Column(

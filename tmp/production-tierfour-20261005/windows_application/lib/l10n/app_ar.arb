@@ -1,0 +1,3466 @@
+{
+  "discountServerFieldInvalid": "\u064a\u0631\u062c\u0649 \u0645\u0631\u0627\u062c\u0639\u0629 \u062d\u0642\u0644 {field}.",
+  "@discountServerFieldInvalid": {"placeholders": {"field": {"type": "String"}}},
+  "customerManagementDeactivateConfirm": "\u0625\u0644\u063a\u0627\u0621 \u062a\u0646\u0634\u064a\u0637 {name}\u061f",
+  "@customerManagementDeactivateConfirm": {"placeholders": {"name": {}}},
+  "customerManagementDeactivateConsequence": "\u0644\u0646 \u064a\u0639\u0648\u062f \u0647\u0630\u0627 \u0627\u0644\u0639\u0645\u064a\u0644 \u0645\u062a\u0627\u062d\u0627\u064b \u0644\u0644\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a \u0627\u0644\u062c\u062f\u064a\u062f. \u062a\u0628\u0642\u0649 \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u062a\u0627\u0631\u064a\u062e\u064a\u0629 \u0645\u062d\u0641\u0648\u0638\u0629.",
+  "customerManagementArchiveConfirm": "\u0623\u0631\u0634\u0641\u0629 {name}\u061f",
+  "@customerManagementArchiveConfirm": {"placeholders": {"name": {}}},
+  "customerManagementArchiveConsequence": "\u0633\u064a\u062a\u0645 \u0623\u0631\u0634\u0641\u0629 \u0647\u0630\u0627 \u0627\u0644\u0639\u0645\u064a\u0644 \u062f\u0648\u0646 \u062d\u0630\u0641 \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u062a\u0627\u0631\u064a\u062e\u064a\u0629. \u064a\u0645\u0643\u0646 \u0627\u0633\u062a\u0639\u0627\u062f\u062a\u0647 \u0644\u0627\u062d\u0642\u0627\u064b.",
+  "customerManagementRestoreConfirm": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 {name}\u061f",
+  "@customerManagementRestoreConfirm": {"placeholders": {"name": {}}},
+  "customerManagementRestoreConsequence": "\u0633\u064a\u062a\u0645 \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0647\u0630\u0627 \u0627\u0644\u0639\u0645\u064a\u0644 \u0628\u062d\u0627\u0644\u0629 \u063a\u064a\u0631 \u0646\u0634\u0637. \u0642\u0645 \u0628\u062a\u0646\u0634\u064a\u0637\u0647 \u0628\u0634\u0643\u0644 \u0645\u0646\u0641\u0635\u0644 \u0642\u0628\u0644 \u0627\u0644\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a \u0627\u0644\u062c\u062f\u064a\u062f.",
+  "customerManagementMutationFailed": "\u0644\u0645 \u064a\u062a\u0645 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0639\u0645\u064a\u0644. \u064a\u0645\u0643\u0646\u0643 \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629 \u0628\u0623\u0645\u0627\u0646.",
+  "@@locale": "ar",
+  "inventoryReportTitle": "المخزون",
+  "inventoryReportSubtitle": "تحليل قيمة المخزون ومستويات التوفر والحركات والهدر وفروقات الجرد عبر المواقع.",
+  "inventoryReportAllLocations": "كل المواقع",
+  "inventoryReportAllCategories": "كل الفئات",
+  "inventoryReportExportTooltip": "سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.",
+  "inventoryReportCurrentValue": "قيمة المخزون الحالية",
+  "inventoryReportLowStock": "أصناف منخفضة المخزون",
+  "inventoryReportOutOfStock": "أصناف نافدة",
+  "inventoryReportWasteValue": "قيمة الهدر",
+  "inventoryReportCountVariance": "فروقات الجرد",
+  "inventoryReportConsumption": "إجمالي الاستهلاك",
+  "inventoryReportReceived": "المخزون المستلم",
+  "inventoryReportTransfers": "التحويلات",
+  "inventoryReportValueByLocation": "قيمة المخزون حسب الموقع",
+  "inventoryReportMovement": "حركة المخزون",
+  "inventoryReportHealth": "حالة المخزون",
+  "inventoryReportLowOut": "أصناف منخفضة ونافدة المخزون",
+  "inventoryReportConsumptionAnalysis": "تحليل الاستهلاك",
+  "inventoryReportWasteAnalysis": "تحليل الهدر",
+  "inventoryReportVariance": "فروقات الجرد",
+  "inventoryReportLocationComparison": "مقارنة المواقع",
+  "inventoryReportExceptions": "استثناءات المخزون",
+  "inventoryReportItem": "الصنف",
+  "inventoryReportCategory": "الفئة",
+  "inventoryReportLocation": "الموقع",
+  "inventoryReportAvailable": "الكمية المتوفرة",
+  "inventoryReportMinimum": "الحد الأدنى",
+  "inventoryReportUnit": "الوحدة",
+  "inventoryReportStatus": "الحالة",
+  "inventoryReportQuantity": "الكمية",
+  "inventoryReportValue": "القيمة",
+  "inventoryReportReason": "السبب",
+  "inventoryReportExpected": "المتوقع",
+  "inventoryReportCounted": "المعدود",
+  "inventoryReportDifference": "الفرق",
+  "inventoryReportVarianceValue": "قيمة الفرق",
+  "inventoryReportItems": "الأصناف",
+  "inventoryReportAvailableStatus": "متوفر",
+  "inventoryReportLowStatus": "مخزون منخفض",
+  "inventoryReportOutStatus": "نافد",
+  "inventoryReportOverstockStatus": "مخزون زائد",
+  "inventoryReportMatched": "مطابق",
+  "inventoryReportShortage": "عجز",
+  "inventoryReportOverage": "زيادة",
+  "inventoryReportNoLocations": "لا توجد مواقع كافية لإجراء المقارنة.",
+  "inventoryReportNoMovements": "لا توجد حركات مخزون ضمن الفترة المحددة.",
+  "inventoryReportNoLowStock": "لا توجد أصناف منخفضة المخزون ضمن الفلاتر الحالية.",
+  "inventoryReportNoWaste": "لا توجد حركات هدر ضمن الفترة المحددة.",
+  "inventoryReportNoVariance": "لا توجد فروقات جرد ضمن الفترة المحددة.",
+  "inventoryReportNoExceptions": "لا توجد استثناءات مخزون تحتاج إلى مراجعة.",
+  "inventoryReportError": "تعذّر تحميل تقرير المخزون.",
+  "posOfflineUsingSavedMenu": "غير متصل — يتم استخدام القائمة المحفوظة",
+  "posSyncErrorUsingSavedMenu": "تعذر مزامنة القائمة — يتم استخدام القائمة المحفوظة",
+  "posLastSynced": "آخر مزامنة: {time}",
+  "@posLastSynced": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "posMenuUpdateReady": "تحديث القائمة جاهز — سيُطبّق بعد الطلب الحالي",
+  "posNoSavedMenu": "لا توجد قائمة محفوظة. أعد الاتصال لتحميل القائمة.",
+  "posConnectionRequiredToCompleteOrder": "الاتصال مطلوب لإتمام هذا الطلب.",
+  "posMenuChangedReviewOrder": "تغيرت القائمة — راجع الطلب.",
+  "appName": "نظام كافيه 618",
+  "language": "اللغة",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "languageSelection": "اختر اللغة",
+  "commonSave": "حفظ",
+  "commonCancel": "إلغاء",
+  "commonClose": "إغلاق",
+  "commonDelete": "حذف",
+  "commonEdit": "تعديل",
+  "commonAdd": "إضافة",
+  "commonRetry": "إعادة المحاولة",
+  "commonRefresh": "تحديث",
+  "commonSearch": "بحث",
+  "commonLoading": "جارٍ التحميل…",
+  "commonError": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "errorConnectionUnavailable": "تعذر الاتصال.",
+  "errorAuthenticationRequired": "المصادقة مطلوبة.",
+  "errorPermissionDenied": "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+  "errorConflict": "يتعارض هذا الإجراء مع الحالة الحالية.",
+  "errorServer": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "commonNoData": "لا توجد بيانات متاحة.",
+  "commonUnknown": "غير معروف",
+  "commonActive": "نشط",
+  "commonDeactivate": "إلغاء التنشيط",
+  "commonActivate": "تنشيط",
+  "commonArchive": "أرشفة",
+  "commonRestore": "استعادة",
+  "commonArchived": "مؤرشف",
+  "commonAll": "الكل",
+  "commonInactive": "غير نشط",
+  "commonAvailable": "متاح",
+  "commonSoldOut": "نفد",
+  "posNoPublishedMenu": "لم يتم نشر قائمة لهذا الفرع بعد.",
+  "posNoAvailableMenu": "لا توجد قائمة منشورة متاحة حالياً.",
+  "posNoAvailableItems": "لا توجد عناصر متاحة في هذا القسم.",
+  "posUnableToLoadMenu": "تعذر تحميل القائمة المنشورة.",
+  "posMenuRefreshRequired": "يجب تحديث بيانات القائمة قبل المتابعة.",
+  "posBranchSwitchBlockedWithCart": "أكمل الطلب الحالي أو علّقه أو ألغِه قبل تبديل الفرع.",
+  "posTemporarilyUnavailable": "غير متاح مؤقتاً",
+  "commonYes": "نعم",
+  "commonNo": "لا",
+  "commonBack": "رجوع",
+  "navigationDashboard": "لوحة التحكم",
+  "navigationPos": "نقطة البيع",
+  "navigationOrders": "الطلبات",
+  "navigationCustomers": "العملاء",
+  "navigationDiscounts": "الخصومات",
+  "navigationMenuManagement": "إدارة القائمة",
+  "navigationInventory": "المخزون",
+  "navigationFinance": "المالية",
+  "navigationReports": "التقارير",
+  "navigationSettings": "الإعدادات",
+  "operationalHub": "مركز العمليات",
+  "shiftStatusOpen": "الوردية مفتوحة",
+  "shiftStatusClosed": "الوردية مغلقة",
+  "shiftCloseTitle": "إغلاق الوردية",
+  "shiftCloseSubtitle": "احسب النقد في الصندوق ثم أغلق ورديتك.",
+  "shiftCloseClosingCashLabel": "النقد عند الإغلاق",
+  "shiftCloseNoteLabel": "ملاحظة (اختياري)",
+  "shiftCloseSubmit": "إغلاق الوردية",
+  "shiftCloseSuccess": "تم إغلاق الوردية.",
+  "shiftCloseRedirectingToBarCheck": "يجب إجراء فحص البار قبل إغلاق هذه الوردية.",
+  "barCheckTitle": "فحص البار",
+  "barCheckSubtitle": "احسب كل صنف، ثم أرسل الفحص لمتابعة إغلاق ورديتك.",
+  "barCheckExpectedLabel": "المتوقع",
+  "barCheckCountedLabel": "المحسوب",
+  "barCheckReasonLabel": "سبب الفرق",
+  "barCheckSubmitAndClose": "إرسال فحص البار",
+  "barCheckPendingManagerReview": "يجب على مدير مراجعة أحد الفروقات في هذا الفحص قبل إتمامه. اطلب من مدير مراجعته ثم أعد المحاولة.",
+  "barCheckAllLinesRequired": "احسب كل صنف قبل الإرسال.",
+  "tooltipCart": "السلة",
+  "tooltipRefreshScreenData": "تحديث بيانات الشاشة",
+  "tooltipNotifications": "الإشعارات",
+  "tooltipProfile": "الملف الشخصي",
+  "invalidCatalogRoute": "مسار الكتالوج المطلوب غير صالح.",
+  "productsEmptyMessage": "لا توجد منتجات.",
+  "ordersEmptyMessage": "لا توجد طلبات.",
+  "menusEmptyMessage": "لا توجد قوائم.",
+  "productCount": "{count, plural, =0{لا توجد منتجات} =1{منتج واحد} =2{منتجان} few{{count} منتجات} many{{count} منتجًا} other{{count} منتج}}",
+  "orderCount": "{count, plural, =0{لا توجد طلبات} =1{طلب واحد} =2{طلبان} few{{count} طلبات} many{{count} طلبًا} other{{count} طلب}}",
+  "variantCount": "{count, plural, =0{لا توجد خيارات} =1{خيار واحد} =2{خياران} few{{count} خيارات} many{{count} خيارًا} other{{count} خيار}}",
+  "validationIssueCount": "{count, plural, =0{لا توجد مشكلات تحقق} =1{مشكلة تحقق واحدة} =2{مشكلتا تحقق} few{{count} مشكلات تحقق} many{{count} مشكلة تحقق} other{{count} مشكلة تحقق}}",
+  "statusPending": "قيد الانتظار",
+  "statusOpen": "مفتوح",
+  "statusCompleted": "مكتمل",
+  "statusCancelled": "ملغى",
+  "statusPaid": "مدفوع",
+  "statusUnpaid": "غير مدفوع",
+  "statusArchived": "مؤرشف",
+  "statusDraft": "مسودة",
+  "statusPublished": "منشور",
+  "statusScheduled": "مجدول",
+  "statusTemporarilyUnavailable": "غير متاح مؤقتًا",
+  "statusAssigned": "مُعيَّن",
+  "statusUnassigned": "غير مُعيَّن",
+  "priceSourceBase": "السعر الأساسي",
+  "priceSourceOverride": "سعر مخصص",
+  "validationSeverityError": "خطأ",
+  "validationSeverityWarning": "تحذير",
+  "validationSeverityInfo": "معلومات",
+  "salesChannelPos": "نقطة البيع",
+  "salesChannelOnline": "عبر الإنترنت",
+  "productTypeSimple": "منتج بسيط",
+  "productTypeVariant": "منتج متعدد الخيارات",
+  "genericFormError": "تعذر حفظ التغييرات. راجع الحقول المميزة وحاول مرة أخرى.",
+  "menuPublishTab": "نشر",
+  "menuPublishAction": "نشر القائمة",
+  "menuPublishPublishing": "جارٍ النشر…",
+  "menuPublishBranch": "الفرع",
+  "menuPublishChannel": "قناة البيع",
+  "menuPublishScope": "النطاق",
+  "menuPublishCollectionScope": "مجموعة القوائم المعينة كاملة",
+  "menuPublishOneMenu": "قائمة واحدة",
+  "menuPublishValidation": "آخر تحقق",
+  "menuPublishValidationRequired": "يلزم إجراء التحقق",
+  "menuPublishCanPublish": "يمكن النشر",
+  "menuPublishCannotPublish": "لا يمكن النشر",
+  "menuPublishErrors": "الأخطاء",
+  "menuPublishWarnings": "التحذيرات",
+  "menuPublishRunValidationFirst": "أجرِ التحقق للنطاق المحدد قبل النشر.",
+  "menuPublishBlockedByValidation": "النشر معطل لأن نتيجة التحقق المحملة تحتوي على أخطاء.",
+  "menuPublishWarningsAllowed": "التحذيرات لا تمنع النشر. راجعها وأكد النشر صراحةً.",
+  "menuPublishConfirmTitle": "تأكيد نشر القائمة",
+  "menuPublishCurrentVersion": "الإصدار المنشور الحالي",
+  "menuPublishConfirmationExplanation": "ينشئ النشر إصدارًا ثابتًا جديدًا للقائمة للفرع وقناة البيع المحددين عند تغير محتوى القائمة المحلول. لا يتم تعديل الطلبات الحالية.",
+  "menuPublishLoadingCurrentVersion": "جارٍ تحميل الإصدار المنشور الحالي…",
+  "menuPublishNoCurrentVersion": "لا يوجد إصدار قائمة منشور لهذا الفرع وقناة البيع.",
+  "menuPublishVersionNumber": "الإصدار",
+  "menuPublishStatus": "الحالة",
+  "menuPublishPublishedAt": "نُشر في",
+  "menuPublishChecksum": "البصمة",
+  "menuPublishPublicationId": "معرف النشر",
+  "menuPublishSuccess": "تم نشر القائمة بنجاح.",
+  "menuPublishNoChanges": "لم يتم اكتشاف أي تغييرات في القائمة.",
+  "menuPublishNoChangesExplanation": "يبقى الإصدار المنشور الحالي دون تغيير.",
+  "menuPublishBackendBlocked": "حظر تحقق الخادم النشر. لم يتم إنشاء إصدار.",
+  "versionHistory": "سجل الإصدارات",
+  "versionDetail": "تفاصيل الإصدار",
+  "compareVersions": "مقارنة الإصدارات",
+  "identicalContent": "محتوى متطابق",
+  "versionsAdded": "مضاف",
+  "versionsRemoved": "محذوف",
+  "versionsChanged": "متغير",
+  "versionPriceChanges": "تغييرات الأسعار",
+  "versionModifierChanges": "تغييرات الخيارات",
+  "versionScheduleChanges": "تغييرات الجداول",
+  "versionRollback": "تراجع",
+  "versionRollbackReason": "سبب التراجع",
+  "versionNewRollback": "إصدار تراجع جديد",
+  "versionNoChangeRollback": "تراجع بدون تغيير",
+  "versionTruncatedComparison": "يعرض جزء محدود من الاختلافات.",
+  "versionImmutableSnapshot": "هذه لقطة تاريخية غير قابلة للتعديل.",
+  "versionStatusCurrent": "حالي",
+  "versionStatusSuperseded": "مستبدل",
+  "versionStatusRolledBack": "تم التراجع عنه",
+  "versionView": "عرض",
+  "versionSelectForCompare": "حدد الإصدار {version} للمقارنة",
+  "@versionSelectForCompare": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionCompareSelected": "مقارنة المحدد ({count})",
+  "@versionCompareSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionHistoryEmptyTitle": "لا يوجد سجل إصدارات",
+  "versionHistoryEmptyDescription": "لم يُنشر إصدار قائمة لـ {branch} · {channel} بعد.",
+  "@versionHistoryEmptyDescription": {
+    "placeholders": {
+      "branch": {},
+      "channel": {}
+    }
+  },
+  "versionHistoryLoadError": "تعذر تحميل سجل الإصدارات.",
+  "versionDetailLoadError": "تعذر تحميل هذا الإصدار.",
+  "versionCompareError": "تعذرت مقارنة هذين الإصدارين.",
+  "versionRestoreError": "تعذرت استعادة هذا الإصدار.",
+  "versionPreviousPage": "السابق",
+  "versionNextPage": "التالي",
+  "versionPage": "الصفحة {page}",
+  "@versionPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "versionChangeCount": "{count, plural, =1{تغيير واحد} =2{تغييران} few{{count} تغييرات} many{{count} تغييرًا} other{{count} تغيير}}",
+  "@versionChangeCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "versionChangesSince": "{count, plural, =1{تغيير واحد} =2{تغييران} few{{count} تغييرات} many{{count} تغييرًا} other{{count} تغيير}} منذ الإصدار {version}",
+  "@versionChangesSince": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionPublishedAt": "نُشر {date}",
+  "@versionPublishedAt": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "versionMenus": "القوائم",
+  "versionSections": "الأقسام",
+  "versionProducts": "المنتجات",
+  "versionPricing": "التسعير",
+  "versionModifiers": "الخيارات",
+  "versionRecipes": "الوصفات",
+  "versionSchedules": "الجدولة",
+  "versionChanges": "تغييرات",
+  "versionChangeSummary": "ملخص التغييرات",
+  "versionChangeSummaryAvailable": "يتضمن هذا الإصدار ملخصًا مسجلًا للتغييرات.",
+  "versionChangeSummaryUnavailable": "لا يتوفر ملخص للتغييرات لهذا الإصدار.",
+  "versionRestoreThisVersion": "استعادة هذا الإصدار",
+  "versionRestoreTitle": "استعادة الإصدار {version}؟",
+  "@versionRestoreTitle": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreExplanation": "سيُنشأ إصدار منشور جديد بمحتوى الإصدار {version}. ستبقى الإصدارات المنشورة بعد الإصدار {version} في السجل.",
+  "@versionRestoreExplanation": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreReason": "سبب الاستعادة (اختياري)",
+  "versionRestoreReasonHint": "مثال: استعادة بعد تغيير سعر غير مقصود",
+  "versionRestoreAsNewVersion": "استعادة كإصدار جديد",
+  "versionRestoring": "جارٍ الاستعادة…",
+  "versionRestoreResultTitle": "تمت استعادة الإصدار",
+  "versionRestoreSuccess": "أُنشئ الإصدار {newVersion} من الإصدار {sourceVersion}. الإصدار {newVersion} هو الحالي الآن.",
+  "@versionRestoreSuccess": {
+    "placeholders": {
+      "newVersion": {
+        "type": "int"
+      },
+      "sourceVersion": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreNoChanges": "الإصدار {version} يطابق المحتوى المنشور الحالي بالفعل. لم يُنشأ إصدار جديد.",
+  "@versionRestoreNoChanges": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionComparisonDirection": "الإصدار {fromVersion} ← الإصدار {toVersion}",
+  "@versionComparisonDirection": {
+    "placeholders": {
+      "fromVersion": {
+        "type": "int"
+      },
+      "toVersion": {
+        "type": "int"
+      }
+    }
+  },
+  "versionNoContentDifferences": "لم يُعثر على اختلافات في المحتوى.",
+  "versionComparisonTruncated": "لا تُعرض التغييرات الإضافية.",
+  "catalogSetupTitle": "إعداد الكتالوج",
+  "catalogSetupCategoriesTitle": "فئات الكتالوج",
+  "catalogSetupReportingCategoriesTitle": "فئات التقارير",
+  "catalogSetupKitchenStationsTitle": "محطات المطبخ",
+  "catalogSetupCategory": "فئة",
+  "catalogSetupReportingCategory": "فئة تقارير",
+  "catalogSetupKitchenStation": "محطة مطبخ",
+  "catalogSetupCategoriesExplanation": "تصنف الفئات المنتجات في الكتالوج.",
+  "catalogSetupReportingCategoriesExplanation": "تجمع فئات التقارير المنتجات للمبيعات وتقارير الأداء. لا تتحكم في موضع المنتجات في قائمة العملاء.",
+  "catalogSetupKitchenStationsExplanation": "تحدد محطات المطبخ منطقة تحضير المنتجات؛ ولا تعد إعدادًا لاتصال الطابعة.",
+  "catalogSetupAll": "الكل",
+  "catalogSetupProducts": "المنتجات",
+  "catalogSetupOrder": "الترتيب",
+  "catalogSetupActions": "الإجراءات",
+  "catalogSetupCodePrinter": "الرمز / الطابعة",
+  "catalogSetupNoMatchingRecords": "لا توجد سجلات مطابقة.",
+  "catalogSetupUnableToLoad": "تعذر تحميل إعداد الكتالوج.",
+  "catalogSetupCreate": "إنشاء {type}",
+  "@catalogSetupCreate": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupEdit": "تعديل {type}",
+  "@catalogSetupEdit": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupArchive": "أرشفة {type}",
+  "@catalogSetupArchive": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupRestore": "استعادة",
+  "catalogSetupMoveUp": "نقل لأعلى",
+  "catalogSetupMoveDown": "نقل لأسفل",
+  "catalogSetupName": "الاسم",
+  "catalogSetupNameArabic": "الاسم بالعربية",
+  "catalogSetupNameEnglish": "الاسم بالإنجليزية",
+  "catalogSetupCode": "الرمز",
+  "catalogSetupDescription": "الوصف",
+  "catalogSetupPrinterName": "اسم الطابعة",
+  "catalogSetupPage": "الصفحة {page}",
+  "@catalogSetupPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogSetupPrevious": "السابق",
+  "catalogSetupNext": "التالي",
+  "catalogSetupArchiveConfirmation": "{name} مستخدم في {count} من المنتجات. تبقى تعيينات المنتجات الحالية خاضعة لقواعد الخادم.",
+  "recipeMaterials": "الوصفة / المواد",
+  "manageRecipe": "إدارة الوصفة",
+  "baseRecipe": "الوصفة الأساسية",
+  "material": "المادة",
+  "quantity": "الكمية",
+  "unit": "الوحدة",
+  "addMaterial": "إضافة مادة",
+  "removeMaterial": "إزالة",
+  "materialAdjustments": "تعديلات المواد",
+  "effectiveFrom": "فعال من",
+  "global": "عام",
+  "productOverride": "تجاوز المنتج",
+  "variantOverride": "تجاوز الخيار",
+  "inherited": "موروث",
+  "createOverride": "إنشاء تجاوز",
+  "suppressInheritedEffects": "إلغاء التأثيرات الموروثة",
+  "restoreInheritance": "استعادة التوريث",
+  "recipeSimulation": "محاكاة الوصفة",
+  "selectedModifiers": "المعدلات المحددة",
+  "resolvedRecipe": "الوصفة النهائية",
+  "recipeUnavailableMaterial": "المواد ذات الوحدة غير المعرفة معطلة ولا يمكن حفظها.",
+  "recipeReadOnly": "هذا الخيار مؤرشف. تكوين الوصفة للعرض فقط.",
+  "recipeEmpty": "لا توجد مكونات وصفة معدة.",
+  "recipeInheritedDraft": "هذه المسودة منسوخة من الملف الموروث. الحفظ ينشئ تجاوزاً كاملاً.",
+  "recipeEmptyOverride": "هذا التجاوز لا يحتوي على أي تأثيرات للمواد.",
+  "recipeSuppressConfirmationTitle": "إلغاء التأثيرات الموروثة؟",
+  "recipeSuppressConfirmationBody": "حفظ ملف فارغ محدد النطاق يزيل كل تأثيرات ADD وREMOVE الموروثة من هذا النطاق.",
+  "recipeRemoveOverrideTitle": "إزالة هذا التجاوز؟",
+  "recipeRemoveOverrideBody": "إزالته تستعيد أقرب تأثيرات المواد الموروثة.",
+  "menuManagementWorkflow": "مسار إدارة القائمة",
+  "menuManagementBuild": "بناء",
+  "menuManagementConfigure": "إعداد",
+  "menuManagementRelease": "مراجعة ونشر",
+  "menuManagementProducts": "المنتجات",
+  "menuManagementModifiers": "المعدلات",
+  "menuManagementMenus": "القوائم",
+  "menuManagementAssignments": "التعيينات والجداول",
+  "menuManagementReview": "مراجعة ومعاينة",
+  "menuManagementCatalogSetup": "إعداد الكتالوج",
+  "recipeConsumptionHelp": "حدد المواد المستهلكة عند تحضير وحدة واحدة من هذا الخيار.",
+  "recipeNoComponentsHelp": "لم تُعد أي مواد بعد. أضف كل مادة تُستخدم لتحضير وحدة واحدة من هذا الخيار.",
+  "recipeOverrideGlobal": "الإعداد العام",
+  "recipeOverrideProduct": "تجاوز لهذا المنتج",
+  "recipeOverrideVariant": "تجاوز لهذا الخيار",
+  "recipeInheritedFromGlobal": "موروث من الإعداد العام",
+  "recipeInheritedFromProduct": "موروث من هذا المنتج",
+  "recipeSimulationHelp": "حدد المعدلات، ثم احسب الوصفة وراجع المواد المستهلكة.",
+  "recipeSimulationResultHelp": "المواد المستهلكة",
+  "recipeSimulationStartHelp": "حدد المعدلات، ثم احسب الوصفة لترى المواد المستهلكة.",
+  "reviewWorkflowHelp": "تحقق من القائمة المحددة، وعاين ما يصل إلى الفرع وقناة البيع، ثم انرها وراجع سجل الإصدارات.",
+  "reviewCheckMenu": "1. تحقق من القائمة",
+  "reviewPreviewStep": "2. معاينة",
+  "reviewPublishStep": "3. نشر",
+  "reviewVersionsStep": "4. سجل الإصدارات",
+  "validationNoBlockingErrors": "لم يُعثر على أخطاء تحقق مانعة.",
+  "validationResolveErrors": "اعالج الأخطاء أدناه قبل أن يمكن نشر هذه القائمة.",
+  "validationIssueCode": "الرمز: {code}",
+  "@validationIssueCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierSelectionExactly": "يجب أن يختار العميل {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}} بالضبط.",
+  "@modifierSelectionExactly": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "modifierSelectionRange": "يمكن للعميل اختيار من {min} إلى {max} خيارات.",
+  "@modifierSelectionRange": {
+    "placeholders": {
+      "min": {
+        "type": "num"
+      },
+      "max": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewAdvancedOptions": "خيارات معاينة متقدمة",
+  "technicalDetails": "التفاصيل التقنية",
+  "managerAvailabilityScheduledHelp": "متى ينبغي أن يكون هذا العنصر متاحًا بشكل عاد؟",
+  "managerAvailabilityOperationalHelp": "هل العنصر غير متاح مؤقتًا الآن؟",
+  "@catalogSetupArchiveConfirmation": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuManagementNavigation": "التنقل في إدارة القوائم",
+  "menuManagementCatalog": "الكتالوج",
+  "menuManagementMenusGroup": "القوائم",
+  "menuManagementReleaseGroup": "الإصدار",
+  "menuManagementReviewPublish": "مراجعة ونشر",
+  "menuBreadcrumbProduct": "المنتج",
+  "menuBreadcrumbVariant": "الخيار",
+  "menuBreadcrumbCreateProduct": "إنشاء منتج",
+  "menuBreadcrumbEditProduct": "تعديل المنتج",
+  "menuBreadcrumbVariants": "الخيارات",
+  "menuBreadcrumbModifiers": "المعدلات",
+  "menuBreadcrumbPricing": "التسعير",
+  "menuBreadcrumbRecipe": "الوصفة",
+  "menuBreadcrumbRecipeSimulation": "محاكاة الوصفة",
+  "menuBreadcrumbAvailability": "التوفر",
+  "menuBreadcrumbOperationalAvailability": "التوفر التشغيلي",
+  "menuBreadcrumbMaterialAdjustments": "تعديلات المواد",
+  "menuBreadcrumbModifierGroup": "مجموعة المعدلات",
+  "menuBreadcrumbCreateModifierGroup": "إنشاء مجموعة معدلات",
+  "menuBreadcrumbEditModifierGroup": "تعديل مجموعة المعدلات",
+  "menuBreadcrumbMenu": "القائمة",
+  "menuBreadcrumbCreateMenu": "إنشاء قائمة",
+  "menuBreadcrumbEditMenu": "تعديل القائمة",
+  "menuBreadcrumbComposition": "التكوين",
+  "menuBreadcrumbVersionHistory": "سجل الإصدارات",
+  "productCatalogTitle": "المنتجات",
+  "productCatalogSubtitle": "أدر المنتجات المتاحة عبر قوائمك.",
+  "productCatalogCreateProduct": "إنشاء منتج",
+  "productCatalogRefresh": "تحديث المنتجات",
+  "productCatalogSearch": "ابحث عن المنتجات أو SKU أو الباركود",
+  "productCatalogLifecycle": "الحالة",
+  "productCatalogAllProducts": "كل المنتجات",
+  "productCatalogMoreFilters": "مزيد من الفلاتر",
+  "productCatalogMoreFiltersSemantic": "مزيد من الفلاتر، {count} نشط",
+  "@productCatalogMoreFiltersSemantic": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productCatalogClearAll": "مسح الكل",
+  "productCatalogClear": "مسح",
+  "productCatalogApply": "تطبيق",
+  "productCatalogSort": "فرز",
+  "productCatalogSortOrder": "ترتيب العرض",
+  "productCatalogNameAscending": "الاسم أ–ي",
+  "productCatalogNameDescending": "الاسم ي–أ",
+  "productCatalogNewest": "الأحدث أولاً",
+  "productCatalogProductType": "نوع المنتج",
+  "productCatalogHasVariants": "لديه خيارات",
+  "productCatalogNoVariants": "بدون خيارات",
+  "productCatalogHasModifiers": "لديه معدلات",
+  "productCatalogNoModifiers": "بدون معدلات",
+  "productCatalogStandard": "عادي",
+  "productCatalogOpenPrice": "سعر مفتوح",
+  "productCatalogCombo": "وجبة مجمعة",
+  "productCatalogSetup": "الإعداد",
+  "productCatalogDefaultVariant": "الافتراضي",
+  "productCatalogStatus": "الحالة",
+  "productCatalogOpen": "فتح",
+  "productCatalogManageVariants": "إدارة الخيارات",
+  "productCatalogManageModifiers": "إدارة المعدلات",
+  "productCatalogArchive": "أرشفة",
+  "productCatalogRestore": "استعادة",
+  "productCatalogActionsFor": "إجراءات المنتج {name}",
+  "@productCatalogActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productCatalogSetupSummary": "{variants} خيارات · {modifiers} معدلات",
+  "@productCatalogSetupSummary": {
+    "placeholders": {
+      "variants": {
+        "type": "int"
+      },
+      "modifiers": {
+        "type": "int"
+      }
+    }
+  },
+  "productCatalogLoadMore": "تحميل مزيد من المنتجات",
+  "productCatalogUnableToLoad": "تعذر تحميل المنتجات.",
+  "productCatalogNoArchived": "لا توجد منتجات مؤرشفة.",
+  "productCatalogNoActive": "لا توجد منتجات نشطة.",
+  "productCatalogNoMatches": "لا تطابق أي منتجات هذه الفلاتر.",
+  "productCatalogNoProductsYet": "لم يتم إنشاء أي منتجات بعد.",
+  "productCatalogMoreFiltersHelper": "ضيّق قائمة المنتجات بمعايير إضافية.",
+  "productCatalogFilterClassification": "التصنيف",
+  "productCatalogFilterPreparation": "التحضير",
+  "productCatalogFilterProductSetup": "إعداد المنتج",
+  "productCatalogClearFilters": "مسح الفلاتر",
+  "productCatalogApplyFilters": "تطبيق الفلاتر",
+  "productUxGeneral": "عام",
+  "productUxClassification": "التصنيف",
+  "productUxSellingPreparation": "البيع والتحضير",
+  "productUxInitialSellingOption": "خيار البيع الأولي",
+  "productUxTranslations": "الترجمات",
+  "productUxAdvanced": "متقدم",
+  "productUxOverview": "نظرة عامة",
+  "productUxUsage": "الاستخدام",
+  "productUxVariants": "الأنواع",
+  "productUxModifiers": "الإضافات",
+  "productUxRecipeMaterials": "الوصفة والمواد",
+  "productUxAvailability": "التوفر",
+  "productUxCreateProduct": "إنشاء منتج",
+  "productUxSaveChanges": "حفظ التغييرات",
+  "productUxCancel": "إلغاء",
+  "productUxManageCatalogSetup": "إدارة إعدادات الكتالوج",
+  "productUxEditProduct": "تعديل المنتج",
+  "productUxArchived": "مؤرشف",
+  "productOverviewBasePrice": "السعر الأساسي",
+  "productOverviewVariants": "الأنواع",
+  "productOverviewModifierGroups": "مجموعات الإضافات",
+  "productOverviewStockTracking": "تتبع المخزون",
+  "productOverviewEnabled": "مفعّل",
+  "productOverviewDisabled": "غير مفعّل",
+  "productOverviewNotConfigured": "غير مهيأ",
+  "productOverviewProductSetup": "إعداد المنتج",
+  "productOverviewCategory": "الفئة",
+  "productOverviewDefaultVariant": "النوع الافتراضي",
+  "productOverviewKitchenStation": "محطة التحضير",
+  "productOverviewProductType": "نوع المنتج",
+  "productOverviewReportingCategory": "فئة التقارير",
+  "productOverviewPreparationTime": "وقت التحضير",
+  "productOverviewMinutes": "دقائق",
+  "modifierLibraryTitle": "مكتبة المعدلات",
+  "modifierLibrarySubtitle": "أنشئ خيارات عميل قابلة لإعادة الاستخدام ويمكن إسنادها إلى المنتجات.",
+  "modifierCreateGroup": "إنشاء مجموعة معدلات",
+  "modifierSearch": "البحث في المعدلات",
+  "modifierActive": "نشط",
+  "modifierArchived": "مؤرشف",
+  "modifierAll": "الكل",
+  "modifierReorder": "إعادة الترتيب",
+  "modifierDone": "تم",
+  "modifierClearFiltersBeforeReorder": "امسح البحث وعوامل التصفية قبل إعادة ترتيب مجموعات المعدلات.",
+  "modifierOptionsCount": "{count, plural, =0 {0 خيارات} =1 {خيار واحد} =2 {خياران} few {# خيارات} many {# خيارًا} other {# خيار}}",
+  "@modifierOptionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierOptionPreviewMore": "+ {count} المزيد",
+  "@modifierOptionPreviewMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleExactly": "يجب على العميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}} بالضبط.",
+  "@modifierRuleExactly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleOptionalExactly": "اختياري — يمكن للعميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}.",
+  "@modifierRuleOptionalExactly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleAtLeastUpTo": "يجب على العميل اختيار {min} على الأقل وحتى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}.",
+  "@modifierRuleAtLeastUpTo": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleOptionalUpTo": "اختياري — يمكن للعميل اختيار ما يصل إلى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}.",
+  "@modifierRuleOptionalUpTo": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleQuantity": "يمكن إضافة الخيار نفسه أكثر من مرة.",
+  "modifierViewGroup": "عرض المجموعة",
+  "modifierEditGroup": "تعديل المجموعة",
+  "modifierSetDefault": "تعيين كافتراضي",
+  "modifierMaterialAdjustments": "تعديلات المواد",
+  "modifierArchive": "أرشفة",
+  "modifierRestore": "استعادة",
+  "modifierNoGroups": "لم يتم إنشاء مجموعات معدلات بعد.",
+  "modifierNoGroupMatches": "لا توجد مجموعات معدلات تطابق عوامل التصفية الحالية.",
+  "modifierUnableToLoad": "تعذر تحميل مجموعات المعدلات.",
+  "modifierRetry": "إعادة المحاولة",
+  "modifierLoadMore": "تحميل المزيد",
+  "modifierRefresh": "تحديث مجموعات المعدلات",
+  "modifierGroupDetailNotFound": "لم يتم العثور على مجموعة المعدلات.",
+  "modifierOptions": "الخيارات",
+  "modifierAddOption": "إضافة خيار",
+  "modifierOptionFilter": "حالة الخيار",
+  "modifierNoArchivedOptions": "لا توجد خيارات معدلات مؤرشفة.",
+  "modifierNoOptions": "لم يتم إنشاء خيارات معدلات بعد.",
+  "modifierReorderOptions": "إعادة ترتيب الخيارات",
+  "modifierMoveUp": "نقل لأعلى",
+  "modifierMoveDown": "نقل لأسفل",
+  "modifierDefault": "افتراضي",
+  "modifierNoExtraCharge": "بدون تكلفة إضافية",
+  "modifierPriceAdjustment": "تعديل السعر",
+  "modifierMaterialUsageConfigured": "تم إعداد استخدام المواد",
+  "modifierStatusActive": "نشط",
+  "modifierStatusArchived": "مؤرشف",
+  "modifierStatusInactive": "غير نشط",
+  "modifierAdvancedDetails": "التفاصيل المتقدمة",
+  "modifierSelectionMode": "طريقة الاختيار",
+  "modifierMinimum": "الحد الأدنى",
+  "modifierMaximum": "الحد الأقصى",
+  "modifierAllowQuantity": "السماح بالكمية",
+  "modifierGroupType": "نوع المجموعة",
+  "modifierSortOrder": "ترتيب العرض",
+  "modifierCreateTitle": "إنشاء مجموعة معدلات",
+  "modifierEditTitle": "تعديل مجموعة معدلات",
+  "modifierBasicInformation": "المعلومات الأساسية",
+  "modifierBasicInformationHelper": "سمِّ مجموعة خيارات العميل القابلة لإعادة الاستخدام.",
+  "modifierGroupName": "اسم مجموعة المعدلات",
+  "modifierGroupNameHint": "مثال: نوع الحليب",
+  "modifierInternalCode": "الرمز الداخلي",
+  "modifierGroupTypeChoice": "اختيار",
+  "modifierGroupTypeAddOn": "إضافة",
+  "modifierGroupTypePreparation": "تعليمات التحضير",
+  "modifierYes": "نعم",
+  "modifierNo": "لا",
+  "modifierTranslations": "الترجمات",
+  "modifierArabic": "العربية",
+  "modifierEnglish": "الإنجليزية",
+  "modifierClose": "إغلاق",
+  "modifierSelectionRules": "قواعد الاختيار",
+  "modifierSelectionRulesHelper": "حدد طريقة تفاعل العملاء مع هذه الخيارات.",
+  "modifierHowChoose": "كيف ينبغي للعملاء الاختيار؟",
+  "modifierChooseOne": "اختيار واحد",
+  "modifierChooseMultiple": "اختيارات متعددة",
+  "modifierChoiceRequired": "هل الاختيار مطلوب؟",
+  "modifierOptional": "اختياري",
+  "modifierRequired": "مطلوب",
+  "modifierMinimumChoices": "الحد الأدنى للاختيارات",
+  "modifierMaximumChoices": "الحد الأقصى للاختيارات",
+  "modifierSameOptionQuantity": "هل يمكن إضافة الخيار نفسه أكثر من مرة؟",
+  "modifierQuantityHelper": "مثال: 2 من الإضافات.",
+  "modifierCurrentRuleSummary": "ملخص القاعدة الحالية",
+  "modifierInitialOption": "الخيار الأولي",
+  "modifierInitialOptions": "الخيارات الأولية",
+  "modifierInitialOptionHelper": "أضف ما يكفي من الخيارات النشطة ليتوافق مع الحد الأقصى قبل إنشاء مجموعة المعدلات.",
+  "modifierAddAnotherOption": "إضافة خيار آخر",
+  "modifierRemoveOption": "إزالة الخيار",
+  "modifierAtLeastActiveOptions": "أضف {count} خيارات نشطة على الأقل أو خفّض الحد الأقصى للاختيارات.",
+  "@modifierAtLeastActiveOptions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierOptionName": "اسم الخيار",
+  "modifierOptionNameHint": "مثال: حليب كامل الدسم",
+  "modifierAdvanced": "متقدم",
+  "modifierActiveStatus": "الحالة النشطة",
+  "modifierAvailableForUse": "متاح للاستخدام في القوائم.",
+  "modifierCancel": "إلغاء",
+  "modifierSaveChanges": "حفظ التغييرات",
+  "modifierCreateAction": "إنشاء مجموعة معدلات",
+  "modifierSaving": "جارٍ الحفظ...",
+  "modifierUnsavedChanges": "لديك تغييرات غير محفوظة. هل تريد المغادرة دون حفظ؟",
+  "modifierStay": "البقاء",
+  "modifierLeave": "مغادرة",
+  "modifierOptionCreateTitle": "إضافة خيار",
+  "modifierOptionEditTitle": "تعديل الخيار",
+  "modifierOptionBasicInformation": "المعلومات الأساسية",
+  "modifierOptionDefault": "خيار افتراضي",
+  "modifierOptionActive": "نشط",
+  "modifierOptionAvailable": "متاح",
+  "modifierOptionAdvanced": "متقدم",
+  "modifierOptionSave": "حفظ",
+  "modifierOptionSaving": "جارٍ الحفظ...",
+  "modifierOptionNameRequired": "اسم الخيار مطلوب.",
+  "modifierOptionPriceInvalid": "أدخل تعديلاً صالحاً للسعر.",
+  "modifierOptionSortInvalid": "أدخل رقماً صحيحاً لترتيب العرض.",
+  "modifierArchiveGroupTitle": "أرشفة مجموعة المعدلات؟",
+  "modifierArchiveOptionTitle": "أرشفة خيار المعدلات؟",
+  "modifierArchiveMessage": "يبقى العنصر محفوظاً ويمكن استعادته لاحقاً.",
+  "modifierConfirmArchive": "أرشفة",
+  "modifierOptionSaveError": "تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى.",
+  "modifierOptionGroupInvalid": "لا يمكن تغيير هذا الخيار لأنه سيجعل مجموعة المعدلات غير صالحة.",
+  "modifierGroupSaveError": "تعذر حفظ مجموعة المعدلات.",
+  "modifierGroupRequired": "اسم مجموعة المعدلات مطلوب.",
+  "modifierNumberInvalid": "أدخل صفراً أو رقماً صحيحاً موجباً.",
+  "modifierMaximumMinimumError": "يجب أن يكون الحد الأقصى أكبر من أو مساوياً للحد الأدنى.",
+  "modifierSingleMaximumError": "لا يمكن أن يتجاوز الحد الأقصى لمجموعة الاختيار الواحد 1.",
+  "modifierRequiredMinimumError": "تحتاج المجموعات المطلوبة إلى حد أدنى لا يقل عن 1.",
+  "modifierInitialOptionRequired": "الخيار النشط الأولي مطلوب.",
+  "modifierPriceInvalid": "أدخل صفراً أو سعراً موجباً.",
+  "modifierInitialMaximumError": "تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1.",
+  "configuredSellPriceMustBePositive": "يجب أن يكون سعر البيع أكبر من صفر.",
+  "recipeVariant": "النوع",
+  "recipeConfigured": "تم إعداد الوصفة · {count} مواد",
+  "@recipeConfigured": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeMaterialId": "المادة #{materialId}",
+  "@recipeMaterialId": {
+    "placeholders": {
+      "materialId": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeSku": "SKU {sku}",
+  "@recipeSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeMissing": "الوصفة مفقودة",
+  "recipeNotConfigured": "الوصفة غير معدّة",
+  "recipeModifierMaterialEffects": "تأثيرات مواد المعدلات",
+  "recipeModifierMaterialEffectsHelp": "اطلع على كيفية تغيير اختيارات العميل للمواد المستهلكة.",
+  "recipeNoMaterialChange": "لا تغيير في المواد",
+  "recipeUsingGlobalSettings": "باستخدام الإعدادات العامة",
+  "recipeUsingProductSettings": "باستخدام إعدادات المنتج",
+  "recipeUsingVariantSettings": "باستخدام إعدادات النوع",
+  "recipeCustomizedForProduct": "مخصص للمنتج",
+  "recipeCustomizedForVariant": "مخصص للنوع",
+  "recipeTest": "اختبار الوصفة",
+  "recipeBackToWorkspace": "العودة إلى الوصفة والمواد",
+  "recipeSave": "حفظ الوصفة",
+  "recipeSaved": "تم حفظ الوصفة.",
+  "recipeCurrentBehavior": "السلوك الحالي",
+  "recipeUseInherited": "استخدام الإعدادات الموروثة",
+  "recipeUseInheritedAgain": "استخدم الإعدادات الموروثة مجدداً",
+  "recipeClearTitle": "مسح وصفة المنتج؟",
+  "recipeClearBody": "سيؤدي ذلك إلى إزالة كل المواد المعدة في الوصفة الأساسية للمنتج.",
+  "recipeClearAction": "مسح الوصفة",
+  "recipeRemoveOverrideAction": "إزالة التجاوز",
+  "recipeCustomizeFor": "تخصيص لـ {context}",
+  "@recipeCustomizeFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeNoMaterialEffectFor": "لا تأثير مادي لـ {context}",
+  "@recipeNoMaterialEffectFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeCurrentVariant": "هذا النوع",
+  "recipeReplacesSummary": "يستبدل {from} بـ {to}",
+  "@recipeReplacesSummary": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "recipeRemovesSummary": "يزيل {materials}",
+  "@recipeRemovesSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeAddsSummary": "يضيف {materials}",
+  "@recipeAddsSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeRemoves": "يزيل",
+  "recipeAdds": "يضيف",
+  "recipeAddMaterialToRemove": "إضافة مادة لإزالتها",
+  "recipeAddMaterialToAdd": "إضافة مادة لإضافتها",
+  "recipeSaveChanges": "حفظ التغييرات",
+  "recipeCancel": "إلغاء",
+  "recipeQuantityRequired": "الكمية مطلوبة.",
+  "recipeQuantityInvalid": "أدخل رقماً موجباً بحد أقصى 6 منازل عشرية.",
+  "recipeDuplicateMaterial": "هذه المادة مستخدمة بالفعل.",
+  "recipeMaterialSearch": "ابحث عن المواد",
+  "recipeNoMaterialResults": "لا توجد مواد مطابقة.",
+  "recipeFinalMaterials": "المواد النهائية",
+  "recipePreviewMaterials": "معاينة المواد",
+  "recipeHowCalculated": "كيف تم احتساب هذا",
+  "recipeChoicesChanged": "تغيرت الاختيارات",
+  "recipeStaleResult": "عاين المواد مجدداً لتحديث النتيجة.",
+  "recipeDecreaseQuantity": "تقليل الكمية",
+  "recipeIncreaseQuantity": "زيادة الكمية",
+  "batch8AvailabilityTitle": "إتاحة البيع",
+  "batch8AvailabilityHelp": "راجع السعر وساعات البيع المعتادة والحالة التشغيلية الحالية لهذا السياق.",
+  "batch8Variant": "النوع",
+  "batch8Branch": "الفرع",
+  "batch8Channel": "قناة البيع",
+  "batch8AvailabilityLoadError": "تعذر تحميل بيانات الإتاحة.",
+  "batch8Retry": "إعادة المحاولة",
+  "batch8Loading": "جارٍ التحميل…",
+  "batch8Checking": "جارٍ التحقق…",
+  "batch8SellingPrice": "سعر البيع",
+  "batch8BasePrice": "السعر الأساسي",
+  "batch8EffectiveSellingPrice": "سعر البيع الفعلي",
+  "batch8Using": "المصدر",
+  "batch8ManagePricing": "إدارة الأسعار",
+  "batch8PriceLoadingHelp": "جارٍ تحديد سعر البيع لهذا السياق.",
+  "batch8PriceFromBase": "السعر الأساسي للنوع",
+  "batch8PriceFromBranch": "سعر الفرع",
+  "batch8PriceFromChannel": "سعر قناة البيع",
+  "batch8PriceFromBranchAndChannel": "سعر الفرع وقناة البيع",
+  "batch8RegularAvailability": "الإتاحة المعتادة",
+  "batch8NoScheduleRestrictions": "لا توجد قيود على الجدول",
+  "batch8NoScheduleRestrictionsHelp": "متاح عادةً ما دامت نقطة البيع مفتوحة في هذا السياق.",
+  "batch8ScheduleLoadingHelp": "جارٍ التحقق من ساعات البيع المعتادة لهذا السياق.",
+  "batch8AvailableNow": "متاح الآن",
+  "batch8UnavailableNow": "غير متاح الآن",
+  "batch8Unavailable": "غير متاح",
+  "batch8AvailableAccordingSchedule": "متاح وفق ساعات البيع المعتادة.",
+  "batch8UnavailableAccordingSchedule": "خارج ساعات البيع المعتادة.",
+  "batch8ScheduleRules": "ساعات البيع المُعدّة",
+  "batch8ManageSchedule": "إدارة الجدول",
+  "batch8CurrentAvailability": "الإتاحة الحالية",
+  "batch8CurrentLoadingHelp": "جارٍ التحقق من الحالة التشغيلية المؤقتة لهذا السياق.",
+  "batch8SoldOut": "نفدت الكمية",
+  "batch8TemporarilyUnavailable": "غير متاح مؤقتًا",
+  "batch8NoTemporaryRestriction": "لا يوجد قيد تشغيلي مؤقت نشط.",
+  "batch8TemporaryRestrictionActive": "يوجد قيد تشغيلي مؤقت نشط.",
+  "batch8TemporaryUntil": "القيد المؤقت ساري حتى {time}.",
+  "@batch8TemporaryUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8ManageAvailability": "إدارة الإتاحة",
+  "batch8EffectiveSellingResult": "نتيجة البيع الفعلية",
+  "batch8Availability": "الإتاحة",
+  "batch8PricingBack": "رجوع",
+  "batch8PricingRefresh": "تحديث",
+  "batch8PricingLoadError": "تعذر تحميل بيانات التسعير.",
+  "batch8PricingArchived": "هذا المنتج أو النوع مؤرشف. الأسعار معروضة للمرجعية ولا يمكن تعديلها.",
+  "batch8PricingContext": "{variant} · سعر البيع",
+  "@batch8PricingContext": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PricingHelp": "سعر البيع للنوع والفرع وقناة البيع المحددة.",
+  "batch8SalesChannel": "قناة البيع",
+  "batch8NoBranch": "بدون فرع",
+  "batch8NoChannel": "بدون قناة",
+  "batch8ChangePrice": "تغيير السعر",
+  "batch8MorePriceRules": "قواعد أسعار إضافية",
+  "batch8RulesConfigured": "{count} قاعدة مُعدّة",
+  "@batch8RulesConfigured": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batch8Show": "عرض",
+  "batch8Hide": "إخفاء",
+  "batch8NoPriceAdjustments": "لا توجد تعديلات على السعر.",
+  "batch8BasePriceEverywhere": "السعر الأساسي مطبق في كل مكان.",
+  "batch8Difference": "الفرق",
+  "batch8AddPrice": "إضافة سعر",
+  "batch8SetSellingPrice": "تعيين سعر البيع",
+  "batch8Product": "المنتج",
+  "batch8AppliesTo": "يُطبّق على",
+  "batch8ScopeBranch": "الفرع",
+  "batch8ScopeChannel": "القناة",
+  "batch8ScopeBranchChannel": "الفرع + القناة",
+  "batch8Price": "السعر",
+  "batch8PriceAboveBase": "أعلى من السعر الأساسي بمقدار {difference}",
+  "@batch8PriceAboveBase": {
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PriceBelowBase": "أقل من السعر الأساسي بمقدار {difference}",
+  "@batch8PriceBelowBase": {
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PriceSameAsBase": "مطابق للسعر الأساسي",
+  "batch8Cancel": "إلغاء",
+  "batch8SavePrice": "حفظ السعر",
+  "batch8Edit": "تعديل",
+  "batch8Remove": "إزالة",
+  "batch8RemovePriceTitle": "إزالة قاعدة السعر؟",
+  "batch8RemovePriceMessage": "سيُزال تعديل السعر لهذا النوع.",
+  "batch8Keep": "إبقاء",
+  "batch8BranchPriceFor": "سعر فرع {branch}",
+  "@batch8BranchPriceFor": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8ChannelPriceFor": "سعر قناة {channel}",
+  "@batch8ChannelPriceFor": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8BranchChannelPriceFor": "سعر {branch} · {channel}",
+  "@batch8BranchChannelPriceFor": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8RuleBranchPrice": "سعر الفرع",
+  "batch8RuleChannelPrice": "سعر القناة",
+  "batch8RuleBranchChannelPrice": "سعر الفرع + القناة",
+  "batch8ChannelPos": "نقطة البيع",
+  "batch8ChannelWaiterApp": "تطبيق النادل",
+  "batch8ChannelKiosk": "الكشك",
+  "batch8ChannelQrOrdering": "الطلب عبر رمز QR",
+  "batch8ChannelDelivery": "التوصيل",
+  "batch8ChannelOnlineOrdering": "الطلب عبر الإنترنت",
+  "batch8UnsavedPriceChanges": "تغييرات سعر غير محفوظة",
+  "batch8UnsavedPriceChangesMessage": "لديك تغييرات سعر غير محفوظة. هل تريد المغادرة بدون حفظ؟",
+  "batch8Leave": "مغادرة",
+  "scheduledUnsavedChanges": "ساعات بيع غير محفوظة",
+  "scheduledUnsavedChangesHelp": "لديك تغييرات غير محفوظة على ساعات البيع. هل تريد المغادرة دون حفظ؟",
+  "scheduledStay": "البقاء",
+  "scheduledLeave": "مغادرة",
+  "scheduledLoadError": "تعذر تحميل إتاحة البيع المعتادة.",
+  "scheduledSaveError": "تعذر حفظ ساعات البيع. راجع القيم المدخلة وحاول مرة أخرى.",
+  "scheduledSaved": "تم حفظ ساعات البيع.",
+  "scheduledArchived": "هذا المنتج أو النوع مؤرشف. تُعرض ساعات البيع للمرجعية ولا يمكن تعديلها.",
+  "scheduledRegularForProduct": "المنتج · الإتاحة المعتادة",
+  "scheduledRegularForVariant": "{variant} · الإتاحة المعتادة",
+  "@scheduledRegularForVariant": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledProduct": "المنتج",
+  "scheduledAllBranches": "كل الفروع",
+  "scheduledAllChannels": "كل القنوات",
+  "scheduledUsingProduct": "باستخدام جدول المنتج",
+  "scheduledProductSchedule": "جدول المنتج",
+  "scheduledCustomizedFor": "مخصص لـ {variant}",
+  "@scheduledCustomizedFor": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledCustomizeFor": "تخصيص لـ {variant}",
+  "@scheduledCustomizeFor": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledUseProductAgain": "استخدام جدول المنتج مجددًا",
+  "scheduledWeeklyInAdvanced": "تظهر ساعات الأسبوع ضمن قواعد الجدول المتقدمة.",
+  "scheduledNoSpecificRestriction": "لا يوجد قيد محدد",
+  "scheduledAvailableAllDay": "متاح طوال اليوم",
+  "scheduledEditSellingHours": "تعديل ساعات البيع",
+  "scheduledAdvancedRules": "قواعد الجدول المتقدمة",
+  "scheduledNoAdvancedRules": "لا توجد قواعد جدول متقدمة",
+  "scheduledViewRules": "عرض القواعد",
+  "scheduledInactiveRule": "قاعدة جدول غير نشطة",
+  "scheduledPriorityRule": "قاعدة جدول ذات أولوية",
+  "scheduledDateBoundRule": "قاعدة جدول محددة بالتاريخ",
+  "scheduledCheckAvailability": "فحص الإتاحة",
+  "scheduledCheckHelp": "افحص التاريخ والوقت ضمن سياق البيع المحدد.",
+  "scheduledDate": "التاريخ",
+  "scheduledTime": "الوقت",
+  "scheduledCheck": "فحص",
+  "scheduledCheckError": "تعذر فحص الإتاحة. حاول مرة أخرى.",
+  "scheduledAvailableUsingProduct": "متاح وفق جدول المنتج.",
+  "scheduledDay": "اليوم",
+  "scheduledEveryDay": "كل يوم",
+  "scheduledAvailability": "الإتاحة",
+  "scheduledAvailableAllDayHelp": "لا يوجد قيد زمني لهذا اليوم.",
+  "scheduledCustomHours": "ساعات مخصصة",
+  "scheduledCustomHoursHelp": "حدد وقت البدء والانتهاء المعتادين.",
+  "scheduledStartTime": "وقت البدء",
+  "scheduledEndTime": "وقت الانتهاء",
+  "scheduledOvernightUntil": "متاح ليلًا حتى {time} في اليوم التالي.",
+  "@scheduledOvernightUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledDateLimits": "حدود التاريخ",
+  "scheduledOptional": "اختياري",
+  "scheduledStartDate": "تاريخ البدء",
+  "scheduledEndDate": "تاريخ الانتهاء",
+  "scheduledSelectDate": "اختر التاريخ",
+  "scheduledAdvanced": "متقدم",
+  "scheduledPriority": "الأولوية",
+  "scheduledActive": "نشط",
+  "scheduledSaveSellingHours": "حفظ ساعات البيع",
+  "scheduledFrom": "من",
+  "scheduledUntil": "حتى",
+  "scheduledSunday": "الأحد",
+  "scheduledMonday": "الإثنين",
+  "scheduledTuesday": "الثلاثاء",
+  "scheduledWednesday": "الأربعاء",
+  "scheduledThursday": "الخميس",
+  "scheduledFriday": "الجمعة",
+  "scheduledSaturday": "السبت",
+  "operationalAvailabilityTitle": "الإتاحة التشغيلية",
+  "operationalAvailabilityPurpose": "هل يمكن للعملاء طلب هذا الصنف الآن؟ للاستثناءات التشغيلية المؤقتة فقط.",
+  "operationalAvailabilityContext": "السياق الحالي",
+  "operationalAvailabilityProductVariant": "المنتج / النوع",
+  "operationalAvailabilityProductOnly": "المنتج",
+  "operationalAvailabilityBranch": "الفرع",
+  "operationalAvailabilityChannel": "قناة البيع",
+  "operationalAvailabilitySelectBranch": "اختر فرعًا نشطًا",
+  "operationalAvailabilitySelectChannel": "اختر قناة بيع",
+  "operationalAvailabilityAvailableNow": "متوفر الآن",
+  "operationalAvailabilitySoldOut": "نفدت الكمية",
+  "operationalAvailabilityTemporarilyUnavailable": "غير متوفر مؤقتًا",
+  "operationalAvailabilityNoRestriction": "لا يوجد قيد تشغيلي مؤقت نشط.",
+  "operationalAvailabilityActiveRestriction": "يوجد قيد تشغيلي مؤقت نشط.",
+  "operationalAvailabilityUntil": "حتى: {time}",
+  "@operationalAvailabilityUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalAvailabilityReason": "السبب",
+  "operationalAvailabilityMarkUnavailable": "جعله غير متوفر مؤقتًا",
+  "operationalAvailabilityMakeAvailable": "إعادة التوفر الآن",
+  "operationalAvailabilityEditStatus": "تعديل الحالة",
+  "operationalAvailabilityEditTemporary": "تعديل القيد المؤقت",
+  "operationalAvailabilityUseDefault": "استخدام الحالة الافتراضية",
+  "operationalAvailabilityUseDefaultTitle": "استخدام الحالة الافتراضية؟",
+  "operationalAvailabilityUseDefaultMessage": "سيؤدي ذلك إلى إزالة الحالة المضبوطة لهذا السياق المحدد فقط، ثم التحقق من الإتاحة الناتجة مرة أخرى.",
+  "operationalAvailabilityDefaultAction": "استخدام الافتراضي",
+  "operationalAvailabilityAllVariants": "تنطبق هذه الحالة على جميع أنواع هذا المنتج.",
+  "operationalAvailabilityOnlyVariant": "تؤثر هذه الحالة في {variant} فقط.",
+  "@operationalAvailabilityOnlyVariant": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalAvailabilityLoadingCurrent": "جارٍ تحديث الإتاحة الحالية…",
+  "operationalAvailabilityNoContext": "اختر فرعًا نشطًا وقناة بيع لعرض الإتاحة الحالية.",
+  "operationalAvailabilityLoadError": "تعذر تحميل الإتاحة الحالية. حاول مرة أخرى.",
+  "operationalAvailabilityArchived": "هذا الصنف مؤرشف. تُعرض الإتاحة الحالية للرجوع إليها ولا يمكن تعديلها.",
+  "operationalAvailabilitySetStatus": "تعيين حالة الإتاحة",
+  "operationalAvailabilityEditStatusTitle": "تعديل حالة الإتاحة",
+  "operationalAvailabilityStatus": "الحالة",
+  "operationalAvailabilityDuration": "المدة",
+  "operationalAvailabilitySpecificTime": "حتى وقت محدد",
+  "operationalAvailabilityEndTimeRequired": "اختر وقت انتهاء هذا القيد المؤقت.",
+  "operationalAvailabilitySelectEndTime": "اختر تاريخ ووقت الانتهاء",
+  "operationalAvailabilityBranchTime": "يُعرض الوقت بالتوقيت المحلي للفرع المحدد.",
+  "operationalAvailabilitySave": "حفظ الحالة",
+  "operationalAvailabilitySaving": "جارٍ الحفظ…",
+  "operationalAvailabilityCancel": "إلغاء",
+  "operationalAvailabilityExplicitAvailable": "متوفر في سياق البيع هذا.",
+  "operationalAvailabilitySaveError": "تعذر حفظ حالة الإتاحة. راجع التفاصيل وحاول مرة أخرى.",
+  "catalogSetupWorkspaceHelp": "اضبط التصنيفات ووجهات التحضير المستخدمة للمنتجات.",
+  "catalogSetupCategoriesPurpose": "نظّم المنتجات ضمن مجموعات واضحة في الكتالوج والقائمة.",
+  "catalogSetupReportingPurpose": "جمّع المنتجات لأغراض تقارير المبيعات والأداء.",
+  "catalogSetupReportingNote": "لا تحدد فئات التقارير مكان ظهور المنتجات في القائمة.",
+  "catalogSetupStationsPurpose": "حدد المكان الذي تُحضَّر فيه المنتجات والأصناف.",
+  "catalogSetupSearchCategories": "ابحث في الفئات...",
+  "catalogSetupSearchReporting": "ابحث في فئات التقارير...",
+  "catalogSetupSearchStations": "ابحث في محطات التحضير...",
+  "catalogSetupAdd": "إضافة {type}",
+  "@catalogSetupAdd": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupSave": "حفظ {type}",
+  "@catalogSetupSave": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupNoCategories": "لا توجد فئات بعد",
+  "catalogSetupNoReportingCategories": "لا توجد فئات تقارير بعد",
+  "catalogSetupNoKitchenStations": "لا توجد محطات تحضير بعد",
+  "catalogSetupEmptyCategoriesHelp": "تساعد الفئات في تنظيم المنتجات ضمن مجموعات واضحة.",
+  "catalogSetupEmptyReportingHelp": "تساعد فئات التقارير في تجميع المنتجات لتقارير مبيعات مفيدة.",
+  "catalogSetupEmptyStationsHelp": "تساعد محطات التحضير في تحديد مكان تحضير كل منتج.",
+  "catalogSetupCouldNotLoad": "تعذر تحميل البيانات",
+  "catalogSetupLoadHelp": "تحقق من الاتصال ثم حاول مرة أخرى.",
+  "catalogSetupShowing": "عرض {shown} من {total}",
+  "@catalogSetupShowing": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogSetupActive": "نشط",
+  "catalogSetupArchived": "مؤرشف",
+  "catalogSetupInactive": "غير نشط",
+  "catalogSetupEditorHelp": "استخدم الأسماء التي يتعرف إليها الموظفون والعملاء.",
+  "catalogSetupPrimaryName": "الاسم",
+  "catalogSetupArchiveTitle": "أرشفة {name}؟",
+  "@catalogSetupArchiveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupArchiveHelp": "يمكن استعادة السجلات المؤرشفة لاحقًا. تظل إسنادات المنتجات الحالية محكومة بقواعد النظام.",
+  "catalogSetupValidationRequired": "أدخل اسمًا للمتابعة.",
+  "catalogSetupRefreshInProgress": "جارٍ تحديث إعداد الكتالوج",
+  "menuListTitle": "القوائم",
+  "menuListSubtitle": "أنشئ ونظّم القوائم التي يمكن للعملاء الطلب منها.",
+  "menuListAdd": "إضافة قائمة",
+  "menuListSearch": "ابحث في القوائم...",
+  "menuListStatus": "الحالة",
+  "menuListSort": "فرز",
+  "menuListDirection": "الاتجاه",
+  "menuListRefresh": "تحديث القوائم",
+  "menuListMenu": "القائمة",
+  "menuListSections": "الأقسام",
+  "menuListVisibleProducts": "المنتجات الظاهرة",
+  "menuListLastUpdated": "آخر تحديث",
+  "menuListActions": "الإجراءات",
+  "menuListOpen": "فتح",
+  "menuListClearFilters": "مسح التصفيات",
+  "menuListNoMenusYet": "لا توجد قوائم بعد",
+  "menuListNoMenusHelp": "أنشئ أول قائمة وابدأ بتنظيم المنتجات ضمن الأقسام.",
+  "menuListNoMatches": "لا توجد قوائم تطابق التصفيات.",
+  "menuListNoMatchesHelp": "جرّب تغيير البحث أو تصفية الحالة.",
+  "menuListCouldNotLoad": "تعذّر تحميل القوائم",
+  "menuListCouldNotLoadHelp": "تحقق من اتصالك ثم حاول مرة أخرى.",
+  "menuListLoadMore": "عرض المزيد",
+  "menuListArchiveTitle": "أرشفة القائمة؟",
+  "menuListArchiveHelp": "يمكن استعادة القائمة لاحقًا. لا تتغير الطلبات والإصدارات المنشورة.",
+  "menuListRestoreTitle": "استعادة القائمة؟",
+  "menuListRestoreHelp": "تجعل الاستعادة القائمة قابلة للتعديل مرة أخرى. لا يؤدّي ذلك إلى نشرها.",
+  "menuListActionsFor": "إجراءات القائمة {name}",
+  "@menuListActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "menuListPaused": "موقفة مؤقتًا",
+  "menuListPriority": "الأولوية",
+  "menuListName": "الاسم",
+  "menuListCreated": "تاريخ الإنشاء",
+  "menuListUpdated": "آخر تحديث",
+  "menuListAscending": "تصاعدي",
+  "menuListDescending": "تنازلي",
+  "menuListAll": "الكل",
+  "menuListDraft": "مسودة",
+  "menuListActive": "نشطة",
+  "menuListArchived": "مؤرشفة",
+  "menuListEdit": "تعديل",
+  "menuListArchive": "أرشفة",
+  "menuListRestore": "استعادة",
+  "menuListCancel": "إلغاء",
+  "menuListRetry": "إعادة المحاولة",
+  "menuEditorAddTitle": "إضافة قائمة",
+  "menuEditorEditTitle": "تعديل القائمة",
+  "menuEditorAddHelp": "ابدأ بالأسماء التي يتعرّف عليها الموظفون والعملاء.",
+  "menuEditorEditHelp": "حدّث هوية القائمة من دون مغادرة مساحة العمل.",
+  "menuEditorClose": "إغلاق محرر القائمة",
+  "menuEditorEnglishName": "الاسم بالإنجليزية",
+  "menuEditorArabicName": "الاسم بالعربية",
+  "menuEditorMoreDetails": "تفاصيل أكثر",
+  "menuEditorHideDetails": "إخفاء التفاصيل",
+  "menuEditorEnglishDescription": "الوصف بالإنجليزية",
+  "menuEditorArabicDescription": "الوصف بالعربية",
+  "menuEditorCoverImageUrl": "رابط صورة الغلاف",
+  "menuEditorPriority": "الأولوية",
+  "menuEditorPriorityHelp": "تحدد ترتيب عرض القوائم معًا.",
+  "menuEditorStatus": "حالة القائمة",
+  "menuEditorCreate": "إنشاء قائمة",
+  "menuEditorSaveChanges": "حفظ التغييرات",
+  "menuEditorDraftHelp": "تبدأ القوائم الجديدة كمسودة. يمكنك تفعيلها لاحقًا.",
+  "menuEditorNameRequired": "أدخل اسمًا بالإنجليزية أو العربية للمتابعة.",
+  "menuEditorPriorityInvalid": "أدخل رقمًا صحيحًا للأولوية.",
+  "menuEditorSaveFailed": "تعذّر حفظ هذه القائمة. حاول مرة أخرى.",
+  "menuEditorArchivedReadOnly": "القوائم المؤرشفة للعرض فقط. استعد القائمة قبل تعديلها.",
+  "menuEditorStatusDraft": "مسودة",
+  "menuEditorStatusActive": "نشطة",
+  "menuEditorStatusPaused": "موقفة مؤقتًا",
+  "menuEditorStatusArchived": "مؤرشفة",
+  "menuOverviewEditMenu": "تعديل القائمة",
+  "menuOverviewActions": "إجراءات القائمة",
+  "menuOverviewTab": "نظرة عامة",
+  "menuOverviewSectionsTab": "الأقسام",
+  "menuOverviewProductsTab": "المنتجات",
+  "menuOverviewWorkspaceTabs": "علامات تبويب مساحة عمل القائمة",
+  "menuOverviewDetails": "تفاصيل القائمة",
+  "menuOverviewName": "الاسم",
+  "menuOverviewStatus": "الحالة",
+  "menuOverviewComposition": "التكوين",
+  "menuOverviewManageSections": "إدارة الأقسام",
+  "menuOverviewManageProducts": "إدارة المنتجات",
+  "menuOverviewCompositionValue": "{sectionCount} أقسام · {visibleProductCount} منتج ظاهر",
+  "@menuOverviewCompositionValue": {
+    "placeholders": {
+      "sectionCount": {
+        "type": "int"
+      },
+      "visibleProductCount": {
+        "type": "int"
+      }
+    }
+  },
+  "menuOverviewDraft": "مسودة",
+  "menuOverviewActive": "نشطة",
+  "menuOverviewPaused": "موقفة مؤقتًا",
+  "menuOverviewArchived": "مؤرشفة",
+  "menuOverviewArchivedReadOnly": "هذه القائمة مؤرشفة وللعرض فقط. استعد القائمة قبل تعديل تكوينها.",
+  "menuOverviewLoading": "جارٍ تحميل مساحة عمل القائمة",
+  "menuOverviewCouldNotLoad": "تعذّر تحميل هذه القائمة",
+  "menuOverviewArchive": "أرشفة",
+  "menuOverviewRestore": "استعادة",
+  "menuSectionsTitle": "الأقسام",
+  "menuSectionsHelp": "نظّم هذه القائمة ضمن مجموعات يسهل على العميل تصفحها.",
+  "menuSectionsAdd": "إضافة قسم",
+  "menuSectionsReorder": "ترتيب الأقسام",
+  "menuSectionsDone": "تم",
+  "menuSectionsReorderHelp": "استخدم الأسهم لتغيير الترتيب الذي يراه العملاء.",
+  "menuSectionsProducts": "{count} منتجات",
+  "@menuSectionsProducts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuSectionsArchived": "مؤرشف",
+  "menuSectionsInactive": "غير نشط",
+  "menuSectionsActions": "إجراءات {name}",
+  "@menuSectionsActions": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "menuSectionsEdit": "تعديل",
+  "menuSectionsArchive": "أرشفة",
+  "menuSectionsRestore": "استعادة",
+  "menuSectionsMoveUp": "نقل للأعلى",
+  "menuSectionsMoveDown": "نقل للأسفل",
+  "menuSectionsNoSections": "لا توجد أقسام بعد",
+  "menuSectionsEmptyHelp": "أنشئ قسمًا قبل إضافة المنتجات.",
+  "menuSectionsLoadError": "تعذر تحميل الأقسام",
+  "menuSectionEditorAddTitle": "إضافة قسم",
+  "menuSectionEditorEditTitle": "تعديل القسم",
+  "menuSectionEditorAddHelp": "أنشئ مجموعة واضحة يمكن للعملاء تصفحها.",
+  "menuSectionEditorEditHelp": "حدّث هذه المجموعة دون مغادرة مساحة عمل القائمة.",
+  "menuSectionEditorClose": "إغلاق محرر القسم",
+  "menuSectionEditorEnglishName": "الاسم بالإنجليزية",
+  "menuSectionEditorArabicName": "الاسم بالعربية",
+  "menuSectionEditorMoreDetails": "تفاصيل أكثر",
+  "menuSectionEditorHideDetails": "إخفاء التفاصيل",
+  "menuSectionEditorDescription": "الوصف",
+  "menuSectionEditorImageUrl": "رابط الصورة",
+  "menuSectionEditorActive": "قسم نشط",
+  "menuSectionEditorNameRequired": "أدخل اسمًا بالإنجليزية أو العربية للمتابعة.",
+  "menuSectionEditorSaveFailed": "تعذر حفظ هذا القسم. راجع الحقول وحاول مرة أخرى.",
+  "menuSectionEditorSave": "حفظ التغييرات",
+  "menuProductsTitle": "المنتجات",
+  "menuProductsHelp": "نظّم المنتجات التي يراها العملاء داخل كل قسم.",
+  "menuProductsAdd": "إضافة منتجات",
+  "menuProductsReorder": "ترتيب المنتجات",
+  "menuProductsDone": "تم",
+  "menuProductsReorderHelp": "استخدم الأسهم لتغيير ترتيب المنتجات داخل كل قسم.",
+  "menuProductsSearchHint": "ابحث عن منتج في هذه القائمة",
+  "menuProductsCount": "{count} منتجات",
+  "@menuProductsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerTitle": "إضافة منتجات",
+  "menuProductsPickerTargetSection": "إضافة إلى قسم",
+  "menuProductsPickerSearchHint": "البحث عن منتجات...",
+  "menuProductsPickerAlreadyInSection": "مضاف مسبقًا في {section}",
+  "@menuProductsPickerAlreadyInSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsPickerSelected": "المحدد: {count}",
+  "@menuProductsPickerSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerNoMatches": "لا توجد منتجات مطابقة لبحثك.",
+  "menuProductsPickerNoEligible": "جميع المنتجات المتاحة مضافة بالفعل إلى هذا القسم.",
+  "menuProductsPickerLoadError": "تعذر تحميل المنتجات.",
+  "menuProductsPickerPartialAdded": "تمت إضافة {added} منتجات. تعذر إضافة {failed}.",
+  "@menuProductsPickerPartialAdded": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerConflict": "هذا المنتج موجود بالفعل في {section}.",
+  "@menuProductsPickerConflict": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsBasePrice": "السعر الأساسي {price}",
+  "@menuProductsBasePrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsFeatured": "مميز",
+  "menuProductsHidden": "مخفي",
+  "menuProductsArchivedPlacement": "تمت إزالته من القائمة",
+  "menuProductsArchivedProduct": "منتج مؤرشف",
+  "menuProductsInactive": "غير نشط",
+  "menuProductsActions": "إجراءات المنتج",
+  "menuProductsMarkFeatured": "تعيين كمميز",
+  "menuProductsRemoveFeatured": "إزالة التمييز",
+  "menuProductsHide": "إخفاء من القائمة",
+  "menuProductsShow": "إظهار في القائمة",
+  "menuProductsMove": "نقل إلى قسم",
+  "menuProductsRemove": "إزالة من القائمة",
+  "menuProductsRestore": "استعادة الموضع",
+  "menuProductsMoveUp": "نقل للأعلى",
+  "menuProductsMoveDown": "نقل للأسفل",
+  "menuProductsEmpty": "لا توجد منتجات في هذا القسم بعد.",
+  "menuProductsNoMatches": "لا توجد منتجات مطابقة في هذا القسم.",
+  "menuProductsNoSections": "لا توجد أقسام بعد",
+  "menuProductsNoSectionsHelp": "أنشئ قسمًا قبل إضافة المنتجات.",
+  "menuProductsArchivedMenuReadOnly": "هذه القائمة مؤرشفة وللعرض فقط. لا يزال تكوينها متاحًا للمراجعة.",
+  "menuProductsLoadError": "تعذر تحميل المنتجات",
+  "menuProductsRemoveHelp": "يؤدي هذا إلى إزالة المنتج من هذا القسم والقائمة فقط. يبقى المنتج في الكتالوج.",
+  "menuProductsRestoreHelp": "يؤدي هذا إلى استعادة هذا الموضع فقط. ولا يستعيد المنتج أو يعيد تنشيطه.",
+  "menuListNotAvailable": "—",
+  "assignmentsWorkspaceTitle": "التخصيصات والجدولة",
+  "assignmentsWorkspaceHelp": "اختر فرعًا وقناة بيع، ثم تحكم بالقوائم المتاحة في سياق البيع هذا.",
+  "assignmentsBranch": "الفرع",
+  "assignmentsSalesChannel": "قناة البيع",
+  "assignmentsTimezone": "المنطقة الزمنية",
+  "assignmentsChooseBranch": "اختر فرعًا",
+  "assignmentsChooseChannel": "اختر قناة بيع",
+  "assignmentsTimezonePending": "اختر فرعًا",
+  "assignmentsNoContextTitle": "اختر سياق بيع",
+  "assignmentsNoContextHelp": "اختر فرعًا وقناة بيع لإدارة قوائمه.",
+  "assignmentsAssignedMenus": "القوائم المخصصة",
+  "assignmentsMenuCount": "{count} قوائم مخصصة",
+  "@assignmentsMenuCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsReorderMenus": "ترتيب القوائم",
+  "assignmentsReorderHelp": "استخدم الأسهم لتغيير ترتيب ظهور القوائم في سياق البيع هذا. لا يحدد الترتيب القائمة الفائزة.",
+  "assignmentsReorderDone": "تم",
+  "assignmentsMoveUp": "نقل للأعلى",
+  "assignmentsMoveDown": "نقل للأسفل",
+  "assignmentsReorderSaveFailed": "تعذر حفظ ترتيب القوائم. حاول مرة أخرى.",
+  "assignmentsReorderArchivedUnavailable": "لا يتوفر ترتيب القوائم بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.",
+  "assignmentsAddMenus": "إضافة قوائم",
+  "assignmentsNoMenusTitle": "لا توجد قوائم مخصصة",
+  "assignmentsNoMenusHelp": "أضف قائمة إلى {branch} · {channel}.",
+  "@assignmentsNoMenusHelp": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "assignmentsLoadErrorTitle": "تعذر تحميل التخصيصات",
+  "assignmentsLifecycle": "القائمة: {status}",
+  "@assignmentsLifecycle": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "assignmentsPaused": "موقوفة",
+  "assignmentsActive": "التخصيص نشط",
+  "assignmentsInactive": "التخصيص غير نشط",
+  "assignmentsAvailableNow": "متاحة الآن",
+  "assignmentsOutsideHours": "خارج ساعات الجدولة",
+  "assignmentsNoScheduleRestriction": "لا توجد قيود للجدولة",
+  "assignmentsScheduleUnknown": "حالة الجدولة غير متاحة",
+  "assignmentsManageSchedule": "إدارة الجدول",
+  "assignmentsRemove": "إزالة من سياق البيع هذا",
+  "assignmentsArchivedDiagnostic": "قائمة مؤرشفة — الإجراءات غير متاحة",
+  "assignmentsChannelWaiterApp": "تطبيق النادل",
+  "assignmentsChannelKiosk": "الكشك",
+  "assignmentsChannelQrOrdering": "طلب QR",
+  "assignmentsChannelDelivery": "التوصيل",
+  "assignmentsChannelOnlineOrdering": "الطلب عبر الإنترنت",
+  "assignmentsMenuFallback": "قائمة",
+  "assignmentsAddSearch": "البحث في القوائم",
+  "assignmentsAddEmpty": "جميع القوائم المتاحة مخصصة بالفعل لسياق البيع هذا.",
+  "assignmentsAddSelected": "المحدد: {count}",
+  "@assignmentsAddSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsAddSelectedAction": "إضافة {count} قوائم",
+  "@assignmentsAddSelectedAction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsAddAlreadyAssigned": "مخصصة بالفعل",
+  "assignmentsAddArchivedUnavailable": "لا يمكن تخصيص القوائم المؤرشفة.",
+  "assignmentsAddNoMatches": "لا توجد قوائم تطابق بحثك.",
+  "assignmentsAddLoadError": "تعذر تحميل القوائم",
+  "assignmentsAddSaveError": "تعذر إضافة القوائم. حاول مرة أخرى.",
+  "assignmentsAddDuplicateError": "قائمة واحدة أو أكثر مخصصة بالفعل لسياق البيع هذا.",
+  "assignmentsAddArchivedScopeError": "إضافة القوائم غير متاحة بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.",
+  "menuScheduleTitle": "جدول القائمة",
+  "menuScheduleTimesShownIn": "الأوقات معروضة بتوقيت {timezone}",
+  "@menuScheduleTimesShownIn": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleUsingBroader": "يُستخدم جدول القائمة الأوسع",
+  "menuScheduleCustomizedFor": "مخصص لـ {context}",
+  "@menuScheduleCustomizedFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCustomize": "تخصيص لهذا السياق",
+  "menuScheduleUseBroader": "استخدام الجدول الأوسع",
+  "menuScheduleAvailableAllDay": "متاح طوال اليوم",
+  "menuScheduleUnavailable": "غير متاح",
+  "menuScheduleCustomHours": "ساعات مخصصة",
+  "menuScheduleStartTime": "وقت البدء",
+  "menuScheduleEndTime": "وقت الانتهاء",
+  "menuScheduleEditDay": "تحرير {day}",
+  "@menuScheduleEditDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleSaveDay": "تطبيق",
+  "menuScheduleSave": "حفظ الجدول",
+  "menuScheduleLoadError": "تعذر تحميل جدول القائمة",
+  "menuScheduleSaveError": "تعذر حفظ جدول القائمة. حاول مرة أخرى.",
+  "menuScheduleMultipleWindows": "{count} فترات زمنية",
+  "@menuScheduleMultipleWindows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuScheduleMultipleWindowsReadOnly": "يحتوي هذا اليوم على عدة فترات زمنية. سيتم الحفاظ عليها ويمكن تحريرها لاحقًا في الجدول المتقدم.",
+  "menuScheduleUnavailableNotSupported": "يستخدم هذا اليوم قاعدة يومية. احتفظ بها كما هي حتى توفر الجدولة المتقدمة.",
+  "menuScheduleInvalidTimes": "أدخل وقتين مختلفين بصيغة HH:mm.",
+  "menuScheduleMonday": "الاثنين",
+  "menuScheduleTuesday": "الثلاثاء",
+  "menuScheduleWednesday": "الأربعاء",
+  "menuScheduleThursday": "الخميس",
+  "menuScheduleFriday": "الجمعة",
+  "menuScheduleSaturday": "السبت",
+  "menuScheduleSunday": "الأحد",
+  "menuScheduleMoreOptions": "خيارات الجدول الإضافية",
+  "menuScheduleDateLimits": "حدود التاريخ",
+  "menuScheduleStartDate": "تاريخ البدء (اختياري)",
+  "menuScheduleEndDate": "تاريخ الانتهاء (اختياري)",
+  "menuScheduleAddTimeWindow": "إضافة فترة زمنية",
+  "menuScheduleOvernightUntil": "يمتد لليوم التالي — متاح حتى {time}",
+  "@menuScheduleOvernightUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleEveryDayReadOnly": "تنطبق هذه القاعدة على كل يوم، لذلك يتم الاحتفاظ بها كما هي للحفاظ على معنى الجدول.",
+  "menuScheduleCheckTitle": "التحقق من الجدول",
+  "menuScheduleDate": "التاريخ",
+  "menuScheduleTime": "الوقت",
+  "menuScheduleCheckTimezone": "تُقيَّم الأوقات بتوقيت {timezone}",
+  "@menuScheduleCheckTimezone": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCheckSaveFirst": "احفظ تغييرات الجدول أولاً للتحقق من الجدول المحفوظ.",
+  "menuScheduleCheckFailed": "تعذر التحقق من الجدول. حاول مرة أخرى.",
+  "menuScheduleInvalidDateRange": "يجب أن يكون تاريخ الانتهاء في تاريخ البدء أو بعده.",
+  "menuScheduleDiscardTitle": "تجاهل تغييرات الجدول؟",
+  "menuScheduleDiscardMessage": "لم يتم حفظ تغييرات الجدول.",
+  "menuScheduleDiscard": "تجاهل التغييرات",
+  "menuScheduleCustomizeDayTitle": "تخصيص {day}",
+  "@menuScheduleCustomizeDayTitle": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCustomizeDayMessage": "ينطبق هذا الجدول حاليًا على كل الأيام. سيحافظ تخصيص يوم واحد على الجدول نفسه للأيام الأخرى ويسمح بتغيير ذلك اليوم بشكل مستقل.",
+  "menuScheduleCustomizeDayAction": "تخصيص {day}",
+  "@menuScheduleCustomizeDayAction": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleDateLimitsMixed": "تحتوي هذه القواعد على حدود تاريخ مختلفة. تُترك حدود التاريخ دون تغيير هنا حتى لا يستبدلها هذا المحرر.",
+  "reviewPublishPageHelp": "راجِع جاهزية القائمة، وعاين تجربة البيع، وانشر إصدارًا لسياق البيع هذا.",
+  "reviewSellingContext": "سياق البيع",
+  "reviewSellingContextHelp": "تغطي هذه المراجعة القوائم المعيّنة لسياق البيع المحدد.",
+  "reviewBranch": "الفرع",
+  "reviewSalesChannel": "قناة البيع",
+  "reviewTimezone": "المنطقة الزمنية",
+  "reviewScope": "النطاق",
+  "reviewScopeAssignedMenus": "القوائم المعيّنة لهذا السياق",
+  "reviewReadinessTab": "الجاهزية",
+  "reviewPreviewTab": "المعاينة",
+  "reviewPublishTab": "النشر",
+  "reviewVersionsTab": "الإصدارات",
+  "reviewCurrentlyPublished": "المنشور حاليًا",
+  "reviewNotPublishedYet": "لم يُنشر بعد",
+  "reviewNoCurrentVersion": "لم يُنشر إصدار قائمة لسياق البيع هذا.",
+  "reviewCurrentVersionLoadError": "تعذر تحميل الإصدار المنشور الحالي.",
+  "reviewVersionNumber": "الإصدار {version}",
+  "@reviewVersionNumber": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPublishedAt": "نُشر {date}",
+  "@reviewPublishedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewViewVersions": "عرض الإصدارات",
+  "reviewReadiness": "الجاهزية",
+  "reviewReadinessHelp": "راجِع التحقق المعتمد لسياق البيع هذا.",
+  "reviewCheckAgain": "تحقق مجددًا",
+  "reviewNeedsAttention": "تحتاج إلى اهتمام",
+  "reviewReadyToPublish": "جاهز للنشر",
+  "reviewFixBlockingErrors": "أصلح الأخطاء المانعة قبل النشر.",
+  "reviewErrors": "أخطاء",
+  "reviewWarnings": "تحذيرات",
+  "reviewWarningsToReview": "{count, plural, =1{تحذير واحد للمراجعة.} =2{تحذيران للمراجعة.} few{{count} تحذيرات للمراجعة.} many{{count} تحذيرًا للمراجعة.} other{{count} تحذير للمراجعة.}}",
+  "@reviewWarningsToReview": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewNoIssuesForScope": "لم تُعثر على مشكلات لـ {branch} · {channel}.",
+  "@reviewNoIssuesForScope": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewNoMenusAssigned": "لا توجد قوائم معيّنة",
+  "reviewNoMenusAssignedHelp": "عيّن قائمة نشطة واحدة على الأقل لـ {branch} · {channel} قبل النشر.",
+  "@reviewNoMenusAssignedHelp": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewGoToAssignments": "انتقل إلى التعيينات",
+  "reviewReadinessLoadError": "تعذر تحميل نتائج الجاهزية.",
+  "reviewTryAgain": "حاول مرة أخرى.",
+  "reviewIssuesAll": "الكل",
+  "reviewSearchIssues": "البحث في المشكلات...",
+  "reviewNoMatchingIssues": "لا توجد مشكلات مطابقة",
+  "reviewTryDifferentSearch": "جرّب بحثًا أو تصفية مختلفة.",
+  "reviewIssueCount": "{count, plural, =0{لا توجد مشكلات} =1{مشكلة واحدة} =2{مشكلتان} few{{count} مشكلات} many{{count} مشكلة} other{{count} مشكلة}}",
+  "@reviewIssueCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewIssueGroupMenus": "القوائم",
+  "reviewIssueGroupSections": "الأقسام",
+  "reviewIssueGroupProducts": "المنتجات",
+  "reviewIssueGroupVariants": "الخيارات",
+  "reviewIssueGroupRecipesMaterials": "الوصفات والمواد",
+  "reviewIssueGroupModifiers": "المعدّلات",
+  "reviewIssueGroupPricing": "التسعير",
+  "reviewIssueGroupAvailability": "التوفّر",
+  "reviewIssueGroupAssignmentsScope": "التعيينات والنطاق",
+  "reviewIssueGroupOther": "أخرى / عامة",
+  "reviewIssueGeneral": "عام",
+  "reviewOpenMenu": "فتح القائمة",
+  "reviewOpenProduct": "فتح المنتج",
+  "reviewOpenSections": "فتح الأقسام",
+  "reviewReviewMenu": "مراجعة القائمة",
+  "reviewIssueContextMenu": "مشكلة في القائمة",
+  "reviewIssueContextSection": "مشكلة في القسم",
+  "reviewIssueContextProduct": "مشكلة في المنتج",
+  "reviewIssueContextVariant": "مشكلة في الخيار",
+  "reviewIssueContextPlacement": "مشكلة في موضع القائمة",
+  "reviewIssueContextModifier": "مشكلة في المعدِّل",
+  "reviewIssueContextRecipe": "مشكلة في الوصفة أو المادة",
+  "reviewIssueContextScope": "مشكلة في سياق البيع",
+  "reviewIssueContextGeneral": "مشكلة عامة",
+  "reviewPreviewContext": "عاين مجموعة القوائم المعيّنة لسياق البيع هذا.",
+  "reviewPreviewLanguage": "لغة المعاينة",
+  "reviewPreviewLanguageDefault": "اللغة الافتراضية",
+  "reviewPreviewLanguageArabic": "العربية",
+  "reviewPreviewLanguageEnglish": "الإنجليزية",
+  "reviewPreviewShowHidden": "إظهار العناصر المخفية",
+  "reviewPreviewShowUnavailable": "إظهار العناصر غير المتاحة",
+  "reviewPreviewRefresh": "تحديث المعاينة",
+  "reviewPreviewLoading": "جارٍ تحميل المعاينة",
+  "reviewPreviewBlockingBanner": "تحتوي هذه المعاينة على مشكلات يجب إصلاحها قبل النشر.",
+  "reviewPreviewReviewReadiness": "مراجعة الجاهزية",
+  "reviewPreviewAvailableNow": "متاح الآن",
+  "reviewPreviewOutsideScheduledHours": "خارج ساعات الجدول",
+  "reviewPreviewHidden": "مخفي",
+  "reviewPreviewUnavailable": "غير متاح",
+  "reviewPreviewSoldOut": "نفد المخزون",
+  "reviewPreviewTemporarilyUnavailable": "غير متاح مؤقتًا",
+  "reviewPreviewAvailable": "متاح",
+  "reviewPreviewFeatured": "مميّز",
+  "reviewPreviewDefault": "افتراضي",
+  "reviewPreviewVariants": "الخيارات",
+  "reviewPreviewModifiers": "المعدّلات",
+  "reviewPreviewRecipeConfigured": "الوصفة مهيأة",
+  "reviewPreviewRecipeComponents": "{count} مكوّنات",
+  "@reviewPreviewRecipeComponents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPreviewNoMenus": "لا توجد قوائم للمعاينة",
+  "reviewPreviewNoMenusHelp": "عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا.",
+  "reviewPreviewEmptySection": "لا توجد منتجات مضمنة في هذا القسم.",
+  "reviewPreviewError": "تعذر تحميل المعاينة.",
+  "reviewPreviewRetry": "إعادة المحاولة",
+  "reviewPreviewBasePrice": "السعر الأساسي",
+  "reviewPreviewRequired": "مطلوب",
+  "reviewPreviewOptional": "اختياري",
+  "reviewPublishQuestion": "نشر {branch} · {channel}؟",
+  "@reviewPublishQuestion": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishScopeHelp": "سينشئ هذا إصدارًا منشورًا للقائمة لسياق البيع الدقيق هذا.",
+  "reviewPublishCurrentVersion": "الإصدار الحالي",
+  "reviewPublishCheckingReadiness": "جارٍ التحقق من الجاهزية…",
+  "reviewPublishWaitForReadiness": "انتظر اكتمال فحص الجاهزية الحالي قبل النشر.",
+  "reviewPublishNoAssignedMenu": "عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا قبل النشر.",
+  "reviewPublishCannotPublish": "لا يمكن النشر بعد",
+  "reviewPublishReviewErrors": "مراجعة الأخطاء",
+  "reviewPublishReviewIssues": "مراجعة المشكلات",
+  "reviewPublishWarningsCanProceed": "{count, plural, =1{تبقى تحذير واحد. يمكنك مع ذلك نشر هذا الإصدار.} other{تبقى {count} تحذيرات. يمكنك مع ذلك نشر هذا الإصدار.}}",
+  "@reviewPublishWarningsCanProceed": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewPublishCleanReady": "لم يُعثر على مشكلات مانعة. يمكنك نشر هذا الإصدار.",
+  "reviewPublishAction": "نشر إصدار القائمة",
+  "reviewPublishPublishing": "جارٍ النشر…",
+  "reviewPublishConfirmTitle": "نشر {branch} · {channel}؟",
+  "@reviewPublishConfirmTitle": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishImmutableExplanation": "سيُنشأ إصدار قائمة غير قابل للتعديل إذا تغيّر التكوين.",
+  "reviewPublishAlreadyUpToDate": "محدّث بالفعل",
+  "reviewPublishNoChanges": "لم يُعثر على تغييرات في القائمة منذ الإصدار {version}. لم يُنشأ إصدار جديد.",
+  "@reviewPublishNoChanges": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPublishSuccess": "تم النشر بنجاح",
+  "reviewPublishCurrentForScope": "هذا هو الإصدار المنشور الحالي لـ {branch} · {channel}.",
+  "@reviewPublishCurrentForScope": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishRevalidationFailedTitle": "تغيّرت القائمة ولم تعد جاهزة للنشر.",
+  "reviewPublishRevalidationFailedMessage": "تم اكتشاف مشكلات جديدة أثناء التحقق النهائي.",
+  "reviewPublishRequestFailed": "تعذّر نشر إصدار القائمة.",
+  "reviewPublishTryAgain": "حاول مرة أخرى",
+  "reviewPreviewOptionUnavailable": "خيار غير متاح",
+  "menuUiUnsavedChangesTitle": "تغييرات غير محفوظة",
+  "menuUiUnsavedChangesMessage": "لديك تغييرات غير محفوظة. إذا غادرت الآن، سيتم تجاهلها.",
+  "menuUiStay": "بقاء",
+  "menuUiLeaveWithoutSaving": "المغادرة دون حفظ",
+  "productEditorCreated": "تم إنشاء المنتج بنجاح.",
+  "productEditorUpdated": "تم تحديث المنتج بنجاح.",
+  "productEditorCreateHelp": "حدد ماهية هذا المنتج، ومكانه في الكتالوج، وكيفية بيعه.",
+  "productEditorEditHelp": "حدّث بيانات المنتج التي يستخدمها المديرون يوميًا.",
+  "productEditorArchivedReadOnly": "المنتجات المؤرشفة متاحة للرجوع إليها فقط. استعد المنتج لتعديله.",
+  "productEditorViewWorkspace": "عرض مساحة عمل المنتج",
+  "productEditorDefaultName": "اسم المنتج الافتراضي",
+  "productEditorDefaultDescription": "الوصف الافتراضي",
+  "productEditorImage": "صورة المنتج",
+  "productEditorUploadingImage": "جارٍ رفع الصورة…",
+  "productEditorChooseImage": "اختر صورة",
+  "productEditorChangeImage": "تغيير الصورة",
+  "productEditorRemoveImage": "إزالة الصورة",
+  "productEditorImageFormats": "PNG، JPG، WEBP، أو GIF بحد أقصى 5 ميغابايت",
+  "productEditorTranslationsClose": "إغلاق الترجمات",
+  "productEditorDefaultContent": "المحتوى الافتراضي",
+  "productEditorLocalizedName": "الاسم المترجم",
+  "productEditorLocalizedDescription": "الوصف المترجم",
+  "productEditorStockTracking": "تتبع المخزون",
+  "productEditorStockTrackingHelp": "تتبع المواد المستهلكة عند تحضير المنتج.",
+  "productEditorNoDefaultVariant": "لم يتم إرجاع خيار افتراضي.",
+  "productEditorManageVariants": "إدارة الخيارات",
+  "productDetailNotFound": "المنتج غير موجود.",
+  "productDetailEdit": "تعديل المنتج",
+  "productDetailArchiveTitle": "أرشفة المنتج؟",
+  "productDetailRestoreTitle": "استعادة المنتج؟",
+  "productDetailArchiveAction": "أرشفة المنتج",
+  "productDetailRestoreAction": "استعادة المنتج",
+  "productDetailUsageEmpty": "هذا المنتج غير مستخدم حاليًا في أي قوائم.",
+  "variantTitle": "الخيارات",
+  "variantHelp": "أدِر خيارات البيع المتاحة لهذا المنتج.",
+  "variantAdd": "إضافة خيار",
+  "variantEdit": "تعديل الخيار",
+  "variantReorder": "إعادة الترتيب",
+  "variantDone": "تم",
+  "variantRefresh": "تحديث الخيارات",
+  "variantReadOnly": "هذا المنتج مؤرشف وخياراته للعرض فقط.",
+  "variantCannotArchiveDefaultTitle": "لا يمكن أرشفة الخيار الافتراضي",
+  "variantCannotArchiveDefaultMessage": "لا يمكن أرشفة الخيار النشط الوحيد.",
+  "variantArchiveMessage": "سيتم أرشفة هذا الخيار ويمكن استعادته لاحقًا.",
+  "variantSelectReplacement": "اختر خيارًا نشطًا بديلًا للخيار الافتراضي.",
+  "variantOrder": "الترتيب",
+  "variantName": "اسم الخيار",
+  "variantBasePrice": "السعر الأساسي",
+  "variantCostPrice": "سعر التكلفة",
+  "variantDefault": "الافتراضي",
+  "variantActions": "الإجراءات",
+  "variantActiveStatus": "حالة النشاط",
+  "variantMakeDefault": "تعيينه كخيار افتراضي",
+  "variantDefaultMustBeActive": "يجب أن يكون الخيار الافتراضي نشطًا.",
+  "variantSaving": "جارٍ الحفظ…",
+  "variantNoArchived": "لا توجد خيارات مؤرشفة.",
+  "variantEmpty": "لم يُعد أي خيارات لهذا المنتج.",
+  "modifierAssignmentTitle": "المعدّلات",
+  "modifierAssignmentSaveChanges": "حفظ التغييرات",
+  "modifierAssignmentAddGroup": "إضافة مجموعة معدّلات",
+  "modifierAssignmentNoAssigned": "لا تُعيّن أي مجموعات معدّلات لهذا المنتج.",
+  "modifierAssignmentNoAvailable": "لم يُعثر على مجموعات معدّلات متاحة.",
+  "modifierAssignmentSearch": "البحث في مجموعات المعدّلات",
+  "modifierAssignmentRemoveTitle": "إزالة مجموعة المعدّلات؟",
+  "modifierAssignmentRemoveMessage": "إزالة مجموعة المعدّلات من المنتج؟ ستبقى المجموعة وخياراتها متاحة في مكتبة المعدّلات.",
+  "modifierAssignmentUseLibrarySettings": "استخدام إعدادات المكتبة",
+  "modifierAssignmentApply": "تطبيق",
+  "modifierAssignmentCurrentBehavior": "السلوك الحالي",
+  "modifierAssignmentNonNegative": "استخدم أرقامًا صحيحة غير سالبة.",
+  "modifierAssignmentInvalidConstraints": "قيود الاختيار الفعّالة غير صالحة.",
+  "productDetailUncategorized": "منتج بلا فئة",
+  "productDetailArchiveMenuAction": "أرشفة المنتج",
+  "productDetailRestoreMenuAction": "استعادة المنتج",
+  "productDetailBasePrice": "السعر الأساسي",
+  "productDetailKitchenStation": "محطة التحضير",
+  "productDetailWorkspaceNavigation": "تنقل مساحة عمل المنتج",
+  "productDetailSetupHelp": "تفاصيل الكتالوج والتحضير لهذا المنتج.",
+  "productDetailDescription": "الوصف",
+  "productDetailAdvancedTechnical": "متقدم وتقني",
+  "productDetailUsageHelp": "القوائم التي يُستخدم فيها هذا المنتج حاليًا.",
+  "productDetailUsageCount": "{count} مواضع نشطة في القوائم.",
+  "@productDetailUsageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productDetailArchivedVariantsMessage": "هذا المنتج مؤرشف وخياراته للعرض فقط.",
+  "productDetailArchivedModifiersMessage": "هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.",
+  "productDetailViewAction": "عرض تفاصيل المنتج",
+  "variantActive": "نشط",
+  "variantInactive": "غير نشط",
+  "variantArchived": "مؤرشف",
+  "variantAll": "الكل",
+  "variantSetDefaultTitle": "تعيين «{name}» كخيار افتراضي؟",
+  "@variantSetDefaultTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantSetDefaultMessage": "سيُستخدم سعر المنتج الأساسي وSKU والباركود وتوافق POS القديم من هذا الخيار. لا تتغير الطلبات الحالية.",
+  "variantArchiveTitle": "أرشفة «{name}»؟",
+  "@variantArchiveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRestoreDefaultTitle": "استعادة «{name}» كخيار افتراضي؟",
+  "@variantRestoreDefaultTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRestoreDefaultMessage": "لا يوجد لهذا المنتج خيار افتراضي نشط، لذا يجب تعيين هذا الخيار المستعاد كافتراضي.",
+  "variantSetDefaultAction": "تعيين افتراضي",
+  "variantRestoreDefaultAction": "استعادة كافتراضي",
+  "variantMoveUp": "نقل للأعلى",
+  "variantMoveDown": "نقل للأسفل",
+  "variantActionsFor": "إجراءات {name}",
+  "@variantActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantReorderSemantic": "إعادة الترتيب",
+  "variantSku": "SKU: {sku}",
+  "@variantSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRecipeConfigured": "الوصفة مُعدّة",
+  "variantRecipeMissing": "الوصفة مفقودة",
+  "variantRecipeNotConfigured": "الوصفة غير مُعدّة",
+  "variantManageRecipe": "إدارة الوصفة",
+  "variantPricing": "التسعير",
+  "variantSellingHours": "ساعات البيع",
+  "variantCurrentAvailability": "الإتاحة الحالية",
+  "variantArabicName": "الاسم بالعربية",
+  "variantEnglishName": "الاسم بالإنجليزية",
+  "variantSortOrder": "ترتيب العرض",
+  "modifierAssignmentArchivedReadOnly": "هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.",
+  "modifierAssignmentViewProduct": "عرض تفاصيل المنتج",
+  "modifierAssignmentProduct": "المنتج",
+  "modifierAssignmentAssignedGroups": "المجموعات المعيّنة ({count})",
+  "@modifierAssignmentAssignedGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierAssignmentAvailableGroups": "المجموعات المتاحة",
+  "modifierAssignmentReorder": "إعادة الترتيب",
+  "modifierAssignmentDone": "تم",
+  "modifierAssignmentMoveUp": "نقل للأعلى",
+  "modifierAssignmentMoveDown": "نقل للأسفل",
+  "modifierAssignmentActionsFor": "إجراءات {name}",
+  "@modifierAssignmentActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentChooseGroupHelp": "اختر مجموعة لإتاحة خياراتها لعملاء هذا المنتج.",
+  "modifierAssignmentCustomizeFor": "تخصيص لـ {name}",
+  "@modifierAssignmentCustomizeFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentCustomizedFor": "مخصّص لـ {name}",
+  "@modifierAssignmentCustomizedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentUsingLibrarySettings": "يستخدم إعدادات المكتبة",
+  "modifierAssignmentHowChoose": "كيف ينبغي للعملاء الاختيار؟",
+  "modifierAssignmentChooseOne": "اختر واحدًا",
+  "modifierAssignmentChooseMultiple": "اختر عدة خيارات",
+  "modifierAssignmentMultipleHelp": "تستخدم هذه المجموعة خيارات متعددة من مكتبة المعدّلات.",
+  "modifierAssignmentSingleHelp": "تستخدم هذه المجموعة خيارًا واحدًا من مكتبة المعدّلات.",
+  "modifierAssignmentMinimumChoices": "الحد الأدنى للخيارات",
+  "modifierAssignmentMaximumChoices": "الحد الأقصى للخيارات",
+  "modifierAssignmentAllowDuplicate": "هل يمكن إضافة الخيار نفسه أكثر من مرة؟",
+  "modifierAssignmentConfigure": "تهيئة {name}",
+  "@modifierAssignmentConfigure": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentOverride": "تجاوز {label}",
+  "@modifierAssignmentOverride": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentLibraryDefaultBoolean": "افتراضي المكتبة: {value}",
+  "@modifierAssignmentLibraryDefaultBoolean": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentLibraryDefaultNumber": "افتراضي المكتبة: {value}",
+  "@modifierAssignmentLibraryDefaultNumber": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierAssignmentEffectiveSetting": "الإعداد الفعّال: {value}",
+  "@modifierAssignmentEffectiveSetting": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentHelp": "اختر مجموعات المعدّلات التي يمكن للعملاء استخدامها مع هذا المنتج.",
+  "modifierAssignmentMaterialImpact": "تم إعداد تأثير المواد",
+  "modifierAssignmentViewGroup": "عرض مجموعة المعدّلات",
+  "modifierAssignmentCustomizeForProduct": "تخصيص للمنتج",
+  "modifierAssignmentRemoveFromProduct": "إزالة من المنتج",
+  "menuDetailArchiveTitle": "أرشفة القائمة؟",
+  "menuDetailRestoreTitle": "استعادة القائمة؟",
+  "menuDetailArchiveMessage": "تؤرشف هذه القائمة دون حذفها. يبقى تكوينها متاحًا للمراجعة.",
+  "menuDetailRestoreMessage": "تعيد استعادة هذه القائمة إلى المسودة. لا تستعيد الأقسام المؤرشفة.",
+  "productEditorProductType": "نوع المنتج",
+  "productEditorStandard": "عادي",
+  "productEditorOpenPrice": "سعر مفتوح",
+  "productEditorPreparationTime": "وقت التحضير",
+  "productEditorMinutes": "دقائق",
+  "productEditorInitialOptionHelp": "يبدأ كل منتج بخيار بيع واحد. يمكنك إضافة خيارات أخرى لاحقًا.",
+  "productEditorVariantName": "اسم خيار البيع",
+  "productEditorDefaultVariant": "الخيار الافتراضي",
+  "productEditorDefaultVariantHelp": "تُدار خيارات البيع بشكل منفصل ليبقى تفاصيل المنتج مركّزة.",
+  "productEditorTranslationsHelp": "أضف محتوى مترجمًا دون إزدحام نموذج المنتج الرئيسي.",
+  "productEditorTranslationsPanelHelp": "استخدم لوحة الترجمات لإدخال أسماء وأوصاف عربية وإنجليزية.",
+  "productEditorSortOrder": "ترتيب العرض",
+  "productEditorVariantCost": "تكلفة خيار البيع",
+  "productEditorNone": "لا شيء",
+  "productEditorPreviewUnavailable": "المعاينة غير متاحة",
+  "productEditorDropImage": "أفلت صورة هنا أو انقر للتصفح",
+  "productEditorImageLoadFailed": "تعذر تحميل الصورة",
+  "productEditorWhatIsProduct": "ما هو هذا المنتج؟",
+  "productEditorClassificationHelp": "اختر موضع هذا المنتج في الكتالوج وتدفق التحضير.",
+  "productEditorKitchenStationHelp": "الموضع العادي لتحضير هذا المنتج.",
+  "productEditorReportingCategoryHelp": "تُستخدم لتقارير المبيعات والأداء.",
+  "productEditorSellingPreparationHelp": "حدد كيفية بيع هذا المنتج وما يلزم فريق العمل من معلومات تحضير.",
+  "productEditorArabicConfigured": "تم إعداد العربية",
+  "productEditorEnglishConfigured": "تم إعداد الإنجليزية",
+  "productEditorBasePriceValue": "السعر الأساسي {price}",
+  "@productEditorBasePriceValue": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "productDetailArchiveMessage": "لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي. لا تتغير الطلبات الحالية والإصدارات المنشورة السابقة.",
+  "productDetailRestoreMessage": "يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.",
+  "productCatalogArchiveMessage": "لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي.\n\nلا يُحذف المنتج نهائيًا. لا تُحذف مجموعات المعدّلات المركزية، وتبقى الخيارات مخزنة حسب سلوك الخلفية.",
+  "productCatalogRestoreMessage": "يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته في القوائم معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.",
+  "productCatalogUsageMessage": "يُستخدم هذا المنتج حاليًا في {count} مواضع في القوائم{names}.",
+  "@productCatalogUsageMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalOverrideClearTitle": "مسح التجاوز التشغيلي؟",
+  "operationalOverrideClearMessage": "مسح تجاوز {level} لـ {scope}؟\n\nلن يتم تغيير الإتاحة المجدولة، أو إعدادات المنتج، أو الإصدارات المنشورة السابقة.",
+  "@operationalOverrideClearMessage": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      },
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalOverrideClearAction": "مسح التجاوز",
+  "productDetailProductId": "معرّف المنتج",
+  "productDetailUpdated": "آخر تحديث",
+  "productDetailImageUrl": "رابط الصورة",
+  "authLoginTitle": "تسجيل الدخول إلى مساحة العمل",
+  "authLoginSubtitle": "تسجيل دخول مركز العمليات",
+  "authEmailOrUsername": "البريد الإلكتروني أو اسم المستخدم",
+  "authIdentifierRequired": "أدخل بريدك الإلكتروني أو اسم المستخدم.",
+  "authPassword": "كلمة المرور",
+  "authPasswordRequired": "أدخل كلمة المرور.",
+  "authLogIn": "تسجيل الدخول",
+  "authLoggingIn": "جاري تسجيل الدخول…",
+  "authLoginHelp": "استخدم بريد العمل أو اسم مستخدم الموظف للمتابعة.",
+  "authLoginFailed": "تعذر تسجيل الدخول. تحقق من بياناتك وحاول مجددًا.",
+  "authInvalidCredentials": "البريد الإلكتروني أو اسم المستخدم أو كلمة المرور غير صحيحة.",
+  "authTooManyAttempts": "تم إجراء محاولات كثيرة لتسجيل الدخول. انتظر قليلًا ثم حاول مجددًا.",
+  "authNetworkUnavailable": "يتعذر الاتصال بالخادم. تحقق من اتصال الشبكة ثم حاول مجددًا.",
+  "authConnectionTimeout": "انتهت مهلة الاتصال. تحقق من الاتصال ثم حاول مجددًا.",
+  "authServerUnavailable": "الخدمة غير متاحة مؤقتًا. يرجى المحاولة بعد قليل.",
+  "authValidationFailed": "يرجى مراجعة الحقول المميزة ثم المحاولة مجددًا.",
+  "authFieldValidationFailed": "تحقق من هذه القيمة ثم حاول مجددًا.",
+  "authInvalidResponse": "تعذر التحقق من استجابة تسجيل الدخول. يرجى المحاولة مجددًا.",
+  "authSecureStorageFailure": "تعذر حفظ الجلسة بأمان. يرجى المحاولة مجددًا.",
+  "authVerifiedSessionSaveFailed": "تعذر حفظ جلستك المتحقق منها بأمان. أعد محاولة التحقق أو سجّل الخروج.",
+  "authPasswordChangedSessionSaveFailed": "تم تغيير كلمة المرور، لكن تعذر حفظ الجلسة. يرجى تسجيل الدخول مجددًا باستخدام كلمة المرور الجديدة.",
+  "authUnexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مجددًا.",
+  "authIncorrectCurrentPassword": "كلمة المرور الحالية غير صحيحة.",
+  "authWeakNewPassword": "اختر كلمة مرور جديدة أقوى.",
+  "authPasswordConfirmationMismatch": "تأكيد كلمة المرور غير مطابق.",
+  "authChangePassword": "تغيير كلمة المرور",
+  "authChangePasswordExplanation": "يتطلب تسجيل الدخول الأول أو إعادة التعيين من مدير تعيين كلمة مرور جديدة.",
+  "authCurrentPassword": "كلمة المرور الحالية",
+  "authNewPassword": "كلمة المرور الجديدة",
+  "authConfirmNewPassword": "تأكيد كلمة المرور الجديدة",
+  "authMinimumPassword": "استخدم ما لا يقل عن {count} محرفًا.",
+  "@authMinimumPassword": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authManagerPasswordRule": "يحتاج المالكون والمديرون إلى 10 محارف على الأقل.",
+  "authEmployeePasswordRule": "يحتاج الموظفون إلى 8 محارف على الأقل.",
+  "authPasswordsDoNotMatch": "كلمتا المرور غير متطابقتين.",
+  "authSavePassword": "حفظ كلمة المرور",
+  "authSavingPassword": "جاري حفظ كلمة المرور…",
+  "authPasswordChangeFailed": "تعذر تغيير كلمة المرور. تحقق من كلمة المرور الحالية وحاول مجددًا.",
+  "authRestoringSession": "جاري استعادة الجلسة الآمنة…",
+  "authSessionExpired": "انتهت جلستك. يرجى تسجيل الدخول مجددًا.",
+  "authOfflineSessionExpired": "انتهت جلستك بدون اتصال. اتصل بالإنترنت وسجل الدخول مجددًا.",
+  "authVerificationRequiredTitle": "تحقق من جلستك",
+  "authUnableToVerifySession": "تعذر التحقق من جلستك المحفوظة. يرجى المحاولة مرة أخرى.",
+  "authRetryVerification": "إعادة محاولة التحقق",
+  "authRetryingVerification": "جارٍ التحقق من الجلسة…",
+  "authReturnToLogin": "العودة إلى تسجيل الدخول",
+  "authSecureStorageReadFailure": "التخزين الآمن غير متاح. حاول مرة أخرى أو عد إلى تسجيل الدخول.",
+  "authCorruptSavedSession": "تعذر قراءة جلستك المحفوظة. يرجى تسجيل الدخول مرة أخرى.",
+  "authConnectionRequiredToVerifySession": "يلزم اتصال للتحقق من هذه الجلسة المحفوظة قبل متابعة الوصول.",
+  "authTenantNotOperationalTitle": "مساحة العمل غير متاحة مؤقتًا",
+  "authTenantNotOperationalExplanation": "مساحة العمل هذه غير متاحة مؤقتًا.",
+  "authContactAdministration": "يرجى التواصل مع الإدارة للحصول على المساعدة.",
+  "authSettingsSubtitle": "إعدادات الحساب والجلسة",
+  "authAccount": "الحساب",
+  "authSignedInTenant": "مسجل الدخول إلى",
+  "authLogout": "تسجيل الخروج",
+  "authLogoutConfirmation": "هل أنت متأكد من رغبتك في تسجيل الخروج من هذا الجهاز؟",
+  "reportsOverviewTitle": "نظرة عامة على التقارير",
+  "reportsOverviewSubtitle": "تابع المبيعات والربحية والنقدية والمخزون وأداء الفروع من مكان واحد.",
+  "reportsOverviewDateRange": "الفترة الزمنية",
+  "reportsOverviewComparePrevious": "مقارنة بالفترة السابقة",
+  "reportsOverviewExport": "تصدير",
+  "reportsOverviewExportTooltip": "متاح في شاشات التقارير التفصيلية",
+  "reportsOverviewAllBranches": "كل الفروع",
+  "reportsOverviewKpiNetSales": "الإجمالي",
+  "reportsOverviewKpiSalesSum": "مجموع المبيعات",
+  "reportsOverviewKpiSalesNet": "صافي المبيعات",
+  "reportsOverviewKpiInfoSalesSum": "المبيعات المكتملة قبل الخصومات والمرتجعات.",
+  "reportsOverviewKpiInfoSalesNet": "الإجمالي بعد المشتريات والمصروفات المدفوعة.",
+  "reportsOverviewKpiGrossProfit": "إجمالي الربح",
+  "reportsOverviewKpiGrossMargin": "هامش الربح الإجمالي",
+  "reportsOverviewKpiTotalExpenses": "إجمالي المصروفات",
+  "reportsOverviewKpiNetProfit": "صافي الربح",
+  "reportsOverviewKpiInfoNetSales": "مجموع المبيعات بعد المرتجعات والخصومات.",
+  "reportsOverviewKpiInfoGrossProfit": "الإجمالي مطروحاً منه تكلفة البضاعة المباعة.",
+  "reportsOverviewKpiInfoGrossMargin": "إجمالي الربح كنسبة من الإجمالي.",
+  "reportsOverviewKpiInfoTotalExpenses": "المصروفات التشغيلية المسجلة لهذه الفترة.",
+  "reportsOverviewKpiInfoNetProfit": "إجمالي الربح مطروحاً منه إجمالي المصروفات.",
+  "reportsOverviewNotAvailableYet": "غير متاح بعد",
+  "reportsOverviewComparisonUnavailable": "المقارنة غير متاحة",
+  "reportsOverviewDeltaPercent": "{value} مقارنة بالفترة السابقة",
+  "@reportsOverviewDeltaPercent": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsOverviewDeltaPoints": "{value} نقطة مقارنة بالفترة السابقة",
+  "@reportsOverviewDeltaPoints": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsOverviewSalesTrendTitle": "اتجاه المبيعات",
+  "reportsOverviewNoSalesData": "لا توجد مبيعات مسجلة لهذه الفترة.",
+  "reportsOverviewBranchComparisonTitle": "مقارنة الفروع",
+  "reportsOverviewBranchColumnBranch": "الفرع",
+  "reportsOverviewBranchColumnNetSales": "صافي المبيعات",
+  "reportsOverviewChooseAllBranches": "اختر كل الفروع لمقارنة الأداء.",
+  "reportsOverviewTopProductsTitle": "أفضل المنتجات",
+  "reportsOverviewNoProductsSold": "لم يتم بيع أي منتجات لهذه الفترة.",
+  "reportsOverviewProductPerformanceComingNext": "تقرير أداء المنتج قادم في المرحلة التالية.",
+  "reportsOverviewExceptionsTitle": "الاستثناءات الأخيرة",
+  "reportsOverviewNoExceptions": "لم يتم العثور على استثناءات تشغيلية لهذه الفترة.",
+  "reportsOverviewBrowseByCategory": "تصفح حسب الفئة",
+  "reportsOverviewComingNext": "قادم لاحقاً",
+  "reportsOverviewCategorySalesProfitability": "المبيعات والربحية",
+  "reportsOverviewCategoryCashShifts": "النقدية والورديات",
+  "reportsOverviewCategoryInventory": "المخزون",
+  "reportsOverviewCategoryExpenses": "المصروفات",
+  "reportsOverviewCategoryPurchasingSuppliers": "المشتريات والموردون",
+  "reportsOverviewCategoryFinancialReports": "التقارير المالية",
+  "reportsOverviewCategoryCustomReportBuilder": "أداة إنشاء تقارير مخصصة",
+  "reportsOverviewFinancialReportsTooltip": "فتح مركز التقارير المالية",
+  "reportsOverviewErrorDefault": "تعذّر تحميل النظرة العامة.",
+  "reportsOverviewRelativeCurrent": "الآن",
+  "reportsOverviewMinutesAgo": "قبل {m} د",
+  "@reportsOverviewMinutesAgo": {
+    "placeholders": {
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "reportsOverviewHoursAgo": "قبل {h} س",
+  "salesProfitabilityTitle": "المبيعات والربحية",
+  "salesProfitabilitySubtitle": "تحليل المبيعات والأرباح والخصومات والمرتجعات وأداء المنتجات والفروع.",
+  "salesProfitabilityBack": "نظرة عامة على التقارير",
+  "salesProfitabilityGroupBy": "التجميع",
+  "salesProfitabilityDaily": "يومي",
+  "salesProfitabilityWeekly": "أسبوعي",
+  "salesProfitabilityMonthly": "شهري",
+  "salesProfitabilityExportTooltip": "سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.",
+  "salesProfitabilityGrossSales": "مجموع المبيعات",
+  "salesProfitabilityNetSales": "الإجمالي",
+  "salesProfitabilityDiscounts": "الخصومات",
+  "salesProfitabilityRefunds": "المرتجعات",
+  "salesProfitabilityCogs": "تكلفة البضاعة المباعة COGS",
+  "salesProfitabilityGrossProfit": "إجمالي الربح",
+  "salesProfitabilityGrossMargin": "هامش الربح %",
+  "salesProfitabilityAverageOrder": "متوسط قيمة الطلب",
+  "salesProfitabilityCashCollected": "المحصّل نقداً",
+  "salesProfitabilityBankCollected": "المحصّل عبر البنك",
+  "salesProfitabilitySalesBySource": "المبيعات حسب المصدر",
+  "salesProfitabilityNoSalesBySource": "لا تتوفر بيانات مبيعات حسب المصدر لهذه الفترة.",
+  "salesProfitabilityTrend": "اتجاه المبيعات والأرباح",
+  "salesProfitabilitySalesByHour": "المبيعات بالساعة",
+  "salesProfitabilitySalesByCategory": "المبيعات حسب الفئة",
+  "salesProfitabilityBranchPerformance": "أداء الفروع",
+  "salesProfitabilityProductPerformance": "أداء المنتجات",
+  "salesProfitabilityTopSelling": "الأكثر مبيعاً",
+  "salesProfitabilityMostProfitable": "الأكثر ربحية",
+  "salesProfitabilityUnderperforming": "الأقل أداءً",
+  "salesProfitabilityPeak": "الأعلى: {value}",
+  "@salesProfitabilityPeak": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "salesProfitabilityNoTrend": "لا تتوفر بيانات لاتجاه المبيعات والأرباح لهذه الفترة.",
+  "salesProfitabilityNoHourly": "لا تتوفر بيانات مبيعات حسب الساعة لهذه الفترة.",
+  "salesProfitabilityNoCategories": "لا تتوفر بيانات مبيعات حسب الفئة لهذه الفترة.",
+  "salesProfitabilityNoBranches": "اختر كل الفروع لمقارنة الأداء.",
+  "salesProfitabilityNoProducts": "لا تتوفر بيانات أداء المنتجات لهذه الفترة.",
+  "salesProfitabilityUnavailable": "غير متاح بعد",
+  "salesProfitabilityError": "تعذّر تحميل هذا التقرير.",
+  "salesProfitabilityProduct": "المنتج",
+  "salesProfitabilityCategory": "الفئة",
+  "salesProfitabilityQuantity": "الكمية المباعة",
+  "salesProfitabilityOrders": "الطلبات",
+  "salesProfitabilityMargin": "الهامش",
+  "cashShiftsTitle": "النقدية والورديات",
+  "cashShiftsSubtitle": "متابعة أداء الورديات، حركة النقدية، طرق الدفع وفروقات الصندوق.",
+  "cashShiftsAllEmployees": "كل الموظفين",
+  "cashShiftsTotalSales": "مجموع المبيعات",
+  "cashShiftsExpectedCash": "النقد المتوقع",
+  "cashShiftsActualCash": "النقد الفعلي",
+  "cashShiftsDifference": "فرق الصندوق",
+  "cashShiftsClosed": "الورديات المغلقة",
+  "cashShiftsOpen": "الورديات المفتوحة",
+  "cashShiftsAverage": "متوسط مبيعات الوردية",
+  "cashShiftsReconciliation": "مطابقة النقدية",
+  "cashShiftsMatched": "مطابق",
+  "cashShiftsMinor": "فرق بسيط",
+  "cashShiftsReview": "فرق يحتاج مراجعة",
+  "cashShiftsShortage": "عجز",
+  "cashShiftsOverage": "زيادة",
+  "cashShiftsPerformance": "أداء الورديات",
+  "cashShiftsPayments": "توزيع طرق الدفع",
+  "cashShiftsTrend": "اتجاه مبيعات الورديات",
+  "cashShiftsTop": "أفضل الورديات أداءً",
+  "cashShiftsExceptions": "الاستثناءات",
+  "cashShiftsNoShifts": "لا توجد ورديات ضمن الفترة المحددة.",
+  "cashShiftsNoPayments": "لا توجد بيانات لطرق الدفع ضمن الفترة المحددة.",
+  "cashShiftsNoExceptions": "لا توجد فروقات نقدية تحتاج إلى مراجعة.",
+  "cashShiftsNoTrend": "لا تتوفر بيانات لاتجاه مبيعات الورديات لهذه الفترة.",
+  "cashShiftsError": "تعذّر تحميل تقرير النقدية والورديات.",
+  "cashShiftsExportTooltip": "سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.",
+  "@reportsOverviewHoursAgo": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      }
+    }
+  },
+  "financeSectionOverview": "نظرة عامة",
+  "financeSectionTransactions": "الحركات المالية",
+  "financeSectionCashBanks": "النقدية والبنوك",
+  "financeSectionExpenses": "المصروفات",
+  "financeSectionSuppliers": "الموردون والمستحقات",
+  "financeSectionReconciliation": "التسويات",
+  "financeSectionJournals": "القيود المحاسبية",
+  "financeSectionClosing": "الإغلاق اليومي",
+  "financeSectionReports": "التقارير المالية",
+  "financeSectionAccounts": "دليل الحسابات",
+  "financeSectionPeriods": "الفترات المحاسبية",
+  "financeSectionSettings": "إعدادات المالية",
+  "financeBreadcrumb": "{module} / {section}",
+  "@financeBreadcrumb": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      },
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "financeStatusApproved": "معتمد",
+  "financeStatusCompleted": "مكتمل",
+  "financeStatusPendingApproval": "بانتظار الموافقة",
+  "financeStatusPendingReview": "قيد المراجعة",
+  "financeStatusRejected": "مرفوض",
+  "financeStatusReversed": "معكوس",
+  "financeStatusPartiallyPaid": "مدفوع جزئياً",
+  "financeStatusInactive": "غير نشط",
+  "financeStatusLocked": "مقفلة نهائياً",
+  "financeStatusUnmatched": "غير مطابق",
+  "financeStatusCurrent": "حالي",
+  "financeTermDebit": "مدين",
+  "financeTermCredit": "دائن",
+  "financeTermBalance": "الرصيد",
+  "financeTermOpeningBalance": "الرصيد الافتتاحي",
+  "financeTermClosingBalance": "الرصيد الختامي",
+  "financeTermRunningBalance": "الرصيد الجاري",
+  "financeTermRevenue": "الإيرادات",
+  "financeTermCogs": "تكلفة البضاعة المباعة",
+  "financeTermGrossProfit": "مجمل الربح",
+  "financeTermOperatingExpenses": "المصروفات التشغيلية",
+  "financeTermOperatingProfit": "الربح التشغيلي",
+  "financeTermAssets": "الأصول",
+  "financeTermLiabilities": "الالتزامات",
+  "financeTermEquity": "حقوق الملكية",
+  "financeTermAccountsPayable": "الذمم الدائنة للموردين",
+  "financeTermGeneralLedger": "دفتر الأستاذ العام",
+  "financeTermTrialBalance": "ميزان المراجعة",
+  "financeTermProfitLoss": "قائمة الدخل",
+  "financeTermBalanceSheet": "الميزانية العمومية",
+  "financeTermCashFlow": "التدفقات النقدية",
+  "financeFiltersReset": "إعادة تعيين",
+  "financeReadinessPanelTitle": "الجاهزية التشغيلية",
+  "financeLoadingDefaultLabel": "جارٍ تحميل البيانات…",
+  "financeEmptyDefaultMessage": "لا توجد بيانات لعرضها",
+  "financeExpectedAccountingImpact": "الأثر المحاسبي المتوقع",
+  "financeExpenseScreenTitle": "المصروفات",
+  "financeExpenseScreenSubtitle": "تسجيل ومتابعة اعتماد المصروفات التشغيلية",
+  "financeExpenseAddAction": "إضافة مصروف",
+  "financeExpenseLoadingLabel": "جارٍ تحميل المصروفات…",
+  "financeExpenseLoadErrorMessage": "تعذّر تحميل المصروفات. لم يتم اعتبار الخطأ صفراً.",
+  "financeExpenseFilterStatusLabel": "الحالة",
+  "financeExpenseFilterCategoryLabel": "الفئة",
+  "financeExpenseSearchHint": "بحث بالوصف أو المرجع…",
+  "financeExpenseDateRangePickerHelp": "اختيار فترة مالية",
+  "financeExpenseFilterRefreshError": "تعذّر تحديث المصروفات لهذه الفلاتر. تُعرض آخر بيانات محمّلة.",
+  "financeExpenseEmptyPeriod": "لا توجد مصروفات مسجلة للفترة المحددة",
+  "financeExpenseEmptyFiltered": "لا توجد مصروفات مطابقة للفلاتر المحددة",
+  "financeExpenseEmptyResetAction": "إعادة تعيين الفلاتر",
+  "financeExpenseKpiTotalAmount": "إجمالي المصروفات",
+  "financeExpenseKpiRejectedAmount": "مرفوضة",
+  "financeExpenseKpiAverageAmount": "متوسط المصروف",
+  "financeExpenseColumnDate": "التاريخ",
+  "financeExpenseColumnReference": "المرجع",
+  "financeExpenseColumnDescription": "الوصف",
+  "financeExpenseColumnBranch": "الفرع",
+  "financeExpenseColumnAmount": "المبلغ",
+  "financeExpenseBranchGeneralFallback": "عام",
+  "financeExpenseBranchGeneralOption": "عام (كل الفروع)",
+  "financeExpenseAllBranchesLabel": "كل الفروع",
+  "financeExpenseSubmittedBy": "قدّمه {name}",
+  "financeExpenseReversedNote": "تم عكس هذا المصروف. استخدم الأزرار أدناه لعرض القيد الأصلي وقيد العكس.",
+  "financeExpenseSubmissionDateLabel": "تاريخ التقديم",
+  "financeExpenseLedgerAccountLabel": "حساب الأستاذ",
+  "financeExpensePreTaxAmountLabel": "المبلغ قبل الضريبة",
+  "financeExpenseTaxLabel": "الضريبة",
+  "financeExpenseNotesLabel": "ملاحظات",
+  "financeExpenseNotesOptionalLabel": "ملاحظات (اختياري)",
+  "financeExpensePaymentMethodLabel": "طريقة الدفع",
+  "financeExpensePaymentAccountLabel": "حساب الدفع",
+  "financeExpenseApprovedAtLabel": "اعتُمد في",
+  "financeExpensePaidAtLabel": "دُفع في",
+  "financeExpenseActionSubmit": "إرسال للموافقة",
+  "financeExpenseActionApprove": "اعتماد",
+  "financeExpenseActionReject": "رفض",
+  "financeExpenseActionPay": "تسجيل دفعة",
+  "financeExpenseActionReverse": "عكس المصروف",
+  "financeExpenseViewJournalAction": "عرض القيد",
+  "financeExpenseViewReversalJournalAction": "عرض قيد العكس",
+  "financeExpenseRejectDialogTitle": "رفض المصروف",
+  "financeExpenseRejectReasonLabel": "سبب الرفض",
+  "financeExpensePaymentValidationError": "اختر طريقة دفع وحساباً نقدياً أو بنكياً نشطاً.",
+  "financeExpensePaymentDialogTitle": "دفع {reference}",
+  "financeExpensePaymentPostAction": "ترحيل الدفع",
+  "financeExpensePaymentLoadingOptions": "جارٍ تحميل خيارات الدفع…",
+  "financeExpenseNoPaymentOptionsMessage": "لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.",
+  "financeExpensePaymentAmountLine": "المبلغ: {amount}",
+  "financeExpenseCashBankAccountLabel": "الحساب النقدي/البنكي",
+  "financeExpenseFormValidationError": "أدخل مبلغاً صالحاً، فئة، ووصفاً.",
+  "financeExpenseEditDialogTitle": "تعديل مصروف",
+  "financeExpenseFieldBranchOptional": "الفرع (اختياري)",
+  "financeExpenseTotalLabel": "الإجمالي",
+  "financeExpenseCategoryScreenTitle": "فئات المصروفات",
+  "financeExpenseCategoryScreenSubtitle": "كل فئة مرتبطة بحساب مصروف فعّال في دليل الحسابات.",
+  "financeExpenseCategoryAddAction": "إضافة فئة",
+  "financeExpenseCategoryEmptyMessage": "لا توجد فئات مصروفات مهيأة.",
+  "financeExpenseCategoryCodeLabel": "الرمز",
+  "financeExpenseCategoryNameLabel": "الاسم",
+  "financeExpenseCategoryAccountLabel": "حساب المصروف",
+  "financeExpenseCategoryColumnStatus": "الحالة",
+  "financeExpenseCategoryColumnAction": "إجراء",
+  "financeExpenseCategorySortOrderLabel": "ترتيب العرض (اختياري)",
+  "financeExpenseCategoryValidationError": "أدخل رمزاً واسماً صالحين.",
+  "financeExpenseCategoryEditDialogTitle": "تعديل فئة",
+  "financeExpenseCategoryDeactivateDialogTitle": "تعطيل الفئة",
+  "financeExpenseCategoryActivateDialogTitle": "تفعيل الفئة",
+  "financeExpenseCategoryDeactivateConfirm": "هل تريد تعطيل فئة \"{name}\"؟ لن تظهر بعد ذلك عند إنشاء مصروف جديد.",
+  "financeExpenseCategoryActivateConfirm": "هل تريد تفعيل فئة \"{name}\"؟",
+  "financeExpenseCategoryDeactivateAction": "تعطيل",
+  "financeExpenseCategoryActivateAction": "تفعيل",
+  "financePeriodToday": "اليوم",
+  "financePeriodThisWeek": "هذا الأسبوع",
+  "financePeriodThisMonth": "هذا الشهر",
+  "financePeriodCustom": "مخصص",
+  "financeGlobalContextTitle": "السياق العام",
+  "financeGlobalContextBranchAll": "الفرع: كل الفروع",
+  "financeGlobalContextBranchNamed": "الفرع: {name}",
+  "@financeGlobalContextBranchNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "financeWarehouseTitle": "إعداد المخازن",
+  "financeWarehouseSubtitle": "إدارة المخازن التشغيلية وربطها بالفروع.",
+  "financeWarehouseAdd": "إضافة مخزن",
+  "financeWarehouseEmpty": "لا توجد مخازن مضافة بعد.",
+  "financeWarehouseAllBranches": "كل الفروع",
+  "financeWarehouseAllStatuses": "كل الحالات",
+  "financeWarehouseName": "المخزن",
+  "financeWarehouseCode": "الرمز",
+  "financeWarehouseType": "النوع",
+  "financeWarehouseBranch": "الفرع",
+  "financeWarehouseEdit": "تعديل المخزن",
+  "financeWarehouseCentral": "مركزي",
+  "financeWarehouseBranchType": "فرع",
+  "financeTransactionSale": "مبيعات",
+  "financeTransactionRefund": "استرجاع",
+  "financeTransactionExpense": "مصروف",
+  "financeTransactionCashTransfer": "تحويل نقدي",
+  "financeTransactionSupplierInvoice": "فاتورة مورد",
+  "financeTransactionSupplierPayment": "دفعة مورد",
+  "financeTransactionInventoryWaste": "هدر مخزون",
+  "financeTransactionStockCountVariance": "فرق جرد",
+  "financeTransactionInventoryMovement": "حركة مخزون",
+  "financeTransactionManualJournal": "قيد يدوي",
+  "financeTransactionReversalJournal": "قيد عكسي",
+  "financeTransactionJournalEntry": "قيد محاسبي",
+  "financeStatusReady": "جاهز",
+  "financeStatusWarning": "تحذير",
+  "financeStatusBlocked": "محظور",
+  "financeStatusActive": "نشط",
+  "financeWarehouseUnassignedBranch": "غير مخصص",
+  "financeStatusClosed": "مغلق",
+  "financeDailyClosingIssueOpenShifts": "يوجد {count} ورديات مفتوحة يجب إغلاقها.",
+  "@financeDailyClosingIssueOpenShifts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssuePendingExpenseApproval": "يوجد {count} مصروفات بانتظار الاعتماد.",
+  "@financeDailyClosingIssuePendingExpenseApproval": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueMissingActualCash": "لم يتم إدخال النقد الفعلي بعد.",
+  "financeDailyClosingIssueCashDifference": "يوجد فرق نقدي بقيمة {amount}.",
+  "@financeDailyClosingIssueCashDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "financeDailyClosingIssueDraftJournals": "يوجد {count} قيود مسودة لهذا اليوم.",
+  "@financeDailyClosingIssueDraftJournals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueUnpostedInventoryEvent": "يوجد {count} حركات مخزون بلا ترحيل محاسبي.",
+  "@financeDailyClosingIssueUnpostedInventoryEvent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueCashReconciliationIncomplete": "تسوية الصندوق النقدي غير مكتملة لهذا اليوم.",
+  "financeDailyClosingIssueCardReconciliationIncomplete": "تسوية البطاقة غير مكتملة لهذا اليوم.",
+  "financeDailyClosingIssueBankReconciliationIncomplete": "تسوية بنكية غير مكتملة لهذا اليوم.",
+  "financeDailyClosingIssueUnknown": "يوجد شرط للإغلاق اليومي يحتاج إلى المراجعة.",
+  "financePaginationRange": "عرض {start}–{end} من {total}",
+  "@financePaginationRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "financePaginationPrevious": "السابق",
+  "financePaginationPage": "صفحة {current} من {last}",
+  "@financePaginationPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "last": {
+        "type": "int"
+      }
+    }
+  },
+  "financePaginationNext": "التالي",
+  "financeSourceActionViewSource": "عرض المصدر",
+  "financeSourceActionViewJournal": "عرض القيد",
+  "financeSourceActionRelatedJournal": "القيد المرتبط",
+  "navigationCafeConfiguration": "إعدادات المقهى",
+  "cafeConfigurationTitle": "إعدادات المقهى",
+  "cafeConfigurationOverview": "نظرة عامة",
+  "cafeConfigurationProfile": "ملف المقهى",
+  "cafeConfigurationBranches": "الفروع",
+  "cafeConfigurationPrinting": "الطباعة",
+  "cafeConfigurationPrintingSubtitle": "اضبط إعدادات طابعة الإيصالات الافتراضية لكل فرع.",
+  "cafeConfigurationReceiptPrinting": "طباعة الإيصالات",
+  "cafeConfigurationReceiptPrintingEnabled": "تفعيل طباعة الإيصالات",
+  "cafeConfigurationPrinterName": "اسم الطابعة",
+  "cafeConfigurationPrinterHost": "عنوان IP أو اسم المضيف للطابعة",
+  "cafeConfigurationPrinterPort": "منفذ الطابعة",
+  "cafeConfigurationPaperWidth": "عرض الورق",
+  "cafeConfigurationAutoPrint": "الطباعة التلقائية بعد الدفع",
+  "cafeConfigurationPrintingSaved": "تم حفظ إعدادات الطباعة الافتراضية.",
+  "cafeConfigurationPrintingDiscard": "هل تريد تجاهل تغييرات الطباعة غير المحفوظة والانتقال إلى فرع آخر؟",
+  "cafeConfigurationPrinterInvalid": "أدخل عنوان طابعة صالحًا ومنفذًا بين 1 و65535.",
+  "cafeConfigurationPrintingBranchDefaultsNotice": "هذه إعدادات افتراضية للفرع: تُطبَّق على جميع أجهزة هذا الفرع ما لم يتم تجاوزها من الإعدادات ← إعداد الطابعة على ذلك الجهاز.",
+  "cafeConfigurationSavePrinterConfig": "حفظ إعدادات الطابعة",
+  "cafeConfigurationSaveReceiptDesign": "حفظ تصميم الإيصال",
+  "cafeConfigurationPrinterConfigSaved": "تم حفظ إعدادات الطابعة.",
+  "cafeConfigurationReceiptDesignSaved": "تم حفظ تصميم الإيصال.",
+  "cafeConfigurationReceiptDesign": "تصميم الإيصال",
+  "cafeConfigurationReceiptHeaderSection": "الترويسة",
+  "cafeConfigurationReceiptHeaderLogo": "شعار المقهى",
+  "cafeConfigurationReceiptHeaderCafeName": "اسم المقهى",
+  "cafeConfigurationReceiptHeaderBranchName": "اسم الفرع",
+  "cafeConfigurationReceiptHeaderAddress": "العنوان",
+  "cafeConfigurationReceiptHeaderPhone": "الهاتف",
+  "cafeConfigurationReceiptOrderInfoSection": "معلومات الطلب",
+  "cafeConfigurationReceiptOrderNumber": "رقم الطلب",
+  "cafeConfigurationReceiptDateTime": "التاريخ والوقت",
+  "cafeConfigurationReceiptCashier": "أمين الصندوق",
+  "cafeConfigurationReceiptCustomer": "العميل",
+  "cafeConfigurationReceiptOrderType": "نوع الطلب",
+  "cafeConfigurationReceiptItemsSection": "الأصناف",
+  "cafeConfigurationReceiptProductName": "اسم المنتج",
+  "cafeConfigurationReceiptQuantity": "الكمية",
+  "cafeConfigurationReceiptUnitPrice": "سعر الوحدة",
+  "cafeConfigurationReceiptModifiers": "الإضافات",
+  "cafeConfigurationReceiptNotes": "ملاحظات الصنف",
+  "cafeConfigurationReceiptTotalsSection": "الإجماليات",
+  "cafeConfigurationReceiptSubtotal": "المجموع الفرعي",
+  "cafeConfigurationReceiptDiscount": "الخصم",
+  "cafeConfigurationReceiptTax": "الضريبة",
+  "cafeConfigurationReceiptTotal": "الإجمالي",
+  "cafeConfigurationReceiptPaymentSection": "الدفع",
+  "cafeConfigurationReceiptPaymentMethod": "طريقة الدفع",
+  "cafeConfigurationReceiptPaidAmount": "المبلغ المدفوع",
+  "cafeConfigurationReceiptChange": "الباقي",
+  "cafeConfigurationReceiptFooterSection": "التذييل",
+  "cafeConfigurationReceiptFooterEnabled": "إظهار التذييل",
+  "cafeConfigurationReceiptFooterText": "نص التذييل",
+  "cafeConfigurationReceiptPreview": "معاينة الإيصال",
+  "cafeConfigurationReceiptPreviewTitle": "معاينة الإيصال",
+  "cafeConfigurationReceiptMoveUp": "تحريك لأعلى",
+  "cafeConfigurationReceiptMoveDown": "تحريك لأسفل",
+  "cafeConfigurationReceiptLockedField": "يظهر دائماً",
+  "cafeConfigurationTeamAccess": "الفريق والوصول",
+  "cafeConfigurationTax": "الضريبة",
+  "cafeConfigurationOverviewSubtitle": "ملخص موجز لإعدادات التشغيل.",
+  "cafeConfigurationProfileSubtitle": "أدر معلومات الأعمال الأساسية المستخدمة عبر النظام.",
+  "cafeConfigurationBranchesSubtitle": "أنشئ وأدر المواقع الفعلية التي يعمل فيها مقهاك.",
+  "cafeConfigurationCreateBranchSubtitle": "أضف موقعًا جديدًا يعمل فيه مقهاك.",
+  "cafeConfigurationEditBranchSubtitle": "حدّث تفاصيل موقع المقهى.",
+  "cafeConfigurationConfigured": "مُعد",
+  "cafeConfigurationTotal": "إجمالي",
+  "cafeConfigurationNotAvailable": "غير متاح",
+  "cafeConfigurationAvailablePhase2": "متاح في المرحلة 2",
+  "cafeConfigurationCouldNotLoad": "تعذر تحميل الإعدادات. تحقق من الاتصال وحاول مجددًا.",
+  "cafeConfigurationBusinessInformation": "معلومات العمل",
+  "cafeConfigurationCafeName": "اسم المقهى",
+  "cafeConfigurationEmail": "البريد الإلكتروني",
+  "cafeConfigurationPhone": "الهاتف",
+  "cafeConfigurationTimezone": "المنطقة الزمنية",
+  "cafeConfigurationReadOnly": "للعرض فقط",
+  "cafeConfigurationCurrency": "العملة",
+  "cafeConfigurationStatus": "الحالة",
+  "cafeConfigurationReset": "إعادة ضبط",
+  "cafeConfigurationSaveChanges": "حفظ التغييرات",
+  "cafeConfigurationProfileSaved": "تم حفظ ملف المقهى.",
+  "cafeConfigurationSaveFailed": "تعذر حفظ التغييرات. تم الاحتفاظ بتعديلاتك.",
+  "cafeConfigurationAddBranch": "إضافة فرع",
+  "cafeConfigurationCreateBranch": "إنشاء فرع",
+  "cafeConfigurationEditBranch": "تعديل الفرع",
+  "cafeConfigurationBranchName": "اسم الفرع",
+  "cafeConfigurationAddress": "العنوان",
+  "cafeConfigurationActions": "الإجراءات",
+  "cafeConfigurationNoBranches": "لا توجد فروع بعد",
+  "cafeConfigurationNoBranchesHelp": "أنشئ أول موقع لمقهاك للبدء.",
+  "cafeConfigurationBranchCreated": "تم إنشاء الفرع.",
+  "cafeConfigurationBranchSaved": "تم حفظ الفرع.",
+  "cafeConfigurationTaxSummary": "ضريبة حصرية على مستوى المقهى",
+  "teamAccessSubtitle": "أدِر المديرين والموظفين الذين لديهم وصول إلى مقهاك.",
+  "teamAddMember": "إضافة عضو فريق",
+  "teamSearch": "ابحث في الفريق",
+  "teamRole": "الدور",
+  "teamName": "الاسم",
+  "teamLogin": "تسجيل الدخول",
+  "teamDeactivated": "معطّل",
+  "teamArchived": "مؤرشف",
+  "teamProtected": "محمي",
+  "teamAllBranches": "كل الفروع",
+  "teamOwner": "المالك",
+  "teamManager": "مدير",
+  "teamEmployee": "موظف",
+  "teamFactoryManager": "مدير معمل",
+  "teamNoMembers": "لا يوجد مديرون أو موظفون بعد.",
+  "teamNoResults": "لا تطابق أي أعضاء مع عوامل التصفية.",
+  "teamEditMember": "تعديل عضو الفريق",
+  "teamUsername": "اسم المستخدم",
+  "teamBranchAccess": "وصول الفروع",
+  "teamActiveBranchesOnly": "يمكن تعيين الفروع النشطة فقط.",
+  "teamTemporaryPassword": "كلمة مرور مؤقتة",
+  "teamConfirmPassword": "تأكيد كلمة المرور المؤقتة",
+  "teamTemporaryPasswordMinimum": "استخدم ما لا يقل عن {count} محارف.",
+  "@teamTemporaryPasswordMinimum": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "teamRoleChangePassword": "تغيير الدور يتطلب كلمة مرور مؤقتة جديدة وإعادة ضبط تسجيل الدخول.",
+  "teamCreate": "إنشاء",
+  "teamMemberCreated": "تم إنشاء عضو الفريق",
+  "teamPasswordVisibleOnce": "يمكن عرض كلمة المرور المؤقتة هذه المرة فقط.",
+  "teamCopy": "نسخ",
+  "teamResetPassword": "إعادة تعيين كلمة المرور",
+  "teamResetPasswordExplanation": "سيتم إلغاء الجلسات النشطة. يجب على المستخدم تغيير كلمة المرور بعد تسجيل الدخول القادم.",
+  "teamPasswordMismatch": "كلمتا المرور غير متطابقتين.",
+  "teamDeactivate": "إلغاء التفعيل",
+  "teamActivate": "تفعيل",
+  "teamArchive": "أرشفة",
+  "teamDeactivateExplanation": "لن يتمكن هذا المستخدم من تسجيل الدخول. تبقى النشاطات التاريخية محتفظة.",
+  "teamActivateExplanation": "يمكن لهذا المريد تسجيل الدخول مجددًا.",
+  "teamArchiveExplanation": "يتم الاحتفاظ بالسجلات التاريخية. لا يمكن استعادة المستخدمين المؤرشفين حاليًا.",
+  "teamConfirm": "تأكيد",
+  "teamMutationFailed": "تعذر إتمام الطلب. تم الاحتفاظ بتعديلاتك.",
+  "teamLoadFailed": "تعذر تحميل هذا القسم. تحقق من الاتصال وحاول مجددًا.",
+  "taxSubtitle": "حدد معدل الضريبة الواحد المستخدم عبر مقهاك.",
+  "taxRate": "معدل الضريبة",
+  "taxHelp": "أدخل نسبة مئوية من 0 إلى 100.",
+  "taxExplanation": "هذه ضريبة حصرية على مستوى المقهى وتُطبق بعد الخصومات. تُطبق التغييرات على الطلبات الجديدة، وتحتفظ الطلبات الحالية بمعدلها المحفوظ.",
+  "taxInvalid": "أدخل نسبة مئوية صحيحة من 0 إلى 100.",
+  "taxSaved": "تم حفظ معدل الضريبة.",
+  "taxConfirm": "تحديث معدل الضريبة؟",
+  "taxCurrent": "الحالي",
+  "taxNew": "الجديد",
+  "taxNewOrdersOnly": "يُطبق هذا على الطلبات الجديدة.",
+  "customerManagementTitle": "إدارة العملاء",
+  "customerManagementCustomers": "العملاء",
+  "customerManagementGroups": "مجموعات العملاء",
+  "customerManagementCreateCustomer": "عميل جديد",
+  "customerManagementCreateGroup": "مجموعة جديدة",
+  "customerManagementSearch": "بحث",
+  "customerManagementActive": "نشط",
+  "customerManagementInactive": "غير نشط",
+  "customerManagementArchived": "مؤرشف",
+  "customerManagementAll": "الكل",
+  "customerManagementNoPhone": "لا يوجد هاتف",
+  "customerManagementNotAvailable": "غير متاح",
+  "customerManagementValueSeparator": " · ",
+  "customerManagementLoading": "جار تحميل معلومات العملاء…",
+  "customerManagementEmptyCustomers": "لا يوجد عملاء بعد.",
+  "customerManagementEmptyGroups": "لا توجد مجموعات عملاء بعد.",
+  "customerManagementNoResults": "لا توجد نتائج مطابقة.",
+  "customerManagementRetry": "إعادة المحاولة",
+  "customerManagementClearFilters": "مسح عوامل التصفية",
+  "customerManagementAccessDenied": "ليس لديك صلاحية الوصول إلى إدارة العملاء.",
+  "customerManagementNotFound": "لم يتم العثور على السجل المطلوب.",
+  "customerManagementCustomerNumber": "رقم العميل",
+  "customerManagementName": "الاسم",
+  "customerManagementPhone": "الهاتف",
+  "customerManagementGroupsLabel": "المجموعات",
+  "customerManagementStatus": "الحالة",
+  "customerManagementEmail": "البريد الإلكتروني",
+  "customerManagementBirthDate": "تاريخ الميلاد",
+  "customerManagementNotes": "ملاحظات",
+  "customerManagementPrimary": "أساسي",
+  "customerManagementMembers": "الأعضاء",
+  "customerManagementMemberCount": "الأعضاء: {count}",
+  "@customerManagementMemberCount": {"placeholders": {"count": {"type": "int"}}},
+  "customerManagementPreviousPage": "الصفحة السابقة",
+  "customerManagementNextPage": "الصفحة التالية",
+  "customerManagementPage": "الصفحة {page} من {total}",
+  "@customerManagementPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "customerManagementView": "عرض",
+  "customerManagementEdit": "تعديل",
+  "customerManagementSave": "حفظ",
+  "customerManagementCancel": "إلغاء",
+  "customerManagementActivate": "تفعيل",
+  "customerManagementDeactivate": "إلغاء التفعيل",
+  "customerManagementArchive": "أرشفة",
+  "customerManagementRestore": "استعادة",
+  "customerManagementConfirm": "تأكيد",
+  "customerManagementDiscardChanges": "تجاهل التغييرات غير المحفوظة؟",
+  "customerManagementChangesKept": "تم الاحتفاظ بتغييراتك.",
+  "customerManagementRequestFailed": "تعذر إتمام الطلب.",
+  "customerManagementValidationFailed": "راجع الحقول المميزة.",
+  "customerManagementAddMembers": "إضافة أعضاء",
+  "customerManagementRemoveMember": "إزالة العضو",
+  "customerManagementRemoveMemberConfirm": "إزالة {customer} من {group}؟",
+  "@customerManagementRemoveMemberConfirm": {"placeholders": {"customer": {}, "group": {}}},
+  "customerManagementCreateTitle": "عميل جديد",
+  "customerManagementEditTitle": "تعديل العميل",
+  "customerManagementCustomerName": "اسم العميل",
+  "customerManagementAddPhone": "إضافة هاتف",
+  "customerManagementRemovePhone": "إزالة الهاتف",
+  "customerManagementPhoneType": "نوع الهاتف",
+  "customerManagementPhoneMobile": "محمول",
+  "customerManagementPhoneHome": "منزلي",
+  "customerManagementPhoneWork": "عمل",
+  "customerManagementPhoneOther": "أخرى",
+  "customerManagementSelectGroups": "المجموعات",
+  "customerManagementActiveGroups": "المجموعات النشطة",
+  "customerManagementArchivedGroupRetained": "المجموعة المؤرشفة محفوظة",
+  "customerManagementDateHint": "YYYY-MM-DD",
+  "customerManagementStay": "البقاء في التعديل",
+  "customerManagementLeave": "مغادرة",
+  "customerManagementRequiredName": "أدخل اسم العميل.",
+  "customerManagementRequiredPhone": "أدخل رقم هاتف.",
+  "customerManagementPrimaryRequired": "اختر هاتفاً أساسياً واحداً.",
+  "customerManagementNoActiveGroups": "لا توجد مجموعات نشطة.",
+  "cmvpCustomersDescription": "إدارة سجلات العملاء وهواتفهم ومجموعاتهم وحالة دورة حياتهم.",
+  "cmvpGroupsDescription": "تنظيم مجموعات العملاء وعضوياتها المحدودة.",
+  "cmvpCustomerDetailDescription": "مراجعة معلومات العميل وعضوياته المعتمدة من الخادم.",
+  "cmvpCustomerFormDescription": "إدخال معلومات العميل التي يديرها الخادم.",
+  "cmvpGroupDetailDescription": "مراجعة هوية المجموعة وحالتها وأعضائها الحاليين.",
+  "cmvpGroupFormDescription": "إنشاء مجموعة عملاء أو إعادة تسميتها.",
+  "cmvpBreadcrumbCustomers": "العملاء",
+  "cmvpBreadcrumbGroups": "مجموعات العملاء",
+  "cmvpBreadcrumbDetails": "التفاصيل",
+  "cmvpBreadcrumbEdit": "تعديل",
+  "cmvpBreadcrumbCreate": "جديد",
+  "cmvpCustomersCount": "{count, plural, =0{لا يوجد عملاء} =1{عميل واحد} =2{عميلان} few{{count} عملاء} many{{count} عميلاً} other{{count} عميل}}",
+  "@cmvpCustomersCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpGroupsCount": "{count, plural, =0{لا توجد مجموعات} =1{مجموعة واحدة} =2{مجموعتان} few{{count} مجموعات} many{{count} مجموعة} other{{count} مجموعة}}",
+  "@cmvpGroupsCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpMembersCount": "{count, plural, =0{لا يوجد أعضاء} =1{عضو واحد} =2{عضوان} few{{count} أعضاء} many{{count} عضواً} other{{count} عضو}}",
+  "@cmvpMembersCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpMoreActions": "إجراءات إضافية",
+  "cmvpOpenActions": "فتح إجراءات الصف",
+  "cmvpSelectRow": "تحديد الصف",
+  "cmvpRemoveGroup": "إزالة المجموعة",
+  "cmvpInformationSection": "معلومات العميل",
+  "cmvpPhoneSection": "أرقام الهواتف",
+  "cmvpGroupsSection": "مجموعات العملاء",
+  "cmvpNotesSection": "ملاحظات",
+  "cmvpLifecycleSection": "دورة الحياة",
+  "cmvpGeneratedNumberHint": "يتم إنشاء رقم العميل من الخادم.",
+  "cmvpCreatedAt": "تاريخ الإنشاء",
+  "cmvpAbsenceValue": "غير متاح",
+  "cmvpManageGroups": "إدارة المجموعات",
+  "cmvpGroupName": "اسم المجموعة",
+  "cmvpMemberSearch": "البحث في الأعضاء",
+  "cmvpNoMembers": "لا يوجد أعضاء في هذه المجموعة.",
+  "cmvpNoCandidates": "لم يتم العثور على عملاء مؤهلين.",
+  "cmvpCandidateSearch": "البحث في العملاء المؤهلين",
+  "cmvpSelectedCount": "{count, plural, =0{إضافة أعضاء} =1{إضافة عضو واحد} =2{إضافة عضوين} few{إضافة {count} أعضاء} many{إضافة {count} عضواً} other{إضافة {count} عضو}}",
+  "@cmvpSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpAddMembersDialogTitle": "إضافة أعضاء",
+  "cmvpConfirmRemoveMember": "إزالة العضو",
+  "cmvpLoadingCustomers": "جار تحميل العملاء",
+  "cmvpLoadingGroups": "جار تحميل مجموعات العملاء",
+  "cmvpLoadingRecord": "جار تحميل السجل",
+  "cmvpForbiddenTitle": "الوصول غير متاح",
+  "cmvpNotFoundTitle": "لم يتم العثور على السجل",
+  "cmvpRetryableTitle": "تعذر تحميل هذا العرض",
+  "cmvpNoResultsTitle": "لا توجد نتائج مطابقة",
+  "cmvpEmptyTitle": "لا توجد بيانات بعد",
+  "cmvpStateLoadingSemantics": "جار تحميل محتوى إدارة العملاء",
+  "cmvpRetryableMessage": "تحقق من الاتصال ثم حاول مرة أخرى.",
+  "cmvpNoResultsMessage": "حاول تغيير البحث أو مسح عوامل التصفية.",
+  "cmvpEmptyCustomersMessage": "أضف العميل الأول للبدء.",
+  "cmvpEmptyGroupsMessage": "أنشئ المجموعة الأولى للبدء.",
+  "cmvpForbiddenMessage": "ليس لديك صلاحية عرض هذا المحتوى.",
+  "cmvpNotFoundMessage": "السجل المطلوب لم يعد متاحاً.",
+  "cmvpSubmitting": "جار الحفظ",
+  "cmvpAddingMembers": "جار إضافة الأعضاء",
+  "cmvpRemovingMember": "جار إزالة العضو",
+  "cmvpDiscardChangesMessage": "ستفقد التغييرات غير المحفوظة.",
+  "cmvpDialogCancel": "إلغاء",
+  "cmvpDialogConfirm": "تأكيد",
+  "cmvpMemberRemoveConsequence": "ستتم إزالة هذا العضو من المجموعة.",
+  "cmvpGroupLifecycleMessage": "ستبقى المجموعة متاحة في السجلات التاريخية."
+  ,"cmvpOrders": "الطلبات"
+  ,"cmvpOrderHistory": "طلبات العميل"
+  ,"cmvpFromDate": "من تاريخ"
+  ,"cmvpToDate": "إلى تاريخ"
+  ,"cmvpBranch": "الفرع"
+  ,"cmvpAllBranches": "كل الفروع"
+  ,"cmvpOrderStatus": "حالة الطلب"
+  ,"cmvpPaymentStatus": "حالة الدفع"
+  ,"cmvpOrderNumber": "رقم الطلب"
+  ,"cmvpOrderDateTime": "التاريخ والوقت"
+  ,"cmvpOrderTotal": "الإجمالي"
+  ,"cmvpOrderStatusCompleted": "مكتمل"
+  ,"cmvpOrderStatusHeld": "قيد التحضير"
+  ,"cmvpOrderStatusCancelled": "ملغي"
+  ,"cmvpOrderStatusDraft": "مسودة"
+  ,"cmvpPaymentStatusPaid": "مدفوع"
+  ,"cmvpPaymentStatusUnpaid": "غير مدفوع"
+  ,"cmvpPaymentStatusPartiallyRefunded": "مسترد جزئياً"
+  ,"cmvpPaymentStatusRefunded": "مسترد"
+  ,"cmvpNoOrders": "لا توجد طلبات."
+  ,"cmvpOrdersShowing": "عرض {start}–{end} من {total}"
+  ,"@cmvpOrdersShowing": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}
+  ,"cmvpOverview": "نظرة عامة"
+  ,"cmvpTotalOrders": "إجمالي الطلبات"
+  ,"cmvpTotalSpending": "إجمالي الإنفاق"
+  ,"cmvpAverageOrderValue": "متوسط قيمة الطلب"
+  ,"cmvpLastVisit": "آخر زيارة"
+  ,"cmvpRecentOrders": "آخر الطلبات"
+  ,"cmvpViewAllOrders": "عرض جميع الطلبات",
+  "expensesReportTitle": "المصروفات",
+  "expensesReportSubtitle": "تحليل المصروفات التشغيلية حسب الفئة والفرع والفترة الزمنية.",
+  "expensesReportAllCategories": "كل الفئات",
+  "expensesReportAllStatuses": "كل الحالات",
+  "expensesReportExportTooltip": "سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.",
+  "expensesReportTotal": "إجمالي المصروفات",
+  "expensesReportPosted": "المصروفات المرحلة",
+  "expensesReportPending": "المصروفات المعلقة",
+  "expensesReportAverageDaily": "متوسط المصروف اليومي",
+  "expensesReportRatio": "نسبة المصروفات إلى الإجمالي",
+  "expensesReportLargestCategory": "أكبر فئة مصروفات",
+  "expensesReportTrend": "اتجاه المصروفات",
+  "expensesReportByCategory": "المصروفات حسب الفئة",
+  "expensesReportLargest": "أكبر المصروفات",
+  "expensesReportBranchComparison": "مقارنة مصروفات الفروع",
+  "expensesReportPeriodComparison": "مقارنة بالفترة السابقة",
+  "expensesReportTable": "جدول المصروفات",
+  "expensesReportDate": "التاريخ",
+  "expensesReportExpense": "المصروف",
+  "expensesReportCategory": "الفئة",
+  "expensesReportBranch": "الفرع",
+  "expensesReportPayee": "المستفيد",
+  "expensesReportPaymentMethod": "طريقة الدفع",
+  "expensesReportAmount": "المبلغ",
+  "expensesReportStatus": "الحالة",
+  "expensesReportNetSales": "الإجمالي",
+  "expensesReportExpenseSales": "المصروفات / المبيعات",
+  "expensesReportCompanyWide": "على مستوى الشركة",
+  "expensesReportUnavailable": "غير متاح",
+  "expensesReportNoExpenses": "لا توجد مصروفات ضمن الفترة المحددة.",
+  "expensesReportNoCategories": "لا توجد بيانات مصروفات حسب الفئة.",
+  "expensesReportNoBranches": "لا توجد بيانات كافية لمقارنة الفروع.",
+  "expensesReportNoLargest": "لا توجد مصروفات لعرضها.",
+  "expensesReportError": "تعذّر تحميل تقرير المصروفات.",
+  "expensesReportCurrentPeriod": "الفترة الحالية",
+  "expensesReportPreviousPeriod": "الفترة السابقة",
+  "expensesReportDifference": "الفرق",
+  "expensesReportDraft": "مسودة",
+  "expensesReportPendingApproval": "معلّق للاعتماد",
+  "expensesReportApproved": "معتمد",
+  "expensesReportPaid": "مدفوع",
+  "expensesReportRejected": "مرفوض",
+  "expensesReportReversed": "معكوس",
+  "expensesReportComparisonUnavailable": "المقارنة غير متاحة",
+  "expensesReportPercentOfTotal": "من الإجمالي",
+  "cashierHomeTitle": "الرئيسية",
+  "cashierDashboardTitle": "عمليات الكاشير",
+  "cashierDashboardSubtitle": "كل ما تحتاجه لإدارة ورديتك على نقطة البيع.",
+  "cashierBranchLabel": "الفرع",
+  "cashierNameLabel": "الكاشير",
+  "cashierShiftLabel": "الوردية",
+  "cashierShiftOpenedAt": "بدأت",
+  "cashierShiftDuration": "المدة",
+  "cashierShiftStatus": "الحالة",
+  "cashierShiftStatusOpen": "مفتوحة",
+  "cashierNoOpenShift": "لا توجد وردية مفتوحة",
+  "cashierNoOpenShiftHint": "تظهر أرقام الوردية بعد فتح وردية في هذا الفرع.",
+  "cashierScopeCurrentShift": "الوردية الحالية",
+  "cashierScopeBranch": "الفرع",
+  "cashierSectionCashAndShift": "الصندوق والوردية",
+  "cashierSectionSalesAndOrders": "المبيعات والطلبات",
+  "cashierSectionFinance": "المالية",
+  "cashierSectionInventory": "المخزون",
+  "cashierSectionQuickAccess": "وصول سريع",
+  "cashierSectionAlerts": "تنبيهات تشغيلية",
+  "cashierExpectedDrawer": "إجمالي الصندوق المتوقع",
+  "cashierExpectedDrawerHint": "مبلغ متوقع وليس فعلياً. الجرد النقدي يتم عند إغلاق الوردية.",
+  "cashierOpeningFloat": "عهدة بداية الوردية",
+  "cashierCashSales": "مبيعات نقدية",
+  "cashierReceiptVouchers": "سندات قبض نقدية",
+  "cashierPaymentVouchers": "سندات دفع نقدية",
+  "cashierCashRefunds": "مرتجعات نقدية",
+  "cashierShiftSales": "مبيعات الوردية",
+  "cashierOrderCount": "عدد الطلبات",
+  "cashierAverageOrder": "متوسط الطلب",
+  "cashierCardSales": "مبيعات بطاقة",
+  "cashierOtherMethods": "وسائل دفع أخرى",
+  "cashierDiscounts": "الخصومات",
+  "cashierRefunds": "المرتجعات",
+  "cashierOrdersActive": "نشطة",
+  "cashierOrdersHeld": "معلقة",
+  "cashierOrdersCompleted": "مكتملة",
+  "cashierPosWarehouse": "مخزن نقطة البيع",
+  "cashierItemCount": "عدد المواد",
+  "cashierLowStock": "مخزون منخفض",
+  "cashierZeroStock": "مخزون صفر",
+  "cashierNegativeStock": "مخزون سالب",
+  "cashierShiftCountStatus": "جرد الوردية",
+  "cashierShiftCountComplete": "مكتمل",
+  "cashierShiftCountPending": "غير مكتمل",
+  "cashierShiftCountNotRequired": "غير مطلوب",
+  "cashierQuickPos": "نقطة البيع",
+  "cashierQuickOrders": "الطلبات",
+  "cashierQuickDiscounts": "الخصومات",
+  "cashierQuickReceiptVoucher": "سند قبض",
+  "cashierQuickPaymentVoucher": "سند دفع",
+  "cashierQuickPurchases": "المشتريات",
+  "cashierQuickSales": "المبيعات",
+  "cashierQuickInventory": "مخزون نقطة البيع",
+  "cashierQuickLowStock": "المواد المنخفضة",
+  "cashierQuickNegativeStock": "المواد السالبة",
+  "cashierCloseShift": "إغلاق الوردية",
+  "cashierCloseShiftUnavailable": "تدفق إغلاق الوردية غير متاح في هذا التطبيق بعد.",
+  "cashierOperationsCount": "{count} عملية",
+  "cashierPendingTemplates": "{count} متبقٍ",
+  "cashierAlertNoBranch": "لا يوجد فرع تشغيلي مرتبط بهذا الحساب.",
+  "cashierAlertNoShift": "لا توجد وردية مفتوحة حالياً.",
+  "cashierAlertWarehouseMissing": "لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.",
+  "cashierAlertWarehouseAmbiguous": "يوجد أكثر من مخزن لنقطة البيع في هذا الفرع.",
+  "cashierAlertBlockingOrders": "{count} طلبات يجب إنهاؤها قبل إغلاق الوردية.",
+  "cashierAlertNegativeStock": "{count} مواد بمخزون سالب.",
+  "cashierAlertLowStock": "{count} مواد منخفضة المخزون.",
+  "cashierAlertShiftCount": "الجرد غير مكتمل.",
+  "cashierAlertsNone": "لا توجد تنبيهات تشغيلية.",
+  "cashierRetry": "إعادة المحاولة",
+  "cashierLoadError": "تعذر تحميل لوحة العمليات.",
+  "cashierInventoryTitle": "مخزون نقطة البيع",
+  "cashierInventorySubtitle": "الكميات التشغيلية للمخزن الذي تبيع منه نقطة البيع.",
+  "cashierInventorySearchHint": "ابحث بالاسم أو الرمز",
+  "cashierInventoryFilterAll": "الكل",
+  "cashierInventoryStateNormal": "طبيعي",
+  "cashierInventoryStateLow": "منخفض",
+  "cashierInventoryStateZero": "صفر",
+  "cashierInventoryStateNegative": "سالب",
+  "cashierInventoryColumnItem": "المادة",
+  "cashierInventoryColumnQuantity": "الكمية",
+  "cashierInventoryColumnState": "الحالة",
+  "cashierInventoryColumnLastMovement": "آخر حركة",
+  "cashierInventoryEmpty": "لا توجد مواد في هذا المخزن.",
+  "cashierInventoryUnavailable": "لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.",
+  "cashierInventoryError": "تعذر تحميل مخزون نقطة البيع.",
+  "discountV2PackageBundle": "حزمة / باقة",
+  "discountV2PackageRequirements": "متطلبات الباقة",
+  "discountV2AllPackageItems": "يجب أن تكون جميع عناصر الباقة موجودة في الطلب لتطبيق هذا الخصم.",
+  "discountV2RequiredQuantity": "الكمية المطلوبة",
+  "discountV2AddProduct": "إضافة منتج",
+  "discountV2SelectedCustomers": "عملاء محددون",
+  "discountV2SelectCustomers": "اختيار العملاء",
+  "discountV2Channels": "القنوات",
+  "discountV2AllChannels": "كل القنوات",
+  "discountV2SelectedChannels": "قنوات محددة",
+  "discountV2BranchChannelHelp": "تُطبق قيود الفرع والقناة معاً.",
+  "discountV2DailyLimit": "الحد اليومي لكل عميل",
+  "discountV2DailyLimitDetails": "يمكن لكل عميل استخدام هذا الخصم حتى الحد الإجمالي، وبحد يومي لكل يوم عمل.",
+  "discountV2Regenerate": "إعادة التوليد",
+  "discountV2CodeGenerationFailed": "تعذر توليد الرمز.",
+  "discountV2Retry": "إعادة المحاولة",
+  "discountV2Search": "بحث",
+  "posCustomerPoints": "{points} نقطة",
+  "@posCustomerPoints": {"placeholders": {"points": {"type": "String"}}},
+  "posWalkInCustomer": "عميل عابر",
+  "posUseWalkInCustomer": "استخدام عميل عابر",
+  "posSelectCustomer": "اختيار العميل",
+  "posSearchCustomers": "ابحث عن العملاء...",
+  "posNoCustomers": "لا يوجد عملاء.",
+  "posNoCustomerMatches": "لا توجد عملاء مطابقون.",
+  "posCreateNewCustomer": "إنشاء جديد",
+  "posCloseCustomerSelector": "إغلاق اختيار العميل",
+  "posCustomerCreateTitle": "إنشاء عميل",
+  "posCustomerGroupsLoading": "جاري تحميل المجموعات النشطة...",
+  "posCustomerGroupsEmpty": "لا توجد مجموعات نشطة.",
+  "posCustomerGroupsForbidden": "لا يمكنك تحميل مجموعات العملاء.",
+  "posCustomerGroupsRetry": "تعذر تحميل مجموعات العملاء.",
+  "posCustomerCreateForbidden": "لا يمكنك إنشاء عميل من نقطة البيع.",
+  "posCustomerCreateFailed": "تعذر إنشاء العميل. يمكنك إعادة المحاولة بأمان.",
+  "posCustomerAttachmentFailed": "تم إنشاء العميل، لكن تعذر إلحاقه بهذا الطلب. أعد المحاولة بأمان.",
+  "posCustomerSearchForbidden": "لا يمكنك البحث عن العملاء.",
+  "posCustomerSearchFailed": "البحث عن العملاء غير متاح مؤقتاً."
+,
+  "discountManual": "يدوي", "discountCode": "الرمز", "discountCoupon": "قسيمة", "discountCodeValue": "الرمز: {code}", "@discountCodeValue": {"placeholders": {"code": {"type": "String"}}},
+  "discountPercentage": "نسبة مئوية", "discountFixedAmount": "مبلغ ثابت", "discountActive": "نشط", "discountInactive": "غير نشط", "discountScheduled": "مجدول", "discountExpired": "منتهي", "discountEntireOrder": "الطلب بالكامل", "discountSelectedProducts": "المنتجات المحددة", "discountSelectedCategories": "الفئات المحددة", "discountNoConditions": "بلا شروط", "discountAlwaysValid": "صالح دائماً",
+  "discountAmountOff": "خصم {amount}", "@discountAmountOff": {"placeholders": {"amount": {"type": "String"}}}, "discountPercentOff": "خصم {value}%", "@discountPercentOff": {"placeholders": {"value": {"type": "String"}}}, "discountBundleValue": "اشترِ {quantity} واحصل على {quantity}", "@discountBundleValue": {"placeholders": {"quantity": {"type": "int"}}}, "discountUntil": "حتى {date}", "@discountUntil": {"placeholders": {"date": {"type": "String"}}}, "discountFrom": "من {date}", "@discountFrom": {"placeholders": {"date": {"type": "String"}}}, "discountDateRange": "{start} - {end}", "@discountDateRange": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "discountsTitle": "الخصومات والقسائم", "discountsSubtitle": "إدارة العروض الترويجية وقواعد التسعير", "discountsCreate": "إنشاء خصم", "discountsSearchHint": "البحث في الخصومات...", "discountsAllStatuses": "كل الحالات", "discountsAdvancedFilters": "فلاتر متقدمة", "discountsAdvancedFiltersSoon": "ستتوفر الفلاتر المتقدمة قريباً.", "discountsEmpty": "لا توجد خصومات تطابق البحث أو فلتر الحالة.", "discountsTableName": "اسم الخصم", "discountsTableType": "النوع", "discountsTableValue": "القيمة", "discountsTableConditions": "الشروط", "discountsTablePeriod": "فترة الصلاحية", "discountsTableStatus": "الحالة", "discountsTableActions": "الإجراءات", "discountsViewTooltip": "عرض الخصم", "discountsEditTooltip": "تعديل الخصم", "discountsDeactivateTooltip": "إلغاء تنشيط الخصم", "discountsActivateTooltip": "تنشيط الخصم", "discountsDeleteTooltip": "حذف الخصم", "discountsPagination": "عرض {start} إلى {end} من {total} إدخال", "@discountsPagination": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}, "discountsActiveMetric": "الخصومات النشطة", "discountsUsageMetric": "إجمالي الاستخدام هذا الشهر", "discountsSavedMetric": "القيمة التقديرية الموفرة", "discountsDeleteTitle": "حذف الخصم؟", "discountsDeleteBody": "لن يعود {name} متاحاً.", "@discountsDeleteBody": {"placeholders": {"name": {"type": "String"}}}, "discountsDeleted": "تم حذف الخصم.", "discountsDeleteFailed": "تعذر حذف الخصم.", "discountsStatusUpdated": "الخصم {status}.", "@discountsStatusUpdated": {"placeholders": {"status": {"type": "String"}}}, "discountsStatusUpdateFailed": "تعذر تحديث حالة الخصم.", "discountsUsedSaved": "استخدم {count} مرة - تم توفير {amount}", "@discountsUsedSaved": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "discountFormBasic": "المعلومات الأساسية", "discountFormName": "اسم الخصم", "discountFormApplicationMode": "وضع التطبيق", "discountFormCouponOrCode": "قسيمة / رمز", "discountFormDescription": "الوصف", "discountFormDescriptionHint": "وصف داخلي لسياسة الخصم...", "discountFormScopeValue": "النطاق والقيمة", "discountFormAppliesTo": "يطبق على", "discountFormValueType": "نوع القيمة", "discountFormValue": "القيمة", "discountFormMinSpendOptional": "الحد الأدنى للطلب (اختياري)", "discountFormMaxDiscountOptional": "الحد الأقصى للخصم (اختياري)", "discountFormQuickPercentages": "قيم نسب مئوية سريعة", "discountFormQuickFixed": "قيم ثابتة سريعة", "discountFormEligibility": "شروط الأهلية", "discountFormAllCustomers": "كل العملاء", "discountFormSelectedCustomerGroups": "مجموعات عملاء محددة", "discountFormAllPaymentMethods": "كل طرق الدفع", "discountFormSelectedPaymentMethods": "طرق دفع محددة", "discountFormAllBranches": "كل الفروع", "discountFormSelectedBranches": "فروع محددة", "discountFormCustomerGroups": "مجموعات العملاء", "discountFormSelectCustomerGroups": "اختيار مجموعات العملاء", "discountFormSelectPaymentMethods": "اختيار طرق الدفع", "discountFormSelectBranches": "اختيار الفروع", "discountFormSchedule": "الجدولة", "discountFormActiveWeekdays": "أيام الأسبوع النشطة (اختياري)", "discountFormStartDate": "تاريخ البدء", "discountFormEndDate": "تاريخ الانتهاء", "discountFormStartTime": "وقت البدء", "discountFormEndTime": "وقت الانتهاء", "discountFormOvernightHelp": "وقت انتهاء أسبق من وقت البدء يعني نافذة ليلية.", "discountFormUsageLimits": "حدود الاستخدام", "discountFormGlobalUsageOptional": "حد الاستخدام العام (اختياري)", "discountFormLifetimeUsageOptional": "حد العميل مدى الحياة (اختياري)", "discountFormUnlimited": "غير محدود", "discountFormProduct": "المنتج", "discountFormLoading": "جارٍ التحميل...", "discountFormNoOptions": "لا توجد خيارات نشطة متاحة.", "discountFormDone": "تم", "discountFormLoadTitle": "تعذر تحميل الخصم", "discountFormRetryOptions": "إعادة محاولة تحميل خيارات الاختيار", "discountFormDiscard": "تجاهل التغييرات", "discountFormSaveDraft": "حفظ كمسودة", "discountFormActivate": "تنشيط الخصم", "discountFormSummary": "الملخص", "discountFormReady": "السياسة جاهزة للمراجعة قبل التنشيط.", "discountFormNotReady": "أكمل الحقول المطلوبة قبل تنشيط هذا الخصم.", "discountFormDiscount": "الخصم", "discountFormScope": "النطاق", "discountFormBranches": "الفروع", "discountFormScheduleLabel": "الجدولة", "discountFormCustomers": "العملاء", "discountFormPackage": "الحزمة", "discountFormUsage": "الاستخدام", "discountFormAnyDay": "أي يوم", "discountFormSelectedCount": "{count} محدد", "@discountFormSelectedCount": {"placeholders": {"count": {"type": "int"}}}, "discountFormDaysSelected": "تم تحديد {count} أيام", "@discountFormDaysSelected": {"placeholders": {"count": {"type": "int"}}}, "discountFormSelectedCustomers": "{count} عملاء محددون", "@discountFormSelectedCustomers": {"placeholders": {"count": {"type": "int"}}}, "discountFormPerDay": "{count} يومياً", "@discountFormPerDay": {"placeholders": {"count": {"type": "int"}}}, "discountFormLifetime": "{count} مدى الحياة", "@discountFormLifetime": {"placeholders": {"count": {"type": "int"}}}, "discountFormUsageBoth": "{lifetime} مدى الحياة / {daily} يومياً", "@discountFormUsageBoth": {"placeholders": {"lifetime": {"type": "int"}, "daily": {"type": "int"}}}, "discountFormSavedActivated": "تم حفظ الخصم وتنشيطه.", "discountFormSaved": "تم حفظ الخصم.", "discountFormSaveFailed": "تعذر حفظ الخصم.",
+  "discountValidationName": "اسم الخصم مطلوب.", "discountValidationNonNegativeValue": "أدخل قيمة تساوي صفراً أو أكبر.", "discountValidationPercentage": "لا يمكن أن تتجاوز نسبة الخصم 100.", "discountValidationCode": "رمز مطلوب لخصومات القسائم.", "discountValidationProducts": "اختر منتجاً واحداً أو أكثر.", "discountValidationCategories": "اختر فئة واحدة أو أكثر.", "discountValidationBundle": "أضف منتج حزمة واحداً على الأقل.", "discountValidationBundleProduct": "اختر منتجاً لكل متطلب حزمة.", "discountValidationBundleUnique": "لا يمكن إضافة منتج الحزمة أكثر من مرة.", "discountValidationBundleQuantity": "يجب أن تكون كميات الحزمة أكبر من صفر.", "discountValidationGroups": "اختر مجموعة عملاء واحدة أو أكثر.", "discountValidationCustomers": "اختر عميلاً واحداً أو أكثر.", "discountValidationBranches": "اختر فرعاً واحداً أو أكثر.", "discountValidationMoney": "أدخل مبالغ نقدية صالحة.", "discountValidationNegativeMoney": "لا يمكن أن تكون المبالغ النقدية سالبة.", "discountValidationUsage": "يجب أن تكون حدود الاستخدام أرقاماً صحيحة موجبة.", "discountValidationDailyUsage": "يجب أن تكون حدود الاستخدام اليومية أرقاماً صحيحة موجبة.", "discountValidationDate": "يجب أن تستخدم التواريخ YYYY-MM-DD.", "discountValidationEndDate": "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.", "discountValidationTimesTogether": "يجب تقديم وقت البدء والانتهاء معاً.", "discountValidationTime": "يجب أن تستخدم الأوقات HH:mm.", "discountFormCreate": "إنشاء خصم", "discountFormEdit": "تعديل الخصم", "discountFormCreatePolicy": "إنشاء سياسة خصم", "discountFormEditPolicy": "تعديل سياسة خصم", "discountFormHeadingSubtitle": "إعداد نطاق السياسة وأهليتها وجدولها.", "discountCustomerEligibility": "أهلية العملاء", "discountPaymentMethods": "طرق الدفع"
+, "discountWeekdayMonday": "الاثنين", "discountWeekdayTuesday": "الثلاثاء", "discountWeekdayWednesday": "الأربعاء", "discountWeekdayThursday": "الخميس", "discountWeekdayFriday": "الجمعة", "discountWeekdaySaturday": "السبت", "discountWeekdaySunday": "الأحد", "discountPosPreview": "معاينة نقطة البيع", "discountSubtotal": "المجموع الفرعي", "discountTotal": "الإجمالي", "discountTax": "الضريبة ({percent}%)", "@discountTax": {"placeholders": {"percent": {"type": "String"}}}, "discountRequestFailed": "تعذر إكمال طلب الخصم. يرجى المحاولة مرة أخرى.", "discountCurrency": "العملة",
+  "discountChannelPos": "نقطة البيع",
+  "discountChannelWaiterApp": "تطبيق النادل",
+  "discountChannelKiosk": "الكشك",
+  "discountChannelQrOrdering": "الطلب عبر رمز QR",
+  "discountChannelDelivery": "التوصيل",
+  "discountChannelOnlineOrdering": "الطلب عبر الإنترنت",
+  "discountFormSelectedCountPlural": "{count, plural, =0{لا يوجد محدد} =1{محدد واحد} =2{محددان} few{{count} محددة} many{{count} محدداً} other{{count} محدد}}", "@discountFormSelectedCountPlural": {"placeholders": {"count": {"type": "int"}}}, "discountFormDaysSelectedPlural": "{count, plural, =0{أي يوم} =1{يوم واحد محدد} =2{يومان محددان} few{{count} أيام محددة} many{{count} يوماً محدداً} other{{count} يوم محدد}}", "@discountFormDaysSelectedPlural": {"placeholders": {"count": {"type": "int"}}}, "discountFormSelectedCustomersPlural": "{count, plural, =0{لا يوجد عملاء محددون} =1{عميل واحد محدد} =2{عميلان محددان} few{{count} عملاء محددون} many{{count} عميلاً محدداً} other{{count} عميل محدد}}", "@discountFormSelectedCustomersPlural": {"placeholders": {"count": {"type": "int"}}}, "discountFormPerDayPlural": "{count, plural, =1{مرة واحدة يومياً} =2{مرتان يومياً} few{{count} مرات يومياً} many{{count} مرة يومياً} other{{count} مرة يومياً}}", "@discountFormPerDayPlural": {"placeholders": {"count": {"type": "int"}}}, "discountFormLifetimePlural": "{count, plural, =1{مرة واحدة مدى الحياة} =2{مرتان مدى الحياة} few{{count} مرات مدى الحياة} many{{count} مرة مدى الحياة} other{{count} مرة مدى الحياة}}", "@discountFormLifetimePlural": {"placeholders": {"count": {"type": "int"}}},
+  "posApplyDiscount": "تطبيق خصم", "posCouponCode": "رمز القسيمة", "posEnterCouponCode": "أدخل رمز القسيمة", "posCouponCodeRequired": "أدخل رمز القسيمة.", "posCouponDiscount": "خصم القسيمة", "posAvailableDiscounts": "الخصومات المتاحة", "posSearchDiscounts": "البحث في الخصومات", "posNoDiscountsAvailable": "لا توجد خصومات متاحة لهذا الطلب.", "posNoDiscountsMatch": "لا توجد خصومات تطابق بحثك.", "posApply": "تطبيق", "posClose": "إغلاق", "posCancel": "إلغاء",
+  "posPayment": "الدفع", "posOrderNumber": "الطلب {number}", "@posOrderNumber": {"placeholders": {"number": {"type": "String"}}}, "posSelectPaymentMethod": "اختر طريقة الدفع", "posPaymentMethodCash": "نقداً", "posPaymentMethodCard": "بطاقة", "posPaymentMethodWallet": "محفظة", "posPaymentMethodSplit": "دفع مقسم", "posAmountReceived": "النقد المستلم", "posChangeDue": "الباقي المستحق", "posEnterAmountReceived": "أدخل النقد المستلم.", "posAmountBelowTotal": "النقد المستلم أقل من الإجمالي المستحق.", "posSplitUnavailable": "سيتوفر الدفع المقسم لاحقاً.", "posExternalTerminalPending": "سيتم ربط جهاز الدفع الخارجي لاحقاً.", "posConfirmPayment": "تأكيد الدفع", "posPaymentFailed": "تعذر إكمال الدفع. يرجى المحاولة مرة أخرى.", "posNoPaymentMethods": "لا توجد طريقة دفع فعالة مرتبطة بحساب مالي.", "posPaymentUncertain": "حالة الدفع غير مؤكدة. تحقق من حالة الدفع قبل إعادة المحاولة.", "posReceiptUnavailable": "تعذر تحميل الإيصال. يمكنك إعادة المحاولة بأمان.", "posRetryReceipt": "إعادة محاولة الإيصال", "posCheckPaymentStatus": "التحقق من حالة الدفع",
+  "posOrderTypeDineIn": "طلب محلي", "posOrderTypeTakeaway": "طلب سفري", "posOrderTypeDelivery": "توصيل", "posCurrentOrder": "الطلب الحالي", "posSubtotal": "المجموع الفرعي", "posDiscount": "خصم", "posTax": "الضريبة ({percent}%)", "@posTax": {"placeholders": {"percent": {"type": "String"}}}, "posTotal": "الإجمالي", "posRemoveDiscount": "إزالة", "posAddDiscount": "إضافة خصم", "posHoldOrder": "تعليق الطلب", "posCancelOrder": "إلغاء الطلب", "posPrint": "طباعة", "posPayAmount": "دفع {amount}", "@posPayAmount": {"placeholders": {"amount": {"type": "String"}}}, "posCompleteOrder": "إكمال الطلب", "posRemoveItem": "إزالة العنصر", "posExactAmount": "المبلغ الدقيق", "posTotalDue": "الإجمالي المستحق", "posItemCount": "{count, plural, =0{لا توجد عناصر} =1{عنصر واحد} =2{عنصران} few{{count} عناصر} many{{count} عنصراً} other{{count} عنصر}}", "@posItemCount": {"placeholders": {"count": {"type": "int"}}}, "posViewDetails": "عرض التفاصيل", "posCheckout": "الدفع",
+  "posProductOptionsUnavailable": "خيارات المنتج غير متاحة", "posRetry": "إعادة المحاولة", "posProductCustomization": "تخصيص {product}", "@posProductCustomization": {"placeholders": {"product": {"type": "String"}}}, "posVariant": "الخيار", "posSpecialInstructions": "تعليمات خاصة", "posSpecialInstructionsHint": "مثال: ساخن جداً، في كوب سفري...", "posTemperature": "درجة الحرارة", "posSize": "الحجم", "posMilkBase": "نوع الحليب", "posAddOns": "الإضافات", "posSweetness": "درجة الحلاوة", "posQuantity": "الكمية", "posAddToOrder": "إضافة إلى الطلب", "posAdding": "جارٍ الإضافة...", "posRequiredSelection": "اختر الخيارات المطلوبة.",
+  "posReceipt": "الإيصال", "posReceiptPreview": "معاينة الإيصال", "posCloseReceiptPreview": "إغلاق معاينة الإيصال", "posSendViaWhatsApp": "إرسال عبر واتساب", "posPrintReceipt": "طباعة الإيصال", "posWhatsAppPending": "ستتوفر ميزة الإرسال عبر واتساب لاحقاً.", "posPaymentCompleted": "تم الدفع", "posReceiptOrder": "الطلب:", "posReceiptCashier": "أمين الصندوق:", "posReceiptCustomer": "العميل:", "posReceiptDate": "التاريخ:", "posReceiptTime": "الوقت:", "posReceiptPaidVia": "طريقة الدفع:", "posReceiptAuthorization": "التفويض:", "posReceiptApproved": "مقبول", "posReceiptChange": "الباقي", "posReceiptNote": "ملاحظة: {note}", "@posReceiptNote": {"placeholders": {"note": {"type": "String"}}}, "posReceiptThankYou": "شكراً لزيارتكم!",
+  "posOperationFailed": "تعذر إكمال عملية نقطة البيع. يرجى المحاولة مرة أخرى.", "posHoldSucceeded": "تم تعليق الطلب بنجاح.", "posHoldRetryable": "تعذر تعليق الطلب. ما زالت السلة متاحة لإعادة المحاولة.", "posHoldUncertain": "تعذر تأكيد حالة تعليق الطلب. ما زالت السلة متاحة؛ تحقق من الطلبات قبل إعادة المحاولة.", "posMenuVersionStale": "تغيرت القائمة. حدّث قائمة نقطة البيع وراجع الطلب.", "posOpenShiftRequired": "افتح وردية قبل المتابعة.", "posOrderUnavailableForBranch": "هذا الطلب غير متاح في الفرع المحدد.", "posHeldOrderRequired": "يمكن استئناف طلب معلّق وغير مدفوع فقط.",
+  "posCustomizeItem": "تخصيص العنصر", "posRequired": "مطلوب", "posHot": "ساخن", "posIced": "مثلج", "posSmallSize": "صغير (8 أونصات)", "posMediumSize": "متوسط (12 أونصة)", "posLargeSize": "كبير (16 أونصة)", "posWholeMilk": "حليب كامل الدسم", "posOatMilk": "حليب الشوفان", "posAlmondMilk": "حليب اللوز", "posDefault": "افتراضي", "posExtraEspresso": "جرعة إسبريسو إضافية", "posCaramelSyrup": "شراب الكراميل", "posVanillaSyrup": "شراب الفانيليا", "posWhippedCream": "كريمة مخفوقة", "posProductDescriptionFallback": "مشروب كلاسيكي محضر بالإسبريسو.", "posBasePrice": "{variant} أساسي - {price}", "@posBasePrice": {"placeholders": {"variant": {"type": "String"}, "price": {"type": "String"}}}, "posSearchProducts": "البحث عن المنتجات...", "posNoItemsAvailable": "لا توجد عناصر متاحة.", "posNoCartItems": "لم تتم إضافة عناصر بعد", "posCloseCustomizationDialog": "إغلاق نافذة تخصيص المنتج"
+  ,"customerImportAction": "استيراد CSV",
+  "customerImportTitle": "استيراد العملاء من CSV",
+  "customerImportDescription": "ارفع ملف CSV لمراجعة المعاينة والتحذيرات ثم أكد الاستيراد.",
+  "customerImportSelectFile": "اختر ملف CSV",
+  "customerImportChooseAnother": "اختر ملفاً آخر",
+  "customerImportDetected": "الترميز {encoding} والفاصل {delimiter}",
+  "@customerImportDetected": {"placeholders": {"encoding": {"type": "String"}, "delimiter": {"type": "String"}}},
+  "customerImportTotal": "الإجمالي",
+  "customerImportReady": "جاهز",
+  "customerImportWarnings": "تحذيرات",
+  "customerImportRejected": "مرفوض",
+  "customerImportDuplicateCandidates": "مرشحو التكرار",
+  "customerImportCreateMissingGroups": "إنشاء المجموعات المفقودة",
+  "customerImportIssues": "مشكلات صفوف ممثلة",
+  "customerImportUnnamedRow": "صف بلا اسم",
+  "customerImportSummary": "ملخص الاستيراد",
+  "customerImportCountsSummary": "تم إنشاء {created}، وتخطي {skipped}، وفشل {failed}؛ المجموعات {groups}، العضويات {memberships}.",
+  "@customerImportCountsSummary": {"placeholders": {"created": {"type": "int"}, "skipped": {"type": "int"}, "failed": {"type": "int"}, "groups": {"type": "int"}, "memberships": {"type": "int"}}},
+  "customerImportConfirmTitle": "تأكيد استيراد العملاء",
+  "customerImportConfirmMessage": "سينشئ الخادم العملاء والعضويات وفق المعاينة. لن يتم تحديث العملاء الموجودين.",
+  "customerImportConfirmAction": "تأكيد الاستيراد",
+  "customerImportStart": "بدء الاستيراد",
+  "customerImportCompletedWithErrors": "اكتمل مع أخطاء",
+  "customerImportDownloadErrors": "تنزيل تقرير الأخطاء",
+  "customerImportValidationFailed": "تعذر التحقق من ملف CSV. تحقق من الترميز والأعمدة والحجم.",
+  "customerImportAlreadyCompleted": "اكتمل استيراد ملف CSV هذا مسبقاً. اختر معاينة جديدة قبل التأكيد.",
+  "customerImportGenericFailure": "تعذر إكمال استيراد العملاء. يرجى المحاولة بأمان.",
+  "posPrinting": "جارٍ الطباعة...",
+  "posRetryPrint": "إعادة الطباعة",
+  "posPrinterSetup": "إعداد الطابعة",
+  "posPrintOrderRequired": "لا يوجد طلب محفوظ على الخادم للطباعة.",
+  "posPrintItemsRequired": "لا يحتوي هذا الطلب على عناصر للطباعة.",
+  "posPreBillUnavailable": "تتوفر معاينة الطلب قبل الدفع فقط.",
+  "posPrintPrinterNotConfigured": "طابعة الإيصالات غير معدّة.",
+  "posPrintInvalidConfiguration": "إعدادات طابعة الإيصالات غير صالحة.",
+  "posPrintConfigurationUnavailable": "تعذر تحميل إعدادات الطابعة.",
+  "posPrintReceiptUnavailable": "تعذر تحميل إيصال الطلب المعتمد من الخادم.",
+  "posPrintRenderingFailed": "تعذر تجهيز الإيصال للطباعة.",
+  "posPrintUnreachable": "تعذر الاتصال بطابعة الإيصالات.",
+  "posPrintTimeout": "انتهت مهلة الاتصال بالطابعة.",
+  "posPrintUnsupported": "الطباعة غير متاحة على هذا الجهاز.",
+  "posPrintFailed": "فشلت الطباعة. تحقق من الطابعة ثم أعد المحاولة.",
+  "printerSetupTitle": "إعداد الطابعة",
+  "printerSetupThisDevice": "هذا الجهاز",
+  "printerSetupDescription": "قم بتهيئة طابعة الإيصالات الحرارية الشبكية المستخدمة على جهاز الويندوز أو الجهاز اللوحي هذا.",
+  "printerSetupNoActiveBranch": "لا يوجد فرع نشط محدد",
+  "printerSetupCouldNotLoadBranch": "تعذر تحميل الفرع النشط.",
+  "printerSetupCouldNotLoad": "تعذر تحميل إعدادات الطابعة.",
+  "printerSetupUseBranchDefaults": "استخدام إعدادات الفرع الافتراضية",
+  "printerSetupUsingBranchDefaults": "يتم استخدام الطابعة الافتراضية المشتركة لهذا الفرع.",
+  "printerSetupUsingLocalOverride": "يتم استخدام إعداد طابعة خاص بهذا الجهاز فقط.",
+  "printerSetupSaveDeviceSettings": "حفظ إعدادات الجهاز",
+  "printerTestPrint": "طباعة تجريبية",
+  "printerTesting": "جارٍ الطباعة...",
+  "printerRetryTestPrint": "إعادة الطباعة التجريبية",
+  "printerTestPrintSuccessful": "تمت الطباعة بنجاح",
+  "ordersTitle": "إدارة الطلبات",
+  "ordersSubtitle": "عرض وإدارة جميع الطلبات النشطة والمعلّقة والحديثة.",
+  "ordersNoMatchFilter": "لا توجد طلبات تطابق هذا الفلتر حتى الآن.",
+  "ordersPrintLater": "ستتم إضافة الطباعة لاحقاً.",
+  "ordersCopyLater": "ستتم إضافة نسخ الطلب لاحقاً.",
+  "ordersCannotResume": "لا يمكن استئناف هذا الطلب.",
+  "ordersResumeFailed": "تعذّر استئناف هذا الطلب. حاول مرة أخرى.",
+  "ordersCancelledDone": "تم إلغاء الطلب.",
+  "ordersCancelFailed": "تعذّر إلغاء هذا الطلب.",
+  "ordersCheckStatus": "فحص الحالة",
+  "ordersCancellationConfirmed": "تم تأكيد إلغاء الطلب.",
+  "ordersStillActiveRetryCancel": "الطلب ما زال نشطاً. أعد محاولة الإلغاء بشكل صريح.",
+  "ordersPaymentRecordFailed": "تعذّر تسجيل الدفعة. حاول مرة أخرى.",
+  "ordersPaymentConfirmed": "تم تأكيد الدفع.",
+  "ordersPaymentConfirmedNoReceipt": "تم تأكيد الدفع لكن الإيصال غير متاح.",
+  "ordersRetryReceipt": "إعادة محاولة الإيصال",
+  "ordersRefundRecorded": "تم تسجيل الاسترداد.",
+  "ordersRefundRecordFailed": "تعذّر تسجيل الاسترداد. تحقق من الطلب قبل إعادة المحاولة.",
+  "ordersPrevious": "السابق",
+  "ordersNext": "التالي",
+  "ordersPageOf": "صفحة {current} من {last}",
+  "@ordersPageOf": {"placeholders": {"current": {"type": "int"}, "last": {"type": "int"}}},
+  "ordersTotalCount": "{total, plural, =1{طلب واحد} =2{طلبان} few{{total} طلبات} many{{total} طلبًا} other{{total} طلب}}",
+  "@ordersTotalCount": {"placeholders": {"total": {"type": "int"}}},
+  "ordersReplaceCartTitle": "استبدال سلة نقطة البيع الحالية؟",
+  "ordersReplaceCartBody": "استئناف هذا الطلب المعلّق سيستبدل سلة نقطة البيع الحالية، وسيتم تجاهل أي تغييرات غير محفوظة.",
+  "ordersKeepCart": "إبقاء السلة الحالية",
+  "ordersReplaceAndResume": "استبدال واستئناف",
+  "ordersCancelOrderTitle": "إلغاء الطلب؟",
+  "ordersCancelOrderBody": "إلغاء {number}؟ لا يمكن التراجع عن هذا الإجراء.",
+  "@ordersCancelOrderBody": {"placeholders": {"number": {"type": "String"}}},
+  "ordersKeepOrder": "إبقاء الطلب",
+  "ordersCancelOrder": "إلغاء الطلب",
+  "ordersCancelOrderSubmitting": "جارٍ إلغاء الطلب",
+  "ordersStatusPreparing": "قيد التحضير",
+  "ordersStatusHeld": "معلّق",
+  "ordersStatusReady": "جاهز",
+  "ordersStatusPaid": "مدفوع",
+  "ordersStatusCompleted": "مكتمل",
+  "ordersStatusCancelled": "ملغى",
+  "ordersStatusRefunded": "مُسترد",
+  "ordersStatusPartiallyRefunded": "استرداد جزئي",
+  "ordersFilterActive": "الطلبات النشطة",
+  "ordersFilterHeld": "الطلبات المعلّقة",
+  "ordersFilterDineIn": "داخل المحل",
+  "ordersFilterTakeaway": "سفري",
+  "ordersActionResume": "استئناف",
+  "ordersActionPay": "دفع",
+  "ordersActionCancel": "إلغاء",
+  "ordersActionDetails": "التفاصيل",
+  "ordersActionSemantics": "إجراء الطلب: {action}",
+  "@ordersActionSemantics": {"placeholders": {"action": {"type": "String"}}},
+  "ordersCustomer": "العميل",
+  "ordersWalkInCustomer": "عميل عابر",
+  "ordersWalkInInitials": "عع",
+  "ordersWalkIn": "عميل عابر",
+  "ordersOrderItems": "عناصر الطلب",
+  "ordersNoLineItems": "لا توجد عناصر",
+  "ordersNote": "ملاحظة: {note}",
+  "@ordersNote": {"placeholders": {"note": {"type": "String"}}},
+  "ordersItemFallback": "عنصر",
+  "ordersItemsOne": "{count} عنصر",
+  "@ordersItemsOne": {"placeholders": {"count": {"type": "String"}}},
+  "ordersItemsMany": "{count} عناصر",
+  "@ordersItemsMany": {"placeholders": {"count": {"type": "String"}}},
+  "ordersTotals": "الإجماليات",
+  "ordersSubtotal": "المجموع الفرعي",
+  "ordersTax": "الضريبة ({percent}%)",
+  "@ordersTax": {"placeholders": {"percent": {"type": "String"}}},
+  "ordersTip": "البقشيش (15%)",
+  "ordersRefundedLabel": "مُسترد",
+  "ordersTotal": "الإجمالي",
+  "ordersCloseDetails": "إغلاق تفاصيل الطلب",
+  "ordersPrintTooltip": "طباعة الطلب",
+  "ordersCopyTooltip": "نسخ الطلب",
+  "ordersResumeInPos": "استئناف في نقطة البيع",
+  "ordersDisabledSemantics": "{label} (غير متاح)",
+  "@ordersDisabledSemantics": {"placeholders": {"label": {"type": "String"}}},
+  "ordersPay": "دفع",
+  "ordersRefund": "استرداد",
+  "ordersPaymentTitle": "الدفع",
+  "ordersPaymentAuth": "{status} - رمز التفويض: {auth}",
+  "@ordersPaymentAuth": {"placeholders": {"status": {"type": "String"}, "auth": {"type": "String"}}},
+  "ordersRefundAmountLine": "استرداد {amount}",
+  "@ordersRefundAmountLine": {"placeholders": {"amount": {"type": "String"}}},
+  "ordersNoPaymentYet": "لم تُسجَّل أي دفعة بعد.",
+  "ordersMethodWallet": "محفظة",
+  "ordersMethodShamCash": "شام كاش",
+  "ordersMethodSplit": "دفع مقسّم",
+  "ordersPaymentStatusPending": "قيد الانتظار",
+  "ordersPaymentStatusCompleted": "مكتمل",
+  "ordersPaymentStatusFailed": "فشل",
+  "ordersPaymentStatusApproved": "موافق عليه",
+  "ordersPaymentStatusVoided": "ملغى",
+  "ordersPaymentStatusRefunded": "مُسترد",
+  "ordersTimeline": "السجل الزمني",
+  "ordersBackendEvent": "حدث في النظام",
+  "ordersEventCreated": "تم إنشاء الطلب",
+  "ordersEventHeld": "تم تعليق الطلب",
+  "ordersEventClosed": "تم إغلاق الطلب",
+  "ordersEventRefundCompleted": "تم الاسترداد",
+  "ordersEventPaymentReceived": "تم استلام الدفعة",
+  "ordersEventCompleted": "اكتمل الطلب",
+  "ordersEventReady": "الطلب جاهز",
+  "ordersEventPreparing": "الطلب قيد التحضير",
+  "ordersAm": "ص",
+  "ordersPm": "م",
+  "ordersJustNow": "الآن",
+  "ordersMinutesAgo": "قبل {n} د",
+  "@ordersMinutesAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersHoursAgo": "قبل {n} س",
+  "@ordersHoursAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersDaysAgo": "قبل {n} ي",
+  "@ordersDaysAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersRefundReasonCustomerRequest": "طلب العميل",
+  "ordersRefundReasonWrongItem": "صنف خاطئ",
+  "ordersRefundReasonQuality": "مشكلة في جودة الصنف",
+  "ordersRefundReasonDuplicate": "دفع مكرر",
+  "ordersRefundReasonOrderCancelled": "طلب ملغى",
+  "ordersRefundReasonManagerApproved": "بموافقة المدير",
+  "ordersRefundReasonOther": "أخرى",
+  "ordersRefundTypeFull": "استرداد كامل",
+  "ordersRefundTypePartial": "استرداد جزئي",
+  "ordersRefundCustomAmount": "مبلغ مخصص",
+  "ordersRefundEnterAmount": "أدخل مبلغ الاسترداد.",
+  "ordersRefundAmountPositive": "يجب أن يكون مبلغ الاسترداد أكبر من الصفر.",
+  "ordersRefundAmountExceeds": "لا يمكن أن يتجاوز مبلغ الاسترداد الرصيد القابل للاسترداد.",
+  "ordersRefundFieldAmount": "مبلغ الاسترداد",
+  "ordersRefundFieldReason": "سبب الاسترداد",
+  "ordersRefundFieldNotes": "ملاحظات المدير (اختياري)",
+  "ordersRefundNotesHint": "أضف تفاصيل لتقرير نهاية اليوم...",
+  "ordersRefundDialogTitle": "استرداد الطلب {number}",
+  "@ordersRefundDialogTitle": {"placeholders": {"number": {"type": "String"}}},
+  "ordersRefundCloseDialog": "إغلاق نافذة الاسترداد",
+  "ordersRefundConfirm": "تأكيد الاسترداد",
+  "ordersRefundOrderTotal": "إجمالي الطلب",
+  "ordersRefundPaidVia": "طريقة الدفع",
+  "ordersRefundWarning": "تنبيه: سيؤدي هذا الإجراء إلى عكس الدفعة ولا يمكن التراجع عنه.\nيرجى التحقق من جميع التفاصيل قبل التأكيد.",
+  "ordersMsgNoActiveBranches": "لا توجد فروع نشطة متاحة.",
+  "ordersMsgPageRecoveryInvalid": "أعادت استعادة صفحة الطلبات بيانات ترقيم غير صالحة.",
+  "ordersMsgLoadFailed": "تعذّر تحميل الطلبات. تحقق من الاتصال بالخادم.",
+  "ordersMsgDetailsLoadFailed": "تعذّر تحميل تفاصيل الطلب. تحقق من الاتصال بالخادم.",
+  "ordersMsgResumeInvalidId": "لا يمكن استئناف هذا الطلب لأن معرّفه غير صالح.",
+  "ordersMsgDifferentOrder": "أعاد الخادم طلباً مختلفاً. حدّث الصفحة وحاول مرة أخرى.",
+  "ordersMsgNotInBranch": "هذا الطلب ليس ضمن الفرع المحدد.",
+  "ordersMsgOnlyHeldResume": "يمكن استئناف الطلب المعلّق غير المدفوع فقط.",
+  "ordersMsgResumeInPosFailed": "تعذّر استئناف الطلب في نقطة البيع. حاول مرة أخرى.",
+  "ordersMsgResumeConnFailed": "تعذّر استئناف هذا الطلب. تحقق من الاتصال بالخادم.",
+  "ordersMsgCancelInvalidId": "لا يمكن إلغاء هذا الطلب لأن معرّفه غير صالح.",
+  "ordersMsgCancelVerifyFailed": "تعذّر التحقق من هذا الطلب قبل الإلغاء.",
+  "ordersMsgOnlyDraftHeldCancel": "يمكن إلغاء المسودة أو الطلب المعلّق غير المدفوع فقط.",
+  "ordersMsgCancelNoChange": "تعذّر إلغاء هذا الطلب. لم يتم تأكيد أي تغيير.",
+  "ordersMsgOrderIdInvalid": "معرّف الطلب غير صالح.",
+  "ordersMsgPaymentPrepareAccess": "تعذّر تجهيز الدفع. تحقق من صلاحية الوصول إلى الطلب وحاول مرة أخرى.",
+  "ordersMsgPaymentNotReady": "الدفع غير جاهز. حدّث الطلب وحاول مرة أخرى.",
+  "ordersMsgCannotPayState": "لا يمكن دفع هذا الطلب في حالته الحالية.",
+  "ordersMsgPaymentPrepareFailed": "تعذّر تجهيز الدفع. حاول مرة أخرى.",
+  "ordersMsgPaymentNeedsBackend": "يتطلب الدفع اتصالاً موثّقاً بالخادم.",
+  "ordersMsgPaymentRecordFailed": "تعذّر تسجيل الدفعة. حاول مرة أخرى.",
+  "ordersMsgPaymentNotCompleted": "لم يكتمل الدفع. يمكنك إعادة المحاولة بأمان بنفس العملية.",
+  "ordersMsgReceiptLoadFailed": "اكتمل الدفع لكن تعذّر تحميل الإيصال.",
+  "ordersMsgPaymentSummaryMismatch": "ملخص الدفع لا يطابق الطلب المحدد.",
+  "ordersMsgNoSupportedMethod": "لا توجد طريقة دفع مدعومة لهذا الطلب.",
+  "ordersMsgPaymentUncertain": "تعذّر تأكيد حالة الدفع. تحقق من الطلب قبل إعادة المحاولة.",
+  "ordersMsgNoRefundable": "لا توجد دفعة مكتملة أو رصيد قابل للاسترداد لهذا الطلب.",
+  "ordersMsgRefundPrepareFailed": "تعذّر تجهيز الاسترداد. حاول مرة أخرى.",
+  "ordersMsgRefundRecordFailed": "تعذّر تسجيل الاسترداد. حاول مرة أخرى.",
+  "ordersMsgRefundNotFound": "لم يتم العثور على الاسترداد في الخادم. تحقق من الطلب ثم أعد المحاولة بنفس العملية.",
+  "ordersMsgRefundUncertain": "تعذّر تأكيد حالة الاسترداد. تحقق من الطلب قبل إعادة المحاولة.",
+  "ordersMsgCancelUncertain": "تعذّر تأكيد حالة الإلغاء. افحص الحالة قبل إعادة المحاولة.",
+  "ordersMsgCancelUnresolved": "حالة الإلغاء غير محسومة. افحص الحالة قبل إعادة المحاولة.",
+  "ordersMsgStillActive": "الطلب ما زال نشطاً وغير مدفوع. افحص الحالة ثم أعد محاولة الإلغاء بشكل صريح.",
+  "posSelectOrderType": "نوع الطلب",
+  "posOrderTypeRequired": "اختر نوع الطلب للمتابعة.",
+  "posSelectDeliveryCompany": "شركة التوصيل",
+  "posDeliveryCompanyRequired": "اختر شركة التوصيل.",
+  "posNoDeliveryCompanies": "لا توجد شركة توصيل مُعدّة. اطلب من المدير إضافتها من طرق الدفع.",
+  "posDeliveryPaymentHint": "يُسجَّل المبلغ على حساب شركة التوصيل.",
+  "posDeliveryOwn": "توصيل خاص",
+  "posDeliveryCollection": "التحصيل",
+  "posDeliveryCashNow": "نقداً الآن",
+  "posDeliveryOnAccount": "آجل على حساب الشركة"
+}

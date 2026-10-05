@@ -16,10 +16,10 @@ use Illuminate\Validation\ValidationException;
  * money from a customer against Accounts Receivable (ADR-04). Like
  * SupplierPaymentService, it records money already received, so it is
  * created and posted in one atomic step — there is no draft lifecycle.
- * Phase 3 requires full allocation of the payment amount to open invoices
- * (see docs/sales SALES_ARCHITECTURE_DECISIONS.md §12): there is no concept
- * of unapplied customer credit yet, so an unallocated remainder is rejected
- * outright rather than silently held as credit.
+ * Any part of the payment not allocated to an invoice (an overpayment, or a
+ * payment with no open invoice) is kept as an advance: it is credited to the
+ * customer's own account in the same journal, which is exactly what the
+ * wallet balance (PartyAccountService::walletState) is derived from.
  *
  * It creates exactly one journal — Dr cash/bank, Cr Accounts Receivable —
  * and never touches Sales Revenue, Sales Tax, COGS or Inventory. Those
@@ -77,6 +77,7 @@ final class CustomerPaymentService
                 }
 
                 $allocations = $this->validatedAllocations($tenantId, (int) $customer->id, $data['allocations'] ?? [], $amountCents, lock: true);
+                $advanceCents = $amountCents - (int) $allocations->sum('amountCents');
                 $arCode = $this->partyAccounts->codeForCustomer($tenantId, (int) $customer->id, $actorId);
 
                 $now = now();
@@ -87,6 +88,7 @@ final class CustomerPaymentService
                     'payment_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId)),
                     'payment_date' => $data['paymentDate'],
                     'amount' => Money::decimal($amountCents),
+                    'advance_amount' => Money::decimal($advanceCents),
                     'payment_method_id' => $method->id,
                     'financial_location_id' => $location->id,
                     'shift_id' => $cashSource?->shift?->id,
@@ -119,13 +121,15 @@ final class CustomerPaymentService
                     'description' => "تحصيل من عميل — {$customer->name}",
                     'lines' => [
                         ['accountCode' => $location->account_code, 'debit' => Money::decimal($amountCents), 'description' => 'نقد أو بنك مستلم', 'financialLocationId' => $location->id],
-                        ['accountCode' => $arCode, 'credit' => Money::decimal($amountCents), 'description' => 'الذمم المدينة'],
+                        // Same account either way: the advance simply leaves the customer with a credit balance (wallet funds).
+                        ...($advanceCents < $amountCents ? [['accountCode' => $arCode, 'credit' => Money::decimal($amountCents - $advanceCents), 'description' => 'الذمم المدينة']] : []),
+                        ...($advanceCents > 0 ? [['accountCode' => $arCode, 'credit' => Money::decimal($advanceCents), 'description' => 'رصيد مقدّم في محفظة العميل']] : []),
                     ],
                 ], $actorId);
 
                 DB::table('customer_payments')->where('id', $paymentId)->update(['journal_entry_id' => $journalId, 'updated_at' => now()]);
                 $result = $this->find($tenantId, $paymentId);
-                $this->audit->record($request, $tenantId, 'sales.customer_payment.posted', 'customer_payment', $paymentId, [], ['paymentNumber' => $result->payment_number, 'amount' => $result->amount, 'journalEntryId' => $journalId, 'allocations' => $allocations->map(fn (array $l) => ['invoiceId' => $l['invoiceId'], 'amount' => Money::decimal($l['amountCents'])])->values()->all()], $result->branch_id, $actorId);
+                $this->audit->record($request, $tenantId, 'sales.customer_payment.posted', 'customer_payment', $paymentId, [], ['paymentNumber' => $result->payment_number, 'amount' => $result->amount, 'advanceAmount' => $result->advance_amount, 'journalEntryId' => $journalId,'allocations' => $allocations->map(fn (array $l) => ['invoiceId' => $l['invoiceId'], 'amount' => Money::decimal($l['amountCents'])])->values()->all()], $result->branch_id, $actorId);
 
                 return $result;
             });
@@ -180,6 +184,7 @@ final class CustomerPaymentService
         return [
             'customer' => ['id' => (int) $customer->id, 'name' => $customer->name],
             'amount' => Money::decimal($amountCents),
+            'advanceAmount' => Money::decimal($amountCents - (int) $allocations->sum('amountCents')),
             'settlementAccount' => ['id' => (int) $location->id, 'code' => $location->account_code, 'name' => $location->name],
             'accounting' => ['debitAccountCode' => $location->account_code, 'debitAmount' => Money::decimal($amountCents), 'creditAccountCode' => $arCode, 'creditAmount' => Money::decimal($amountCents)],
             'allocations' => $lines,
@@ -295,25 +300,21 @@ final class CustomerPaymentService
     /**
      * Shared by pay() (lock: true, inside the posting transaction) and
      * preview() (lock: false, no transaction) so both apply exactly the
-     * same rules: unique invoices, allocations summing to the payment
-     * amount exactly (§12 — no unapplied credit in Phase 3), same
-     * customer (§13), posted invoice only (§14), and never beyond the
-     * invoice's remaining balance (§11).
+     * same rules: unique invoices, allocations never exceeding the payment
+     * amount (the remainder is an advance that stays as credit on the
+     * customer's account), same customer (§13), posted invoice only (§14),
+     * and never beyond the invoice's remaining balance (§11).
      */
     private function validatedAllocations(int $tenantId, int $customerId, array $input, int $amountCents, bool $lock): Collection
     {
         $allocations = collect($input)
             ->map(fn (array $line) => ['invoiceId' => (int) ($line['invoiceId'] ?? $line['salesInvoiceId'] ?? 0), 'amountCents' => Money::cents($line['amount'])])
             ->sortBy('invoiceId')->values();
-        if ($allocations->isEmpty()) {
-            throw ValidationException::withMessages(['allocations' => 'يجب توزيع الدفعة على فاتورة واحدة على الأقل.']);
-        }
         if ($allocations->pluck('invoiceId')->unique()->count() !== $allocations->count()) {
             throw ValidationException::withMessages(['allocations' => 'لا يمكن توزيع الدفعة على الفاتورة نفسها مرتين.']);
         }
-        $allocatedTotalCents = $allocations->sum('amountCents');
-        if ($allocatedTotalCents !== $amountCents) {
-            throw ValidationException::withMessages(['allocations' => 'يجب أن يساوي مجموع التوزيعات مبلغ الدفعة تماماً.']);
+        if ($allocations->sum('amountCents') > $amountCents) {
+            throw ValidationException::withMessages(['allocations' => 'مجموع التوزيعات يتجاوز مبلغ الدفعة.']);
         }
 
         foreach ($allocations as $line) {

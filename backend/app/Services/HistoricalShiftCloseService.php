@@ -147,13 +147,13 @@ final class HistoricalShiftCloseService
         if ($continuation && $transfer) {
             DB::table('shift_cash_movements')->insert([
                 'tenant_id' => $tenant, 'branch_id' => $shift->branch_id, 'shift_id' => $continuation,
-                'kind' => 'withdrawal', 'amount' => Money::decimal($counted - Money::cents($shift->closing_float_amount)),
+                'kind' => 'withdrawal', 'amount' => Money::decimal(max(0, $counted - Money::cents($shift->closing_float_amount))),
                 'description' => 'تحويل إغلاق الوردية '.$shift->shift_number,
                 'source_type' => 'historical_shift_close_transfer', 'source_id' => $transfer,
                 'created_by' => $shift->user_id, 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
-        $metadata['transferAmount'] = Money::decimal($counted - Money::cents($shift->closing_float_amount));
+        $metadata['transferAmount'] = Money::decimal(max(0, $counted - Money::cents($shift->closing_float_amount)));
         $snapshot['identity']['lifecycle'] = 'closed';
         $snapshot['identity']['closedAt'] = $period->end->subSecond()->toIso8601String();
         $snapshot['identity']['closedBy'] = $snapshot['identity']['cashierName'];

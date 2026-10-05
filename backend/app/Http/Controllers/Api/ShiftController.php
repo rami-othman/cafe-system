@@ -6,6 +6,7 @@ use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
 use App\Services\CashVarianceService;
+use App\Services\CashTransferService;
 use App\Services\HistoricalShiftCloseService;
 use App\Services\ShiftClosePeriod;
 use App\Services\ShiftClosePreviewService;
@@ -120,11 +121,11 @@ class ShiftController extends Controller
     public function open(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)], 'userId' => ['prohibited'], 'openingCash' => ['required', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000']]);
+        $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)], 'userId' => ['prohibited'], 'openingCash' => ['required', 'numeric', 'min:0'], 'fundOpeningCash' => ['sometimes', 'boolean'], 'note' => ['nullable', 'string', 'max:4000']]);
         $this->branches->authorizeRequestBranch($request, (int) $data['branchId']);
         $actor = $request->attributes->get('auth_user');
         try {
-            $shift = DB::transaction(function () use ($tenantId, $data, $actor): object {
+            $shift = DB::transaction(function () use ($request, $tenantId, $data, $actor): object {
                 // Locks the branch (configuration) row, then only the drawer location row.
                 $config = $this->readiness->assertReady($tenantId, (int) $data['branchId'], true);
                 $drawer = $config['drawer'];
@@ -132,6 +133,22 @@ class ShiftController extends Controller
                     throw ValidationException::withMessages(['branchId' => __('shifts.drawer_has_open_shift')]);
                 }
                 $ledgerCash = $this->readiness->drawerLedgerBalance($tenantId, $drawer);
+                $openingCents = Money::cents($data['openingCash'], 'openingCash');
+                $ledgerCents = Money::cents($ledgerCash);
+                if (($data['fundOpeningCash'] ?? false) && $ledgerCents >= 0 && $openingCents > $ledgerCents) {
+                    $safe = $this->readiness->destinationLocation($tenantId, (int) $data['branchId'], (int) $config['destination']->id, true);
+                    $amount = $openingCents - $ledgerCents;
+                    if (! $safe || Money::cents($this->readiness->drawerLedgerBalance($tenantId, $safe)) < $amount) {
+                        throw ValidationException::withMessages(['openingCash' => 'رصيد صندوق تسليم النقدية لا يكفي لتسليم العهدة.']);
+                    }
+                    app(CashTransferService::class)->create($request, $tenantId, [
+                        'branchId' => (int) $data['branchId'], 'fromFinancialLocationId' => (int) $safe->id,
+                        'toFinancialLocationId' => (int) $drawer->id, 'amount' => Money::decimal($amount),
+                        'transferDate' => \App\Support\BranchLocalDate::today((int) $data['branchId']),
+                        'description' => 'تسليم عهدة افتتاح الوردية',
+                    ], (int) $actor->id);
+                    $ledgerCash = $this->readiness->drawerLedgerBalance($tenantId, $drawer);
+                }
                 if (Money::cents($data['openingCash'], 'openingCash') !== Money::cents($ledgerCash)) {
                     throw ValidationException::withMessages(['openingCash' => __('shifts.opening_cash_mismatch', ['ledger' => $ledgerCash])]);
                 }
@@ -292,7 +309,7 @@ class ShiftController extends Controller
                         throw ValidationException::withMessages(['barCountLines' => 'الكمية المحسوبة لا يمكن أن تكون سالبة.']);
                     }
                 }
-                $this->counts->upsertLine($tenant, $countId, ['itemId' => $line['inventoryItemId'], 'countedQuantity' => (string) $line['counted']], $actorId);
+                $this->counts->upsertLine($tenant, $countId, ['itemId' => $line['inventoryItemId'], 'countedQuantity' => (string) $line['counted'], 'reason' => $line['reason'] ?? null], $actorId);
             }
             $this->counts->transition($request, $tenant, $countId, 'submit', $actorId);
             $this->counts->transition($request, $tenant, $countId, 'approve', $actorId);

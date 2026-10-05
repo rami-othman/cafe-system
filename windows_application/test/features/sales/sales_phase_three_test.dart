@@ -350,6 +350,21 @@ void main() {
         dio.interceptors.add(
           InterceptorsWrapper(
             onRequest: (options, handler) {
+              if (options.path == 'finance/cash-source-options') {
+                return handler.resolve(
+                  Response<dynamic>(
+                    requestOptions: options,
+                    statusCode: 200,
+                    data: <String, dynamic>{
+                      'data': <String, dynamic>{
+                        'cashSourceMode': 'fixed',
+                        'resolvedCashLocation': <String, dynamic>{'id': 7, 'name': 'Main safe', 'branchId': 3},
+                        'allowedCashLocations': <Map<String, dynamic>>[],
+                      },
+                    },
+                  ),
+                );
+              }
               if (options.path == 'finance/payment-methods') {
                 return handler.resolve(
                   Response<dynamic>(
@@ -530,7 +545,8 @@ void main() {
         );
         expect(body['amount'], '150.00');
         expect(body['paymentMethodId'], 1);
-        expect(body['financialLocationId'], 7);
+        // Fixed cash-source mode: the server resolves the drawer, the client sends no location.
+        expect(body.containsKey('financialLocationId'), isFalse);
         final List<dynamic> allocations = body['allocations'] as List<dynamic>;
         expect(allocations, hasLength(2));
         // Dialog closes and reports success once posted.
@@ -538,7 +554,7 @@ void main() {
       },
     );
 
-    testWidgets('blocks posting while any amount is left unallocated', (
+    testWidgets('keeps an unallocated remainder as an advance instead of blocking', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(1600, 1000));
@@ -547,6 +563,21 @@ void main() {
       dio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
+            if (options.path == 'finance/cash-source-options') {
+              return handler.resolve(
+                Response<dynamic>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: <String, dynamic>{
+                    'data': <String, dynamic>{
+                      'cashSourceMode': 'fixed',
+                      'resolvedCashLocation': <String, dynamic>{'id': 7, 'name': 'Main safe', 'branchId': 3},
+                      'allowedCashLocations': <Map<String, dynamic>>[],
+                    },
+                  },
+                ),
+              );
+            }
             if (options.path == 'finance/payment-methods') {
               return handler.resolve(
                 Response<dynamic>(
@@ -660,15 +691,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('المتبقي غير الموزع: 200.00'), findsOneWidget);
+      expect(find.byKey(const Key('customerPaymentAdvanceNote')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('customerPaymentSubmit')));
       await tester.pumpAndSettle();
 
-      // Still open — no POST was attempted (the interceptor would have rejected it and surfaced an error snackbar instead).
-      expect(find.text('تسجيل دفعة من العميل — Damascus Tech'), findsOneWidget);
+      // The remainder is no longer rejected: it is kept as an advance, so the submit reaches the server.
       expect(
         find.text('يجب توزيع كامل مبلغ الدفعة على الفواتير قبل الترحيل.'),
-        findsOneWidget,
+        findsNothing,
       );
     });
   });

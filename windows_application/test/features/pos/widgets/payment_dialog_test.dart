@@ -146,6 +146,70 @@ void main() {
     expect(paymentResult?.changeDue, 0);
   });
 
+  testWidgets('wallet is preselected when the customer balance covers the total', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    PaymentResult? submitted;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: PaymentDialog(
+            totalDue: 24.5,
+            itemCount: 3,
+            walletBalance: 50,
+            onSubmit: (PaymentResult result) async {
+              submitted = result;
+              return PaymentCompletionStatus.retryableFailure;
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text(
+        "The customer's wallet is selected because it covers this order (balance 50 SYP).",
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Confirm Payment'));
+    await tester.pump();
+    expect(submitted?.method, PaymentMethod.wallet);
+  });
+
+  testWidgets('wallet is not preselected when the balance is too low', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: PaymentDialog(totalDue: 24.5, itemCount: 3, walletBalance: 10),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('wallet is selected'), findsNothing);
+    expect(find.text('Change Due'), findsOneWidget);
+  });
+
   testWidgets('split payment is disabled for now', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(

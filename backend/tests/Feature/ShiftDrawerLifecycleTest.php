@@ -258,6 +258,44 @@ final class ShiftDrawerLifecycleTest extends TestCase
 
     // ---- A2.5 automatic close -----------------------------------------------
 
+    public function test_empty_drawer_closes_without_a_transfer_even_with_a_configured_float(): void
+    {
+        $this->configureClose($this->branchA, $this->safe(), '500.00');
+        $shift = $this->open($this->branchA, '0.00')->assertCreated()->json('data.id');
+        $preview = $this->getJson("/api/v1/shifts/{$shift}/close-preview", $this->headers)->assertOk();
+        $preview->assertJsonPath('data.period.canClose', true)->assertJsonPath('data.period.transferAmount', '0.00');
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '0.00'], $this->headers)
+            ->assertOk()->assertJsonPath('data.closeTransferId', null);
+        $this->assertSame('closed', DB::table('shifts')->where('id', $shift)->value('status'));
+        $this->assertSame('0.00', $this->ledger($this->branchA));
+    }
+
+    public function test_opening_custody_is_funded_once_only_when_explicitly_requested(): void
+    {
+        $safeAccount = DB::table('financial_locations')->where('id', $this->safe())->value('financial_account_id');
+        app(\App\Services\AccountingPostingService::class)->post(request(), $this->tenant, [
+            'sourceType' => 'opening_balance', 'sourceId' => $this->safe(), 'sourceEvent' => 'TEST_SAFE_FUNDED',
+            'lines' => [
+                ['accountCode' => DB::table('financial_accounts')->where('id', $safeAccount)->value('code'), 'debit' => '500.00', 'financialLocationId' => $this->safe()],
+                ['accountCode' => '3000', 'credit' => '500.00'],
+            ],
+        ], $this->owner->id);
+        $this->open($this->branchA, '500.00')->assertUnprocessable();
+        $payload = ['branchId' => $this->branchA, 'openingCash' => '500.00', 'fundOpeningCash' => true];
+        $this->postJson('/api/v1/shifts/current', $payload, $this->headers)->assertCreated();
+        $this->assertSame('500.00', $this->ledger($this->branchA));
+        $this->postJson('/api/v1/shifts/current', $payload, $this->headers)->assertUnprocessable();
+        $this->assertSame(1, DB::table('cash_transfers')->where('to_financial_location_id', $this->drawer($this->branchA))->count());
+    }
+
+    public function test_insufficient_safe_balance_rolls_back_opening_custody(): void
+    {
+        $this->postJson('/api/v1/shifts/current', ['branchId' => $this->branchA, 'openingCash' => '500.00', 'fundOpeningCash' => true], $this->headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('openingCash');
+        $this->assertSame(0, DB::table('shifts')->where('branch_id', $this->branchA)->count());
+        $this->assertSame(0, DB::table('cash_transfers')->where('to_financial_location_id', $this->drawer($this->branchA))->count());
+    }
+
     public function test_14_automatic_close_uses_the_same_close_transfer_primitive(): void
     {
         $this->configureClose($this->branchA, $this->safe(), '30.00');

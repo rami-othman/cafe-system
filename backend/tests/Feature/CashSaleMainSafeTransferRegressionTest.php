@@ -118,6 +118,28 @@ final class CashSaleMainSafeTransferRegressionTest extends TestCase
         return false;
     }
 
+    public function test_cash_sale_and_refund_follow_a_branch_drawer_with_a_different_account(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $drawer = $this->drawerId($branch);
+        $template = (array) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->first();
+        unset($template['id']);
+        $template['code'] = '139';
+        $template['name_ar'] = 'صندوق TierFour';
+        $account = DB::table('financial_accounts')->insertGetId($template);
+        DB::table('financial_locations')->where('id', $drawer)->update(['financial_account_id' => $account]);
+        $shift = $this->openShift($tenant, $branch, $headers);
+        $total = $this->cashSale($tenant, $branch, $shift, $headers, 1);
+        $order = DB::table('orders')->where('shift_id', $shift)->sole();
+        $this->assertSame($total, $this->locationBalance($drawer, $headers));
+        $this->postJson("/api/v1/orders/{$order->id}/refunds", ['type' => 'full', 'reason' => 'Cash account regression', 'idempotencyKey' => 'cash-139-refund'], $headers)->assertCreated();
+        $this->assertSame(0.0, $this->locationBalance($drawer, $headers));
+        $this->assertSame(2, DB::table('journal_entry_lines')->where('financial_account_id', $account)->where('financial_location_id', $drawer)->count());
+    }
+
     private function locationBalance(int $location, array $headers): float
     {
         return (float) $this->getJson("/api/v1/finance/cash-accounts/{$location}/transactions", $headers)

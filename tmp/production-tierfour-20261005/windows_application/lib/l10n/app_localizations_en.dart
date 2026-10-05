@@ -1,0 +1,9725 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get inventoryReportTitle => 'Inventory';
+
+  @override
+  String get inventoryReportSubtitle =>
+      'Analyze inventory value, availability, movements, waste, and count variances across locations.';
+
+  @override
+  String get inventoryReportAllLocations => 'All locations';
+
+  @override
+  String get inventoryReportAllCategories => 'All categories';
+
+  @override
+  String get inventoryReportExportTooltip =>
+      'Export will be enabled after this report is connected to a data source.';
+
+  @override
+  String get inventoryReportCurrentValue => 'Current inventory value';
+
+  @override
+  String get inventoryReportLowStock => 'Low-stock items';
+
+  @override
+  String get inventoryReportOutOfStock => 'Out-of-stock items';
+
+  @override
+  String get inventoryReportWasteValue => 'Waste value';
+
+  @override
+  String get inventoryReportCountVariance => 'Count variances';
+
+  @override
+  String get inventoryReportConsumption => 'Total consumption';
+
+  @override
+  String get inventoryReportReceived => 'Stock received';
+
+  @override
+  String get inventoryReportTransfers => 'Transfers';
+
+  @override
+  String get inventoryReportValueByLocation => 'Inventory value by location';
+
+  @override
+  String get inventoryReportMovement => 'Inventory movement';
+
+  @override
+  String get inventoryReportHealth => 'Stock health';
+
+  @override
+  String get inventoryReportLowOut => 'Low and out-of-stock items';
+
+  @override
+  String get inventoryReportConsumptionAnalysis => 'Consumption analysis';
+
+  @override
+  String get inventoryReportWasteAnalysis => 'Waste analysis';
+
+  @override
+  String get inventoryReportVariance => 'Stock-count variances';
+
+  @override
+  String get inventoryReportLocationComparison => 'Location comparison';
+
+  @override
+  String get inventoryReportExceptions => 'Inventory exceptions';
+
+  @override
+  String get inventoryReportItem => 'Item';
+
+  @override
+  String get inventoryReportCategory => 'Category';
+
+  @override
+  String get inventoryReportLocation => 'Location';
+
+  @override
+  String get inventoryReportAvailable => 'Available quantity';
+
+  @override
+  String get inventoryReportMinimum => 'Minimum level';
+
+  @override
+  String get inventoryReportUnit => 'Unit';
+
+  @override
+  String get inventoryReportStatus => 'Status';
+
+  @override
+  String get inventoryReportQuantity => 'Quantity';
+
+  @override
+  String get inventoryReportValue => 'Value';
+
+  @override
+  String get inventoryReportReason => 'Reason';
+
+  @override
+  String get inventoryReportExpected => 'Expected';
+
+  @override
+  String get inventoryReportCounted => 'Counted';
+
+  @override
+  String get inventoryReportDifference => 'Difference';
+
+  @override
+  String get inventoryReportVarianceValue => 'Variance value';
+
+  @override
+  String get inventoryReportItems => 'Items';
+
+  @override
+  String get inventoryReportAvailableStatus => 'Available';
+
+  @override
+  String get inventoryReportLowStatus => 'Low stock';
+
+  @override
+  String get inventoryReportOutStatus => 'Out of stock';
+
+  @override
+  String get inventoryReportOverstockStatus => 'Overstock';
+
+  @override
+  String get inventoryReportMatched => 'Matched';
+
+  @override
+  String get inventoryReportShortage => 'Shortage';
+
+  @override
+  String get inventoryReportOverage => 'Overage';
+
+  @override
+  String get inventoryReportNoLocations =>
+      'There are not enough locations to compare.';
+
+  @override
+  String get inventoryReportNoMovements =>
+      'There are no inventory movements for the selected period.';
+
+  @override
+  String get inventoryReportNoLowStock =>
+      'There are no low-stock items for the current filters.';
+
+  @override
+  String get inventoryReportNoWaste =>
+      'There are no waste movements for the selected period.';
+
+  @override
+  String get inventoryReportNoVariance =>
+      'There are no stock-count variances for the selected period.';
+
+  @override
+  String get inventoryReportNoExceptions =>
+      'There are no inventory exceptions requiring review.';
+
+  @override
+  String get inventoryReportError => 'Unable to load the Inventory report.';
+
+  @override
+  String get appName => 'Cafe System 618';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageArabic => 'العربية';
+
+  @override
+  String get languageSelection => 'Select language';
+
+  @override
+  String get commonSave => 'Save';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonAdd => 'Add';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonRefresh => 'Refresh';
+
+  @override
+  String get commonSearch => 'Search';
+
+  @override
+  String get commonLoading => 'Loading…';
+
+  @override
+  String get commonError => 'Something went wrong. Please try again.';
+
+  @override
+  String get errorConnectionUnavailable => 'Connection unavailable.';
+
+  @override
+  String get errorAuthenticationRequired => 'Authentication required.';
+
+  @override
+  String get errorPermissionDenied =>
+      'You do not have permission to perform this action.';
+
+  @override
+  String get errorConflict => 'This action conflicts with the current state.';
+
+  @override
+  String get errorServer => 'Something went wrong. Please try again.';
+
+  @override
+  String get commonNoData => 'No data available.';
+
+  @override
+  String get commonUnknown => 'Unknown';
+
+  @override
+  String get commonActive => 'Active';
+
+  @override
+  String get commonDeactivate => 'Deactivate';
+
+  @override
+  String get commonActivate => 'Activate';
+
+  @override
+  String get commonArchive => 'Archive';
+
+  @override
+  String get commonRestore => 'Restore';
+
+  @override
+  String get commonArchived => 'Archived';
+
+  @override
+  String get commonAll => 'All';
+
+  @override
+  String get commonInactive => 'Inactive';
+
+  @override
+  String get commonAvailable => 'Available';
+
+  @override
+  String get commonSoldOut => 'Sold out';
+
+  @override
+  String get posNoPublishedMenu =>
+      'No menu has been published for this branch yet.';
+
+  @override
+  String get posNoAvailableMenu => 'No published menu is currently available.';
+
+  @override
+  String get posNoAvailableItems => 'No available items in this section.';
+
+  @override
+  String get posUnableToLoadMenu => 'Unable to load the published menu.';
+
+  @override
+  String get posMenuRefreshRequired =>
+      'Menu data needs refresh before this order can continue.';
+
+  @override
+  String get posOfflineUsingSavedMenu => 'Offline — using saved menu';
+
+  @override
+  String get posSyncErrorUsingSavedMenu =>
+      'Unable to sync menu — using saved menu';
+
+  @override
+  String posLastSynced(String time) {
+    return 'Last synced: $time';
+  }
+
+  @override
+  String get posMenuUpdateReady =>
+      'Menu update ready — will apply after current order';
+
+  @override
+  String get posNoSavedMenu =>
+      'No saved menu available. Reconnect to load menu.';
+
+  @override
+  String get posConnectionRequiredToCompleteOrder =>
+      'Connection required to complete this order.';
+
+  @override
+  String get posMenuChangedReviewOrder => 'Menu changed — review order.';
+
+  @override
+  String get posBranchSwitchBlockedWithCart =>
+      'Finish, hold, or cancel the current order before switching branches.';
+
+  @override
+  String get posTemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get commonYes => 'Yes';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get navigationDashboard => 'Dashboard';
+
+  @override
+  String get navigationPos => 'POS';
+
+  @override
+  String get navigationOrders => 'Orders';
+
+  @override
+  String get navigationCustomers => 'Customers';
+
+  @override
+  String get navigationDiscounts => 'Discounts';
+
+  @override
+  String get navigationMenuManagement => 'Menu Management';
+
+  @override
+  String get navigationInventory => 'Inventory';
+
+  @override
+  String get navigationFinance => 'Finance';
+
+  @override
+  String get navigationReports => 'Reports';
+
+  @override
+  String get navigationSettings => 'Settings';
+
+  @override
+  String get operationalHub => 'OPERATIONAL HUB';
+
+  @override
+  String get shiftStatusOpen => 'SHIFT OPEN';
+
+  @override
+  String get shiftStatusClosed => 'SHIFT CLOSED';
+
+  @override
+  String get shiftCloseTitle => 'Close Shift';
+
+  @override
+  String get shiftCloseSubtitle =>
+      'Count the cash in your register and close your shift.';
+
+  @override
+  String get shiftCloseClosingCashLabel => 'Closing cash';
+
+  @override
+  String get shiftCloseNoteLabel => 'Note (optional)';
+
+  @override
+  String get shiftCloseSubmit => 'Close Shift';
+
+  @override
+  String get shiftCloseSuccess => 'Shift closed.';
+
+  @override
+  String get shiftCloseRedirectingToBarCheck =>
+      'A bar check is required before you can close this shift.';
+
+  @override
+  String get barCheckTitle => 'Bar Check';
+
+  @override
+  String get barCheckSubtitle =>
+      'Count each item, then submit to continue closing your shift.';
+
+  @override
+  String get barCheckExpectedLabel => 'Expected';
+
+  @override
+  String get barCheckCountedLabel => 'Counted';
+
+  @override
+  String get barCheckReasonLabel => 'Reason for variance';
+
+  @override
+  String get barCheckSubmitAndClose => 'Submit Bar Check';
+
+  @override
+  String get barCheckPendingManagerReview =>
+      'A manager needs to review a variance on this count before it can be completed. Ask a manager to review it, then try again.';
+
+  @override
+  String get barCheckAllLinesRequired => 'Count every item before submitting.';
+
+  @override
+  String get tooltipCart => 'Cart';
+
+  @override
+  String get tooltipRefreshScreenData => 'Refresh screen data';
+
+  @override
+  String get tooltipNotifications => 'Notifications';
+
+  @override
+  String get tooltipProfile => 'Profile';
+
+  @override
+  String get invalidCatalogRoute => 'The requested catalog route is invalid.';
+
+  @override
+  String get productsEmptyMessage => 'No products found.';
+
+  @override
+  String get ordersEmptyMessage => 'No orders found.';
+
+  @override
+  String get menusEmptyMessage => 'No menus found.';
+
+  @override
+  String productCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count products',
+      one: '1 product',
+      zero: 'No products',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String orderCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count orders',
+      one: '1 order',
+      zero: 'No orders',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String variantCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count variants',
+      one: '1 variant',
+      zero: 'No variants',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validationIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count validation issues',
+      one: '1 validation issue',
+      zero: 'No validation issues',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusOpen => 'Open';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String get statusPaid => 'Paid';
+
+  @override
+  String get statusUnpaid => 'Unpaid';
+
+  @override
+  String get statusArchived => 'Archived';
+
+  @override
+  String get statusDraft => 'Draft';
+
+  @override
+  String get statusPublished => 'Published';
+
+  @override
+  String get statusScheduled => 'Scheduled';
+
+  @override
+  String get statusTemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get statusAssigned => 'Assigned';
+
+  @override
+  String get statusUnassigned => 'Unassigned';
+
+  @override
+  String get priceSourceBase => 'Base price';
+
+  @override
+  String get priceSourceOverride => 'Override price';
+
+  @override
+  String get validationSeverityError => 'Error';
+
+  @override
+  String get validationSeverityWarning => 'Warning';
+
+  @override
+  String get validationSeverityInfo => 'Information';
+
+  @override
+  String get salesChannelPos => 'POS';
+
+  @override
+  String get salesChannelOnline => 'Online';
+
+  @override
+  String get productTypeSimple => 'Simple product';
+
+  @override
+  String get productTypeVariant => 'Variant product';
+
+  @override
+  String get genericFormError =>
+      'We could not save your changes. Review the highlighted fields and try again.';
+
+  @override
+  String get menuPublishTab => 'Publish';
+
+  @override
+  String get menuPublishAction => 'Publish Menu';
+
+  @override
+  String get menuPublishPublishing => 'Publishing…';
+
+  @override
+  String get menuPublishBranch => 'Branch';
+
+  @override
+  String get menuPublishChannel => 'Sales channel';
+
+  @override
+  String get menuPublishScope => 'Scope';
+
+  @override
+  String get menuPublishCollectionScope => 'Complete assigned Menu collection';
+
+  @override
+  String get menuPublishOneMenu => 'One Menu';
+
+  @override
+  String get menuPublishValidation => 'Last validation';
+
+  @override
+  String get menuPublishValidationRequired => 'Validation required';
+
+  @override
+  String get menuPublishCanPublish => 'Can Publish';
+
+  @override
+  String get menuPublishCannotPublish => 'Cannot Publish';
+
+  @override
+  String get menuPublishErrors => 'Errors';
+
+  @override
+  String get menuPublishWarnings => 'Warnings';
+
+  @override
+  String get menuPublishRunValidationFirst =>
+      'Run Validation for this selected scope before publishing.';
+
+  @override
+  String get menuPublishBlockedByValidation =>
+      'Publishing is disabled because the loaded validation contains errors.';
+
+  @override
+  String get menuPublishWarningsAllowed =>
+      'Warnings do not block publishing. Review them and confirm explicitly.';
+
+  @override
+  String get menuPublishConfirmTitle => 'Confirm Menu publication';
+
+  @override
+  String get menuPublishCurrentVersion => 'Current Published Version';
+
+  @override
+  String get menuPublishConfirmationExplanation =>
+      'Publishing creates a new immutable Menu Version for the selected Branch and Channel when the resolved Menu content has changed. Existing Orders are not modified.';
+
+  @override
+  String get menuPublishLoadingCurrentVersion =>
+      'Loading current published Version…';
+
+  @override
+  String get menuPublishNoCurrentVersion =>
+      'No Menu Version has been published for this Branch and Sales Channel.';
+
+  @override
+  String get menuPublishVersionNumber => 'Version';
+
+  @override
+  String get menuPublishStatus => 'Status';
+
+  @override
+  String get menuPublishPublishedAt => 'Published at';
+
+  @override
+  String get menuPublishChecksum => 'Checksum';
+
+  @override
+  String get menuPublishPublicationId => 'Publication ID';
+
+  @override
+  String get menuPublishSuccess => 'Menu publication successful.';
+
+  @override
+  String get menuPublishNoChanges => 'No Menu changes were detected.';
+
+  @override
+  String get menuPublishNoChangesExplanation =>
+      'The current published Version remains unchanged.';
+
+  @override
+  String get menuPublishBackendBlocked =>
+      'Backend validation blocked publication. No Version was created.';
+
+  @override
+  String get versionHistory => 'Version History';
+
+  @override
+  String get versionDetail => 'Version Detail';
+
+  @override
+  String get compareVersions => 'Compare Versions';
+
+  @override
+  String get identicalContent => 'Identical content';
+
+  @override
+  String get versionsAdded => 'Added';
+
+  @override
+  String get versionsRemoved => 'Removed';
+
+  @override
+  String get versionsChanged => 'Changed';
+
+  @override
+  String get versionPriceChanges => 'Price changes';
+
+  @override
+  String get versionModifierChanges => 'Modifier changes';
+
+  @override
+  String get versionScheduleChanges => 'Schedule changes';
+
+  @override
+  String get versionRollback => 'Rollback';
+
+  @override
+  String get versionRollbackReason => 'Rollback reason';
+
+  @override
+  String get versionNewRollback => 'New rollback Version';
+
+  @override
+  String get versionNoChangeRollback => 'No-change rollback';
+
+  @override
+  String get versionTruncatedComparison =>
+      'Only a bounded subset of differences is displayed.';
+
+  @override
+  String get versionImmutableSnapshot =>
+      'This is an immutable historical Snapshot.';
+
+  @override
+  String get versionStatusCurrent => 'Current';
+
+  @override
+  String get versionStatusSuperseded => 'Superseded';
+
+  @override
+  String get versionStatusRolledBack => 'Rolled back';
+
+  @override
+  String get versionView => 'View';
+
+  @override
+  String versionSelectForCompare(int version) {
+    return 'Select Version $version for comparison';
+  }
+
+  @override
+  String versionCompareSelected(int count) {
+    return 'Compare selected ($count)';
+  }
+
+  @override
+  String get versionHistoryEmptyTitle => 'No version history';
+
+  @override
+  String versionHistoryEmptyDescription(Object branch, Object channel) {
+    return 'No Menu version has been published for $branch · $channel yet.';
+  }
+
+  @override
+  String get versionHistoryLoadError => 'Could not load version history.';
+
+  @override
+  String get versionDetailLoadError => 'Could not load this version.';
+
+  @override
+  String get versionCompareError => 'Could not compare these versions.';
+
+  @override
+  String get versionRestoreError => 'Could not restore this version.';
+
+  @override
+  String get versionPreviousPage => 'Previous';
+
+  @override
+  String get versionNextPage => 'Next';
+
+  @override
+  String versionPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String versionChangeCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionChangesSince(num count, int version) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0 since Version $version';
+  }
+
+  @override
+  String versionPublishedAt(Object date) {
+    return 'Published $date';
+  }
+
+  @override
+  String get versionMenus => 'Menus';
+
+  @override
+  String get versionSections => 'Sections';
+
+  @override
+  String get versionProducts => 'Products';
+
+  @override
+  String get versionPricing => 'Pricing';
+
+  @override
+  String get versionModifiers => 'Modifiers';
+
+  @override
+  String get versionRecipes => 'Recipes';
+
+  @override
+  String get versionSchedules => 'Schedules';
+
+  @override
+  String get versionChanges => 'changes';
+
+  @override
+  String get versionChangeSummary => 'Change summary';
+
+  @override
+  String get versionChangeSummaryAvailable =>
+      'This version includes a recorded change summary.';
+
+  @override
+  String get versionChangeSummaryUnavailable =>
+      'No change summary is available for this version.';
+
+  @override
+  String get versionRestoreThisVersion => 'Restore this Version';
+
+  @override
+  String versionRestoreTitle(int version) {
+    return 'Restore Version $version?';
+  }
+
+  @override
+  String versionRestoreExplanation(int version) {
+    return 'A new published version will be created using the contents of Version $version. Versions published after Version $version will remain in history.';
+  }
+
+  @override
+  String get versionRestoreReason => 'Reason for restore (optional)';
+
+  @override
+  String get versionRestoreReasonHint =>
+      'For example, restore after an unintended pricing change';
+
+  @override
+  String get versionRestoreAsNewVersion => 'Restore as New Version';
+
+  @override
+  String get versionRestoring => 'Restoring…';
+
+  @override
+  String get versionRestoreResultTitle => 'Version restored';
+
+  @override
+  String versionRestoreSuccess(int newVersion, int sourceVersion) {
+    return 'Version $newVersion was created from Version $sourceVersion. Version $newVersion is now Current.';
+  }
+
+  @override
+  String versionRestoreNoChanges(int version) {
+    return 'Version $version already matches the current published content. No new version was created.';
+  }
+
+  @override
+  String versionComparisonDirection(int fromVersion, int toVersion) {
+    return 'Version $fromVersion → Version $toVersion';
+  }
+
+  @override
+  String get versionNoContentDifferences => 'No content differences found.';
+
+  @override
+  String get versionComparisonTruncated => 'Additional changes are not shown.';
+
+  @override
+  String get catalogSetupTitle => 'Catalog Setup';
+
+  @override
+  String get catalogSetupCategoriesTitle => 'Catalog Categories';
+
+  @override
+  String get catalogSetupReportingCategoriesTitle => 'Reporting Categories';
+
+  @override
+  String get catalogSetupKitchenStationsTitle => 'Kitchen Stations';
+
+  @override
+  String get catalogSetupCategory => 'Category';
+
+  @override
+  String get catalogSetupReportingCategory => 'Reporting Category';
+
+  @override
+  String get catalogSetupKitchenStation => 'Kitchen Station';
+
+  @override
+  String get catalogSetupCategoriesExplanation =>
+      'Categories classify Products for the Catalog.';
+
+  @override
+  String get catalogSetupReportingCategoriesExplanation =>
+      'Reporting Categories group Products for sales and performance reports. They do not control where Products appear in the customer Menu.';
+
+  @override
+  String get catalogSetupKitchenStationsExplanation =>
+      'Kitchen Stations identify the preparation area for Products; this does not configure printer communication.';
+
+  @override
+  String get catalogSetupAll => 'All';
+
+  @override
+  String get catalogSetupProducts => 'Products';
+
+  @override
+  String get catalogSetupOrder => 'Order';
+
+  @override
+  String get catalogSetupActions => 'Actions';
+
+  @override
+  String get catalogSetupCodePrinter => 'Code / Printer';
+
+  @override
+  String get catalogSetupNoMatchingRecords => 'No matching records.';
+
+  @override
+  String get catalogSetupUnableToLoad => 'Unable to load Catalog Setup.';
+
+  @override
+  String catalogSetupCreate(String type) {
+    return 'Create $type';
+  }
+
+  @override
+  String catalogSetupEdit(String type) {
+    return 'Edit $type';
+  }
+
+  @override
+  String catalogSetupArchive(String type) {
+    return 'Archive $type';
+  }
+
+  @override
+  String get catalogSetupRestore => 'Restore';
+
+  @override
+  String get catalogSetupMoveUp => 'Move up';
+
+  @override
+  String get catalogSetupMoveDown => 'Move down';
+
+  @override
+  String get catalogSetupName => 'Name';
+
+  @override
+  String get catalogSetupNameArabic => 'Arabic name';
+
+  @override
+  String get catalogSetupNameEnglish => 'English name';
+
+  @override
+  String get catalogSetupCode => 'Code';
+
+  @override
+  String get catalogSetupDescription => 'Description';
+
+  @override
+  String get catalogSetupPrinterName => 'Printer name';
+
+  @override
+  String catalogSetupPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String get catalogSetupPrevious => 'Previous';
+
+  @override
+  String get catalogSetupNext => 'Next';
+
+  @override
+  String catalogSetupArchiveConfirmation(String name, int count) {
+    return '$name is used by $count Products. Existing Product assignments remain governed by Backend rules.';
+  }
+
+  @override
+  String get recipeMaterials => 'Recipe / Materials';
+
+  @override
+  String get manageRecipe => 'Manage Recipe';
+
+  @override
+  String get baseRecipe => 'Base Recipe';
+
+  @override
+  String get material => 'Material';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get unit => 'Unit';
+
+  @override
+  String get addMaterial => 'Add Material';
+
+  @override
+  String get removeMaterial => 'Remove';
+
+  @override
+  String get materialAdjustments => 'Material Adjustments';
+
+  @override
+  String get effectiveFrom => 'Effective from';
+
+  @override
+  String get global => 'Global';
+
+  @override
+  String get productOverride => 'Product Override';
+
+  @override
+  String get variantOverride => 'Variant Override';
+
+  @override
+  String get inherited => 'Inherited';
+
+  @override
+  String get createOverride => 'Create Override';
+
+  @override
+  String get suppressInheritedEffects => 'Suppress Inherited Effects';
+
+  @override
+  String get restoreInheritance => 'Restore Inheritance';
+
+  @override
+  String get recipeSimulation => 'Recipe Simulation';
+
+  @override
+  String get selectedModifiers => 'Selected Modifiers';
+
+  @override
+  String get resolvedRecipe => 'Resolved Recipe';
+
+  @override
+  String get recipeUnavailableMaterial =>
+      'Materials with an unmapped unit are disabled and cannot be saved.';
+
+  @override
+  String get recipeReadOnly =>
+      'This Variant is archived. Recipe configuration is read-only.';
+
+  @override
+  String get recipeEmpty => 'No recipe components are configured.';
+
+  @override
+  String get recipeInheritedDraft =>
+      'This draft is cloned from the inherited profile. Saving creates a full replacement override.';
+
+  @override
+  String get recipeEmptyOverride =>
+      'This override deliberately has no material effects.';
+
+  @override
+  String get recipeSuppressConfirmationTitle =>
+      'Suppress inherited material effects?';
+
+  @override
+  String get recipeSuppressConfirmationBody =>
+      'Saving an empty scoped profile removes every inherited ADD and REMOVE effect for this scope.';
+
+  @override
+  String get recipeRemoveOverrideTitle => 'Remove this override?';
+
+  @override
+  String get recipeRemoveOverrideBody =>
+      'Removing it restores the nearest inherited material effects.';
+
+  @override
+  String get menuManagementWorkflow => 'Menu management workflow';
+
+  @override
+  String get menuManagementBuild => 'Build';
+
+  @override
+  String get menuManagementConfigure => 'Configure';
+
+  @override
+  String get menuManagementRelease => 'Review & release';
+
+  @override
+  String get menuManagementProducts => 'Products';
+
+  @override
+  String get menuManagementModifiers => 'Modifiers';
+
+  @override
+  String get menuManagementMenus => 'Menus';
+
+  @override
+  String get menuManagementAssignments => 'Assignments & Schedules';
+
+  @override
+  String get menuManagementReview => 'Review & preview';
+
+  @override
+  String get menuManagementCatalogSetup => 'Catalog Setup';
+
+  @override
+  String get recipeConsumptionHelp =>
+      'Define the materials consumed when one unit of this Variant is prepared.';
+
+  @override
+  String get recipeNoComponentsHelp =>
+      'No materials are configured yet. Add each material used to prepare one unit of this Variant.';
+
+  @override
+  String get recipeOverrideGlobal => 'Global default';
+
+  @override
+  String get recipeOverrideProduct => 'Override for this Product';
+
+  @override
+  String get recipeOverrideVariant => 'Override for this Variant';
+
+  @override
+  String get recipeInheritedFromGlobal => 'Inherited from Global';
+
+  @override
+  String get recipeInheritedFromProduct => 'Inherited from this Product';
+
+  @override
+  String get recipeSimulationHelp =>
+      'Select modifiers, resolve the recipe, then review the materials consumed.';
+
+  @override
+  String get recipeSimulationResultHelp => 'Consumed materials';
+
+  @override
+  String get recipeSimulationStartHelp =>
+      'Select modifiers, then resolve the recipe to see the consumed materials.';
+
+  @override
+  String get reviewWorkflowHelp =>
+      'Check the selected Menu, preview what the Branch and Channel receive, then publish and review its Version history.';
+
+  @override
+  String get reviewCheckMenu => '1. Check Menu';
+
+  @override
+  String get reviewPreviewStep => '2. Preview';
+
+  @override
+  String get reviewPublishStep => '3. Publish';
+
+  @override
+  String get reviewVersionsStep => '4. Version History';
+
+  @override
+  String get validationNoBlockingErrors =>
+      'No blocking validation errors were found.';
+
+  @override
+  String get validationResolveErrors =>
+      'Resolve the errors below before this Menu can be published.';
+
+  @override
+  String validationIssueCode(String code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String modifierSelectionExactly(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Customer must choose exactly $_temp0.';
+  }
+
+  @override
+  String modifierSelectionRange(num min, num max) {
+    return 'Customer may choose from $min to $max options.';
+  }
+
+  @override
+  String get reviewAdvancedOptions => 'Advanced preview options';
+
+  @override
+  String get technicalDetails => 'Technical details';
+
+  @override
+  String get managerAvailabilityScheduledHelp =>
+      'When should this item normally be available?';
+
+  @override
+  String get managerAvailabilityOperationalHelp =>
+      'Is it temporarily unavailable right now?';
+
+  @override
+  String get menuManagementNavigation => 'Menu Management navigation';
+
+  @override
+  String get menuManagementCatalog => 'Catalog';
+
+  @override
+  String get menuManagementMenusGroup => 'Menus';
+
+  @override
+  String get menuManagementReleaseGroup => 'Release';
+
+  @override
+  String get menuManagementReviewPublish => 'Review & Publish';
+
+  @override
+  String get menuBreadcrumbProduct => 'Product';
+
+  @override
+  String get menuBreadcrumbVariant => 'Variant';
+
+  @override
+  String get menuBreadcrumbCreateProduct => 'Create product';
+
+  @override
+  String get menuBreadcrumbEditProduct => 'Edit product';
+
+  @override
+  String get menuBreadcrumbVariants => 'Variants';
+
+  @override
+  String get menuBreadcrumbModifiers => 'Modifiers';
+
+  @override
+  String get menuBreadcrumbPricing => 'Pricing';
+
+  @override
+  String get menuBreadcrumbRecipe => 'Recipe';
+
+  @override
+  String get menuBreadcrumbRecipeSimulation => 'Recipe simulation';
+
+  @override
+  String get menuBreadcrumbAvailability => 'Availability';
+
+  @override
+  String get menuBreadcrumbOperationalAvailability =>
+      'Operational availability';
+
+  @override
+  String get menuBreadcrumbMaterialAdjustments => 'Material adjustments';
+
+  @override
+  String get menuBreadcrumbModifierGroup => 'Modifier group';
+
+  @override
+  String get menuBreadcrumbCreateModifierGroup => 'Create modifier group';
+
+  @override
+  String get menuBreadcrumbEditModifierGroup => 'Edit modifier group';
+
+  @override
+  String get menuBreadcrumbMenu => 'Menu';
+
+  @override
+  String get menuBreadcrumbCreateMenu => 'Create menu';
+
+  @override
+  String get menuBreadcrumbEditMenu => 'Edit menu';
+
+  @override
+  String get menuBreadcrumbComposition => 'Composition';
+
+  @override
+  String get menuBreadcrumbVersionHistory => 'Version history';
+
+  @override
+  String get productCatalogTitle => 'Products';
+
+  @override
+  String get productCatalogSubtitle =>
+      'Manage the products available across your menus.';
+
+  @override
+  String get productCatalogCreateProduct => 'Create Product';
+
+  @override
+  String get productCatalogRefresh => 'Refresh products';
+
+  @override
+  String get productCatalogSearch => 'Search products, SKU, or barcode';
+
+  @override
+  String get productCatalogLifecycle => 'Lifecycle';
+
+  @override
+  String get productCatalogAllProducts => 'All products';
+
+  @override
+  String get productCatalogMoreFilters => 'More Filters';
+
+  @override
+  String productCatalogMoreFiltersSemantic(int count) {
+    return 'More Filters, $count active';
+  }
+
+  @override
+  String get productCatalogClearAll => 'Clear All';
+
+  @override
+  String get productCatalogClear => 'Clear';
+
+  @override
+  String get productCatalogApply => 'Apply';
+
+  @override
+  String get productCatalogSort => 'Sort';
+
+  @override
+  String get productCatalogSortOrder => 'Sort order';
+
+  @override
+  String get productCatalogNameAscending => 'Name A–Z';
+
+  @override
+  String get productCatalogNameDescending => 'Name Z–A';
+
+  @override
+  String get productCatalogNewest => 'Newest first';
+
+  @override
+  String get productCatalogProductType => 'Product type';
+
+  @override
+  String get productCatalogHasVariants => 'Has variants';
+
+  @override
+  String get productCatalogNoVariants => 'No variants';
+
+  @override
+  String get productCatalogHasModifiers => 'Has modifiers';
+
+  @override
+  String get productCatalogNoModifiers => 'No modifiers';
+
+  @override
+  String get productCatalogStandard => 'Standard';
+
+  @override
+  String get productCatalogOpenPrice => 'Open price';
+
+  @override
+  String get productCatalogCombo => 'Combo';
+
+  @override
+  String get productCatalogSetup => 'Setup';
+
+  @override
+  String get productCatalogDefaultVariant => 'Default';
+
+  @override
+  String get productCatalogStatus => 'Status';
+
+  @override
+  String get productCatalogOpen => 'Open';
+
+  @override
+  String get productCatalogManageVariants => 'Manage Variants';
+
+  @override
+  String get productCatalogManageModifiers => 'Manage Modifiers';
+
+  @override
+  String get productCatalogArchive => 'Archive';
+
+  @override
+  String get productCatalogRestore => 'Restore';
+
+  @override
+  String productCatalogActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String productCatalogSetupSummary(int variants, int modifiers) {
+    return '$variants variants · $modifiers modifiers';
+  }
+
+  @override
+  String get productCatalogLoadMore => 'Load more products';
+
+  @override
+  String get productCatalogUnableToLoad => 'Unable to load products.';
+
+  @override
+  String get productCatalogNoArchived => 'No archived products are available.';
+
+  @override
+  String get productCatalogNoActive => 'No active products are available.';
+
+  @override
+  String get productCatalogNoMatches => 'No products match these filters.';
+
+  @override
+  String get productCatalogNoProductsYet =>
+      'No products have been created yet.';
+
+  @override
+  String get productCatalogMoreFiltersHelper =>
+      'Refine the product list with additional criteria.';
+
+  @override
+  String get productCatalogFilterClassification => 'Classification';
+
+  @override
+  String get productCatalogFilterPreparation => 'Preparation';
+
+  @override
+  String get productCatalogFilterProductSetup => 'Product setup';
+
+  @override
+  String get productCatalogClearFilters => 'Clear filters';
+
+  @override
+  String get productCatalogApplyFilters => 'Apply filters';
+
+  @override
+  String get productUxGeneral => 'General';
+
+  @override
+  String get productUxClassification => 'Classification';
+
+  @override
+  String get productUxSellingPreparation => 'Selling & Preparation';
+
+  @override
+  String get productUxInitialSellingOption => 'Initial selling option';
+
+  @override
+  String get productUxTranslations => 'Translations';
+
+  @override
+  String get productUxAdvanced => 'Advanced';
+
+  @override
+  String get productUxOverview => 'Overview';
+
+  @override
+  String get productUxUsage => 'Usage';
+
+  @override
+  String get productUxVariants => 'Variants';
+
+  @override
+  String get productUxModifiers => 'Modifiers';
+
+  @override
+  String get productUxRecipeMaterials => 'Recipe & Materials';
+
+  @override
+  String get productUxAvailability => 'Availability';
+
+  @override
+  String get productUxCreateProduct => 'Create Product';
+
+  @override
+  String get productUxSaveChanges => 'Save Changes';
+
+  @override
+  String get productUxCancel => 'Cancel';
+
+  @override
+  String get productUxManageCatalogSetup => 'Manage catalog setup';
+
+  @override
+  String get productUxEditProduct => 'Edit Product';
+
+  @override
+  String get productUxArchived => 'Archived';
+
+  @override
+  String get productOverviewBasePrice => 'Base Price';
+
+  @override
+  String get productOverviewVariants => 'Variants';
+
+  @override
+  String get productOverviewModifierGroups => 'Modifier Groups';
+
+  @override
+  String get productOverviewStockTracking => 'Stock Tracking';
+
+  @override
+  String get productOverviewEnabled => 'Enabled';
+
+  @override
+  String get productOverviewDisabled => 'Disabled';
+
+  @override
+  String get productOverviewNotConfigured => 'Not configured';
+
+  @override
+  String get productOverviewProductSetup => 'Product Setup';
+
+  @override
+  String get productOverviewCategory => 'Category';
+
+  @override
+  String get productOverviewDefaultVariant => 'Default Variant';
+
+  @override
+  String get productOverviewKitchenStation => 'Kitchen Station';
+
+  @override
+  String get productOverviewProductType => 'Product Type';
+
+  @override
+  String get productOverviewReportingCategory => 'Reporting Category';
+
+  @override
+  String get productOverviewPreparationTime => 'Preparation Time';
+
+  @override
+  String get productOverviewMinutes => 'minutes';
+
+  @override
+  String get modifierLibraryTitle => 'Modifier Library';
+
+  @override
+  String get modifierLibrarySubtitle =>
+      'Create reusable customer choices that can be assigned to Products.';
+
+  @override
+  String get modifierCreateGroup => 'Create Modifier Group';
+
+  @override
+  String get modifierSearch => 'Search modifiers';
+
+  @override
+  String get modifierActive => 'Active';
+
+  @override
+  String get modifierArchived => 'Archived';
+
+  @override
+  String get modifierAll => 'All';
+
+  @override
+  String get modifierReorder => 'Reorder';
+
+  @override
+  String get modifierDone => 'Done';
+
+  @override
+  String get modifierClearFiltersBeforeReorder =>
+      'Clear search and filters before reordering Modifier Groups.';
+
+  @override
+  String modifierOptionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+      zero: '0 options',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modifierOptionPreviewMore(int count) {
+    return '+ $count more';
+  }
+
+  @override
+  String modifierRuleExactly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Customer must choose exactly $_temp0.';
+  }
+
+  @override
+  String modifierRuleOptionalExactly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Optional — customer may choose $_temp0.';
+  }
+
+  @override
+  String modifierRuleAtLeastUpTo(int min, int max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '$max options',
+      one: '1 option',
+    );
+    return 'Customer must choose at least $min and up to $_temp0.';
+  }
+
+  @override
+  String modifierRuleOptionalUpTo(int max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '$max options',
+      one: '1 option',
+    );
+    return 'Optional — customer may choose up to $_temp0.';
+  }
+
+  @override
+  String get modifierRuleQuantity =>
+      'The same option may be added more than once.';
+
+  @override
+  String get modifierViewGroup => 'View Group';
+
+  @override
+  String get modifierEditGroup => 'Edit Group';
+
+  @override
+  String get modifierSetDefault => 'Set as Default';
+
+  @override
+  String get modifierMaterialAdjustments => 'Material Adjustments';
+
+  @override
+  String get modifierArchive => 'Archive';
+
+  @override
+  String get modifierRestore => 'Restore';
+
+  @override
+  String get modifierNoGroups => 'No modifier groups have been created yet.';
+
+  @override
+  String get modifierNoGroupMatches =>
+      'No modifier groups match the current filters.';
+
+  @override
+  String get modifierUnableToLoad => 'Unable to load modifier groups.';
+
+  @override
+  String get modifierRetry => 'Retry';
+
+  @override
+  String get modifierLoadMore => 'Load more';
+
+  @override
+  String get modifierRefresh => 'Refresh modifier groups';
+
+  @override
+  String get modifierGroupDetailNotFound => 'Modifier group not found.';
+
+  @override
+  String get modifierOptions => 'Options';
+
+  @override
+  String get modifierAddOption => 'Add Option';
+
+  @override
+  String get modifierOptionFilter => 'Option status';
+
+  @override
+  String get modifierNoArchivedOptions => 'No archived modifier options.';
+
+  @override
+  String get modifierNoOptions => 'No modifier options have been created yet.';
+
+  @override
+  String get modifierReorderOptions => 'Reorder Options';
+
+  @override
+  String get modifierMoveUp => 'Move Up';
+
+  @override
+  String get modifierMoveDown => 'Move Down';
+
+  @override
+  String get modifierDefault => 'DEFAULT';
+
+  @override
+  String get modifierNoExtraCharge => 'No extra charge';
+
+  @override
+  String get modifierPriceAdjustment => 'Price adjustment';
+
+  @override
+  String get modifierMaterialUsageConfigured => 'Material usage configured';
+
+  @override
+  String get modifierStatusActive => 'Active';
+
+  @override
+  String get modifierStatusArchived => 'Archived';
+
+  @override
+  String get modifierStatusInactive => 'Inactive';
+
+  @override
+  String get modifierAdvancedDetails => 'Advanced Details';
+
+  @override
+  String get modifierSelectionMode => 'Selection mode';
+
+  @override
+  String get modifierMinimum => 'Minimum';
+
+  @override
+  String get modifierMaximum => 'Maximum';
+
+  @override
+  String get modifierAllowQuantity => 'Allow quantity';
+
+  @override
+  String get modifierGroupType => 'Group type';
+
+  @override
+  String get modifierSortOrder => 'Sort order';
+
+  @override
+  String get modifierCreateTitle => 'Create Modifier Group';
+
+  @override
+  String get modifierEditTitle => 'Edit Modifier Group';
+
+  @override
+  String get modifierBasicInformation => 'Basic Information';
+
+  @override
+  String get modifierBasicInformationHelper =>
+      'Name this reusable customer-choice group.';
+
+  @override
+  String get modifierGroupName => 'Modifier Group Name';
+
+  @override
+  String get modifierGroupNameHint => 'e.g. Milk Type';
+
+  @override
+  String get modifierInternalCode => 'Internal code';
+
+  @override
+  String get modifierGroupTypeChoice => 'Choice';
+
+  @override
+  String get modifierGroupTypeAddOn => 'Add-on';
+
+  @override
+  String get modifierGroupTypePreparation => 'Preparation instruction';
+
+  @override
+  String get modifierYes => 'Yes';
+
+  @override
+  String get modifierNo => 'No';
+
+  @override
+  String get modifierTranslations => 'Translations';
+
+  @override
+  String get modifierArabic => 'Arabic';
+
+  @override
+  String get modifierEnglish => 'English';
+
+  @override
+  String get modifierClose => 'Close';
+
+  @override
+  String get modifierSelectionRules => 'Selection Rules';
+
+  @override
+  String get modifierSelectionRulesHelper =>
+      'Determine how customers interact with these options.';
+
+  @override
+  String get modifierHowChoose => 'How should customers choose?';
+
+  @override
+  String get modifierChooseOne => 'Choose one';
+
+  @override
+  String get modifierChooseMultiple => 'Choose multiple';
+
+  @override
+  String get modifierChoiceRequired => 'Is a choice required?';
+
+  @override
+  String get modifierOptional => 'Optional';
+
+  @override
+  String get modifierRequired => 'Required';
+
+  @override
+  String get modifierMinimumChoices => 'Minimum choices';
+
+  @override
+  String get modifierMaximumChoices => 'Maximum choices';
+
+  @override
+  String get modifierSameOptionQuantity =>
+      'Can the same Option be added more than once?';
+
+  @override
+  String get modifierQuantityHelper => 'For example: 2 Extra Shots.';
+
+  @override
+  String get modifierCurrentRuleSummary => 'Current Rule Summary';
+
+  @override
+  String get modifierInitialOption => 'Initial Option';
+
+  @override
+  String get modifierInitialOptions => 'Initial Options';
+
+  @override
+  String get modifierInitialOptionHelper =>
+      'Add enough active Options for the Maximum choices before creating the Modifier Group.';
+
+  @override
+  String get modifierAddAnotherOption => 'Add another Option';
+
+  @override
+  String get modifierRemoveOption => 'Remove Option';
+
+  @override
+  String modifierAtLeastActiveOptions(int count) {
+    return 'Add at least $count active Options or reduce Maximum choices.';
+  }
+
+  @override
+  String get modifierOptionName => 'Option name';
+
+  @override
+  String get modifierOptionNameHint => 'e.g. Whole Milk';
+
+  @override
+  String get modifierAdvanced => 'Advanced';
+
+  @override
+  String get modifierActiveStatus => 'Active status';
+
+  @override
+  String get modifierAvailableForUse => 'Available for use in menus.';
+
+  @override
+  String get modifierCancel => 'Cancel';
+
+  @override
+  String get modifierSaveChanges => 'Save Changes';
+
+  @override
+  String get modifierCreateAction => 'Create Modifier Group';
+
+  @override
+  String get modifierSaving => 'Saving...';
+
+  @override
+  String get modifierUnsavedChanges =>
+      'You have unsaved changes. Leave without saving?';
+
+  @override
+  String get modifierStay => 'Stay';
+
+  @override
+  String get modifierLeave => 'Leave';
+
+  @override
+  String get modifierOptionCreateTitle => 'Add Option';
+
+  @override
+  String get modifierOptionEditTitle => 'Edit Option';
+
+  @override
+  String get modifierOptionBasicInformation => 'Basic Information';
+
+  @override
+  String get modifierOptionDefault => 'Default option';
+
+  @override
+  String get modifierOptionActive => 'Active';
+
+  @override
+  String get modifierOptionAvailable => 'Available';
+
+  @override
+  String get modifierOptionAdvanced => 'Advanced';
+
+  @override
+  String get modifierOptionSave => 'Save';
+
+  @override
+  String get modifierOptionSaving => 'Saving...';
+
+  @override
+  String get modifierOptionNameRequired => 'Option name is required.';
+
+  @override
+  String get modifierOptionPriceInvalid => 'Enter a valid price adjustment.';
+
+  @override
+  String get modifierOptionSortInvalid => 'Sort order must be a whole number.';
+
+  @override
+  String get modifierArchiveGroupTitle => 'Archive modifier group?';
+
+  @override
+  String get modifierArchiveOptionTitle => 'Archive modifier option?';
+
+  @override
+  String get modifierArchiveMessage =>
+      'The item remains stored and can be restored later.';
+
+  @override
+  String get modifierConfirmArchive => 'Archive';
+
+  @override
+  String get modifierOptionSaveError =>
+      'Unable to save this modifier option. Check the option rules and try again.';
+
+  @override
+  String get modifierOptionGroupInvalid =>
+      'This Option cannot be changed because it would make the Modifier Group invalid.';
+
+  @override
+  String get modifierGroupSaveError => 'Unable to save this modifier group.';
+
+  @override
+  String get modifierGroupRequired => 'Modifier group name is required.';
+
+  @override
+  String get modifierNumberInvalid => 'Enter zero or a positive whole number.';
+
+  @override
+  String get modifierMaximumMinimumError =>
+      'Maximum must be at least the minimum.';
+
+  @override
+  String get modifierSingleMaximumError =>
+      'Single selection groups cannot have a maximum above 1.';
+
+  @override
+  String get modifierRequiredMinimumError =>
+      'Required groups need a minimum of at least 1.';
+
+  @override
+  String get modifierInitialOptionRequired =>
+      'An initial active option is required.';
+
+  @override
+  String get modifierPriceInvalid => 'Enter zero or a positive price.';
+
+  @override
+  String get modifierInitialMaximumError =>
+      'A new group has one initial option; maximum cannot exceed 1.';
+
+  @override
+  String get configuredSellPriceMustBePositive =>
+      'Selling price must be greater than zero.';
+
+  @override
+  String get recipeVariant => 'Variant';
+
+  @override
+  String recipeConfigured(int count) {
+    return 'Recipe configured · $count materials';
+  }
+
+  @override
+  String recipeMaterialId(int materialId) {
+    return 'Material #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
+  String get recipeMissing => 'Recipe missing';
+
+  @override
+  String get recipeNotConfigured => 'Recipe not configured';
+
+  @override
+  String get recipeModifierMaterialEffects => 'Modifier Material Effects';
+
+  @override
+  String get recipeModifierMaterialEffectsHelp =>
+      'See how customer choices change the materials consumed.';
+
+  @override
+  String get recipeNoMaterialChange => 'No material change';
+
+  @override
+  String get recipeUsingGlobalSettings => 'Using Global settings';
+
+  @override
+  String get recipeUsingProductSettings => 'Using Product settings';
+
+  @override
+  String get recipeUsingVariantSettings => 'Using Variant settings';
+
+  @override
+  String get recipeCustomizedForProduct => 'Customized for Product';
+
+  @override
+  String get recipeCustomizedForVariant => 'Customized for Variant';
+
+  @override
+  String get recipeTest => 'Test Recipe';
+
+  @override
+  String get recipeBackToWorkspace => 'Back to Recipe & Materials';
+
+  @override
+  String get recipeSave => 'Save recipe';
+
+  @override
+  String get recipeSaved => 'Recipe saved.';
+
+  @override
+  String get recipeCurrentBehavior => 'Current Behavior';
+
+  @override
+  String get recipeUseInherited => 'Use inherited settings';
+
+  @override
+  String get recipeUseInheritedAgain => 'Use inherited settings again';
+
+  @override
+  String get recipeClearTitle => 'Clear the product recipe?';
+
+  @override
+  String get recipeClearBody =>
+      'This removes every material configured for the product base recipe.';
+
+  @override
+  String get recipeClearAction => 'Clear recipe';
+
+  @override
+  String get recipeRemoveOverrideAction => 'Remove override';
+
+  @override
+  String recipeCustomizeFor(String context) {
+    return 'Customize for $context';
+  }
+
+  @override
+  String recipeNoMaterialEffectFor(String context) {
+    return 'No material effect for $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'this Variant';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'Replaces $from with $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'Removes $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'Adds $materials';
+  }
+
+  @override
+  String get recipeRemoves => 'Removes';
+
+  @override
+  String get recipeAdds => 'Adds';
+
+  @override
+  String get recipeAddMaterialToRemove => 'Add Material to Remove';
+
+  @override
+  String get recipeAddMaterialToAdd => 'Add Material to Add';
+
+  @override
+  String get recipeSaveChanges => 'Save Changes';
+
+  @override
+  String get recipeCancel => 'Cancel';
+
+  @override
+  String get recipeQuantityRequired => 'Quantity is required.';
+
+  @override
+  String get recipeQuantityInvalid =>
+      'Enter a positive number with up to 6 decimal places.';
+
+  @override
+  String get recipeDuplicateMaterial => 'This material is already used.';
+
+  @override
+  String get recipeMaterialSearch => 'Search materials';
+
+  @override
+  String get recipeNoMaterialResults => 'No materials found.';
+
+  @override
+  String get recipeFinalMaterials => 'Final Materials';
+
+  @override
+  String get recipePreviewMaterials => 'Preview Materials';
+
+  @override
+  String get recipeHowCalculated => 'How this was calculated';
+
+  @override
+  String get recipeChoicesChanged => 'Choices changed';
+
+  @override
+  String get recipeStaleResult =>
+      'Preview the materials again to update this result.';
+
+  @override
+  String get recipeDecreaseQuantity => 'Decrease quantity';
+
+  @override
+  String get recipeIncreaseQuantity => 'Increase quantity';
+
+  @override
+  String get batch8AvailabilityTitle => 'Selling availability';
+
+  @override
+  String get batch8AvailabilityHelp =>
+      'Review the price, regular selling hours, and current operational status for this selling context.';
+
+  @override
+  String get batch8Variant => 'Variant';
+
+  @override
+  String get batch8Branch => 'Branch';
+
+  @override
+  String get batch8Channel => 'Channel';
+
+  @override
+  String get batch8AvailabilityLoadError => 'Availability could not be loaded.';
+
+  @override
+  String get batch8Retry => 'Retry';
+
+  @override
+  String get batch8Loading => 'Loading…';
+
+  @override
+  String get batch8Checking => 'Checking…';
+
+  @override
+  String get batch8SellingPrice => 'Selling price';
+
+  @override
+  String get batch8BasePrice => 'Base price';
+
+  @override
+  String get batch8EffectiveSellingPrice => 'Effective selling price';
+
+  @override
+  String get batch8Using => 'Using';
+
+  @override
+  String get batch8ManagePricing => 'Manage pricing';
+
+  @override
+  String get batch8PriceLoadingHelp =>
+      'Resolving the selling price for this context.';
+
+  @override
+  String get batch8PriceFromBase => 'Variant base price';
+
+  @override
+  String get batch8PriceFromBranch => 'Branch price';
+
+  @override
+  String get batch8PriceFromChannel => 'Channel price';
+
+  @override
+  String get batch8PriceFromBranchAndChannel => 'Branch and channel price';
+
+  @override
+  String get batch8RegularAvailability => 'Regular availability';
+
+  @override
+  String get batch8NoScheduleRestrictions => 'No schedule restrictions';
+
+  @override
+  String get batch8NoScheduleRestrictionsHelp =>
+      'Normally available whenever this selling context is open.';
+
+  @override
+  String get batch8ScheduleLoadingHelp =>
+      'Checking regular selling hours for this context.';
+
+  @override
+  String get batch8AvailableNow => 'Available now';
+
+  @override
+  String get batch8UnavailableNow => 'Unavailable now';
+
+  @override
+  String get batch8Unavailable => 'Unavailable';
+
+  @override
+  String get batch8AvailableAccordingSchedule =>
+      'Available according to regular selling hours.';
+
+  @override
+  String get batch8UnavailableAccordingSchedule =>
+      'Outside the regular selling hours.';
+
+  @override
+  String get batch8ScheduleRules => 'Configured selling hours';
+
+  @override
+  String get batch8ManageSchedule => 'Manage schedule';
+
+  @override
+  String get batch8CurrentAvailability => 'Current availability';
+
+  @override
+  String get batch8CurrentLoadingHelp =>
+      'Checking temporary operational status for this context.';
+
+  @override
+  String get batch8SoldOut => 'Sold out';
+
+  @override
+  String get batch8TemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get batch8NoTemporaryRestriction =>
+      'No temporary restriction is active.';
+
+  @override
+  String get batch8TemporaryRestrictionActive =>
+      'A temporary operational restriction is active.';
+
+  @override
+  String batch8TemporaryUntil(String time) {
+    return 'Temporary restriction active until $time.';
+  }
+
+  @override
+  String get batch8ManageAvailability => 'Manage availability';
+
+  @override
+  String get batch8EffectiveSellingResult => 'Effective selling result';
+
+  @override
+  String get batch8Availability => 'Availability';
+
+  @override
+  String get batch8PricingBack => 'Back';
+
+  @override
+  String get batch8PricingRefresh => 'Refresh';
+
+  @override
+  String get batch8PricingLoadError => 'Pricing could not be loaded.';
+
+  @override
+  String get batch8PricingArchived =>
+      'This Product or Variant is archived. Prices are shown for reference and cannot be changed.';
+
+  @override
+  String batch8PricingContext(String variant) {
+    return '$variant · Selling price';
+  }
+
+  @override
+  String get batch8PricingHelp =>
+      'The selling price for the selected Variant, Branch, and sales channel.';
+
+  @override
+  String get batch8SalesChannel => 'Sales channel';
+
+  @override
+  String get batch8NoBranch => 'No Branch';
+
+  @override
+  String get batch8NoChannel => 'No Channel';
+
+  @override
+  String get batch8ChangePrice => 'Change Price';
+
+  @override
+  String get batch8MorePriceRules => 'More Price Rules';
+
+  @override
+  String batch8RulesConfigured(int count) {
+    return '$count configured';
+  }
+
+  @override
+  String get batch8Show => 'Show';
+
+  @override
+  String get batch8Hide => 'Hide';
+
+  @override
+  String get batch8NoPriceAdjustments => 'No price adjustments.';
+
+  @override
+  String get batch8BasePriceEverywhere => 'Base Price applies everywhere.';
+
+  @override
+  String get batch8Difference => 'Difference';
+
+  @override
+  String get batch8AddPrice => 'Add Price';
+
+  @override
+  String get batch8SetSellingPrice => 'Set Selling Price';
+
+  @override
+  String get batch8Product => 'Product';
+
+  @override
+  String get batch8AppliesTo => 'Applies to';
+
+  @override
+  String get batch8ScopeBranch => 'Branch';
+
+  @override
+  String get batch8ScopeChannel => 'Channel';
+
+  @override
+  String get batch8ScopeBranchChannel => 'Branch + Channel';
+
+  @override
+  String get batch8Price => 'Price';
+
+  @override
+  String batch8PriceAboveBase(String difference) {
+    return '$difference above Base Price';
+  }
+
+  @override
+  String batch8PriceBelowBase(String difference) {
+    return '$difference below Base Price';
+  }
+
+  @override
+  String get batch8PriceSameAsBase => 'Same as Base Price';
+
+  @override
+  String get batch8Cancel => 'Cancel';
+
+  @override
+  String get batch8SavePrice => 'Save Price';
+
+  @override
+  String get batch8Edit => 'Edit';
+
+  @override
+  String get batch8Remove => 'Remove';
+
+  @override
+  String get batch8RemovePriceTitle => 'Remove price rule?';
+
+  @override
+  String get batch8RemovePriceMessage =>
+      'This price adjustment will be removed for this Variant.';
+
+  @override
+  String get batch8Keep => 'Keep';
+
+  @override
+  String batch8BranchPriceFor(String branch) {
+    return '$branch Branch price';
+  }
+
+  @override
+  String batch8ChannelPriceFor(String channel) {
+    return '$channel channel price';
+  }
+
+  @override
+  String batch8BranchChannelPriceFor(String branch, String channel) {
+    return '$branch · $channel price';
+  }
+
+  @override
+  String get batch8RuleBranchPrice => 'Branch price';
+
+  @override
+  String get batch8RuleChannelPrice => 'Channel price';
+
+  @override
+  String get batch8RuleBranchChannelPrice => 'Branch + Channel price';
+
+  @override
+  String get batch8ChannelPos => 'POS';
+
+  @override
+  String get batch8ChannelWaiterApp => 'Waiter App';
+
+  @override
+  String get batch8ChannelKiosk => 'Kiosk';
+
+  @override
+  String get batch8ChannelQrOrdering => 'QR Ordering';
+
+  @override
+  String get batch8ChannelDelivery => 'Delivery';
+
+  @override
+  String get batch8ChannelOnlineOrdering => 'Online Ordering';
+
+  @override
+  String get batch8UnsavedPriceChanges => 'Unsaved price changes';
+
+  @override
+  String get batch8UnsavedPriceChangesMessage =>
+      'You have unsaved price changes. Leave without saving?';
+
+  @override
+  String get batch8Leave => 'Leave';
+
+  @override
+  String get scheduledUnsavedChanges => 'Unsaved selling hours';
+
+  @override
+  String get scheduledUnsavedChangesHelp =>
+      'You have unsaved selling-hours changes. Leave without saving?';
+
+  @override
+  String get scheduledStay => 'Stay';
+
+  @override
+  String get scheduledLeave => 'Leave';
+
+  @override
+  String get scheduledLoadError =>
+      'Scheduled availability could not be loaded.';
+
+  @override
+  String get scheduledSaveError =>
+      'Selling hours could not be saved. Please review the entered values and try again.';
+
+  @override
+  String get scheduledSaved => 'Selling hours saved.';
+
+  @override
+  String get scheduledArchived =>
+      'This Product or Variant is archived. Selling hours are shown for reference and cannot be changed.';
+
+  @override
+  String get scheduledRegularForProduct => 'Product · Regular availability';
+
+  @override
+  String scheduledRegularForVariant(String variant) {
+    return '$variant · Regular availability';
+  }
+
+  @override
+  String get scheduledProduct => 'Product';
+
+  @override
+  String get scheduledAllBranches => 'All branches';
+
+  @override
+  String get scheduledAllChannels => 'All channels';
+
+  @override
+  String get scheduledUsingProduct => 'Using Product schedule';
+
+  @override
+  String get scheduledProductSchedule => 'Product schedule';
+
+  @override
+  String scheduledCustomizedFor(String variant) {
+    return 'Customized for $variant';
+  }
+
+  @override
+  String scheduledCustomizeFor(String variant) {
+    return 'Customize for $variant';
+  }
+
+  @override
+  String get scheduledUseProductAgain => 'Use Product schedule again';
+
+  @override
+  String get scheduledWeeklyInAdvanced =>
+      'Weekly hours are shown in Advanced Schedule Rules.';
+
+  @override
+  String get scheduledNoSpecificRestriction => 'No specific restriction';
+
+  @override
+  String get scheduledAvailableAllDay => 'Available all day';
+
+  @override
+  String get scheduledEditSellingHours => 'Edit Selling Hours';
+
+  @override
+  String get scheduledAdvancedRules => 'Advanced Schedule Rules';
+
+  @override
+  String get scheduledNoAdvancedRules => 'No advanced schedule rules';
+
+  @override
+  String get scheduledViewRules => 'View Rules';
+
+  @override
+  String get scheduledInactiveRule => 'Inactive schedule rule';
+
+  @override
+  String get scheduledPriorityRule => 'Priority schedule rule';
+
+  @override
+  String get scheduledDateBoundRule => 'Date-limited schedule rule';
+
+  @override
+  String get scheduledCheckAvailability => 'Check Availability';
+
+  @override
+  String get scheduledCheckHelp =>
+      'Check a date and time in the selected selling context.';
+
+  @override
+  String get scheduledDate => 'Date';
+
+  @override
+  String get scheduledTime => 'Time';
+
+  @override
+  String get scheduledCheck => 'Check';
+
+  @override
+  String get scheduledCheckError =>
+      'Availability could not be checked. Please try again.';
+
+  @override
+  String get scheduledAvailableUsingProduct =>
+      'Available according to the Product schedule.';
+
+  @override
+  String get scheduledDay => 'Day';
+
+  @override
+  String get scheduledEveryDay => 'Every day';
+
+  @override
+  String get scheduledAvailability => 'Availability';
+
+  @override
+  String get scheduledAvailableAllDayHelp =>
+      'No time restriction for this day.';
+
+  @override
+  String get scheduledCustomHours => 'Custom hours';
+
+  @override
+  String get scheduledCustomHoursHelp => 'Set the normal start and end time.';
+
+  @override
+  String get scheduledStartTime => 'Start time';
+
+  @override
+  String get scheduledEndTime => 'End time';
+
+  @override
+  String scheduledOvernightUntil(String time) {
+    return 'Available overnight until $time the next day.';
+  }
+
+  @override
+  String get scheduledDateLimits => 'Date Limits';
+
+  @override
+  String get scheduledOptional => 'Optional';
+
+  @override
+  String get scheduledStartDate => 'Start date';
+
+  @override
+  String get scheduledEndDate => 'End date';
+
+  @override
+  String get scheduledSelectDate => 'Select date';
+
+  @override
+  String get scheduledAdvanced => 'Advanced';
+
+  @override
+  String get scheduledPriority => 'Priority';
+
+  @override
+  String get scheduledActive => 'Active';
+
+  @override
+  String get scheduledSaveSellingHours => 'Save Selling Hours';
+
+  @override
+  String get scheduledFrom => 'From';
+
+  @override
+  String get scheduledUntil => 'Until';
+
+  @override
+  String get scheduledSunday => 'Sunday';
+
+  @override
+  String get scheduledMonday => 'Monday';
+
+  @override
+  String get scheduledTuesday => 'Tuesday';
+
+  @override
+  String get scheduledWednesday => 'Wednesday';
+
+  @override
+  String get scheduledThursday => 'Thursday';
+
+  @override
+  String get scheduledFriday => 'Friday';
+
+  @override
+  String get scheduledSaturday => 'Saturday';
+
+  @override
+  String get operationalAvailabilityTitle => 'Operational availability';
+
+  @override
+  String get operationalAvailabilityPurpose =>
+      'Can customers order this item right now? Temporary operational exceptions only.';
+
+  @override
+  String get operationalAvailabilityContext => 'Current context';
+
+  @override
+  String get operationalAvailabilityProductVariant => 'Product / Variant';
+
+  @override
+  String get operationalAvailabilityProductOnly => 'Product';
+
+  @override
+  String get operationalAvailabilityBranch => 'Branch';
+
+  @override
+  String get operationalAvailabilityChannel => 'Sales channel';
+
+  @override
+  String get operationalAvailabilitySelectBranch => 'Select an active branch';
+
+  @override
+  String get operationalAvailabilitySelectChannel => 'Select a sales channel';
+
+  @override
+  String get operationalAvailabilityAvailableNow => 'AVAILABLE NOW';
+
+  @override
+  String get operationalAvailabilitySoldOut => 'SOLD OUT';
+
+  @override
+  String get operationalAvailabilityTemporarilyUnavailable =>
+      'TEMPORARILY UNAVAILABLE';
+
+  @override
+  String get operationalAvailabilityNoRestriction =>
+      'No temporary restriction is active.';
+
+  @override
+  String get operationalAvailabilityActiveRestriction =>
+      'A temporary operational restriction is active.';
+
+  @override
+  String operationalAvailabilityUntil(String time) {
+    return 'Until: $time';
+  }
+
+  @override
+  String get operationalAvailabilityReason => 'Reason';
+
+  @override
+  String get operationalAvailabilityMarkUnavailable =>
+      'Mark temporarily unavailable';
+
+  @override
+  String get operationalAvailabilityMakeAvailable => 'Make available now';
+
+  @override
+  String get operationalAvailabilityEditStatus => 'Edit status';
+
+  @override
+  String get operationalAvailabilityEditTemporary =>
+      'Edit temporary restriction';
+
+  @override
+  String get operationalAvailabilityUseDefault => 'Use default status';
+
+  @override
+  String get operationalAvailabilityUseDefaultTitle => 'Use default status?';
+
+  @override
+  String get operationalAvailabilityUseDefaultMessage =>
+      'This removes only the status set for this exact product context. The resulting availability will be checked again.';
+
+  @override
+  String get operationalAvailabilityDefaultAction => 'Use default';
+
+  @override
+  String get operationalAvailabilityAllVariants =>
+      'This status applies to all variants of this product.';
+
+  @override
+  String operationalAvailabilityOnlyVariant(String variant) {
+    return 'This status affects only $variant.';
+  }
+
+  @override
+  String get operationalAvailabilityLoadingCurrent =>
+      'Updating current availability…';
+
+  @override
+  String get operationalAvailabilityNoContext =>
+      'Choose an active branch and sales channel to view current availability.';
+
+  @override
+  String get operationalAvailabilityLoadError =>
+      'We couldn’t load current availability. Try again.';
+
+  @override
+  String get operationalAvailabilityArchived =>
+      'This item is archived. Current availability is shown for reference and cannot be changed.';
+
+  @override
+  String get operationalAvailabilitySetStatus => 'Set availability status';
+
+  @override
+  String get operationalAvailabilityEditStatusTitle =>
+      'Edit availability status';
+
+  @override
+  String get operationalAvailabilityStatus => 'Status';
+
+  @override
+  String get operationalAvailabilityDuration => 'Duration';
+
+  @override
+  String get operationalAvailabilitySpecificTime => 'Until a specific time';
+
+  @override
+  String get operationalAvailabilityEndTimeRequired =>
+      'Select when this temporary restriction should end.';
+
+  @override
+  String get operationalAvailabilitySelectEndTime => 'Select end date and time';
+
+  @override
+  String get operationalAvailabilityBranchTime =>
+      'The time is shown in the selected branch’s local time.';
+
+  @override
+  String get operationalAvailabilitySave => 'Save status';
+
+  @override
+  String get operationalAvailabilitySaving => 'Saving…';
+
+  @override
+  String get operationalAvailabilityCancel => 'Cancel';
+
+  @override
+  String get operationalAvailabilityExplicitAvailable =>
+      'Available for this selling context.';
+
+  @override
+  String get operationalAvailabilitySaveError =>
+      'We couldn’t save this availability status. Review the details and try again.';
+
+  @override
+  String get catalogSetupWorkspaceHelp =>
+      'Configure the classifications and preparation destinations used by Products.';
+
+  @override
+  String get catalogSetupCategoriesPurpose =>
+      'Organize Products into clear catalog and menu groups.';
+
+  @override
+  String get catalogSetupReportingPurpose =>
+      'Group Products for sales and performance reporting.';
+
+  @override
+  String get catalogSetupReportingNote =>
+      'Reporting Categories do not control where Products appear in the menu.';
+
+  @override
+  String get catalogSetupStationsPurpose =>
+      'Define where Products and items are prepared.';
+
+  @override
+  String get catalogSetupSearchCategories => 'Search categories...';
+
+  @override
+  String get catalogSetupSearchReporting => 'Search reporting categories...';
+
+  @override
+  String get catalogSetupSearchStations => 'Search kitchen stations...';
+
+  @override
+  String catalogSetupAdd(String type) {
+    return 'Add $type';
+  }
+
+  @override
+  String catalogSetupSave(String type) {
+    return 'Save $type';
+  }
+
+  @override
+  String get catalogSetupNoCategories => 'No categories yet';
+
+  @override
+  String get catalogSetupNoReportingCategories => 'No reporting categories yet';
+
+  @override
+  String get catalogSetupNoKitchenStations => 'No kitchen stations yet';
+
+  @override
+  String get catalogSetupEmptyCategoriesHelp =>
+      'Categories help organize Products into clear groups.';
+
+  @override
+  String get catalogSetupEmptyReportingHelp =>
+      'Reporting Categories help group Products for useful sales reporting.';
+
+  @override
+  String get catalogSetupEmptyStationsHelp =>
+      'Kitchen Stations help define where each Product is prepared.';
+
+  @override
+  String get catalogSetupCouldNotLoad => 'Couldn’t load data';
+
+  @override
+  String get catalogSetupLoadHelp =>
+      'Please check your connection and try again.';
+
+  @override
+  String catalogSetupShowing(int shown, int total) {
+    return 'Showing $shown of $total';
+  }
+
+  @override
+  String get catalogSetupActive => 'Active';
+
+  @override
+  String get catalogSetupArchived => 'Archived';
+
+  @override
+  String get catalogSetupInactive => 'Inactive';
+
+  @override
+  String get catalogSetupEditorHelp =>
+      'Use the names that staff and customers should recognize.';
+
+  @override
+  String get catalogSetupPrimaryName => 'Name';
+
+  @override
+  String catalogSetupArchiveTitle(String name) {
+    return 'Archive $name?';
+  }
+
+  @override
+  String get catalogSetupArchiveHelp =>
+      'Archived records can be restored later. Existing Product assignments follow the system’s current rules.';
+
+  @override
+  String get catalogSetupValidationRequired => 'Enter a name to continue.';
+
+  @override
+  String get catalogSetupRefreshInProgress => 'Refreshing catalog setup';
+
+  @override
+  String get menuListTitle => 'Menus';
+
+  @override
+  String get menuListSubtitle =>
+      'Create and organize the menus customers can order from.';
+
+  @override
+  String get menuListAdd => 'Add Menu';
+
+  @override
+  String get menuListSearch => 'Search menus...';
+
+  @override
+  String get menuListStatus => 'Status';
+
+  @override
+  String get menuListSort => 'Sort';
+
+  @override
+  String get menuListDirection => 'Direction';
+
+  @override
+  String get menuListRefresh => 'Refresh menus';
+
+  @override
+  String get menuListMenu => 'Menu';
+
+  @override
+  String get menuListSections => 'Sections';
+
+  @override
+  String get menuListVisibleProducts => 'Visible Products';
+
+  @override
+  String get menuListLastUpdated => 'Last Updated';
+
+  @override
+  String get menuListActions => 'Actions';
+
+  @override
+  String get menuListOpen => 'Open';
+
+  @override
+  String get menuListClearFilters => 'Clear filters';
+
+  @override
+  String get menuListNoMenusYet => 'No menus yet';
+
+  @override
+  String get menuListNoMenusHelp =>
+      'Create your first Menu and start organizing Products into Sections.';
+
+  @override
+  String get menuListNoMatches => 'No menus match these filters.';
+
+  @override
+  String get menuListNoMatchesHelp =>
+      'Try changing the search or status filter.';
+
+  @override
+  String get menuListCouldNotLoad => 'Couldn’t load menus';
+
+  @override
+  String get menuListCouldNotLoadHelp => 'Check your connection and try again.';
+
+  @override
+  String get menuListLoadMore => 'Load more';
+
+  @override
+  String get menuListArchiveTitle => 'Archive menu?';
+
+  @override
+  String get menuListArchiveHelp =>
+      'The menu can be restored later. Existing orders and published versions are unchanged.';
+
+  @override
+  String get menuListRestoreTitle => 'Restore menu?';
+
+  @override
+  String get menuListRestoreHelp =>
+      'Restoring makes the menu editable again. It does not publish the menu.';
+
+  @override
+  String menuListActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get menuListPaused => 'Paused';
+
+  @override
+  String get menuListPriority => 'Priority';
+
+  @override
+  String get menuListName => 'Name';
+
+  @override
+  String get menuListCreated => 'Created';
+
+  @override
+  String get menuListUpdated => 'Last updated';
+
+  @override
+  String get menuListAscending => 'Ascending';
+
+  @override
+  String get menuListDescending => 'Descending';
+
+  @override
+  String get menuListAll => 'All';
+
+  @override
+  String get menuListDraft => 'Draft';
+
+  @override
+  String get menuListActive => 'Active';
+
+  @override
+  String get menuListArchived => 'Archived';
+
+  @override
+  String get menuListEdit => 'Edit';
+
+  @override
+  String get menuListArchive => 'Archive';
+
+  @override
+  String get menuListRestore => 'Restore';
+
+  @override
+  String get menuListCancel => 'Cancel';
+
+  @override
+  String get menuListRetry => 'Retry';
+
+  @override
+  String get menuEditorAddTitle => 'Add Menu';
+
+  @override
+  String get menuEditorEditTitle => 'Edit Menu';
+
+  @override
+  String get menuEditorAddHelp =>
+      'Start with the names your staff and customers recognize.';
+
+  @override
+  String get menuEditorEditHelp =>
+      'Update the menu identity without leaving this workspace.';
+
+  @override
+  String get menuEditorClose => 'Close menu editor';
+
+  @override
+  String get menuEditorEnglishName => 'English Name';
+
+  @override
+  String get menuEditorArabicName => 'Arabic Name';
+
+  @override
+  String get menuEditorMoreDetails => 'More details';
+
+  @override
+  String get menuEditorHideDetails => 'Hide details';
+
+  @override
+  String get menuEditorEnglishDescription => 'English Description';
+
+  @override
+  String get menuEditorArabicDescription => 'Arabic Description';
+
+  @override
+  String get menuEditorCoverImageUrl => 'Cover image URL';
+
+  @override
+  String get menuEditorPriority => 'Priority';
+
+  @override
+  String get menuEditorPriorityHelp =>
+      'Controls the ordering when menus are shown together.';
+
+  @override
+  String get menuEditorStatus => 'Menu status';
+
+  @override
+  String get menuEditorCreate => 'Create Menu';
+
+  @override
+  String get menuEditorSaveChanges => 'Save Changes';
+
+  @override
+  String get menuEditorDraftHelp =>
+      'New menus start as Draft. You can activate them later.';
+
+  @override
+  String get menuEditorNameRequired =>
+      'Enter an English or Arabic name to continue.';
+
+  @override
+  String get menuEditorPriorityInvalid => 'Enter a whole number for priority.';
+
+  @override
+  String get menuEditorSaveFailed =>
+      'We couldn’t save this menu. Please try again.';
+
+  @override
+  String get menuEditorArchivedReadOnly =>
+      'Archived menus are read-only. Restore this menu before editing it.';
+
+  @override
+  String get menuEditorStatusDraft => 'Draft';
+
+  @override
+  String get menuEditorStatusActive => 'Active';
+
+  @override
+  String get menuEditorStatusPaused => 'Paused';
+
+  @override
+  String get menuEditorStatusArchived => 'Archived';
+
+  @override
+  String get menuOverviewEditMenu => 'Edit Menu';
+
+  @override
+  String get menuOverviewActions => 'Menu actions';
+
+  @override
+  String get menuOverviewTab => 'Overview';
+
+  @override
+  String get menuOverviewSectionsTab => 'Sections';
+
+  @override
+  String get menuOverviewProductsTab => 'Products';
+
+  @override
+  String get menuOverviewWorkspaceTabs => 'Menu workspace tabs';
+
+  @override
+  String get menuOverviewDetails => 'Menu details';
+
+  @override
+  String get menuOverviewName => 'Name';
+
+  @override
+  String get menuOverviewStatus => 'Status';
+
+  @override
+  String get menuOverviewComposition => 'Composition';
+
+  @override
+  String get menuOverviewManageSections => 'Manage Sections';
+
+  @override
+  String get menuOverviewManageProducts => 'Manage Products';
+
+  @override
+  String menuOverviewCompositionValue(
+    int sectionCount,
+    int visibleProductCount,
+  ) {
+    return '$sectionCount Sections · $visibleProductCount visible Products';
+  }
+
+  @override
+  String get menuOverviewDraft => 'Draft';
+
+  @override
+  String get menuOverviewActive => 'Active';
+
+  @override
+  String get menuOverviewPaused => 'Paused';
+
+  @override
+  String get menuOverviewArchived => 'Archived';
+
+  @override
+  String get menuOverviewArchivedReadOnly =>
+      'This menu is archived and read-only. Restore it before changing its composition.';
+
+  @override
+  String get menuOverviewLoading => 'Loading menu workspace';
+
+  @override
+  String get menuOverviewCouldNotLoad => 'Couldn’t load this menu';
+
+  @override
+  String get menuOverviewArchive => 'Archive';
+
+  @override
+  String get menuOverviewRestore => 'Restore';
+
+  @override
+  String get menuSectionsTitle => 'Sections';
+
+  @override
+  String get menuSectionsHelp =>
+      'Organize this menu into customer-friendly groups.';
+
+  @override
+  String get menuSectionsAdd => 'Add Section';
+
+  @override
+  String get menuSectionsReorder => 'Reorder Sections';
+
+  @override
+  String get menuSectionsDone => 'Done';
+
+  @override
+  String get menuSectionsReorderHelp =>
+      'Use the arrows to change the order customers see.';
+
+  @override
+  String menuSectionsProducts(int count) {
+    return '$count Products';
+  }
+
+  @override
+  String get menuSectionsArchived => 'Archived';
+
+  @override
+  String get menuSectionsInactive => 'Inactive';
+
+  @override
+  String menuSectionsActions(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get menuSectionsEdit => 'Edit';
+
+  @override
+  String get menuSectionsArchive => 'Archive';
+
+  @override
+  String get menuSectionsRestore => 'Restore';
+
+  @override
+  String get menuSectionsMoveUp => 'Move Up';
+
+  @override
+  String get menuSectionsMoveDown => 'Move Down';
+
+  @override
+  String get menuSectionsNoSections => 'No Sections yet';
+
+  @override
+  String get menuSectionsEmptyHelp =>
+      'Create a Section before adding Products.';
+
+  @override
+  String get menuSectionsLoadError => 'Couldn’t load Sections';
+
+  @override
+  String get menuSectionEditorAddTitle => 'Add Section';
+
+  @override
+  String get menuSectionEditorEditTitle => 'Edit Section';
+
+  @override
+  String get menuSectionEditorAddHelp =>
+      'Create a clear group customers can browse.';
+
+  @override
+  String get menuSectionEditorEditHelp =>
+      'Update this group without leaving the menu workspace.';
+
+  @override
+  String get menuSectionEditorClose => 'Close Section editor';
+
+  @override
+  String get menuSectionEditorEnglishName => 'English Name';
+
+  @override
+  String get menuSectionEditorArabicName => 'Arabic Name';
+
+  @override
+  String get menuSectionEditorMoreDetails => 'More details';
+
+  @override
+  String get menuSectionEditorHideDetails => 'Hide details';
+
+  @override
+  String get menuSectionEditorDescription => 'Description';
+
+  @override
+  String get menuSectionEditorImageUrl => 'Image URL';
+
+  @override
+  String get menuSectionEditorActive => 'Active Section';
+
+  @override
+  String get menuSectionEditorNameRequired =>
+      'Enter an English or Arabic name to continue.';
+
+  @override
+  String get menuSectionEditorSaveFailed =>
+      'Couldn’t save this Section. Check the fields and try again.';
+
+  @override
+  String get menuSectionEditorSave => 'Save Changes';
+
+  @override
+  String get menuProductsTitle => 'Products';
+
+  @override
+  String get menuProductsHelp =>
+      'Organize the Products customers see inside each Section.';
+
+  @override
+  String get menuProductsAdd => 'Add Products';
+
+  @override
+  String get menuProductsReorder => 'Reorder Products';
+
+  @override
+  String get menuProductsDone => 'Done';
+
+  @override
+  String get menuProductsReorderHelp =>
+      'Use the arrows to set the order customers see within each Section.';
+
+  @override
+  String get menuProductsSearchHint => 'Search Products in this Menu';
+
+  @override
+  String menuProductsCount(int count) {
+    return '$count Products';
+  }
+
+  @override
+  String get menuProductsPickerTitle => 'Add Products';
+
+  @override
+  String get menuProductsPickerTargetSection => 'Add to Section';
+
+  @override
+  String get menuProductsPickerSearchHint => 'Search Products...';
+
+  @override
+  String menuProductsPickerAlreadyInSection(String section) {
+    return 'Already in $section';
+  }
+
+  @override
+  String menuProductsPickerSelected(int count) {
+    return 'Selected: $count';
+  }
+
+  @override
+  String get menuProductsPickerNoMatches => 'No Products match your search.';
+
+  @override
+  String get menuProductsPickerNoEligible =>
+      'All available Products are already in this Section.';
+
+  @override
+  String get menuProductsPickerLoadError => 'Could not load Products.';
+
+  @override
+  String menuProductsPickerPartialAdded(int added, int failed) {
+    return '$added Products were added. $failed could not be added.';
+  }
+
+  @override
+  String menuProductsPickerConflict(String section) {
+    return 'This Product is already in $section.';
+  }
+
+  @override
+  String menuProductsBasePrice(String price) {
+    return 'Base $price';
+  }
+
+  @override
+  String get menuProductsFeatured => 'Featured';
+
+  @override
+  String get menuProductsHidden => 'Hidden';
+
+  @override
+  String get menuProductsArchivedPlacement => 'Removed from Menu';
+
+  @override
+  String get menuProductsArchivedProduct => 'Archived Product';
+
+  @override
+  String get menuProductsInactive => 'Inactive';
+
+  @override
+  String get menuProductsActions => 'Product actions';
+
+  @override
+  String get menuProductsMarkFeatured => 'Mark Featured';
+
+  @override
+  String get menuProductsRemoveFeatured => 'Remove Featured';
+
+  @override
+  String get menuProductsHide => 'Hide from Menu';
+
+  @override
+  String get menuProductsShow => 'Show on Menu';
+
+  @override
+  String get menuProductsMove => 'Move to Section';
+
+  @override
+  String get menuProductsRemove => 'Remove from Menu';
+
+  @override
+  String get menuProductsRestore => 'Restore Placement';
+
+  @override
+  String get menuProductsMoveUp => 'Move Up';
+
+  @override
+  String get menuProductsMoveDown => 'Move Down';
+
+  @override
+  String get menuProductsEmpty => 'No Products in this Section yet.';
+
+  @override
+  String get menuProductsNoMatches => 'No matching Products in this Section.';
+
+  @override
+  String get menuProductsNoSections => 'No Sections yet';
+
+  @override
+  String get menuProductsNoSectionsHelp =>
+      'Create a Section before adding Products.';
+
+  @override
+  String get menuProductsArchivedMenuReadOnly =>
+      'This menu is archived and read-only. Its composition remains available to review.';
+
+  @override
+  String get menuProductsLoadError => 'Couldn’t load Products';
+
+  @override
+  String get menuProductsRemoveHelp =>
+      'This removes the Product from this Section and Menu only. The Product remains in the Catalog.';
+
+  @override
+  String get menuProductsRestoreHelp =>
+      'This restores this Placement only. It does not restore or reactivate the Product.';
+
+  @override
+  String get assignmentsWorkspaceTitle => 'Assignments & Schedules';
+
+  @override
+  String get assignmentsWorkspaceHelp =>
+      'Choose a Branch and sales channel, then control which Menus are available in that selling context.';
+
+  @override
+  String get assignmentsBranch => 'Branch';
+
+  @override
+  String get assignmentsSalesChannel => 'Sales Channel';
+
+  @override
+  String get assignmentsTimezone => 'Timezone';
+
+  @override
+  String get assignmentsChooseBranch => 'Choose a Branch';
+
+  @override
+  String get assignmentsChooseChannel => 'Choose a sales channel';
+
+  @override
+  String get assignmentsTimezonePending => 'Select a Branch';
+
+  @override
+  String get assignmentsNoContextTitle => 'Choose a selling context';
+
+  @override
+  String get assignmentsNoContextHelp =>
+      'Select a Branch and sales channel to manage its Menus.';
+
+  @override
+  String get assignmentsAssignedMenus => 'Assigned Menus';
+
+  @override
+  String assignmentsMenuCount(int count) {
+    return '$count Menus assigned';
+  }
+
+  @override
+  String get assignmentsReorderMenus => 'Reorder Menus';
+
+  @override
+  String get assignmentsReorderHelp =>
+      'Use the arrows to change the order Menus appear in this selling context. Ordering does not decide which Menu wins.';
+
+  @override
+  String get assignmentsReorderDone => 'Done';
+
+  @override
+  String get assignmentsMoveUp => 'Move up';
+
+  @override
+  String get assignmentsMoveDown => 'Move down';
+
+  @override
+  String get assignmentsReorderSaveFailed =>
+      'We couldn\'t save this Menu order. Try again.';
+
+  @override
+  String get assignmentsReorderArchivedUnavailable =>
+      'Reordering is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.';
+
+  @override
+  String get assignmentsAddMenus => 'Add Menus';
+
+  @override
+  String get assignmentsNoMenusTitle => 'No Menus assigned';
+
+  @override
+  String assignmentsNoMenusHelp(String branch, String channel) {
+    return 'Add a Menu to $branch · $channel.';
+  }
+
+  @override
+  String get assignmentsLoadErrorTitle => 'Couldn\'t load assignments';
+
+  @override
+  String assignmentsLifecycle(String status) {
+    return 'Menu: $status';
+  }
+
+  @override
+  String get assignmentsPaused => 'Paused';
+
+  @override
+  String get assignmentsActive => 'Assignment Active';
+
+  @override
+  String get assignmentsInactive => 'Assignment Inactive';
+
+  @override
+  String get assignmentsAvailableNow => 'Available now';
+
+  @override
+  String get assignmentsOutsideHours => 'Outside scheduled hours';
+
+  @override
+  String get assignmentsNoScheduleRestriction => 'No schedule restriction';
+
+  @override
+  String get assignmentsScheduleUnknown => 'Schedule status unavailable';
+
+  @override
+  String get assignmentsManageSchedule => 'Manage Schedule';
+
+  @override
+  String get assignmentsRemove => 'Remove from this selling context';
+
+  @override
+  String get assignmentsArchivedDiagnostic =>
+      'Archived Menu — actions unavailable';
+
+  @override
+  String get assignmentsChannelWaiterApp => 'Waiter App';
+
+  @override
+  String get assignmentsChannelKiosk => 'Kiosk';
+
+  @override
+  String get assignmentsChannelQrOrdering => 'QR Ordering';
+
+  @override
+  String get assignmentsChannelDelivery => 'Delivery';
+
+  @override
+  String get assignmentsChannelOnlineOrdering => 'Online Ordering';
+
+  @override
+  String get assignmentsMenuFallback => 'Menu';
+
+  @override
+  String get assignmentsAddSearch => 'Search Menus';
+
+  @override
+  String get assignmentsAddEmpty =>
+      'All available Menus are already assigned to this selling context.';
+
+  @override
+  String assignmentsAddSelected(int count) {
+    return 'Selected: $count';
+  }
+
+  @override
+  String assignmentsAddSelectedAction(int count) {
+    return 'Add $count Menus';
+  }
+
+  @override
+  String get assignmentsAddAlreadyAssigned => 'Already assigned';
+
+  @override
+  String get assignmentsAddArchivedUnavailable =>
+      'Archived Menus can’t be assigned.';
+
+  @override
+  String get assignmentsAddNoMatches => 'No Menus match your search.';
+
+  @override
+  String get assignmentsAddLoadError => 'Couldn’t load Menus';
+
+  @override
+  String get assignmentsAddSaveError => 'Couldn’t add Menus. Try again.';
+
+  @override
+  String get assignmentsAddDuplicateError =>
+      'One or more Menus are already assigned to this selling context.';
+
+  @override
+  String get assignmentsAddArchivedScopeError =>
+      'Adding Menus is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.';
+
+  @override
+  String get menuScheduleTitle => 'Menu Schedule';
+
+  @override
+  String menuScheduleTimesShownIn(String timezone) {
+    return 'Times shown in $timezone';
+  }
+
+  @override
+  String get menuScheduleUsingBroader => 'Using broader Menu schedule';
+
+  @override
+  String menuScheduleCustomizedFor(String context) {
+    return 'Customized for $context';
+  }
+
+  @override
+  String get menuScheduleCustomize => 'Customize for this context';
+
+  @override
+  String get menuScheduleUseBroader => 'Use broader schedule';
+
+  @override
+  String get menuScheduleAvailableAllDay => 'Available all day';
+
+  @override
+  String get menuScheduleUnavailable => 'Unavailable';
+
+  @override
+  String get menuScheduleCustomHours => 'Custom hours';
+
+  @override
+  String get menuScheduleStartTime => 'Start time';
+
+  @override
+  String get menuScheduleEndTime => 'End time';
+
+  @override
+  String menuScheduleEditDay(String day) {
+    return 'Edit $day';
+  }
+
+  @override
+  String get menuScheduleSaveDay => 'Apply';
+
+  @override
+  String get menuScheduleSave => 'Save Schedule';
+
+  @override
+  String get menuScheduleLoadError => 'Couldn\'t load Menu schedule';
+
+  @override
+  String get menuScheduleSaveError =>
+      'Couldn\'t save Menu schedule. Try again.';
+
+  @override
+  String menuScheduleMultipleWindows(int count) {
+    return '$count time windows';
+  }
+
+  @override
+  String get menuScheduleMultipleWindowsReadOnly =>
+      'This day has multiple time windows. They are preserved and can be edited in the advanced schedule later.';
+
+  @override
+  String get menuScheduleUnavailableNotSupported =>
+      'This day uses an Every Day rule. Keep it unchanged until advanced scheduling is available.';
+
+  @override
+  String get menuScheduleInvalidTimes =>
+      'Enter two different times in HH:mm format.';
+
+  @override
+  String get menuScheduleMonday => 'Monday';
+
+  @override
+  String get menuScheduleTuesday => 'Tuesday';
+
+  @override
+  String get menuScheduleWednesday => 'Wednesday';
+
+  @override
+  String get menuScheduleThursday => 'Thursday';
+
+  @override
+  String get menuScheduleFriday => 'Friday';
+
+  @override
+  String get menuScheduleSaturday => 'Saturday';
+
+  @override
+  String get menuScheduleSunday => 'Sunday';
+
+  @override
+  String get menuScheduleMoreOptions => 'More schedule options';
+
+  @override
+  String get menuScheduleDateLimits => 'Date limits';
+
+  @override
+  String get menuScheduleStartDate => 'Start date (optional)';
+
+  @override
+  String get menuScheduleEndDate => 'End date (optional)';
+
+  @override
+  String get menuScheduleAddTimeWindow => 'Add time window';
+
+  @override
+  String menuScheduleOvernightUntil(String time) {
+    return 'Overnight — available until $time the next day';
+  }
+
+  @override
+  String get menuScheduleEveryDayReadOnly =>
+      'This rule applies every day. It is kept as-is so its schedule meaning is preserved.';
+
+  @override
+  String get menuScheduleCheckTitle => 'Check Schedule';
+
+  @override
+  String get menuScheduleDate => 'Date';
+
+  @override
+  String get menuScheduleTime => 'Time';
+
+  @override
+  String menuScheduleCheckTimezone(String timezone) {
+    return 'Times evaluated in $timezone';
+  }
+
+  @override
+  String get menuScheduleCheckSaveFirst =>
+      'Save schedule changes before checking the saved schedule.';
+
+  @override
+  String get menuScheduleCheckFailed =>
+      'Could not check the schedule. Try again.';
+
+  @override
+  String get menuScheduleInvalidDateRange =>
+      'End date must be on or after the start date.';
+
+  @override
+  String get menuScheduleDiscardTitle => 'Discard schedule changes?';
+
+  @override
+  String get menuScheduleDiscardMessage =>
+      'Your schedule changes have not been saved.';
+
+  @override
+  String get menuScheduleDiscard => 'Discard changes';
+
+  @override
+  String menuScheduleCustomizeDayTitle(String day) {
+    return 'Customize $day';
+  }
+
+  @override
+  String get menuScheduleCustomizeDayMessage =>
+      'This schedule currently applies to every day. Customizing one day will keep the same schedule for the other days and let you change that day separately.';
+
+  @override
+  String menuScheduleCustomizeDayAction(String day) {
+    return 'Customize $day';
+  }
+
+  @override
+  String get menuScheduleDateLimitsMixed =>
+      'These rules have different date limits. Date limits are left unchanged here so this editor does not overwrite them.';
+
+  @override
+  String get menuListNotAvailable => '—';
+
+  @override
+  String get reviewPublishPageHelp =>
+      'Review Menu readiness, preview the selling experience, and publish a version for this selling context.';
+
+  @override
+  String get reviewSellingContext => 'Selling Context';
+
+  @override
+  String get reviewSellingContextHelp =>
+      'This review covers the Menus assigned to the selected selling context.';
+
+  @override
+  String get reviewBranch => 'Branch';
+
+  @override
+  String get reviewSalesChannel => 'Sales Channel';
+
+  @override
+  String get reviewTimezone => 'Timezone';
+
+  @override
+  String get reviewScope => 'Scope';
+
+  @override
+  String get reviewScopeAssignedMenus => 'Menus assigned to this context';
+
+  @override
+  String get reviewReadinessTab => 'Readiness';
+
+  @override
+  String get reviewPreviewTab => 'Preview';
+
+  @override
+  String get reviewPublishTab => 'Publish';
+
+  @override
+  String get reviewVersionsTab => 'Versions';
+
+  @override
+  String get reviewCurrentlyPublished => 'Currently Published';
+
+  @override
+  String get reviewNotPublishedYet => 'Not published yet';
+
+  @override
+  String get reviewNoCurrentVersion =>
+      'No Menu version has been published for this selling context.';
+
+  @override
+  String get reviewCurrentVersionLoadError =>
+      'Could not load the current published version.';
+
+  @override
+  String reviewVersionNumber(int version) {
+    return 'Version $version';
+  }
+
+  @override
+  String reviewPublishedAt(String date) {
+    return 'Published $date';
+  }
+
+  @override
+  String get reviewViewVersions => 'View Versions';
+
+  @override
+  String get reviewReadiness => 'Readiness';
+
+  @override
+  String get reviewReadinessHelp =>
+      'Review the authoritative validation for this selling context.';
+
+  @override
+  String get reviewCheckAgain => 'Check Again';
+
+  @override
+  String get reviewNeedsAttention => 'Needs Attention';
+
+  @override
+  String get reviewReadyToPublish => 'Ready to Publish';
+
+  @override
+  String get reviewFixBlockingErrors =>
+      'Fix the blocking errors before publishing.';
+
+  @override
+  String get reviewErrors => 'Errors';
+
+  @override
+  String get reviewWarnings => 'Warnings';
+
+  @override
+  String reviewWarningsToReview(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings to review.',
+      one: '1 warning to review.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reviewNoIssuesForScope(String branch, String channel) {
+    return 'No issues found for $branch · $channel.';
+  }
+
+  @override
+  String get reviewNoMenusAssigned => 'No Menus assigned';
+
+  @override
+  String reviewNoMenusAssignedHelp(String branch, String channel) {
+    return 'Assign at least one active Menu to $branch · $channel before publishing.';
+  }
+
+  @override
+  String get reviewGoToAssignments => 'Go to Assignments';
+
+  @override
+  String get reviewReadinessLoadError => 'Could not load readiness results.';
+
+  @override
+  String get reviewTryAgain => 'Try again.';
+
+  @override
+  String get reviewIssuesAll => 'All';
+
+  @override
+  String get reviewSearchIssues => 'Search issues...';
+
+  @override
+  String get reviewNoMatchingIssues => 'No matching issues';
+
+  @override
+  String get reviewTryDifferentSearch => 'Try a different search or filter.';
+
+  @override
+  String reviewIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count issues',
+      one: '1 issue',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewIssueGroupMenus => 'Menus';
+
+  @override
+  String get reviewIssueGroupSections => 'Sections';
+
+  @override
+  String get reviewIssueGroupProducts => 'Products';
+
+  @override
+  String get reviewIssueGroupVariants => 'Variants';
+
+  @override
+  String get reviewIssueGroupRecipesMaterials => 'Recipes & Materials';
+
+  @override
+  String get reviewIssueGroupModifiers => 'Modifiers';
+
+  @override
+  String get reviewIssueGroupPricing => 'Pricing';
+
+  @override
+  String get reviewIssueGroupAvailability => 'Availability';
+
+  @override
+  String get reviewIssueGroupAssignmentsScope => 'Assignments / Scope';
+
+  @override
+  String get reviewIssueGroupOther => 'Other / General';
+
+  @override
+  String get reviewIssueGeneral => 'General';
+
+  @override
+  String get reviewOpenMenu => 'Open Menu';
+
+  @override
+  String get reviewOpenProduct => 'Open Product';
+
+  @override
+  String get reviewOpenSections => 'Open Sections';
+
+  @override
+  String get reviewReviewMenu => 'Review Menu';
+
+  @override
+  String get reviewIssueContextMenu => 'Menu issue';
+
+  @override
+  String get reviewIssueContextSection => 'Section issue';
+
+  @override
+  String get reviewIssueContextProduct => 'Product issue';
+
+  @override
+  String get reviewIssueContextVariant => 'Variant issue';
+
+  @override
+  String get reviewIssueContextPlacement => 'Menu placement issue';
+
+  @override
+  String get reviewIssueContextModifier => 'Modifier issue';
+
+  @override
+  String get reviewIssueContextRecipe => 'Recipe or material issue';
+
+  @override
+  String get reviewIssueContextScope => 'Selling context issue';
+
+  @override
+  String get reviewIssueContextGeneral => 'General issue';
+
+  @override
+  String get reviewPreviewContext =>
+      'Inspect the assigned Menu collection for this selling context.';
+
+  @override
+  String get reviewPreviewLanguage => 'Preview language';
+
+  @override
+  String get reviewPreviewLanguageDefault => 'Default';
+
+  @override
+  String get reviewPreviewLanguageArabic => 'Arabic';
+
+  @override
+  String get reviewPreviewLanguageEnglish => 'English';
+
+  @override
+  String get reviewPreviewShowHidden => 'Show hidden items';
+
+  @override
+  String get reviewPreviewShowUnavailable => 'Show unavailable items';
+
+  @override
+  String get reviewPreviewRefresh => 'Refresh Preview';
+
+  @override
+  String get reviewPreviewLoading => 'Loading Preview';
+
+  @override
+  String get reviewPreviewBlockingBanner =>
+      'This preview contains issues that must be fixed before publishing.';
+
+  @override
+  String get reviewPreviewReviewReadiness => 'Review Readiness';
+
+  @override
+  String get reviewPreviewAvailableNow => 'Available now';
+
+  @override
+  String get reviewPreviewOutsideScheduledHours => 'Outside scheduled hours';
+
+  @override
+  String get reviewPreviewHidden => 'Hidden';
+
+  @override
+  String get reviewPreviewUnavailable => 'Unavailable';
+
+  @override
+  String get reviewPreviewSoldOut => 'Sold out';
+
+  @override
+  String get reviewPreviewTemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get reviewPreviewAvailable => 'Available';
+
+  @override
+  String get reviewPreviewFeatured => 'Featured';
+
+  @override
+  String get reviewPreviewDefault => 'Default';
+
+  @override
+  String get reviewPreviewVariants => 'Variants';
+
+  @override
+  String get reviewPreviewModifiers => 'Modifiers';
+
+  @override
+  String get reviewPreviewRecipeConfigured => 'Recipe configured';
+
+  @override
+  String reviewPreviewRecipeComponents(int count) {
+    return '$count components';
+  }
+
+  @override
+  String get reviewPreviewNoMenus => 'No Menus to preview';
+
+  @override
+  String get reviewPreviewNoMenusHelp =>
+      'Assign at least one active Menu to this selling context.';
+
+  @override
+  String get reviewPreviewEmptySection =>
+      'No products are included in this section.';
+
+  @override
+  String get reviewPreviewError => 'Could not load Preview.';
+
+  @override
+  String get reviewPreviewRetry => 'Retry';
+
+  @override
+  String get reviewPreviewBasePrice => 'Base price';
+
+  @override
+  String get reviewPreviewRequired => 'Required';
+
+  @override
+  String get reviewPreviewOptional => 'Optional';
+
+  @override
+  String get reviewPreviewOptionUnavailable => 'Unavailable option';
+
+  @override
+  String reviewPublishQuestion(String branch, String channel) {
+    return 'Publish $branch · $channel?';
+  }
+
+  @override
+  String get reviewPublishScopeHelp =>
+      'This creates a published Menu version for this exact selling context.';
+
+  @override
+  String get reviewPublishCurrentVersion => 'Current version';
+
+  @override
+  String get reviewPublishCheckingReadiness => 'Checking readiness…';
+
+  @override
+  String get reviewPublishWaitForReadiness =>
+      'Wait for the current readiness check before publishing.';
+
+  @override
+  String get reviewPublishNoAssignedMenu =>
+      'Assign at least one active Menu to this selling context before publishing.';
+
+  @override
+  String get reviewPublishCannotPublish => 'Cannot publish yet';
+
+  @override
+  String get reviewPublishReviewErrors => 'Review Errors';
+
+  @override
+  String get reviewPublishReviewIssues => 'Review Issues';
+
+  @override
+  String reviewPublishWarningsCanProceed(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings remain. You can still publish this version.',
+      one: '1 warning remains. You can still publish this version.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPublishCleanReady =>
+      'No blocking issues were found. You can publish this version.';
+
+  @override
+  String get reviewPublishAction => 'Publish Menu Version';
+
+  @override
+  String get reviewPublishPublishing => 'Publishing…';
+
+  @override
+  String reviewPublishConfirmTitle(String branch, String channel) {
+    return 'Publish $branch · $channel?';
+  }
+
+  @override
+  String get reviewPublishImmutableExplanation =>
+      'A new immutable Menu version will be created if the configuration changed.';
+
+  @override
+  String get reviewPublishAlreadyUpToDate => 'Already up to date';
+
+  @override
+  String reviewPublishNoChanges(int version) {
+    return 'No Menu changes were found since Version $version. No new version was created.';
+  }
+
+  @override
+  String get reviewPublishSuccess => 'Published successfully';
+
+  @override
+  String reviewPublishCurrentForScope(String branch, String channel) {
+    return 'This is now the current published Menu version for $branch · $channel.';
+  }
+
+  @override
+  String get reviewPublishRevalidationFailedTitle =>
+      'Menu changed and is no longer ready to publish.';
+
+  @override
+  String get reviewPublishRevalidationFailedMessage =>
+      'New issues were found during the final check.';
+
+  @override
+  String get reviewPublishRequestFailed =>
+      'Could not publish the Menu version.';
+
+  @override
+  String get reviewPublishTryAgain => 'Try Again';
+
+  @override
+  String get menuUiUnsavedChangesTitle => 'Unsaved changes';
+
+  @override
+  String get menuUiUnsavedChangesMessage =>
+      'You have unsaved changes. If you leave now, they will be discarded.';
+
+  @override
+  String get menuUiStay => 'Stay';
+
+  @override
+  String get menuUiLeaveWithoutSaving => 'Leave without saving';
+
+  @override
+  String get productEditorCreated => 'Product created successfully.';
+
+  @override
+  String get productEditorUpdated => 'Product updated successfully.';
+
+  @override
+  String get productEditorCreateHelp =>
+      'Define what this product is, where it belongs, and how it is sold.';
+
+  @override
+  String get productEditorEditHelp =>
+      'Update the product information managers use every day.';
+
+  @override
+  String get productEditorArchivedReadOnly =>
+      'Archived products are available for reference only. Restore this product to edit it.';
+
+  @override
+  String get productEditorViewWorkspace => 'View Product Workspace';
+
+  @override
+  String get productEditorDefaultName => 'Default Product Name';
+
+  @override
+  String get productEditorDefaultDescription => 'Default Description';
+
+  @override
+  String get productEditorImage => 'Product Image';
+
+  @override
+  String get productEditorUploadingImage => 'Uploading image…';
+
+  @override
+  String get productEditorChooseImage => 'Choose Image';
+
+  @override
+  String get productEditorChangeImage => 'Change Image';
+
+  @override
+  String get productEditorRemoveImage => 'Remove Image';
+
+  @override
+  String get productEditorImageFormats => 'PNG, JPG, WEBP, or GIF up to 5 MB';
+
+  @override
+  String get productEditorTranslationsClose => 'Close translations';
+
+  @override
+  String get productEditorDefaultContent => 'Default content';
+
+  @override
+  String get productEditorLocalizedName => 'Localized Name';
+
+  @override
+  String get productEditorLocalizedDescription => 'Localized Description';
+
+  @override
+  String get productEditorStockTracking => 'Stock Tracking';
+
+  @override
+  String get productEditorStockTrackingHelp =>
+      'Track the materials consumed when this Product is prepared.';
+
+  @override
+  String get productEditorNoDefaultVariant => 'No default variant returned.';
+
+  @override
+  String get productEditorManageVariants => 'Manage Variants';
+
+  @override
+  String get productDetailNotFound => 'Product not found.';
+
+  @override
+  String get productDetailEdit => 'Edit Product';
+
+  @override
+  String get productDetailArchiveTitle => 'Archive Product?';
+
+  @override
+  String get productDetailRestoreTitle => 'Restore Product?';
+
+  @override
+  String get productDetailArchiveAction => 'Archive Product';
+
+  @override
+  String get productDetailRestoreAction => 'Restore Product';
+
+  @override
+  String get productDetailUsageEmpty =>
+      'This Product is not currently used in any menus.';
+
+  @override
+  String get variantTitle => 'Variants';
+
+  @override
+  String get variantHelp =>
+      'Manage the selling options available for this Product.';
+
+  @override
+  String get variantAdd => 'Add Variant';
+
+  @override
+  String get variantEdit => 'Edit Variant';
+
+  @override
+  String get variantReorder => 'Reorder';
+
+  @override
+  String get variantDone => 'Done';
+
+  @override
+  String get variantRefresh => 'Refresh Variants';
+
+  @override
+  String get variantReadOnly =>
+      'This product is archived and variants are read-only.';
+
+  @override
+  String get variantCannotArchiveDefaultTitle =>
+      'Cannot archive Default Variant';
+
+  @override
+  String get variantCannotArchiveDefaultMessage =>
+      'The only active Variant cannot be archived.';
+
+  @override
+  String get variantArchiveMessage =>
+      'This Variant will be archived and can be restored later.';
+
+  @override
+  String get variantSelectReplacement =>
+      'Select an active replacement Default Variant.';
+
+  @override
+  String get variantOrder => 'Order';
+
+  @override
+  String get variantName => 'Variant name';
+
+  @override
+  String get variantBasePrice => 'Base Price';
+
+  @override
+  String get variantCostPrice => 'Cost Price';
+
+  @override
+  String get variantDefault => 'Default';
+
+  @override
+  String get variantActions => 'Actions';
+
+  @override
+  String get variantActiveStatus => 'Active status';
+
+  @override
+  String get variantMakeDefault => 'Make this the Default Variant';
+
+  @override
+  String get variantDefaultMustBeActive => 'A Default Variant must be active.';
+
+  @override
+  String get variantSaving => 'Saving…';
+
+  @override
+  String get variantNoArchived => 'No archived Variants.';
+
+  @override
+  String get variantEmpty => 'No Variants returned for this product.';
+
+  @override
+  String get modifierAssignmentTitle => 'Modifiers';
+
+  @override
+  String get modifierAssignmentSaveChanges => 'Save Changes';
+
+  @override
+  String get modifierAssignmentAddGroup => 'Add Modifier Group';
+
+  @override
+  String get modifierAssignmentNoAssigned =>
+      'No Modifier Groups are assigned to this Product.';
+
+  @override
+  String get modifierAssignmentNoAvailable =>
+      'No available Modifier Groups found.';
+
+  @override
+  String get modifierAssignmentSearch => 'Search Modifier Groups';
+
+  @override
+  String get modifierAssignmentRemoveTitle => 'Remove modifier group?';
+
+  @override
+  String get modifierAssignmentRemoveMessage =>
+      'Remove this Modifier Group from the Product? The Group and its Options will remain available in the Modifier Library.';
+
+  @override
+  String get modifierAssignmentUseLibrarySettings => 'Use library settings';
+
+  @override
+  String get modifierAssignmentApply => 'Apply';
+
+  @override
+  String get modifierAssignmentCurrentBehavior => 'Current behavior';
+
+  @override
+  String get modifierAssignmentNonNegative => 'Use non-negative whole numbers.';
+
+  @override
+  String get modifierAssignmentInvalidConstraints =>
+      'The effective selection constraints are invalid.';
+
+  @override
+  String get productDetailUncategorized => 'Uncategorized product';
+
+  @override
+  String get productDetailArchiveMenuAction => 'Archive Product';
+
+  @override
+  String get productDetailRestoreMenuAction => 'Restore Product';
+
+  @override
+  String get productDetailBasePrice => 'Base Price';
+
+  @override
+  String get productDetailKitchenStation => 'Kitchen Station';
+
+  @override
+  String get productDetailWorkspaceNavigation => 'Product workspace navigation';
+
+  @override
+  String get productDetailSetupHelp =>
+      'The catalog and preparation details for this product.';
+
+  @override
+  String get productDetailDescription => 'Description';
+
+  @override
+  String get productDetailAdvancedTechnical => 'Advanced & Technical';
+
+  @override
+  String get productDetailUsageHelp =>
+      'Menus where this Product is currently used.';
+
+  @override
+  String productDetailUsageCount(int count) {
+    return '$count active menu placements.';
+  }
+
+  @override
+  String get productDetailArchivedVariantsMessage =>
+      'This product is archived and variants are read-only.';
+
+  @override
+  String get productDetailArchivedModifiersMessage =>
+      'This product is archived and modifier assignments are read-only.';
+
+  @override
+  String get productDetailViewAction => 'View Product Detail';
+
+  @override
+  String get variantActive => 'Active';
+
+  @override
+  String get variantInactive => 'Inactive';
+
+  @override
+  String get variantArchived => 'Archived';
+
+  @override
+  String get variantAll => 'All';
+
+  @override
+  String variantSetDefaultTitle(String name) {
+    return 'Set “$name” as the Default Variant?';
+  }
+
+  @override
+  String get variantSetDefaultMessage =>
+      'The Product’s displayed base price, SKU, barcode, and legacy POS compatibility will use this Variant. Existing Orders are not changed.';
+
+  @override
+  String variantArchiveTitle(String name) {
+    return 'Archive “$name”?';
+  }
+
+  @override
+  String variantRestoreDefaultTitle(String name) {
+    return 'Restore “$name” as Default?';
+  }
+
+  @override
+  String get variantRestoreDefaultMessage =>
+      'This Product has no active Default Variant, so this restored Variant must become the Default Variant.';
+
+  @override
+  String get variantSetDefaultAction => 'Set Default';
+
+  @override
+  String get variantRestoreDefaultAction => 'Restore as Default';
+
+  @override
+  String get variantMoveUp => 'Move up';
+
+  @override
+  String get variantMoveDown => 'Move down';
+
+  @override
+  String variantActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get variantReorderSemantic => 'Reorder';
+
+  @override
+  String variantSku(String sku) {
+    return 'SKU: $sku';
+  }
+
+  @override
+  String get variantRecipeConfigured => 'Recipe configured';
+
+  @override
+  String get variantRecipeMissing => 'Recipe missing';
+
+  @override
+  String get variantRecipeNotConfigured => 'Recipe not configured';
+
+  @override
+  String get variantManageRecipe => 'Manage Recipe';
+
+  @override
+  String get variantPricing => 'Pricing';
+
+  @override
+  String get variantSellingHours => 'Selling Hours';
+
+  @override
+  String get variantCurrentAvailability => 'Current Availability';
+
+  @override
+  String get variantArabicName => 'Arabic name';
+
+  @override
+  String get variantEnglishName => 'English name';
+
+  @override
+  String get variantSortOrder => 'Sort Order';
+
+  @override
+  String get modifierAssignmentArchivedReadOnly =>
+      'This product is archived and modifier assignments are read-only.';
+
+  @override
+  String get modifierAssignmentViewProduct => 'View Product Detail';
+
+  @override
+  String get modifierAssignmentProduct => 'Product';
+
+  @override
+  String modifierAssignmentAssignedGroups(int count) {
+    return 'Assigned Groups ($count)';
+  }
+
+  @override
+  String get modifierAssignmentAvailableGroups => 'Available Groups';
+
+  @override
+  String get modifierAssignmentReorder => 'Reorder';
+
+  @override
+  String get modifierAssignmentDone => 'Done';
+
+  @override
+  String get modifierAssignmentMoveUp => 'Move up';
+
+  @override
+  String get modifierAssignmentMoveDown => 'Move down';
+
+  @override
+  String modifierAssignmentActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get modifierAssignmentChooseGroupHelp =>
+      'Choose a group to make its customer choices available for this Product.';
+
+  @override
+  String modifierAssignmentCustomizeFor(String name) {
+    return 'Customize for $name';
+  }
+
+  @override
+  String modifierAssignmentCustomizedFor(String name) {
+    return 'Customized for $name';
+  }
+
+  @override
+  String get modifierAssignmentUsingLibrarySettings => 'Using library settings';
+
+  @override
+  String get modifierAssignmentHowChoose => 'How should customers choose?';
+
+  @override
+  String get modifierAssignmentChooseOne => 'Choose one';
+
+  @override
+  String get modifierAssignmentChooseMultiple => 'Choose multiple';
+
+  @override
+  String get modifierAssignmentMultipleHelp =>
+      'This group uses multiple choices from the Modifier Library.';
+
+  @override
+  String get modifierAssignmentSingleHelp =>
+      'This group uses one choice from the Modifier Library.';
+
+  @override
+  String get modifierAssignmentMinimumChoices => 'Minimum choices';
+
+  @override
+  String get modifierAssignmentMaximumChoices => 'Maximum choices';
+
+  @override
+  String get modifierAssignmentAllowDuplicate =>
+      'Can the same option be added more than once?';
+
+  @override
+  String modifierAssignmentConfigure(String name) {
+    return 'Configure $name';
+  }
+
+  @override
+  String modifierAssignmentOverride(String label) {
+    return '$label override';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultBoolean(String value) {
+    return 'Library Default: $value';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultNumber(int value) {
+    return 'Library Default: $value';
+  }
+
+  @override
+  String modifierAssignmentEffectiveSetting(String value) {
+    return 'Effective Setting: $value';
+  }
+
+  @override
+  String get modifierAssignmentHelp =>
+      'Choose which Modifier Groups customers can use with this Product.';
+
+  @override
+  String get modifierAssignmentMaterialImpact => 'Material impact configured';
+
+  @override
+  String get modifierAssignmentViewGroup => 'View Modifier Group';
+
+  @override
+  String get modifierAssignmentCustomizeForProduct => 'Customize for Product';
+
+  @override
+  String get modifierAssignmentRemoveFromProduct => 'Remove from Product';
+
+  @override
+  String get menuDetailArchiveTitle => 'Archive menu?';
+
+  @override
+  String get menuDetailRestoreTitle => 'Restore menu?';
+
+  @override
+  String get menuDetailArchiveMessage =>
+      'This archives the menu without deleting it. Its composition remains available to review.';
+
+  @override
+  String get menuDetailRestoreMessage =>
+      'Restoring this menu returns it to Draft. It does not restore archived sections.';
+
+  @override
+  String get productEditorProductType => 'Product Type';
+
+  @override
+  String get productEditorStandard => 'Standard';
+
+  @override
+  String get productEditorOpenPrice => 'Open price';
+
+  @override
+  String get productEditorPreparationTime => 'Preparation Time';
+
+  @override
+  String get productEditorMinutes => 'minutes';
+
+  @override
+  String get productEditorInitialOptionHelp =>
+      'Every product starts with one selling option. You can add more variants later.';
+
+  @override
+  String get productEditorVariantName => 'Variant Name';
+
+  @override
+  String get productEditorDefaultVariant => 'Default Variant';
+
+  @override
+  String get productEditorDefaultVariantHelp =>
+      'Selling options are managed separately so product details stay focused.';
+
+  @override
+  String get productEditorTranslationsHelp =>
+      'Add localized content without crowding the main product form.';
+
+  @override
+  String get productEditorTranslationsPanelHelp =>
+      'Use the translation panel to provide Arabic and English names and descriptions.';
+
+  @override
+  String get productEditorSortOrder => 'Sort Order';
+
+  @override
+  String get productEditorVariantCost => 'Variant Cost';
+
+  @override
+  String get productEditorNone => 'None';
+
+  @override
+  String get productEditorPreviewUnavailable => 'Preview unavailable';
+
+  @override
+  String get productEditorDropImage => 'Drop an image here or click to browse';
+
+  @override
+  String get productEditorImageLoadFailed => 'Image could not be loaded';
+
+  @override
+  String get productEditorWhatIsProduct => 'What is this product?';
+
+  @override
+  String get productEditorClassificationHelp =>
+      'Choose where this product belongs in the catalog and preparation flow.';
+
+  @override
+  String get productEditorKitchenStationHelp =>
+      'Where this product is generally prepared.';
+
+  @override
+  String get productEditorReportingCategoryHelp =>
+      'Used for sales and performance reports.';
+
+  @override
+  String get productEditorSellingPreparationHelp =>
+      'Set how this product is sold and what preparation information the team needs.';
+
+  @override
+  String get productEditorArabicConfigured => 'Arabic configured';
+
+  @override
+  String get productEditorEnglishConfigured => 'English configured';
+
+  @override
+  String productEditorBasePriceValue(String price) {
+    return 'Base price $price';
+  }
+
+  @override
+  String get productDetailArchiveMessage =>
+      'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.';
+
+  @override
+  String get productDetailRestoreMessage =>
+      'This restores the Product to the editable Catalog. Availability still depends on Menu assignments, schedules, operational status, validation, and publishing.';
+
+  @override
+  String get productCatalogArchiveMessage =>
+      'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.';
+
+  @override
+  String get productCatalogRestoreMessage =>
+      'This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.';
+
+  @override
+  String productCatalogUsageMessage(int count, String names) {
+    return 'This Product is currently used in $count Menu placements$names.';
+  }
+
+  @override
+  String get operationalOverrideClearTitle => 'Clear operational override?';
+
+  @override
+  String operationalOverrideClearMessage(String level, String scope) {
+    return 'Clear the $level override for $scope?\n\nScheduled Availability, Product configuration, and historical Published Versions will not be changed.';
+  }
+
+  @override
+  String get operationalOverrideClearAction => 'Clear override';
+
+  @override
+  String get productDetailProductId => 'Product ID';
+
+  @override
+  String get productDetailUpdated => 'Updated';
+
+  @override
+  String get productDetailImageUrl => 'Image URL';
+
+  @override
+  String get authLoginTitle => 'Log in to your workspace';
+
+  @override
+  String get authLoginSubtitle => 'Operational Hub Login';
+
+  @override
+  String get authEmailOrUsername => 'Email or Username';
+
+  @override
+  String get authIdentifierRequired => 'Enter your email or username.';
+
+  @override
+  String get authPassword => 'Password';
+
+  @override
+  String get authPasswordRequired => 'Enter your password.';
+
+  @override
+  String get authLogIn => 'Log In';
+
+  @override
+  String get authLoggingIn => 'Logging in…';
+
+  @override
+  String get authLoginHelp =>
+      'Use your work email or employee username to continue.';
+
+  @override
+  String get authLoginFailed =>
+      'We could not log you in. Check your details and try again.';
+
+  @override
+  String get authInvalidCredentials =>
+      'The email, username, or password is incorrect.';
+
+  @override
+  String get authTooManyAttempts =>
+      'Too many login attempts. Please wait a moment and try again.';
+
+  @override
+  String get authNetworkUnavailable =>
+      'We cannot connect to the server. Check your network connection and try again.';
+
+  @override
+  String get authConnectionTimeout =>
+      'The connection timed out. Check your connection and try again.';
+
+  @override
+  String get authServerUnavailable =>
+      'The service is temporarily unavailable. Please try again shortly.';
+
+  @override
+  String get authValidationFailed =>
+      'Please review the highlighted fields and try again.';
+
+  @override
+  String get authFieldValidationFailed => 'Check this value and try again.';
+
+  @override
+  String get authInvalidResponse =>
+      'We could not verify the sign-in response. Please try again.';
+
+  @override
+  String get authSecureStorageFailure =>
+      'We could not securely save this session. Please try again.';
+
+  @override
+  String get authVerifiedSessionSaveFailed =>
+      'Your verified session could not be saved securely. Retry verification or log out.';
+
+  @override
+  String get authPasswordChangedSessionSaveFailed =>
+      'Your password was changed, but we could not save this session. Please log in again using your new password.';
+
+  @override
+  String get authUnexpectedError =>
+      'Something unexpected went wrong. Please try again.';
+
+  @override
+  String get authIncorrectCurrentPassword =>
+      'The current password is incorrect.';
+
+  @override
+  String get authWeakNewPassword => 'Choose a stronger new password.';
+
+  @override
+  String get authPasswordConfirmationMismatch =>
+      'The password confirmation does not match.';
+
+  @override
+  String get authChangePassword => 'Change Password';
+
+  @override
+  String get authChangePasswordExplanation =>
+      'Your first login or an administrator reset requires you to set a new password.';
+
+  @override
+  String get authCurrentPassword => 'Current Password';
+
+  @override
+  String get authNewPassword => 'New Password';
+
+  @override
+  String get authConfirmNewPassword => 'Confirm New Password';
+
+  @override
+  String authMinimumPassword(int count) {
+    return 'Use at least $count characters.';
+  }
+
+  @override
+  String get authManagerPasswordRule =>
+      'Owners and managers need at least 10 characters.';
+
+  @override
+  String get authEmployeePasswordRule =>
+      'Employees need at least 8 characters.';
+
+  @override
+  String get authPasswordsDoNotMatch => 'The passwords do not match.';
+
+  @override
+  String get authSavePassword => 'Save Password';
+
+  @override
+  String get authSavingPassword => 'Saving password…';
+
+  @override
+  String get authPasswordChangeFailed =>
+      'We could not change your password. Please check the current password and try again.';
+
+  @override
+  String get authRestoringSession => 'Restoring your secure session…';
+
+  @override
+  String get authSessionExpired =>
+      'Your session has expired. Please log in again.';
+
+  @override
+  String get authOfflineSessionExpired =>
+      'Your offline session has expired. Connect to the internet and log in again.';
+
+  @override
+  String get authVerificationRequiredTitle => 'Verify your session';
+
+  @override
+  String get authUnableToVerifySession =>
+      'We could not verify your saved session. Please try again.';
+
+  @override
+  String get authRetryVerification => 'Retry verification';
+
+  @override
+  String get authRetryingVerification => 'Verifying session…';
+
+  @override
+  String get authReturnToLogin => 'Return to Login';
+
+  @override
+  String get authSecureStorageReadFailure =>
+      'Secure storage is unavailable. Please try again or return to Login.';
+
+  @override
+  String get authCorruptSavedSession =>
+      'Your saved session could not be read. Please log in again.';
+
+  @override
+  String get authConnectionRequiredToVerifySession =>
+      'A connection is required to verify this saved session before access can continue.';
+
+  @override
+  String get authTenantNotOperationalTitle =>
+      'Workspace temporarily unavailable';
+
+  @override
+  String get authTenantNotOperationalExplanation =>
+      'This workspace is temporarily unavailable.';
+
+  @override
+  String get authContactAdministration =>
+      'Please contact administration for assistance.';
+
+  @override
+  String get authSettingsSubtitle => 'Account and session controls';
+
+  @override
+  String get authAccount => 'Account';
+
+  @override
+  String get authSignedInTenant => 'Signed in to';
+
+  @override
+  String get authLogout => 'Log Out';
+
+  @override
+  String get authLogoutConfirmation =>
+      'Are you sure you want to log out from this device?';
+
+  @override
+  String get reportsOverviewTitle => 'Reports Overview';
+
+  @override
+  String get reportsOverviewSubtitle =>
+      'Track sales, profitability, cash, inventory, and branch performance from one place.';
+
+  @override
+  String get reportsOverviewDateRange => 'Date range';
+
+  @override
+  String get reportsOverviewComparePrevious => 'vs. Previous Period';
+
+  @override
+  String get reportsOverviewExport => 'Export';
+
+  @override
+  String get reportsOverviewExportTooltip =>
+      'Available in detailed report screens';
+
+  @override
+  String get reportsOverviewAllBranches => 'All branches';
+
+  @override
+  String get reportsOverviewKpiNetSales => 'Total';
+
+  @override
+  String get reportsOverviewKpiSalesSum => 'Gross sales';
+
+  @override
+  String get reportsOverviewKpiSalesNet => 'Net sales';
+
+  @override
+  String get reportsOverviewKpiInfoSalesSum =>
+      'Completed sales before discounts and refunds.';
+
+  @override
+  String get reportsOverviewKpiInfoSalesNet =>
+      'Total after paid purchases and expenses.';
+
+  @override
+  String get reportsOverviewKpiGrossProfit => 'Gross Profit';
+
+  @override
+  String get reportsOverviewKpiGrossMargin => 'Gross Margin';
+
+  @override
+  String get reportsOverviewKpiTotalExpenses => 'Total Expenses';
+
+  @override
+  String get reportsOverviewKpiNetProfit => 'Net Profit';
+
+  @override
+  String get reportsOverviewKpiInfoNetSales =>
+      'Gross sales after refunds and discounts.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossProfit =>
+      'Total minus the cost of goods sold.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossMargin =>
+      'Gross profit as a percentage of total.';
+
+  @override
+  String get reportsOverviewKpiInfoTotalExpenses =>
+      'Operating expenses recorded for the selected period.';
+
+  @override
+  String get reportsOverviewKpiInfoNetProfit =>
+      'Gross profit minus total expenses.';
+
+  @override
+  String get reportsOverviewNotAvailableYet => 'Not available yet';
+
+  @override
+  String get reportsOverviewComparisonUnavailable => 'Comparison unavailable';
+
+  @override
+  String reportsOverviewDeltaPercent(String value) {
+    return '$value vs prev.';
+  }
+
+  @override
+  String reportsOverviewDeltaPoints(String value) {
+    return '$value pts vs prev.';
+  }
+
+  @override
+  String get reportsOverviewSalesTrendTitle => 'Sales Trend';
+
+  @override
+  String get reportsOverviewNoSalesData => 'No sales recorded for this period.';
+
+  @override
+  String get reportsOverviewBranchComparisonTitle => 'Branch Comparison';
+
+  @override
+  String get reportsOverviewBranchColumnBranch => 'Branch';
+
+  @override
+  String get reportsOverviewBranchColumnNetSales => 'Net sales';
+
+  @override
+  String get reportsOverviewChooseAllBranches =>
+      'Choose all branches to compare performance.';
+
+  @override
+  String get reportsOverviewTopProductsTitle => 'Top Products';
+
+  @override
+  String get reportsOverviewNoProductsSold =>
+      'No products were sold for this period.';
+
+  @override
+  String get reportsOverviewProductPerformanceComingNext =>
+      'Product Performance report is coming next.';
+
+  @override
+  String get reportsOverviewExceptionsTitle => 'Recent Exceptions';
+
+  @override
+  String get reportsOverviewNoExceptions =>
+      'No operational exceptions found for this period.';
+
+  @override
+  String get reportsOverviewBrowseByCategory => 'Browse by Category';
+
+  @override
+  String get reportsOverviewComingNext => 'Coming next';
+
+  @override
+  String get reportsOverviewCategorySalesProfitability =>
+      'Sales & Profitability';
+
+  @override
+  String get reportsOverviewCategoryCashShifts => 'Cash & Shifts';
+
+  @override
+  String get reportsOverviewCategoryInventory => 'Inventory';
+
+  @override
+  String get reportsOverviewCategoryExpenses => 'Expenses';
+
+  @override
+  String get reportsOverviewCategoryPurchasingSuppliers =>
+      'Purchasing & Suppliers';
+
+  @override
+  String get reportsOverviewCategoryFinancialReports => 'Financial Reports';
+
+  @override
+  String get reportsOverviewCategoryCustomReportBuilder =>
+      'Custom Report Builder';
+
+  @override
+  String get reportsOverviewFinancialReportsTooltip =>
+      'Open the Financial Reports center';
+
+  @override
+  String get reportsOverviewErrorDefault => 'The overview could not be loaded.';
+
+  @override
+  String get reportsOverviewRelativeCurrent => 'Current';
+
+  @override
+  String reportsOverviewMinutesAgo(int m) {
+    return '${m}m ago';
+  }
+
+  @override
+  String reportsOverviewHoursAgo(int h) {
+    return '${h}h ago';
+  }
+
+  @override
+  String get salesProfitabilityTitle => 'Sales & Profitability';
+
+  @override
+  String get salesProfitabilitySubtitle =>
+      'Analyze sales, profit, discounts, refunds, and product and branch performance.';
+
+  @override
+  String get salesProfitabilityBack => 'Reports Overview';
+
+  @override
+  String get salesProfitabilityGroupBy => 'Group by';
+
+  @override
+  String get salesProfitabilityDaily => 'Daily';
+
+  @override
+  String get salesProfitabilityWeekly => 'Weekly';
+
+  @override
+  String get salesProfitabilityMonthly => 'Monthly';
+
+  @override
+  String get salesProfitabilityExportTooltip =>
+      'Export will be enabled after the report is connected to a data source.';
+
+  @override
+  String get salesProfitabilityGrossSales => 'Gross sales';
+
+  @override
+  String get salesProfitabilityNetSales => 'Total';
+
+  @override
+  String get salesProfitabilityDiscounts => 'Discounts';
+
+  @override
+  String get salesProfitabilityRefunds => 'Refunds';
+
+  @override
+  String get salesProfitabilityCogs => 'Cost of Goods Sold (COGS)';
+
+  @override
+  String get salesProfitabilityGrossProfit => 'Gross Profit';
+
+  @override
+  String get salesProfitabilityGrossMargin => 'Gross Margin %';
+
+  @override
+  String get salesProfitabilityAverageOrder => 'Average Order Value';
+
+  @override
+  String get salesProfitabilityCashCollected => 'Cash Collected';
+
+  @override
+  String get salesProfitabilityBankCollected => 'Bank Collected';
+
+  @override
+  String get salesProfitabilitySalesBySource => 'Sales by Source';
+
+  @override
+  String get salesProfitabilityNoSalesBySource =>
+      'No sales-by-source data is available for this period.';
+
+  @override
+  String get salesProfitabilityTrend => 'Sales & Profit Trend';
+
+  @override
+  String get salesProfitabilitySalesByHour => 'Sales by Hour';
+
+  @override
+  String get salesProfitabilitySalesByCategory => 'Sales by Category';
+
+  @override
+  String get salesProfitabilityBranchPerformance => 'Branch Performance';
+
+  @override
+  String get salesProfitabilityProductPerformance => 'Product Performance';
+
+  @override
+  String get salesProfitabilityTopSelling => 'Top Selling';
+
+  @override
+  String get salesProfitabilityMostProfitable => 'Most Profitable';
+
+  @override
+  String get salesProfitabilityUnderperforming => 'Underperforming';
+
+  @override
+  String salesProfitabilityPeak(String value) {
+    return 'Peak: $value';
+  }
+
+  @override
+  String get salesProfitabilityNoTrend =>
+      'No sales and profit trend is available for this period.';
+
+  @override
+  String get salesProfitabilityNoHourly =>
+      'No hourly sales are available for this period.';
+
+  @override
+  String get salesProfitabilityNoCategories =>
+      'No category sales are available for this period.';
+
+  @override
+  String get salesProfitabilityNoBranches =>
+      'Choose all branches to compare performance.';
+
+  @override
+  String get salesProfitabilityNoProducts =>
+      'No product performance is available for this period.';
+
+  @override
+  String get salesProfitabilityUnavailable => 'Not available yet';
+
+  @override
+  String get salesProfitabilityError => 'This report could not be loaded.';
+
+  @override
+  String get salesProfitabilityProduct => 'Product';
+
+  @override
+  String get salesProfitabilityCategory => 'Category';
+
+  @override
+  String get salesProfitabilityQuantity => 'Quantity sold';
+
+  @override
+  String get salesProfitabilityOrders => 'Orders';
+
+  @override
+  String get salesProfitabilityMargin => 'Margin';
+
+  @override
+  String get cashShiftsTitle => 'Cash & Shifts';
+
+  @override
+  String get cashShiftsSubtitle =>
+      'Monitor shift performance, cash movement, payment methods, and drawer differences.';
+
+  @override
+  String get cashShiftsAllEmployees => 'All employees';
+
+  @override
+  String get cashShiftsTotalSales => 'Gross sales';
+
+  @override
+  String get cashShiftsExpectedCash => 'Expected Cash';
+
+  @override
+  String get cashShiftsActualCash => 'Actual Cash';
+
+  @override
+  String get cashShiftsDifference => 'Cash Difference';
+
+  @override
+  String get cashShiftsClosed => 'Closed Shifts';
+
+  @override
+  String get cashShiftsOpen => 'Open Shifts';
+
+  @override
+  String get cashShiftsAverage => 'Average Shift Sales';
+
+  @override
+  String get cashShiftsReconciliation => 'Cash Reconciliation';
+
+  @override
+  String get cashShiftsMatched => 'Matched';
+
+  @override
+  String get cashShiftsMinor => 'Minor difference';
+
+  @override
+  String get cashShiftsReview => 'Difference needs review';
+
+  @override
+  String get cashShiftsShortage => 'Shortage';
+
+  @override
+  String get cashShiftsOverage => 'Overage';
+
+  @override
+  String get cashShiftsPerformance => 'Shift Performance';
+
+  @override
+  String get cashShiftsPayments => 'Payment Method Breakdown';
+
+  @override
+  String get cashShiftsTrend => 'Shift Sales Trend';
+
+  @override
+  String get cashShiftsTop => 'Best Performing Shifts';
+
+  @override
+  String get cashShiftsExceptions => 'Exceptions';
+
+  @override
+  String get cashShiftsNoShifts => 'No shifts exist for the selected period.';
+
+  @override
+  String get cashShiftsNoPayments =>
+      'No payment-method data exists for the selected period.';
+
+  @override
+  String get cashShiftsNoExceptions => 'No cash differences need review.';
+
+  @override
+  String get cashShiftsNoTrend =>
+      'No shift-sales trend is available for this period.';
+
+  @override
+  String get cashShiftsError => 'Cash & Shifts report could not be loaded.';
+
+  @override
+  String get cashShiftsExportTooltip =>
+      'Export will be enabled after the report is connected to a data source.';
+
+  @override
+  String get financeSectionOverview => 'Overview';
+
+  @override
+  String get financeSectionTransactions => 'Financial Transactions';
+
+  @override
+  String get financeSectionCashBanks => 'Cash & Banks';
+
+  @override
+  String get financeSectionExpenses => 'Expenses';
+
+  @override
+  String get financeSectionSuppliers => 'Suppliers & Payables';
+
+  @override
+  String get financeSectionReconciliation => 'Reconciliation';
+
+  @override
+  String get financeSectionJournals => 'Journal Entries';
+
+  @override
+  String get financeSectionClosing => 'Daily Closing';
+
+  @override
+  String get financeSectionReports => 'Financial Reports';
+
+  @override
+  String get financeSectionAccounts => 'Chart of Accounts';
+
+  @override
+  String get financeSectionPeriods => 'Accounting Periods';
+
+  @override
+  String get financeSectionSettings => 'Finance Settings';
+
+  @override
+  String financeBreadcrumb(String module, String section) {
+    return '$module / $section';
+  }
+
+  @override
+  String get financeStatusApproved => 'Approved';
+
+  @override
+  String get financeStatusCompleted => 'Completed';
+
+  @override
+  String get financeStatusPendingApproval => 'Pending Approval';
+
+  @override
+  String get financeStatusPendingReview => 'Pending Review';
+
+  @override
+  String get financeStatusRejected => 'Rejected';
+
+  @override
+  String get financeStatusReversed => 'Reversed';
+
+  @override
+  String get financeStatusPartiallyPaid => 'Partially Paid';
+
+  @override
+  String get financeStatusInactive => 'Inactive';
+
+  @override
+  String get financeStatusLocked => 'Locked';
+
+  @override
+  String get financeStatusUnmatched => 'Unmatched';
+
+  @override
+  String get financeStatusCurrent => 'Current';
+
+  @override
+  String get financeTermDebit => 'Debit';
+
+  @override
+  String get financeTermCredit => 'Credit';
+
+  @override
+  String get financeTermBalance => 'Balance';
+
+  @override
+  String get financeTermOpeningBalance => 'Opening Balance';
+
+  @override
+  String get financeTermClosingBalance => 'Closing Balance';
+
+  @override
+  String get financeTermRunningBalance => 'Running Balance';
+
+  @override
+  String get financeTermRevenue => 'Revenue';
+
+  @override
+  String get financeTermCogs => 'COGS';
+
+  @override
+  String get financeTermGrossProfit => 'Gross Profit';
+
+  @override
+  String get financeTermOperatingExpenses => 'Operating Expenses';
+
+  @override
+  String get financeTermOperatingProfit => 'Operating Profit';
+
+  @override
+  String get financeTermAssets => 'Assets';
+
+  @override
+  String get financeTermLiabilities => 'Liabilities';
+
+  @override
+  String get financeTermEquity => 'Equity';
+
+  @override
+  String get financeTermAccountsPayable => 'Accounts Payable';
+
+  @override
+  String get financeTermGeneralLedger => 'General Ledger';
+
+  @override
+  String get financeTermTrialBalance => 'Trial Balance';
+
+  @override
+  String get financeTermProfitLoss => 'Profit & Loss';
+
+  @override
+  String get financeTermBalanceSheet => 'Balance Sheet';
+
+  @override
+  String get financeTermCashFlow => 'Cash Flow';
+
+  @override
+  String get financeFiltersReset => 'Reset';
+
+  @override
+  String get financeReadinessPanelTitle => 'Operational Readiness';
+
+  @override
+  String get financeLoadingDefaultLabel => 'Loading data…';
+
+  @override
+  String get financeEmptyDefaultMessage => 'No data to display';
+
+  @override
+  String get financeExpectedAccountingImpact => 'Expected Accounting Impact';
+
+  @override
+  String get financeExpenseScreenTitle => 'Expenses';
+
+  @override
+  String get financeExpenseScreenSubtitle =>
+      'Record and track the approval of operating expenses';
+
+  @override
+  String get financeExpenseAddAction => 'Add Expense';
+
+  @override
+  String get financeExpenseLoadingLabel => 'Loading expenses…';
+
+  @override
+  String get financeExpenseLoadErrorMessage =>
+      'Couldn\'t load expenses. The error is not treated as zero.';
+
+  @override
+  String get financeExpenseFilterStatusLabel => 'Status';
+
+  @override
+  String get financeExpenseFilterCategoryLabel => 'Category';
+
+  @override
+  String get financeExpenseSearchHint => 'Search by description or reference…';
+
+  @override
+  String get financeExpenseDateRangePickerHelp => 'Select a financial period';
+
+  @override
+  String get financeExpenseFilterRefreshError =>
+      'Couldn\'t refresh expenses for these filters. Showing the last loaded data.';
+
+  @override
+  String get financeExpenseEmptyPeriod =>
+      'No expenses recorded for the selected period';
+
+  @override
+  String get financeExpenseEmptyFiltered =>
+      'No expenses match the selected filters';
+
+  @override
+  String get financeExpenseEmptyResetAction => 'Reset Filters';
+
+  @override
+  String get financeExpenseKpiTotalAmount => 'Total Expenses';
+
+  @override
+  String get financeExpenseKpiRejectedAmount => 'Rejected';
+
+  @override
+  String get financeExpenseKpiAverageAmount => 'Average Expense';
+
+  @override
+  String get financeExpenseColumnDate => 'Date';
+
+  @override
+  String get financeExpenseColumnReference => 'Reference';
+
+  @override
+  String get financeExpenseColumnDescription => 'Description';
+
+  @override
+  String get financeExpenseColumnBranch => 'Branch';
+
+  @override
+  String get financeExpenseColumnAmount => 'Amount';
+
+  @override
+  String get financeExpenseBranchGeneralFallback => 'General';
+
+  @override
+  String get financeExpenseBranchGeneralOption => 'General (All Branches)';
+
+  @override
+  String get financeExpenseAllBranchesLabel => 'All Branches';
+
+  @override
+  String financeExpenseSubmittedBy(String name) {
+    return 'Submitted by $name';
+  }
+
+  @override
+  String get financeExpenseReversedNote =>
+      'This expense has been reversed. Use the buttons below to view the original entry and the reversal entry.';
+
+  @override
+  String get financeExpenseSubmissionDateLabel => 'Submission Date';
+
+  @override
+  String get financeExpenseLedgerAccountLabel => 'Ledger Account';
+
+  @override
+  String get financeExpensePreTaxAmountLabel => 'Amount Before Tax';
+
+  @override
+  String get financeExpenseTaxLabel => 'Tax';
+
+  @override
+  String get financeExpenseNotesLabel => 'Notes';
+
+  @override
+  String get financeExpenseNotesOptionalLabel => 'Notes (Optional)';
+
+  @override
+  String get financeExpensePaymentMethodLabel => 'Payment Method';
+
+  @override
+  String get financeExpensePaymentAccountLabel => 'Payment Account';
+
+  @override
+  String get financeExpenseApprovedAtLabel => 'Approved At';
+
+  @override
+  String get financeExpensePaidAtLabel => 'Paid At';
+
+  @override
+  String get financeExpenseActionSubmit => 'Submit for Approval';
+
+  @override
+  String get financeExpenseActionApprove => 'Approve';
+
+  @override
+  String get financeExpenseActionReject => 'Reject';
+
+  @override
+  String get financeExpenseActionPay => 'Record Payment';
+
+  @override
+  String get financeExpenseActionReverse => 'Reverse Expense';
+
+  @override
+  String get financeExpenseViewJournalAction => 'View Journal Entry';
+
+  @override
+  String get financeExpenseViewReversalJournalAction => 'View Reversal Entry';
+
+  @override
+  String get financeExpenseRejectDialogTitle => 'Reject Expense';
+
+  @override
+  String get financeExpenseRejectReasonLabel => 'Rejection Reason';
+
+  @override
+  String get financeExpensePaymentValidationError =>
+      'Choose a payment method and an active cash or bank account.';
+
+  @override
+  String financeExpensePaymentDialogTitle(String reference) {
+    return 'Pay $reference';
+  }
+
+  @override
+  String get financeExpensePaymentPostAction => 'Post Payment';
+
+  @override
+  String get financeExpensePaymentLoadingOptions => 'Loading payment options…';
+
+  @override
+  String get financeExpenseNoPaymentOptionsMessage =>
+      'No active payment method or cash/bank account. Add one from Finance settings first.';
+
+  @override
+  String financeExpensePaymentAmountLine(String amount) {
+    return 'Amount: $amount';
+  }
+
+  @override
+  String get financeExpenseCashBankAccountLabel => 'Cash/Bank Account';
+
+  @override
+  String get financeExpenseFormValidationError =>
+      'Enter a valid amount, category, and description.';
+
+  @override
+  String get financeExpenseEditDialogTitle => 'Edit Expense';
+
+  @override
+  String get financeExpenseFieldBranchOptional => 'Branch (Optional)';
+
+  @override
+  String get financeExpenseTotalLabel => 'Total';
+
+  @override
+  String get financeExpenseCategoryScreenTitle => 'Expense Categories';
+
+  @override
+  String get financeExpenseCategoryScreenSubtitle =>
+      'Every category is linked to an active expense account in the chart of accounts.';
+
+  @override
+  String get financeExpenseCategoryAddAction => 'Add Category';
+
+  @override
+  String get financeExpenseCategoryEmptyMessage =>
+      'No expense categories configured.';
+
+  @override
+  String get financeExpenseCategoryCodeLabel => 'Code';
+
+  @override
+  String get financeExpenseCategoryNameLabel => 'Name';
+
+  @override
+  String get financeExpenseCategoryAccountLabel => 'Expense Account';
+
+  @override
+  String get financeExpenseCategoryColumnStatus => 'Status';
+
+  @override
+  String get financeExpenseCategoryColumnAction => 'Action';
+
+  @override
+  String get financeExpenseCategorySortOrderLabel => 'Sort Order (Optional)';
+
+  @override
+  String get financeExpenseCategoryValidationError =>
+      'Enter a valid code and name.';
+
+  @override
+  String get financeExpenseCategoryEditDialogTitle => 'Edit Category';
+
+  @override
+  String get financeExpenseCategoryDeactivateDialogTitle =>
+      'Deactivate Category';
+
+  @override
+  String get financeExpenseCategoryActivateDialogTitle => 'Activate Category';
+
+  @override
+  String financeExpenseCategoryDeactivateConfirm(String name) {
+    return 'Deactivate category \"$name\"? It will no longer appear when creating a new expense.';
+  }
+
+  @override
+  String financeExpenseCategoryActivateConfirm(String name) {
+    return 'Activate category \"$name\"?';
+  }
+
+  @override
+  String get financeExpenseCategoryDeactivateAction => 'Deactivate';
+
+  @override
+  String get financeExpenseCategoryActivateAction => 'Activate';
+
+  @override
+  String get financePeriodToday => 'Today';
+
+  @override
+  String get financePeriodThisWeek => 'This Week';
+
+  @override
+  String get financePeriodThisMonth => 'This Month';
+
+  @override
+  String get financePeriodCustom => 'Custom';
+
+  @override
+  String get financeGlobalContextTitle => 'Overall Context';
+
+  @override
+  String get financeGlobalContextBranchAll => 'Branch: All Branches';
+
+  @override
+  String financeGlobalContextBranchNamed(String name) {
+    return 'Branch: $name';
+  }
+
+  @override
+  String get financeSupplierListSubtitle =>
+      'The supplier balance is derived exclusively from posted invoices and payments';
+
+  @override
+  String get financeSupplierAddAction => 'Add Supplier';
+
+  @override
+  String get financeSupplierListLoading => 'Loading suppliers…';
+
+  @override
+  String get financeSupplierListLoadError =>
+      'Could not load suppliers. The error is not being disregarded.';
+
+  @override
+  String get financeSupplierStatusLabel => 'Status';
+
+  @override
+  String get financeSupplierSearchHint => 'Supplier name or code…';
+
+  @override
+  String get financeSupplierFilterRefreshError =>
+      'Could not refresh suppliers for these filters. Showing the last loaded data.';
+
+  @override
+  String get financeSupplierEmptyFiltered =>
+      'No suppliers match the selected filters';
+
+  @override
+  String get financeSupplierEmptyNone => 'No suppliers registered yet';
+
+  @override
+  String get financeSupplierResetFiltersAction => 'Reset Filters';
+
+  @override
+  String get financeSupplierKpiTotalOutstanding => 'Total Payables';
+
+  @override
+  String get financeSupplierKpiOverdueLabel => 'Overdue Payments';
+
+  @override
+  String get financeSupplierKpiActiveCount => 'Active Suppliers';
+
+  @override
+  String get financeSupplierKpiAvgPaymentTerms => 'Average Payment Terms';
+
+  @override
+  String financeSupplierDaysUnit(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get financeSupplierColumnSupplier => 'Supplier';
+
+  @override
+  String get financeSupplierOutstandingBalanceLabel => 'Outstanding Balance';
+
+  @override
+  String get financeSupplierOverdueLabel => 'Overdue';
+
+  @override
+  String get financeSupplierColumnOpenInvoices => 'Open Invoices';
+
+  @override
+  String get financeSupplierColumnLastInvoice => 'Last Invoice';
+
+  @override
+  String get financeSupplierEditAction => 'Edit Supplier';
+
+  @override
+  String get financeSupplierNameRequired => 'Enter the supplier name.';
+
+  @override
+  String get financeSupplierFieldName => 'Name';
+
+  @override
+  String get financeSupplierFieldPhone => 'Phone';
+
+  @override
+  String get financeSupplierFieldEmail => 'Email';
+
+  @override
+  String get financeSupplierFieldAddress => 'Address';
+
+  @override
+  String get financeSupplierFieldContactPerson => 'Contact Person';
+
+  @override
+  String get financeSupplierFieldTaxNumber => 'Tax Number';
+
+  @override
+  String get financeSupplierFieldPaymentTermsDays => 'Payment Terms (Days)';
+
+  @override
+  String get financeSupplierFieldNotes => 'Notes';
+
+  @override
+  String get financeSupplierInactiveBadge => 'Inactive';
+
+  @override
+  String get financeSupplierProfileSubtitle =>
+      'Supplier profile and financial activity';
+
+  @override
+  String get financeSupplierBackToList => 'Back to Suppliers';
+
+  @override
+  String get financeSupplierProfileLoading => 'Loading supplier profile…';
+
+  @override
+  String financeSupplierProfileLoadError(String error) {
+    return 'Could not load the supplier profile. $error';
+  }
+
+  @override
+  String get financeSupplierNotFound =>
+      'Could not find the requested supplier.';
+
+  @override
+  String financeSupplierPaymentTermsWithDays(int days) {
+    return 'Payment terms $days days';
+  }
+
+  @override
+  String get financeSupplierStatementAction => 'Supplier Statement';
+
+  @override
+  String get financeSupplierNewInvoiceAction => 'New Invoice';
+
+  @override
+  String get financeSupplierNewPaymentAction => 'New Payment';
+
+  @override
+  String get financeSupplierKpiTotalInvoiced => 'Total Invoiced';
+
+  @override
+  String get financeSupplierKpiTotalPaid => 'Total Paid';
+
+  @override
+  String get financeSupplierTabInvoices => 'Invoices';
+
+  @override
+  String get financeSupplierTabPayments => 'Payments';
+
+  @override
+  String get financeSupplierTabStatement => 'Statement';
+
+  @override
+  String get financeSupplierNoInvoices => 'No invoices for this supplier yet';
+
+  @override
+  String get financeSupplierColumnReference => 'Reference';
+
+  @override
+  String get financeSupplierColumnDate => 'Date';
+
+  @override
+  String get financeSupplierColumnDueDate => 'Due';
+
+  @override
+  String get financeSupplierTotalLabel => 'Total';
+
+  @override
+  String get financeSupplierColumnRemaining => 'Remaining';
+
+  @override
+  String get financeSupplierViewJournalAction => 'View Journal Entry';
+
+  @override
+  String get financeSupplierNoPayments => 'No payments for this supplier yet';
+
+  @override
+  String get financeSupplierColumnAmount => 'Amount';
+
+  @override
+  String get financeSupplierColumnPaymentMethod => 'Payment Method';
+
+  @override
+  String get financeSupplierNoStatementLines => 'No statement activity yet';
+
+  @override
+  String get financeSupplierKpiTotalPayments => 'Total Payments';
+
+  @override
+  String get financeSupplierColumnType => 'Type';
+
+  @override
+  String get financeSupplierTypeInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierTypePayment => 'Payment';
+
+  @override
+  String get financeSupplierReverseInvoiceTitle => 'Reverse Invoice';
+
+  @override
+  String financeSupplierReverseInvoiceMessage(String reference) {
+    return 'A reversing entry will be created for invoice $reference. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierPostInvoiceError(String error) {
+    return 'Could not post the invoice: $error';
+  }
+
+  @override
+  String financeSupplierReverseInvoiceError(String error) {
+    return 'Could not reverse the invoice: $error';
+  }
+
+  @override
+  String get financeSupplierReversePaymentTitle => 'Reverse Payment';
+
+  @override
+  String financeSupplierReversePaymentMessage(String reference) {
+    return 'A reversing entry will be created and the balances of invoices linked to payment $reference will be restored. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierReversePaymentError(String error) {
+    return 'Could not reverse the payment: $error';
+  }
+
+  @override
+  String get financeSupplierConfirmAction => 'Confirm';
+
+  @override
+  String get financeSupplierInvoiceNumberSubtotalRequired =>
+      'Enter an invoice number and a valid subtotal.';
+
+  @override
+  String get financeSupplierExpenseCategoryRequired =>
+      'Select an expense category.';
+
+  @override
+  String get financeSupplierDebitAccountRequired => 'Select the debit account.';
+
+  @override
+  String financeSupplierInvoiceDialogTitleWithRef(String reference) {
+    return 'Invoice $reference';
+  }
+
+  @override
+  String get financeSupplierInvoiceLockedMessage =>
+      'The invoice is posted and cannot be edited. Use the reverse action if needed.';
+
+  @override
+  String get financeSupplierNewInvoiceDialogTitle => 'New Supplier Invoice';
+
+  @override
+  String financeSupplierEditInvoiceDialogTitle(String reference) {
+    return 'Edit invoice $reference';
+  }
+
+  @override
+  String get financeSupplierSaveAsDraftAction => 'Save as Draft';
+
+  @override
+  String get financeSupplierLoadingOptions => 'Loading options…';
+
+  @override
+  String get financeSupplierFieldBranchOptional => 'Branch (Optional)';
+
+  @override
+  String get financeSupplierGeneralOption => 'General';
+
+  @override
+  String get financeSupplierFieldSupplierInvoiceNumber =>
+      'Supplier Invoice Number';
+
+  @override
+  String get financeSupplierFieldInvoiceDate => 'Invoice Date';
+
+  @override
+  String get financeSupplierFieldDueDate => 'Due Date';
+
+  @override
+  String get financeSupplierFieldInvoiceType => 'Invoice Type';
+
+  @override
+  String get financeSupplierInvoiceTypeExpense => 'Expense';
+
+  @override
+  String get financeSupplierInvoiceTypeInventory =>
+      'Inventory (accounting liability only, does not create stock quantity)';
+
+  @override
+  String get financeSupplierInvoiceTypeOther => 'Other';
+
+  @override
+  String get financeSupplierFieldExpenseCategory => 'Expense Category';
+
+  @override
+  String get financeSupplierFieldDebitAccount => 'Debit Account';
+
+  @override
+  String get financeSupplierFieldSubtotal => 'Subtotal';
+
+  @override
+  String get financeSupplierFieldTax => 'Tax';
+
+  @override
+  String get financeSupplierFieldDescription => 'Description';
+
+  @override
+  String get financeSupplierInvoiceDetailTitle => 'Supplier Invoice';
+
+  @override
+  String get financeSupplierPostAction => 'Post';
+
+  @override
+  String get financeSupplierReverseAction => 'Reverse';
+
+  @override
+  String get financeSupplierFieldBranch => 'Branch';
+
+  @override
+  String get financeSupplierPaymentDetailTitle => 'Supplier Payment';
+
+  @override
+  String get financeSupplierFieldPaymentDate => 'Payment Date';
+
+  @override
+  String get financeSupplierFieldCashBankAccount => 'Cash/Bank Account';
+
+  @override
+  String get financeSupplierFieldExternalReference => 'External Reference';
+
+  @override
+  String get financeSupplierPaymentAllocationTitle =>
+      'Payment Allocation to Invoices';
+
+  @override
+  String get financeSupplierColumnInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierPaymentMethodLocationRequired =>
+      'Select a payment method and an active cash or bank account.';
+
+  @override
+  String get financeSupplierPaymentAmountRequired =>
+      'Enter a valid payment amount greater than zero.';
+
+  @override
+  String get financeSupplierAllocationRequired =>
+      'Allocate an amount to at least one invoice.';
+
+  @override
+  String financeSupplierAllocationExceedsRemaining(String reference) {
+    return 'The allocation for $reference exceeds its remaining balance.';
+  }
+
+  @override
+  String financeSupplierAllocationMustMatchPayment(String remaining) {
+    return 'The total allocations must exactly equal the payment amount. Unallocated remaining: $remaining';
+  }
+
+  @override
+  String get financeSupplierNewPaymentDialogTitle => 'New Supplier Payment';
+
+  @override
+  String get financeSupplierPostPaymentAction => 'Post Payment';
+
+  @override
+  String get financeSupplierLoadingPaymentOptions => 'Loading payment options…';
+
+  @override
+  String get financeSupplierNoPaymentMethodOrAccount =>
+      'No active payment method or cash/bank account. Add one from Finance Settings first.';
+
+  @override
+  String get financeSupplierFieldCashBankSource => 'Cash/Bank Account (Source)';
+
+  @override
+  String get financeSupplierFieldPaymentAmount => 'Payment Amount';
+
+  @override
+  String get financeSupplierFieldExternalReferenceOptional =>
+      'External Reference (Optional)';
+
+  @override
+  String get financeSupplierFieldNotesOptional => 'Notes (Optional)';
+
+  @override
+  String get financeSupplierAllocationOpenInvoicesTitle =>
+      'Payment Allocation to Open Invoices';
+
+  @override
+  String financeSupplierInvoiceRemainingLabel(
+    String reference,
+    String remaining,
+  ) {
+    return '$reference — remaining $remaining';
+  }
+
+  @override
+  String get financeSupplierFieldAllocation => 'Allocation';
+
+  @override
+  String get financeSupplierAllocatedAmountLabel => 'Allocated Amount';
+
+  @override
+  String get financeSupplierUnallocatedRemainingLabel =>
+      'Unallocated Remaining';
+
+  @override
+  String get financeSupplierOverdueBadge => 'Overdue';
+
+  @override
+  String get financeWarehouseTitle => 'Warehouse Setup';
+
+  @override
+  String get financeWarehouseSubtitle =>
+      'Manage operational warehouses and their branch assignments.';
+
+  @override
+  String get financeWarehouseAdd => 'Add Warehouse';
+
+  @override
+  String get financeWarehouseEmpty => 'No warehouses have been added yet.';
+
+  @override
+  String get financeWarehouseAllBranches => 'All Branches';
+
+  @override
+  String get financeWarehouseAllStatuses => 'All Statuses';
+
+  @override
+  String get financeWarehouseName => 'Warehouse';
+
+  @override
+  String get financeWarehouseCode => 'Code';
+
+  @override
+  String get financeWarehouseType => 'Type';
+
+  @override
+  String get financeWarehouseBranch => 'Branch';
+
+  @override
+  String get financeWarehouseEdit => 'Edit Warehouse';
+
+  @override
+  String get financeWarehouseCentral => 'Central';
+
+  @override
+  String get financeWarehouseBranchType => 'Branch';
+
+  @override
+  String get financeTransactionSale => 'Sale';
+
+  @override
+  String get financeTransactionRefund => 'Refund';
+
+  @override
+  String get financeTransactionExpense => 'Expense';
+
+  @override
+  String get financeTransactionCashTransfer => 'Cash Transfer';
+
+  @override
+  String get financeTransactionSupplierInvoice => 'Supplier Invoice';
+
+  @override
+  String get financeTransactionSupplierPayment => 'Supplier Payment';
+
+  @override
+  String get financeTransactionInventoryWaste => 'Inventory Waste';
+
+  @override
+  String get financeTransactionStockCountVariance => 'Stock Count Variance';
+
+  @override
+  String get financeTransactionInventoryMovement => 'Inventory Movement';
+
+  @override
+  String get financeTransactionManualJournal => 'Manual Journal';
+
+  @override
+  String get financeTransactionReversalJournal => 'Reversal Journal';
+
+  @override
+  String get financeTransactionJournalEntry => 'Journal Entry';
+
+  @override
+  String get financeStatusReady => 'Ready';
+
+  @override
+  String get financeStatusWarning => 'Warning';
+
+  @override
+  String get financeStatusBlocked => 'Blocked';
+
+  @override
+  String get financeStatusActive => 'Active';
+
+  @override
+  String get financeWarehouseUnassignedBranch => 'Unassigned';
+
+  @override
+  String get financeStatusClosed => 'Closed';
+
+  @override
+  String financeDailyClosingIssueOpenShifts(int count) {
+    return 'There are $count open shifts that must be closed.';
+  }
+
+  @override
+  String financeDailyClosingIssuePendingExpenseApproval(int count) {
+    return 'There are $count expenses awaiting approval.';
+  }
+
+  @override
+  String get financeDailyClosingIssueMissingActualCash =>
+      'Actual cash has not been entered yet.';
+
+  @override
+  String financeDailyClosingIssueCashDifference(String amount) {
+    return 'There is a cash difference of $amount.';
+  }
+
+  @override
+  String financeDailyClosingIssueDraftJournals(int count) {
+    return 'There are $count draft journal entries for today.';
+  }
+
+  @override
+  String financeDailyClosingIssueUnpostedInventoryEvent(int count) {
+    return 'There are $count inventory movements without accounting posting.';
+  }
+
+  @override
+  String get financeDailyClosingIssueCashReconciliationIncomplete =>
+      'Cash reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueCardReconciliationIncomplete =>
+      'Card reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueBankReconciliationIncomplete =>
+      'Bank reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueUnknown =>
+      'A daily-closing requirement needs attention.';
+
+  @override
+  String financePaginationRange(int start, int end, int total) {
+    return 'Showing $start–$end of $total';
+  }
+
+  @override
+  String get financePaginationPrevious => 'Previous';
+
+  @override
+  String financePaginationPage(int current, int last) {
+    return 'Page $current of $last';
+  }
+
+  @override
+  String get financePaginationNext => 'Next';
+
+  @override
+  String get financeSourceActionViewSource => 'View Source';
+
+  @override
+  String get financeSourceActionViewJournal => 'View Journal Entry';
+
+  @override
+  String get financeSourceActionRelatedJournal => 'Related Journal Entry';
+
+  @override
+  String get navigationCafeConfiguration => 'Cafe Configuration';
+
+  @override
+  String get cafeConfigurationTitle => 'Cafe Configuration';
+
+  @override
+  String get cafeConfigurationOverview => 'Overview';
+
+  @override
+  String get cafeConfigurationProfile => 'Cafe Profile';
+
+  @override
+  String get cafeConfigurationBranches => 'Branches';
+
+  @override
+  String get cafeConfigurationPrinting => 'Printing';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'Set receipt printer defaults for each branch.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'Receipt printing';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled =>
+      'Receipt Printing Enabled';
+
+  @override
+  String get cafeConfigurationPrinterName => 'Printer Name';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'Printer IP / Host';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'Printer Port';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'Paper Width';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'Auto Print After Payment';
+
+  @override
+  String get cafeConfigurationPrintingSaved => 'Printing defaults saved.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'Discard unsaved printing changes and switch branches?';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'Enter a valid printer host and port (1–65535).';
+
+  @override
+  String get cafeConfigurationPrintingBranchDefaultsNotice =>
+      'These are branch defaults: they apply to every device at this branch unless overridden on Settings → Printer Setup on that device.';
+
+  @override
+  String get cafeConfigurationSavePrinterConfig => 'Save Printer Configuration';
+
+  @override
+  String get cafeConfigurationSaveReceiptDesign => 'Save Receipt Design';
+
+  @override
+  String get cafeConfigurationPrinterConfigSaved =>
+      'Printer configuration saved.';
+
+  @override
+  String get cafeConfigurationReceiptDesignSaved => 'Receipt design saved.';
+
+  @override
+  String get cafeConfigurationReceiptDesign => 'Receipt Design';
+
+  @override
+  String get cafeConfigurationReceiptHeaderSection => 'Header';
+
+  @override
+  String get cafeConfigurationReceiptHeaderLogo => 'Cafe logo';
+
+  @override
+  String get cafeConfigurationReceiptHeaderCafeName => 'Cafe name';
+
+  @override
+  String get cafeConfigurationReceiptHeaderBranchName => 'Branch name';
+
+  @override
+  String get cafeConfigurationReceiptHeaderAddress => 'Address';
+
+  @override
+  String get cafeConfigurationReceiptHeaderPhone => 'Phone';
+
+  @override
+  String get cafeConfigurationReceiptOrderInfoSection => 'Order Information';
+
+  @override
+  String get cafeConfigurationReceiptOrderNumber => 'Order number';
+
+  @override
+  String get cafeConfigurationReceiptDateTime => 'Date & time';
+
+  @override
+  String get cafeConfigurationReceiptCashier => 'Cashier';
+
+  @override
+  String get cafeConfigurationReceiptCustomer => 'Customer';
+
+  @override
+  String get cafeConfigurationReceiptOrderType => 'Order type';
+
+  @override
+  String get cafeConfigurationReceiptItemsSection => 'Items';
+
+  @override
+  String get cafeConfigurationReceiptProductName => 'Product name';
+
+  @override
+  String get cafeConfigurationReceiptQuantity => 'Quantity';
+
+  @override
+  String get cafeConfigurationReceiptUnitPrice => 'Unit price';
+
+  @override
+  String get cafeConfigurationReceiptModifiers => 'Modifiers';
+
+  @override
+  String get cafeConfigurationReceiptNotes => 'Item notes';
+
+  @override
+  String get cafeConfigurationReceiptTotalsSection => 'Totals';
+
+  @override
+  String get cafeConfigurationReceiptSubtotal => 'Subtotal';
+
+  @override
+  String get cafeConfigurationReceiptDiscount => 'Discount';
+
+  @override
+  String get cafeConfigurationReceiptTax => 'Tax';
+
+  @override
+  String get cafeConfigurationReceiptTotal => 'Total';
+
+  @override
+  String get cafeConfigurationReceiptPaymentSection => 'Payment';
+
+  @override
+  String get cafeConfigurationReceiptPaymentMethod => 'Payment method';
+
+  @override
+  String get cafeConfigurationReceiptPaidAmount => 'Paid amount';
+
+  @override
+  String get cafeConfigurationReceiptChange => 'Change';
+
+  @override
+  String get cafeConfigurationReceiptFooterSection => 'Footer';
+
+  @override
+  String get cafeConfigurationReceiptFooterEnabled => 'Show footer';
+
+  @override
+  String get cafeConfigurationReceiptFooterText => 'Footer text';
+
+  @override
+  String get cafeConfigurationReceiptPreview => 'Preview Receipt';
+
+  @override
+  String get cafeConfigurationReceiptPreviewTitle => 'Receipt Preview';
+
+  @override
+  String get cafeConfigurationReceiptMoveUp => 'Move up';
+
+  @override
+  String get cafeConfigurationReceiptMoveDown => 'Move down';
+
+  @override
+  String get cafeConfigurationReceiptLockedField => 'Always shown';
+
+  @override
+  String get cafeConfigurationTeamAccess => 'Team & Access';
+
+  @override
+  String get cafeConfigurationTax => 'Tax';
+
+  @override
+  String get cafeConfigurationOverviewSubtitle =>
+      'A concise summary of your cafe’s operational configuration.';
+
+  @override
+  String get cafeConfigurationProfileSubtitle =>
+      'Manage the core business information used across Cafe System.';
+
+  @override
+  String get cafeConfigurationBranchesSubtitle =>
+      'Create and manage the physical locations where your cafe operates.';
+
+  @override
+  String get cafeConfigurationCreateBranchSubtitle =>
+      'Add a new location where your cafe operates.';
+
+  @override
+  String get cafeConfigurationEditBranchSubtitle =>
+      'Update the details for this cafe location.';
+
+  @override
+  String get cafeConfigurationConfigured => 'Configured';
+
+  @override
+  String get cafeConfigurationTotal => 'total';
+
+  @override
+  String get cafeConfigurationNotAvailable => 'Not available';
+
+  @override
+  String get cafeConfigurationAvailablePhase2 => 'Available in Phase 2';
+
+  @override
+  String get cafeConfigurationCouldNotLoad =>
+      'Could not load configuration. Check your connection and try again.';
+
+  @override
+  String get cafeConfigurationBusinessInformation => 'Business information';
+
+  @override
+  String get cafeConfigurationCafeName => 'Cafe Name';
+
+  @override
+  String get cafeConfigurationEmail => 'Email';
+
+  @override
+  String get cafeConfigurationPhone => 'Phone';
+
+  @override
+  String get cafeConfigurationTimezone => 'Timezone';
+
+  @override
+  String get cafeConfigurationReadOnly => 'Read-only';
+
+  @override
+  String get cafeConfigurationCurrency => 'Currency';
+
+  @override
+  String get cafeConfigurationStatus => 'Status';
+
+  @override
+  String get cafeConfigurationReset => 'Reset';
+
+  @override
+  String get cafeConfigurationSaveChanges => 'Save Changes';
+
+  @override
+  String get cafeConfigurationProfileSaved => 'Cafe profile saved.';
+
+  @override
+  String get cafeConfigurationSaveFailed =>
+      'Could not save your changes. Your edits were kept.';
+
+  @override
+  String get cafeConfigurationAddBranch => 'Add Branch';
+
+  @override
+  String get cafeConfigurationCreateBranch => 'Create Branch';
+
+  @override
+  String get cafeConfigurationEditBranch => 'Edit Branch';
+
+  @override
+  String get cafeConfigurationBranchName => 'Branch Name';
+
+  @override
+  String get cafeConfigurationAddress => 'Address';
+
+  @override
+  String get cafeConfigurationActions => 'Actions';
+
+  @override
+  String get cafeConfigurationNoBranches => 'No branches yet';
+
+  @override
+  String get cafeConfigurationNoBranchesHelp =>
+      'Create your first cafe location to get started.';
+
+  @override
+  String get cafeConfigurationBranchCreated => 'Branch created.';
+
+  @override
+  String get cafeConfigurationBranchSaved => 'Branch saved.';
+
+  @override
+  String get cafeConfigurationTaxSummary => 'Cafe-wide exclusive tax';
+
+  @override
+  String get teamAccessSubtitle =>
+      'Manage Managers and Employees with access to your cafe.';
+
+  @override
+  String get teamAddMember => 'Add Team Member';
+
+  @override
+  String get teamSearch => 'Search team';
+
+  @override
+  String get teamRole => 'Role';
+
+  @override
+  String get teamName => 'Name';
+
+  @override
+  String get teamLogin => 'Login';
+
+  @override
+  String get teamDeactivated => 'Deactivated';
+
+  @override
+  String get teamArchived => 'Archived';
+
+  @override
+  String get teamProtected => 'Protected';
+
+  @override
+  String get teamAllBranches => 'All Branches';
+
+  @override
+  String get teamOwner => 'Owner';
+
+  @override
+  String get teamManager => 'Manager';
+
+  @override
+  String get teamEmployee => 'Employee';
+
+  @override
+  String get teamFactoryManager => 'Factory Manager';
+
+  @override
+  String get teamNoMembers => 'No Managers or Employees yet.';
+
+  @override
+  String get teamNoResults => 'No team members match these filters.';
+
+  @override
+  String get teamEditMember => 'Edit Team Member';
+
+  @override
+  String get teamUsername => 'Username';
+
+  @override
+  String get teamBranchAccess => 'Branch Access';
+
+  @override
+  String get teamActiveBranchesOnly => 'Only active branches can be assigned.';
+
+  @override
+  String get teamTemporaryPassword => 'Temporary Password';
+
+  @override
+  String get teamConfirmPassword => 'Confirm Temporary Password';
+
+  @override
+  String teamTemporaryPasswordMinimum(int count) {
+    return 'Use at least $count characters.';
+  }
+
+  @override
+  String get teamRoleChangePassword =>
+      'Changing the role requires a new temporary password and login reset.';
+
+  @override
+  String get teamCreate => 'Create';
+
+  @override
+  String get teamMemberCreated => 'Team member created';
+
+  @override
+  String get teamPasswordVisibleOnce =>
+      'This temporary password can only be viewed now.';
+
+  @override
+  String get teamCopy => 'Copy';
+
+  @override
+  String get teamResetPassword => 'Reset Password';
+
+  @override
+  String get teamResetPasswordExplanation =>
+      'Active sessions will be revoked. The user must change their password after next login.';
+
+  @override
+  String get teamPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get teamDeactivate => 'Deactivate';
+
+  @override
+  String get teamActivate => 'Activate';
+
+  @override
+  String get teamArchive => 'Archive';
+
+  @override
+  String get teamDeactivateExplanation =>
+      'This user can no longer sign in. Historical activity remains.';
+
+  @override
+  String get teamActivateExplanation => 'This user can sign in again.';
+
+  @override
+  String get teamArchiveExplanation =>
+      'Historical records are preserved. Archived users cannot currently be restored.';
+
+  @override
+  String get teamConfirm => 'Confirm';
+
+  @override
+  String get teamMutationFailed =>
+      'Could not complete the request. Your changes were kept.';
+
+  @override
+  String get teamLoadFailed =>
+      'Could not load this section. Check your connection and try again.';
+
+  @override
+  String get taxSubtitle => 'Set the single tax rate used across your cafe.';
+
+  @override
+  String get taxRate => 'Tax rate';
+
+  @override
+  String get taxHelp => 'Enter a percentage from 0 through 100.';
+
+  @override
+  String get taxExplanation =>
+      'This cafe-wide tax is exclusive and applied after discounts. Changes apply to new orders; existing orders preserve their captured tax rate.';
+
+  @override
+  String get taxInvalid => 'Enter a valid percentage from 0 through 100.';
+
+  @override
+  String get taxSaved => 'Tax rate saved.';
+
+  @override
+  String get taxConfirm => 'Update tax rate?';
+
+  @override
+  String get taxCurrent => 'Current';
+
+  @override
+  String get taxNew => 'New';
+
+  @override
+  String get taxNewOrdersOnly => 'This applies to new orders.';
+
+  @override
+  String get customerManagementTitle => 'Customer Management';
+
+  @override
+  String get customerManagementCustomers => 'Customers';
+
+  @override
+  String get customerManagementGroups => 'Customer Groups';
+
+  @override
+  String get customerManagementCreateCustomer => 'New Customer';
+
+  @override
+  String get customerManagementCreateGroup => 'New Group';
+
+  @override
+  String get customerManagementSearch => 'Search';
+
+  @override
+  String get customerManagementActive => 'Active';
+
+  @override
+  String get customerManagementInactive => 'Inactive';
+
+  @override
+  String get customerManagementArchived => 'Archived';
+
+  @override
+  String get customerManagementAll => 'All';
+
+  @override
+  String get customerManagementNoPhone => 'No phone';
+
+  @override
+  String get customerManagementNotAvailable => 'Not available';
+
+  @override
+  String get customerManagementValueSeparator => ' · ';
+
+  @override
+  String get customerManagementLoading => 'Loading customer information…';
+
+  @override
+  String get customerManagementEmptyCustomers => 'No customers yet.';
+
+  @override
+  String get customerManagementEmptyGroups => 'No customer groups yet.';
+
+  @override
+  String get customerManagementNoResults => 'No matching results.';
+
+  @override
+  String get customerManagementRetry => 'Retry';
+
+  @override
+  String get customerManagementClearFilters => 'Clear filters';
+
+  @override
+  String get customerManagementAccessDenied =>
+      'You do not have access to Customer Management.';
+
+  @override
+  String get customerManagementNotFound =>
+      'The requested record was not found.';
+
+  @override
+  String get customerManagementCustomerNumber => 'Customer number';
+
+  @override
+  String get customerManagementName => 'Name';
+
+  @override
+  String get customerManagementPhone => 'Phone';
+
+  @override
+  String get customerManagementGroupsLabel => 'Groups';
+
+  @override
+  String get customerManagementStatus => 'Status';
+
+  @override
+  String get customerManagementEmail => 'Email';
+
+  @override
+  String get customerManagementBirthDate => 'Birth date';
+
+  @override
+  String get customerManagementNotes => 'Notes';
+
+  @override
+  String get customerManagementPrimary => 'Primary';
+
+  @override
+  String get customerManagementMembers => 'Members';
+
+  @override
+  String customerManagementMemberCount(int count) {
+    return 'Members: $count';
+  }
+
+  @override
+  String get customerManagementPreviousPage => 'Previous page';
+
+  @override
+  String get customerManagementNextPage => 'Next page';
+
+  @override
+  String customerManagementPage(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String get customerManagementView => 'View';
+
+  @override
+  String get customerManagementEdit => 'Edit';
+
+  @override
+  String get customerManagementSave => 'Save';
+
+  @override
+  String get customerManagementCancel => 'Cancel';
+
+  @override
+  String get customerManagementActivate => 'Activate';
+
+  @override
+  String get customerManagementDeactivate => 'Deactivate';
+
+  @override
+  String get customerManagementArchive => 'Archive';
+
+  @override
+  String get customerManagementRestore => 'Restore';
+
+  @override
+  String get customerManagementConfirm => 'Confirm';
+
+  @override
+  String get customerManagementDiscardChanges => 'Discard unsaved changes?';
+
+  @override
+  String get customerManagementChangesKept => 'Your changes were kept.';
+
+  @override
+  String get customerManagementRequestFailed =>
+      'The request could not be completed.';
+
+  @override
+  String get customerManagementValidationFailed =>
+      'Review the highlighted fields.';
+
+  @override
+  String get customerManagementAddMembers => 'Add members';
+
+  @override
+  String get customerManagementRemoveMember => 'Remove member';
+
+  @override
+  String customerManagementRemoveMemberConfirm(Object customer, Object group) {
+    return 'Remove $customer from $group?';
+  }
+
+  @override
+  String get customerManagementCreateTitle => 'New Customer';
+
+  @override
+  String get customerManagementEditTitle => 'Edit Customer';
+
+  @override
+  String get customerManagementCustomerName => 'Customer name';
+
+  @override
+  String get customerManagementAddPhone => 'Add phone';
+
+  @override
+  String get customerManagementRemovePhone => 'Remove phone';
+
+  @override
+  String get customerManagementPhoneType => 'Phone type';
+
+  @override
+  String get customerManagementPhoneMobile => 'Mobile';
+
+  @override
+  String get customerManagementPhoneHome => 'Home';
+
+  @override
+  String get customerManagementPhoneWork => 'Work';
+
+  @override
+  String get customerManagementPhoneOther => 'Other';
+
+  @override
+  String get customerManagementSelectGroups => 'Groups';
+
+  @override
+  String get customerManagementActiveGroups => 'Active groups';
+
+  @override
+  String get customerManagementArchivedGroupRetained =>
+      'Archived group retained';
+
+  @override
+  String get customerManagementDateHint => 'YYYY-MM-DD';
+
+  @override
+  String get customerManagementStay => 'Keep editing';
+
+  @override
+  String get customerManagementLeave => 'Leave';
+
+  @override
+  String get customerManagementRequiredName => 'Enter a customer name.';
+
+  @override
+  String get customerManagementRequiredPhone => 'Enter a phone number.';
+
+  @override
+  String get customerManagementPrimaryRequired => 'Select one primary phone.';
+
+  @override
+  String get customerManagementNoActiveGroups => 'No active groups available.';
+
+  @override
+  String customerManagementDeactivateConfirm(Object name) {
+    return 'Deactivate $name?';
+  }
+
+  @override
+  String get customerManagementDeactivateConsequence =>
+      'This customer will no longer be available for new operational use. Historical records remain preserved.';
+
+  @override
+  String customerManagementArchiveConfirm(Object name) {
+    return 'Archive $name?';
+  }
+
+  @override
+  String get customerManagementArchiveConsequence =>
+      'This customer will be archived without deleting historical records. It can be restored later.';
+
+  @override
+  String customerManagementRestoreConfirm(Object name) {
+    return 'Restore $name?';
+  }
+
+  @override
+  String get customerManagementRestoreConsequence =>
+      'This customer will be restored as Inactive. Activate it separately before new operational use.';
+
+  @override
+  String get customerManagementMutationFailed =>
+      'Your customer was not changed. You can retry safely.';
+
+  @override
+  String get cmvpCustomersDescription =>
+      'Manage customer records, phones, groups, and lifecycle state.';
+
+  @override
+  String get cmvpGroupsDescription =>
+      'Organize customer groups and their bounded memberships.';
+
+  @override
+  String get cmvpCustomerDetailDescription =>
+      'Review the authoritative customer information and memberships.';
+
+  @override
+  String get cmvpCustomerFormDescription =>
+      'Enter the customer information managed by the server.';
+
+  @override
+  String get cmvpGroupDetailDescription =>
+      'Review the group identity, lifecycle, and current members.';
+
+  @override
+  String get cmvpGroupFormDescription => 'Create or rename a customer group.';
+
+  @override
+  String get cmvpBreadcrumbCustomers => 'Customers';
+
+  @override
+  String get cmvpBreadcrumbGroups => 'Customer Groups';
+
+  @override
+  String get cmvpBreadcrumbDetails => 'Details';
+
+  @override
+  String get cmvpBreadcrumbEdit => 'Edit';
+
+  @override
+  String get cmvpBreadcrumbCreate => 'New';
+
+  @override
+  String cmvpCustomersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count customers',
+      one: '1 customer',
+      zero: 'No customers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpGroupsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+      zero: 'No groups',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+      zero: 'No members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpMoreActions => 'More actions';
+
+  @override
+  String get cmvpOpenActions => 'Open row actions';
+
+  @override
+  String get cmvpSelectRow => 'Select row';
+
+  @override
+  String get cmvpRemoveGroup => 'Remove group';
+
+  @override
+  String get cmvpInformationSection => 'Customer information';
+
+  @override
+  String get cmvpPhoneSection => 'Phone numbers';
+
+  @override
+  String get cmvpGroupsSection => 'Customer groups';
+
+  @override
+  String get cmvpNotesSection => 'Notes';
+
+  @override
+  String get cmvpLifecycleSection => 'Lifecycle';
+
+  @override
+  String get cmvpGeneratedNumberHint =>
+      'The customer number is generated by the server.';
+
+  @override
+  String get cmvpCreatedAt => 'Created';
+
+  @override
+  String get cmvpAbsenceValue => 'Not available';
+
+  @override
+  String get cmvpManageGroups => 'Manage groups';
+
+  @override
+  String get cmvpGroupName => 'Group name';
+
+  @override
+  String get cmvpMemberSearch => 'Search members';
+
+  @override
+  String get cmvpNoMembers => 'No members in this group.';
+
+  @override
+  String get cmvpNoCandidates => 'No eligible customers found.';
+
+  @override
+  String get cmvpCandidateSearch => 'Search eligible customers';
+
+  @override
+  String cmvpSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Add $count members',
+      one: 'Add 1 member',
+      zero: 'Add members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpAddMembersDialogTitle => 'Add members';
+
+  @override
+  String get cmvpConfirmRemoveMember => 'Remove member';
+
+  @override
+  String get cmvpLoadingCustomers => 'Loading customers';
+
+  @override
+  String get cmvpLoadingGroups => 'Loading customer groups';
+
+  @override
+  String get cmvpLoadingRecord => 'Loading record';
+
+  @override
+  String get cmvpForbiddenTitle => 'Access unavailable';
+
+  @override
+  String get cmvpNotFoundTitle => 'Record not found';
+
+  @override
+  String get cmvpRetryableTitle => 'Could not load this view';
+
+  @override
+  String get cmvpNoResultsTitle => 'No matching results';
+
+  @override
+  String get cmvpEmptyTitle => 'Nothing here yet';
+
+  @override
+  String get cmvpStateLoadingSemantics =>
+      'Customer Management content is loading';
+
+  @override
+  String get cmvpRetryableMessage => 'Check your connection and try again.';
+
+  @override
+  String get cmvpNoResultsMessage =>
+      'Try changing the search or clearing the filters.';
+
+  @override
+  String get cmvpEmptyCustomersMessage => 'Add the first customer to begin.';
+
+  @override
+  String get cmvpEmptyGroupsMessage => 'Create the first group to begin.';
+
+  @override
+  String get cmvpForbiddenMessage =>
+      'You do not have permission to view this content.';
+
+  @override
+  String get cmvpNotFoundMessage =>
+      'The requested record is no longer available.';
+
+  @override
+  String get cmvpSubmitting => 'Saving';
+
+  @override
+  String get cmvpAddingMembers => 'Adding members';
+
+  @override
+  String get cmvpRemovingMember => 'Removing member';
+
+  @override
+  String get cmvpDiscardChangesMessage => 'Your unsaved changes will be lost.';
+
+  @override
+  String get cmvpDialogCancel => 'Cancel';
+
+  @override
+  String get cmvpDialogConfirm => 'Confirm';
+
+  @override
+  String get cmvpMemberRemoveConsequence =>
+      'This member will be removed from the group.';
+
+  @override
+  String get cmvpGroupLifecycleMessage =>
+      'The group will remain available in historical records.';
+
+  @override
+  String get cmvpOrders => 'Orders';
+
+  @override
+  String get cmvpOrderHistory => 'Customer orders';
+
+  @override
+  String get cmvpFromDate => 'From date';
+
+  @override
+  String get cmvpToDate => 'To date';
+
+  @override
+  String get cmvpBranch => 'Branch';
+
+  @override
+  String get cmvpAllBranches => 'All branches';
+
+  @override
+  String get cmvpOrderStatus => 'Order status';
+
+  @override
+  String get cmvpPaymentStatus => 'Payment status';
+
+  @override
+  String get cmvpOrderNumber => 'Order number';
+
+  @override
+  String get cmvpOrderDateTime => 'Date and time';
+
+  @override
+  String get cmvpOrderTotal => 'Total';
+
+  @override
+  String get cmvpOrderStatusCompleted => 'Completed';
+
+  @override
+  String get cmvpOrderStatusHeld => 'Held';
+
+  @override
+  String get cmvpOrderStatusCancelled => 'Cancelled';
+
+  @override
+  String get cmvpOrderStatusDraft => 'Draft';
+
+  @override
+  String get cmvpPaymentStatusPaid => 'Paid';
+
+  @override
+  String get cmvpPaymentStatusUnpaid => 'Unpaid';
+
+  @override
+  String get cmvpPaymentStatusPartiallyRefunded => 'Partially refunded';
+
+  @override
+  String get cmvpPaymentStatusRefunded => 'Refunded';
+
+  @override
+  String get cmvpNoOrders => 'No orders found.';
+
+  @override
+  String cmvpOrdersShowing(int start, int end, int total) {
+    return 'Showing $start–$end of $total';
+  }
+
+  @override
+  String get cmvpOverview => 'Overview';
+
+  @override
+  String get cmvpTotalOrders => 'Total orders';
+
+  @override
+  String get cmvpTotalSpending => 'Total spending';
+
+  @override
+  String get cmvpAverageOrderValue => 'Average order value';
+
+  @override
+  String get cmvpLastVisit => 'Last visit';
+
+  @override
+  String get cmvpRecentOrders => 'Recent orders';
+
+  @override
+  String get cmvpViewAllOrders => 'View all orders';
+
+  @override
+  String get expensesReportTitle => 'Expenses';
+
+  @override
+  String get expensesReportSubtitle =>
+      'Analyze operating expenses by category, branch, and time period.';
+
+  @override
+  String get expensesReportAllCategories => 'All categories';
+
+  @override
+  String get expensesReportAllStatuses => 'All statuses';
+
+  @override
+  String get expensesReportExportTooltip =>
+      'Export will be enabled after this report is connected to a data source.';
+
+  @override
+  String get expensesReportTotal => 'Total expenses';
+
+  @override
+  String get expensesReportPosted => 'Posted expenses';
+
+  @override
+  String get expensesReportPending => 'Pending expenses';
+
+  @override
+  String get expensesReportAverageDaily => 'Average daily expense';
+
+  @override
+  String get expensesReportRatio => 'Expense-to-total ratio';
+
+  @override
+  String get expensesReportLargestCategory => 'Largest expense category';
+
+  @override
+  String get expensesReportTrend => 'Expenses trend';
+
+  @override
+  String get expensesReportByCategory => 'Expenses by category';
+
+  @override
+  String get expensesReportLargest => 'Largest expenses';
+
+  @override
+  String get expensesReportBranchComparison => 'Branch expense comparison';
+
+  @override
+  String get expensesReportPeriodComparison => 'Period comparison';
+
+  @override
+  String get expensesReportTable => 'Expense table';
+
+  @override
+  String get expensesReportDate => 'Date';
+
+  @override
+  String get expensesReportExpense => 'Expense';
+
+  @override
+  String get expensesReportCategory => 'Category';
+
+  @override
+  String get expensesReportBranch => 'Branch';
+
+  @override
+  String get expensesReportPayee => 'Payee';
+
+  @override
+  String get expensesReportPaymentMethod => 'Payment method';
+
+  @override
+  String get expensesReportAmount => 'Amount';
+
+  @override
+  String get expensesReportStatus => 'Status';
+
+  @override
+  String get expensesReportNetSales => 'Total';
+
+  @override
+  String get expensesReportExpenseSales => 'Expense / sales';
+
+  @override
+  String get expensesReportCompanyWide => 'Company-wide';
+
+  @override
+  String get expensesReportUnavailable => 'Unavailable';
+
+  @override
+  String get expensesReportNoExpenses =>
+      'There are no expenses in the selected period.';
+
+  @override
+  String get expensesReportNoCategories =>
+      'There is no expense data by category.';
+
+  @override
+  String get expensesReportNoBranches =>
+      'There is not enough data to compare branches.';
+
+  @override
+  String get expensesReportNoLargest => 'There are no expenses to display.';
+
+  @override
+  String get expensesReportError => 'Unable to load the Expenses report.';
+
+  @override
+  String get expensesReportCurrentPeriod => 'Current period';
+
+  @override
+  String get expensesReportPreviousPeriod => 'Previous period';
+
+  @override
+  String get expensesReportDifference => 'Difference';
+
+  @override
+  String get expensesReportDraft => 'Draft';
+
+  @override
+  String get expensesReportPendingApproval => 'Pending approval';
+
+  @override
+  String get expensesReportApproved => 'Approved';
+
+  @override
+  String get expensesReportPaid => 'Paid';
+
+  @override
+  String get expensesReportRejected => 'Rejected';
+
+  @override
+  String get expensesReportReversed => 'Reversed';
+
+  @override
+  String get expensesReportComparisonUnavailable => 'Comparison unavailable';
+
+  @override
+  String get expensesReportPercentOfTotal => 'of total';
+
+  @override
+  String get cashierHomeTitle => 'Home';
+
+  @override
+  String get cashierDashboardTitle => 'Cashier Operations';
+
+  @override
+  String get cashierDashboardSubtitle =>
+      'Everything needed to run this shift at the till.';
+
+  @override
+  String get cashierBranchLabel => 'Branch';
+
+  @override
+  String get cashierNameLabel => 'Cashier';
+
+  @override
+  String get cashierShiftLabel => 'Shift';
+
+  @override
+  String get cashierShiftOpenedAt => 'Opened';
+
+  @override
+  String get cashierShiftDuration => 'Duration';
+
+  @override
+  String get cashierShiftStatus => 'Status';
+
+  @override
+  String get cashierShiftStatusOpen => 'Open';
+
+  @override
+  String get cashierNoOpenShift => 'No open shift';
+
+  @override
+  String get cashierNoOpenShiftHint =>
+      'Shift figures appear once a shift is open at this branch.';
+
+  @override
+  String get cashierScopeCurrentShift => 'Current shift';
+
+  @override
+  String get cashierScopeBranch => 'Branch';
+
+  @override
+  String get cashierSectionCashAndShift => 'Cash and shift';
+
+  @override
+  String get cashierSectionSalesAndOrders => 'Sales and orders';
+
+  @override
+  String get cashierSectionFinance => 'Finance';
+
+  @override
+  String get cashierSectionInventory => 'Inventory';
+
+  @override
+  String get cashierSectionQuickAccess => 'Quick access';
+
+  @override
+  String get cashierSectionAlerts => 'Operational alerts';
+
+  @override
+  String get cashierExpectedDrawer => 'Expected drawer cash';
+
+  @override
+  String get cashierExpectedDrawerHint =>
+      'Expected, not counted. The physical count happens at shift close.';
+
+  @override
+  String get cashierOpeningFloat => 'Opening float';
+
+  @override
+  String get cashierCashSales => 'Cash sales';
+
+  @override
+  String get cashierReceiptVouchers => 'Cash receipt vouchers';
+
+  @override
+  String get cashierPaymentVouchers => 'Cash payment vouchers';
+
+  @override
+  String get cashierCashRefunds => 'Cash refunds';
+
+  @override
+  String get cashierShiftSales => 'Shift sales';
+
+  @override
+  String get cashierOrderCount => 'Orders';
+
+  @override
+  String get cashierAverageOrder => 'Average order';
+
+  @override
+  String get cashierCardSales => 'Card sales';
+
+  @override
+  String get cashierOtherMethods => 'Other methods';
+
+  @override
+  String get cashierDiscounts => 'Discounts';
+
+  @override
+  String get cashierRefunds => 'Refunds';
+
+  @override
+  String get cashierOrdersActive => 'Active';
+
+  @override
+  String get cashierOrdersHeld => 'Held';
+
+  @override
+  String get cashierOrdersCompleted => 'Completed';
+
+  @override
+  String get cashierPosWarehouse => 'POS warehouse';
+
+  @override
+  String get cashierItemCount => 'Items';
+
+  @override
+  String get cashierLowStock => 'Low stock';
+
+  @override
+  String get cashierZeroStock => 'Zero stock';
+
+  @override
+  String get cashierNegativeStock => 'Negative stock';
+
+  @override
+  String get cashierShiftCountStatus => 'Shift count';
+
+  @override
+  String get cashierShiftCountComplete => 'Complete';
+
+  @override
+  String get cashierShiftCountPending => 'Not complete';
+
+  @override
+  String get cashierShiftCountNotRequired => 'Not required';
+
+  @override
+  String get cashierQuickPos => 'Point of sale';
+
+  @override
+  String get cashierQuickOrders => 'Orders';
+
+  @override
+  String get cashierQuickDiscounts => 'Discounts';
+
+  @override
+  String get cashierQuickReceiptVoucher => 'Receipt voucher';
+
+  @override
+  String get cashierQuickPaymentVoucher => 'Payment voucher';
+
+  @override
+  String get cashierQuickPurchases => 'Purchases';
+
+  @override
+  String get cashierQuickSales => 'Sales';
+
+  @override
+  String get cashierQuickInventory => 'POS stock';
+
+  @override
+  String get cashierQuickLowStock => 'Low items';
+
+  @override
+  String get cashierQuickNegativeStock => 'Negative items';
+
+  @override
+  String get cashierCloseShift => 'Close shift';
+
+  @override
+  String get cashierCloseShiftUnavailable =>
+      'The shift close flow is not available in this client yet.';
+
+  @override
+  String cashierOperationsCount(int count) {
+    return '$count operations';
+  }
+
+  @override
+  String cashierPendingTemplates(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String get cashierAlertNoBranch =>
+      'No operational branch is assigned to this account.';
+
+  @override
+  String get cashierAlertNoShift => 'No shift is open right now.';
+
+  @override
+  String get cashierAlertWarehouseMissing =>
+      'No POS warehouse is configured for this branch.';
+
+  @override
+  String get cashierAlertWarehouseAmbiguous =>
+      'More than one POS warehouse is configured for this branch.';
+
+  @override
+  String cashierAlertBlockingOrders(int count) {
+    return '$count orders must be settled before closing the shift.';
+  }
+
+  @override
+  String cashierAlertNegativeStock(int count) {
+    return '$count items have negative stock.';
+  }
+
+  @override
+  String cashierAlertLowStock(int count) {
+    return '$count items are low on stock.';
+  }
+
+  @override
+  String get cashierAlertShiftCount => 'The shift count is not complete.';
+
+  @override
+  String get cashierAlertsNone => 'No operational alerts.';
+
+  @override
+  String get cashierRetry => 'Retry';
+
+  @override
+  String get cashierLoadError => 'Unable to load the operations dashboard.';
+
+  @override
+  String get cashierInventoryTitle => 'POS stock';
+
+  @override
+  String get cashierInventorySubtitle =>
+      'Operational quantities for the warehouse this till sells from.';
+
+  @override
+  String get cashierInventorySearchHint => 'Search by name or code';
+
+  @override
+  String get cashierInventoryFilterAll => 'All';
+
+  @override
+  String get cashierInventoryStateNormal => 'Normal';
+
+  @override
+  String get cashierInventoryStateLow => 'Low';
+
+  @override
+  String get cashierInventoryStateZero => 'Zero';
+
+  @override
+  String get cashierInventoryStateNegative => 'Negative';
+
+  @override
+  String get cashierInventoryColumnItem => 'Item';
+
+  @override
+  String get cashierInventoryColumnQuantity => 'Quantity';
+
+  @override
+  String get cashierInventoryColumnState => 'State';
+
+  @override
+  String get cashierInventoryColumnLastMovement => 'Last movement';
+
+  @override
+  String get cashierInventoryEmpty => 'There are no items in this warehouse.';
+
+  @override
+  String get cashierInventoryUnavailable =>
+      'No POS warehouse is configured for this branch.';
+
+  @override
+  String get cashierInventoryError => 'Unable to load POS stock.';
+
+  @override
+  String get discountV2PackageBundle => 'Package / Bundle';
+
+  @override
+  String get discountV2PackageRequirements => 'Package Requirements';
+
+  @override
+  String get discountV2AllPackageItems =>
+      'All package items must be present in the order for this discount to apply.';
+
+  @override
+  String get discountV2RequiredQuantity => 'Required Quantity';
+
+  @override
+  String get discountV2AddProduct => 'Add Product';
+
+  @override
+  String get discountV2SelectedCustomers => 'Selected Customers';
+
+  @override
+  String get discountV2SelectCustomers => 'Select Customers';
+
+  @override
+  String get discountV2Channels => 'Channels';
+
+  @override
+  String get discountV2AllChannels => 'All Channels';
+
+  @override
+  String get discountV2SelectedChannels => 'Selected Channels';
+
+  @override
+  String get discountV2BranchChannelHelp =>
+      'Branch and channel restrictions are applied together.';
+
+  @override
+  String get discountV2DailyLimit => 'Per Customer Daily Limit';
+
+  @override
+  String get discountV2DailyLimitDetails =>
+      'Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.';
+
+  @override
+  String get discountV2Regenerate => 'Regenerate';
+
+  @override
+  String get discountV2CodeGenerationFailed => 'Unable to generate a code.';
+
+  @override
+  String get discountV2Retry => 'Retry';
+
+  @override
+  String get discountV2Search => 'Search';
+
+  @override
+  String posCustomerPoints(String points) {
+    return '$points pts';
+  }
+
+  @override
+  String get posWalkInCustomer => 'Walk-in customer';
+
+  @override
+  String get posUseWalkInCustomer => 'Use walk-in customer';
+
+  @override
+  String get posSelectCustomer => 'Select Customer';
+
+  @override
+  String get posSearchCustomers => 'Search customers...';
+
+  @override
+  String get posNoCustomers => 'No customers found.';
+
+  @override
+  String get posNoCustomerMatches => 'No matching customers found.';
+
+  @override
+  String get posCreateNewCustomer => 'Create New';
+
+  @override
+  String get posCloseCustomerSelector => 'Close customer selector';
+
+  @override
+  String get posCustomerCreateTitle => 'Create customer';
+
+  @override
+  String get posCustomerGroupsLoading => 'Loading active groups...';
+
+  @override
+  String get posCustomerGroupsEmpty => 'No active groups available.';
+
+  @override
+  String get posCustomerGroupsForbidden => 'You cannot load customer groups.';
+
+  @override
+  String get posCustomerGroupsRetry => 'Customer groups could not be loaded.';
+
+  @override
+  String get posCustomerCreateForbidden =>
+      'You cannot create a customer from the POS.';
+
+  @override
+  String get posCustomerCreateFailed =>
+      'The customer could not be created. You can retry safely.';
+
+  @override
+  String get posCustomerAttachmentFailed =>
+      'The customer was created, but could not be attached to this order. Retry safely.';
+
+  @override
+  String get posCustomerSearchForbidden => 'You cannot search customers.';
+
+  @override
+  String get posCustomerSearchFailed =>
+      'Customer search is temporarily unavailable.';
+
+  @override
+  String get discountManual => 'Manual';
+
+  @override
+  String get discountCode => 'Code';
+
+  @override
+  String get discountCoupon => 'Coupon';
+
+  @override
+  String discountCodeValue(String code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String get discountPercentage => 'Percentage';
+
+  @override
+  String get discountFixedAmount => 'Fixed Amount';
+
+  @override
+  String get discountActive => 'Active';
+
+  @override
+  String get discountInactive => 'Inactive';
+
+  @override
+  String get discountScheduled => 'Scheduled';
+
+  @override
+  String get discountExpired => 'Expired';
+
+  @override
+  String get discountEntireOrder => 'Entire Order';
+
+  @override
+  String get discountSelectedProducts => 'Selected Products';
+
+  @override
+  String get discountSelectedCategories => 'Selected Categories';
+
+  @override
+  String get discountNoConditions => 'No Conditions';
+
+  @override
+  String get discountAlwaysValid => 'Always Valid';
+
+  @override
+  String discountAmountOff(String amount) {
+    return '$amount off';
+  }
+
+  @override
+  String discountPercentOff(String value) {
+    return '$value% off';
+  }
+
+  @override
+  String discountBundleValue(int quantity) {
+    return 'Buy $quantity Get $quantity';
+  }
+
+  @override
+  String discountUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String discountFrom(String date) {
+    return 'From $date';
+  }
+
+  @override
+  String discountDateRange(String start, String end) {
+    return '$start - $end';
+  }
+
+  @override
+  String get discountsTitle => 'Discounts & Coupons';
+
+  @override
+  String get discountsSubtitle => 'Manage promotional offers and pricing rules';
+
+  @override
+  String get discountsCreate => 'Create Discount';
+
+  @override
+  String get discountsSearchHint => 'Search discounts...';
+
+  @override
+  String get discountsAllStatuses => 'All Statuses';
+
+  @override
+  String get discountsAdvancedFilters => 'Advanced filters';
+
+  @override
+  String get discountsAdvancedFiltersSoon =>
+      'Advanced filters will be available soon.';
+
+  @override
+  String get discountsEmpty =>
+      'No discounts match your search or status filter.';
+
+  @override
+  String get discountsTableName => 'Discount Name';
+
+  @override
+  String get discountsTableType => 'Type';
+
+  @override
+  String get discountsTableValue => 'Value';
+
+  @override
+  String get discountsTableConditions => 'Conditions';
+
+  @override
+  String get discountsTablePeriod => 'Valid Period';
+
+  @override
+  String get discountsTableStatus => 'Status';
+
+  @override
+  String get discountsTableActions => 'Actions';
+
+  @override
+  String get discountsViewTooltip => 'View discount';
+
+  @override
+  String get discountsEditTooltip => 'Edit discount';
+
+  @override
+  String get discountsDeactivateTooltip => 'Deactivate discount';
+
+  @override
+  String get discountsActivateTooltip => 'Activate discount';
+
+  @override
+  String get discountsDeleteTooltip => 'Delete discount';
+
+  @override
+  String discountsPagination(int start, int end, int total) {
+    return 'Showing $start to $end of $total entries';
+  }
+
+  @override
+  String get discountsActiveMetric => 'ACTIVE DISCOUNTS';
+
+  @override
+  String get discountsUsageMetric => 'TOTAL USAGE (THIS MONTH)';
+
+  @override
+  String get discountsSavedMetric => 'ESTIMATED VALUE SAVED';
+
+  @override
+  String get discountsDeleteTitle => 'Delete discount?';
+
+  @override
+  String discountsDeleteBody(String name) {
+    return '\"$name\" will no longer be available.';
+  }
+
+  @override
+  String get discountsDeleted => 'Discount deleted.';
+
+  @override
+  String get discountsDeleteFailed => 'Unable to delete discount.';
+
+  @override
+  String discountsStatusUpdated(String status) {
+    return 'Discount $status.';
+  }
+
+  @override
+  String get discountsStatusUpdateFailed => 'Unable to update discount status.';
+
+  @override
+  String discountsUsedSaved(int count, String amount) {
+    return 'Used $count times - $amount saved';
+  }
+
+  @override
+  String get discountFormBasic => 'Basic Information';
+
+  @override
+  String get discountFormName => 'Discount Name';
+
+  @override
+  String get discountFormApplicationMode => 'Application Mode';
+
+  @override
+  String get discountFormCouponOrCode => 'Coupon / Code';
+
+  @override
+  String get discountFormDescription => 'Description';
+
+  @override
+  String get discountFormDescriptionHint =>
+      'Internal description for discount policy...';
+
+  @override
+  String get discountFormScopeValue => 'Scope & Value';
+
+  @override
+  String get discountFormAppliesTo => 'Applies To';
+
+  @override
+  String get discountFormValueType => 'Value Type';
+
+  @override
+  String get discountFormValue => 'Value';
+
+  @override
+  String get discountFormMinSpendOptional => 'Minimum Spend (optional)';
+
+  @override
+  String get discountFormMaxDiscountOptional => 'Maximum Discount (optional)';
+
+  @override
+  String get discountFormQuickPercentages => 'Quick percentage values';
+
+  @override
+  String get discountFormQuickFixed => 'Quick fixed values';
+
+  @override
+  String get discountFormEligibility => 'Eligibility Conditions';
+
+  @override
+  String get discountFormAllCustomers => 'All Customers';
+
+  @override
+  String get discountFormSelectedCustomerGroups => 'Selected Customer Groups';
+
+  @override
+  String get discountFormAllPaymentMethods => 'All Payment Methods';
+
+  @override
+  String get discountFormSelectedPaymentMethods => 'Selected Payment Methods';
+
+  @override
+  String get discountFormAllBranches => 'All Branches';
+
+  @override
+  String get discountFormSelectedBranches => 'Selected Branches';
+
+  @override
+  String get discountFormCustomerGroups => 'Customer Groups';
+
+  @override
+  String get discountFormSelectCustomerGroups => 'Select Customer Groups';
+
+  @override
+  String get discountFormSelectPaymentMethods => 'Select Payment Methods';
+
+  @override
+  String get discountFormSelectBranches => 'Select Branches';
+
+  @override
+  String get discountFormSchedule => 'Schedule';
+
+  @override
+  String get discountFormActiveWeekdays => 'Active Weekdays (optional)';
+
+  @override
+  String get discountFormStartDate => 'Start Date';
+
+  @override
+  String get discountFormEndDate => 'End Date';
+
+  @override
+  String get discountFormStartTime => 'Start Time';
+
+  @override
+  String get discountFormEndTime => 'End Time';
+
+  @override
+  String get discountFormOvernightHelp =>
+      'An end time earlier than the start time is an overnight window.';
+
+  @override
+  String get discountFormUsageLimits => 'Usage Limits';
+
+  @override
+  String get discountFormGlobalUsageOptional => 'Global Usage Limit (optional)';
+
+  @override
+  String get discountFormLifetimeUsageOptional =>
+      'Per Customer Lifetime Limit (optional)';
+
+  @override
+  String get discountFormUnlimited => 'Unlimited';
+
+  @override
+  String get discountFormProduct => 'Product';
+
+  @override
+  String get discountFormLoading => 'Loading...';
+
+  @override
+  String get discountFormNoOptions => 'No active options are available.';
+
+  @override
+  String get discountFormDone => 'Done';
+
+  @override
+  String get discountFormLoadTitle => 'Unable to load discount';
+
+  @override
+  String get discountFormRetryOptions => 'Retry loading selection options';
+
+  @override
+  String get discountFormDiscard => 'Discard Changes';
+
+  @override
+  String get discountFormSaveDraft => 'Save as Draft';
+
+  @override
+  String get discountFormActivate => 'Activate Discount';
+
+  @override
+  String get discountFormSummary => 'Summary';
+
+  @override
+  String get discountFormReady =>
+      'Policy is ready for review before activation.';
+
+  @override
+  String get discountFormNotReady =>
+      'Complete the required fields before activating this discount.';
+
+  @override
+  String get discountFormDiscount => 'Discount';
+
+  @override
+  String get discountFormScope => 'Scope';
+
+  @override
+  String get discountFormBranches => 'Branches';
+
+  @override
+  String get discountFormScheduleLabel => 'Schedule';
+
+  @override
+  String get discountFormCustomers => 'Customers';
+
+  @override
+  String get discountFormPackage => 'Package';
+
+  @override
+  String get discountFormUsage => 'Usage';
+
+  @override
+  String get discountFormAnyDay => 'Any day';
+
+  @override
+  String discountFormSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String discountFormDaysSelected(int count) {
+    return '$count days selected';
+  }
+
+  @override
+  String discountFormSelectedCustomers(int count) {
+    return '$count selected customers';
+  }
+
+  @override
+  String discountFormPerDay(int count) {
+    return '$count per day';
+  }
+
+  @override
+  String discountFormLifetime(int count) {
+    return '$count lifetime';
+  }
+
+  @override
+  String discountFormUsageBoth(int lifetime, int daily) {
+    return '$lifetime lifetime / $daily per day';
+  }
+
+  @override
+  String get discountFormSavedActivated => 'Discount saved and activated.';
+
+  @override
+  String get discountFormSaved => 'Discount saved.';
+
+  @override
+  String get discountFormSaveFailed => 'Unable to save discount.';
+
+  @override
+  String get discountValidationName => 'Discount name is required.';
+
+  @override
+  String get discountValidationNonNegativeValue =>
+      'Enter a value of zero or greater.';
+
+  @override
+  String get discountValidationPercentage =>
+      'A percentage discount cannot exceed 100.';
+
+  @override
+  String get discountValidationCode =>
+      'A code is required for coupon discounts.';
+
+  @override
+  String get discountValidationProducts => 'Select one or more products.';
+
+  @override
+  String get discountValidationCategories => 'Select one or more categories.';
+
+  @override
+  String get discountValidationBundle => 'Add at least one package product.';
+
+  @override
+  String get discountValidationBundleProduct =>
+      'Select a product for every package requirement.';
+
+  @override
+  String get discountValidationBundleUnique =>
+      'A package product can only be added once.';
+
+  @override
+  String get discountValidationBundleQuantity =>
+      'Package quantities must be greater than zero.';
+
+  @override
+  String get discountValidationGroups => 'Select one or more customer groups.';
+
+  @override
+  String get discountValidationCustomers => 'Select one or more customers.';
+
+  @override
+  String get discountValidationBranches => 'Select one or more branches.';
+
+  @override
+  String get discountValidationMoney => 'Enter valid monetary amounts.';
+
+  @override
+  String get discountValidationNegativeMoney =>
+      'Monetary amounts cannot be negative.';
+
+  @override
+  String get discountValidationUsage =>
+      'Usage limits must be positive whole numbers.';
+
+  @override
+  String get discountValidationDailyUsage =>
+      'Daily usage limits must be positive whole numbers.';
+
+  @override
+  String get discountValidationDate => 'Dates must use YYYY-MM-DD.';
+
+  @override
+  String get discountValidationEndDate =>
+      'End date cannot be earlier than start date.';
+
+  @override
+  String get discountValidationTimesTogether =>
+      'Start time and end time must be provided together.';
+
+  @override
+  String get discountValidationTime => 'Times must use HH:mm.';
+
+  @override
+  String get discountFormCreate => 'Create Discount';
+
+  @override
+  String get discountFormEdit => 'Edit Discount';
+
+  @override
+  String get discountFormCreatePolicy => 'Create Discount Policy';
+
+  @override
+  String get discountFormEditPolicy => 'Edit Discount Policy';
+
+  @override
+  String get discountFormHeadingSubtitle =>
+      'Configure policy scope, eligibility, and schedule.';
+
+  @override
+  String get discountCustomerEligibility => 'Customer Eligibility';
+
+  @override
+  String get discountPaymentMethods => 'Payment Methods';
+
+  @override
+  String get discountWeekdayMonday => 'Mon';
+
+  @override
+  String get discountWeekdayTuesday => 'Tue';
+
+  @override
+  String get discountWeekdayWednesday => 'Wed';
+
+  @override
+  String get discountWeekdayThursday => 'Thu';
+
+  @override
+  String get discountWeekdayFriday => 'Fri';
+
+  @override
+  String get discountWeekdaySaturday => 'Sat';
+
+  @override
+  String get discountWeekdaySunday => 'Sun';
+
+  @override
+  String get discountPosPreview => 'POS Preview';
+
+  @override
+  String get discountSubtotal => 'Subtotal';
+
+  @override
+  String get discountTotal => 'Total';
+
+  @override
+  String discountTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get discountRequestFailed =>
+      'Unable to complete the discount request. Please try again.';
+
+  @override
+  String discountServerFieldInvalid(String field) {
+    return 'Review the $field field.';
+  }
+
+  @override
+  String get discountCurrency => 'Currency';
+
+  @override
+  String get discountChannelPos => 'POS';
+
+  @override
+  String get discountChannelWaiterApp => 'Waiter app';
+
+  @override
+  String get discountChannelKiosk => 'Kiosk';
+
+  @override
+  String get discountChannelQrOrdering => 'QR ordering';
+
+  @override
+  String get discountChannelDelivery => 'Delivery';
+
+  @override
+  String get discountChannelOnlineOrdering => 'Online ordering';
+
+  @override
+  String discountFormSelectedCountPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+      one: '1 selected',
+      zero: 'None selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormDaysSelectedPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days selected',
+      one: '1 day selected',
+      zero: 'Any day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormSelectedCustomersPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected customers',
+      one: '1 selected customer',
+      zero: 'No customers selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormPerDayPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count per day',
+      one: '1 per day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormLifetimePlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lifetime',
+      one: '1 lifetime',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posApplyDiscount => 'Apply Discount';
+
+  @override
+  String get posCouponCode => 'Coupon code';
+
+  @override
+  String get posEnterCouponCode => 'Enter coupon code';
+
+  @override
+  String get posCouponCodeRequired => 'Enter a coupon code.';
+
+  @override
+  String get posCouponDiscount => 'Coupon discount';
+
+  @override
+  String get posAvailableDiscounts => 'Available Discounts';
+
+  @override
+  String get posSearchDiscounts => 'Search discounts';
+
+  @override
+  String get posNoDiscountsAvailable =>
+      'No discounts are available for this order.';
+
+  @override
+  String get posNoDiscountsMatch => 'No discounts match your search.';
+
+  @override
+  String get posApply => 'Apply';
+
+  @override
+  String get posClose => 'Close';
+
+  @override
+  String get posCancel => 'Cancel';
+
+  @override
+  String get posPayment => 'Payment';
+
+  @override
+  String posOrderNumber(String number) {
+    return 'Order $number';
+  }
+
+  @override
+  String get posSelectPaymentMethod => 'Select Method';
+
+  @override
+  String get posPaymentMethodCash => 'Cash';
+
+  @override
+  String get posPaymentMethodCard => 'Card';
+
+  @override
+  String get posPaymentMethodWallet => 'Wallet';
+
+  @override
+  String get posPaymentMethodSplit => 'Split';
+
+  @override
+  String get posAmountReceived => 'AMOUNT RECEIVED';
+
+  @override
+  String get posChangeDue => 'Change Due';
+
+  @override
+  String get posEnterAmountReceived => 'Enter amount received.';
+
+  @override
+  String get posAmountBelowTotal => 'Amount received is less than total due.';
+
+  @override
+  String get posSplitUnavailable => 'Split payment will be supported later.';
+
+  @override
+  String get posExternalTerminalPending =>
+      'External payment terminal integration will be added later.';
+
+  @override
+  String get posConfirmPayment => 'Confirm Payment';
+
+  @override
+  String get posPaymentFailed =>
+      'Payment could not be completed. Please try again.';
+
+  @override
+  String get posNoPaymentMethods =>
+      'No active payment method is linked to a financial account.';
+
+  @override
+  String get posPaymentUncertain =>
+      'Payment status is uncertain. Check the payment status before trying again.';
+
+  @override
+  String get posReceiptUnavailable =>
+      'The receipt could not be loaded. You can retry safely.';
+
+  @override
+  String get posRetryReceipt => 'Retry Receipt';
+
+  @override
+  String get posCheckPaymentStatus => 'Check Payment Status';
+
+  @override
+  String get posOrderTypeDineIn => 'Dine-in';
+
+  @override
+  String get posOrderTypeTakeaway => 'Takeaway';
+
+  @override
+  String get posOrderTypeDelivery => 'Delivery';
+
+  @override
+  String get posCurrentOrder => 'Current order';
+
+  @override
+  String get posSubtotal => 'Subtotal';
+
+  @override
+  String get posDiscount => 'Discount';
+
+  @override
+  String posTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get posTotal => 'Total';
+
+  @override
+  String get posRemoveDiscount => 'Remove';
+
+  @override
+  String get posAddDiscount => 'Add discount';
+
+  @override
+  String get posHoldOrder => 'Hold order';
+
+  @override
+  String get posCancelOrder => 'Cancel order';
+
+  @override
+  String get posPrint => 'Print';
+
+  @override
+  String posPayAmount(String amount) {
+    return 'Pay $amount';
+  }
+
+  @override
+  String get posCompleteOrder => 'Complete order';
+
+  @override
+  String get posRemoveItem => 'Remove item';
+
+  @override
+  String get posExactAmount => 'Exact';
+
+  @override
+  String get posTotalDue => 'Total due';
+
+  @override
+  String posItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posViewDetails => 'View details';
+
+  @override
+  String get posCheckout => 'Checkout';
+
+  @override
+  String get posProductOptionsUnavailable => 'Product options unavailable';
+
+  @override
+  String get posRetry => 'Retry';
+
+  @override
+  String posProductCustomization(String product) {
+    return 'Customize $product';
+  }
+
+  @override
+  String get posVariant => 'Variant';
+
+  @override
+  String get posSpecialInstructions => 'Special Instructions';
+
+  @override
+  String get posSpecialInstructionsHint => 'E.g., extra hot, in a to-go cup...';
+
+  @override
+  String get posTemperature => 'Temperature';
+
+  @override
+  String get posSize => 'Size';
+
+  @override
+  String get posMilkBase => 'Milk Base';
+
+  @override
+  String get posAddOns => 'Add-ons';
+
+  @override
+  String get posSweetness => 'Sweetness';
+
+  @override
+  String get posQuantity => 'Quantity';
+
+  @override
+  String get posAddToOrder => 'Add to Order';
+
+  @override
+  String get posAdding => 'Adding...';
+
+  @override
+  String get posRequiredSelection => 'Select the required options.';
+
+  @override
+  String get posReceipt => 'Receipt';
+
+  @override
+  String get posReceiptPreview => 'Receipt preview';
+
+  @override
+  String get posCloseReceiptPreview => 'Close receipt preview';
+
+  @override
+  String get posSendViaWhatsApp => 'Send via WhatsApp';
+
+  @override
+  String get posPrintReceipt => 'Print receipt';
+
+  @override
+  String get posWhatsAppPending => 'WhatsApp sending will be added later.';
+
+  @override
+  String get posPaymentCompleted => 'Payment completed';
+
+  @override
+  String get posReceiptOrder => 'Order:';
+
+  @override
+  String get posReceiptCashier => 'Cashier:';
+
+  @override
+  String get posReceiptCustomer => 'Customer:';
+
+  @override
+  String get posReceiptDate => 'Date:';
+
+  @override
+  String get posReceiptTime => 'Time:';
+
+  @override
+  String get posReceiptPaidVia => 'Paid via:';
+
+  @override
+  String get posReceiptAuthorization => 'Authorization:';
+
+  @override
+  String get posReceiptApproved => 'Approved';
+
+  @override
+  String get posReceiptChange => 'Change';
+
+  @override
+  String posReceiptNote(String note) {
+    return 'Note: $note';
+  }
+
+  @override
+  String get posReceiptThankYou => 'Thank you for visiting!';
+
+  @override
+  String get posOperationFailed =>
+      'The POS operation could not be completed. Please try again.';
+
+  @override
+  String get posHoldSucceeded => 'Order held successfully.';
+
+  @override
+  String get posHoldRetryable =>
+      'The order could not be held. Your cart is still available to retry.';
+
+  @override
+  String get posHoldUncertain =>
+      'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.';
+
+  @override
+  String get posMenuVersionStale =>
+      'The menu changed. Refresh the POS menu and review the order.';
+
+  @override
+  String get posOpenShiftRequired => 'Open a shift before continuing.';
+
+  @override
+  String get posOrderUnavailableForBranch =>
+      'This order is not available in the selected branch.';
+
+  @override
+  String get posHeldOrderRequired =>
+      'Only an unpaid held order can be resumed.';
+
+  @override
+  String get posCustomizeItem => 'Customize item';
+
+  @override
+  String get posRequired => 'Required';
+
+  @override
+  String get posHot => 'Hot';
+
+  @override
+  String get posIced => 'Iced';
+
+  @override
+  String get posSmallSize => 'Small (8oz)';
+
+  @override
+  String get posMediumSize => 'Medium (12oz)';
+
+  @override
+  String get posLargeSize => 'Large (16oz)';
+
+  @override
+  String get posWholeMilk => 'Whole milk';
+
+  @override
+  String get posOatMilk => 'Oat milk';
+
+  @override
+  String get posAlmondMilk => 'Almond milk';
+
+  @override
+  String get posDefault => 'Default';
+
+  @override
+  String get posExtraEspresso => 'Extra espresso shot';
+
+  @override
+  String get posCaramelSyrup => 'Caramel syrup';
+
+  @override
+  String get posVanillaSyrup => 'Vanilla syrup';
+
+  @override
+  String get posWhippedCream => 'Whipped cream';
+
+  @override
+  String get posProductDescriptionFallback =>
+      'A classic espresso-based beverage.';
+
+  @override
+  String posBasePrice(String variant, String price) {
+    return '$variant base - $price';
+  }
+
+  @override
+  String get posSearchProducts => 'Search products...';
+
+  @override
+  String get posNoItemsAvailable => 'No items available.';
+
+  @override
+  String get posNoCartItems => 'No items added yet';
+
+  @override
+  String get posCloseCustomizationDialog => 'Close customization dialog';
+
+  @override
+  String get customerImportAction => 'Import CSV';
+
+  @override
+  String get customerImportTitle => 'Import customers from CSV';
+
+  @override
+  String get customerImportDescription =>
+      'Upload a CSV preview, review warnings, then confirm the server-authoritative import.';
+
+  @override
+  String get customerImportSelectFile => 'Select CSV file';
+
+  @override
+  String get customerImportChooseAnother => 'Choose another file';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'Detected $encoding encoding and $delimiter delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'Total';
+
+  @override
+  String get customerImportReady => 'Ready';
+
+  @override
+  String get customerImportWarnings => 'Warnings';
+
+  @override
+  String get customerImportRejected => 'Rejected';
+
+  @override
+  String get customerImportDuplicateCandidates => 'Duplicate candidates';
+
+  @override
+  String get customerImportCreateMissingGroups => 'Create missing groups';
+
+  @override
+  String get customerImportIssues => 'Representative row issues';
+
+  @override
+  String get customerImportUnnamedRow => 'Unnamed row';
+
+  @override
+  String get customerImportSummary => 'Import summary';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'Created $created, skipped $skipped, failed $failed; groups $groups, memberships $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'Confirm customer import';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'The server will create customers and memberships according to this preview. Existing customers are not updated.';
+
+  @override
+  String get customerImportConfirmAction => 'Confirm import';
+
+  @override
+  String get customerImportStart => 'Start import';
+
+  @override
+  String get customerImportCompletedWithErrors => 'Completed with errors';
+
+  @override
+  String get customerImportDownloadErrors => 'Download error report';
+
+  @override
+  String get customerImportValidationFailed =>
+      'The CSV file could not be validated. Check its encoding, columns, and size.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'This CSV import was already completed. Choose a new preview before committing.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'The customer import could not be completed. Please try again safely.';
+
+  @override
+  String get posPrinting => 'Printing...';
+
+  @override
+  String get posRetryPrint => 'Retry Print';
+
+  @override
+  String get posPrinterSetup => 'Printer Setup';
+
+  @override
+  String get posPrintOrderRequired =>
+      'No saved backend order is available to print.';
+
+  @override
+  String get posPrintItemsRequired => 'This order has no items to print.';
+
+  @override
+  String get posPreBillUnavailable =>
+      'A pre-bill is only available before payment.';
+
+  @override
+  String get posPrintPrinterNotConfigured =>
+      'Receipt printer is not configured.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'Receipt printer settings are invalid.';
+
+  @override
+  String get posPrintConfigurationUnavailable =>
+      'Printer settings could not be loaded.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'The authoritative order receipt could not be loaded.';
+
+  @override
+  String get posPrintRenderingFailed => 'The receipt could not be rendered.';
+
+  @override
+  String get posPrintUnreachable => 'Could not connect to the receipt printer.';
+
+  @override
+  String get posPrintTimeout => 'The printer timed out.';
+
+  @override
+  String get posPrintUnsupported =>
+      'Receipt printing is unavailable on this device.';
+
+  @override
+  String get posPrintFailed =>
+      'Printing failed. Check the printer and try again.';
+
+  @override
+  String get printerSetupTitle => 'Printer Setup';
+
+  @override
+  String get printerSetupThisDevice => 'This Device';
+
+  @override
+  String get printerSetupDescription =>
+      'Configure the network thermal printer used by this Windows PC or Android tablet.';
+
+  @override
+  String get printerSetupNoActiveBranch => 'No active branch selected';
+
+  @override
+  String get printerSetupCouldNotLoadBranch =>
+      'Could not load the active branch.';
+
+  @override
+  String get printerSetupCouldNotLoad => 'Printer setup could not be loaded.';
+
+  @override
+  String get printerSetupUseBranchDefaults => 'Use Branch Defaults';
+
+  @override
+  String get printerSetupUsingBranchDefaults =>
+      'Using the shared default printer for the active branch.';
+
+  @override
+  String get printerSetupUsingLocalOverride =>
+      'Using this device-only printer override.';
+
+  @override
+  String get printerSetupSaveDeviceSettings => 'Save Device Settings';
+
+  @override
+  String get printerTestPrint => 'Test Print';
+
+  @override
+  String get printerTesting => 'Testing…';
+
+  @override
+  String get printerRetryTestPrint => 'Retry Test Print';
+
+  @override
+  String get printerTestPrintSuccessful => 'Print successful';
+
+  @override
+  String get ordersTitle => 'Order Management';
+
+  @override
+  String get ordersSubtitle =>
+      'View and manage all active, held, and recent orders.';
+
+  @override
+  String get ordersNoMatchFilter => 'No orders match this filter yet.';
+
+  @override
+  String get ordersPrintLater => 'Printing will be added later.';
+
+  @override
+  String get ordersCopyLater => 'Copy order will be added later.';
+
+  @override
+  String get ordersCannotResume => 'This order cannot be resumed.';
+
+  @override
+  String get ordersResumeFailed =>
+      'Could not resume this order. Please try again.';
+
+  @override
+  String get ordersCancelledDone => 'Order cancelled.';
+
+  @override
+  String get ordersCancelFailed => 'Could not cancel this order.';
+
+  @override
+  String get ordersCheckStatus => 'Check status';
+
+  @override
+  String get ordersCancellationConfirmed => 'Order cancellation confirmed.';
+
+  @override
+  String get ordersStillActiveRetryCancel =>
+      'Order is still active. Retry cancellation explicitly.';
+
+  @override
+  String get ordersPaymentRecordFailed =>
+      'Could not record payment. Please try again.';
+
+  @override
+  String get ordersPaymentConfirmed => 'Payment confirmed.';
+
+  @override
+  String get ordersPaymentConfirmedNoReceipt =>
+      'Payment confirmed, but the receipt is unavailable.';
+
+  @override
+  String get ordersRetryReceipt => 'Retry receipt';
+
+  @override
+  String get ordersRefundRecorded => 'Refund recorded.';
+
+  @override
+  String get ordersRefundRecordFailed =>
+      'Could not record refund. Please check the order before retrying.';
+
+  @override
+  String get ordersPrevious => 'Previous';
+
+  @override
+  String get ordersNext => 'Next';
+
+  @override
+  String ordersPageOf(int current, int last) {
+    return 'Page $current of $last';
+  }
+
+  @override
+  String ordersTotalCount(int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total orders',
+      one: '1 order',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordersReplaceCartTitle => 'Replace current POS cart?';
+
+  @override
+  String get ordersReplaceCartBody =>
+      'Resuming this held order will replace the current POS cart context. Unsaved local changes will be discarded.';
+
+  @override
+  String get ordersKeepCart => 'Keep current cart';
+
+  @override
+  String get ordersReplaceAndResume => 'Replace and resume';
+
+  @override
+  String get ordersCancelOrderTitle => 'Cancel order?';
+
+  @override
+  String ordersCancelOrderBody(String number) {
+    return 'Cancel $number? This cannot be undone.';
+  }
+
+  @override
+  String get ordersKeepOrder => 'Keep order';
+
+  @override
+  String get ordersCancelOrder => 'Cancel order';
+
+  @override
+  String get ordersCancelOrderSubmitting => 'Cancel order submitting';
+
+  @override
+  String get ordersStatusPreparing => 'PREPARING';
+
+  @override
+  String get ordersStatusHeld => 'HELD';
+
+  @override
+  String get ordersStatusReady => 'READY';
+
+  @override
+  String get ordersStatusPaid => 'PAID';
+
+  @override
+  String get ordersStatusCompleted => 'COMPLETED';
+
+  @override
+  String get ordersStatusCancelled => 'CANCELLED';
+
+  @override
+  String get ordersStatusRefunded => 'REFUNDED';
+
+  @override
+  String get ordersStatusPartiallyRefunded => 'PARTIAL REFUND';
+
+  @override
+  String get ordersFilterActive => 'ACTIVE ORDERS';
+
+  @override
+  String get ordersFilterHeld => 'HELD ORDERS';
+
+  @override
+  String get ordersFilterDineIn => 'DINE-IN';
+
+  @override
+  String get ordersFilterTakeaway => 'TAKEAWAY';
+
+  @override
+  String get ordersActionResume => 'RESUME';
+
+  @override
+  String get ordersActionPay => 'PAY';
+
+  @override
+  String get ordersActionCancel => 'CANCEL';
+
+  @override
+  String get ordersActionDetails => 'DETAILS';
+
+  @override
+  String ordersActionSemantics(String action) {
+    return '$action order action';
+  }
+
+  @override
+  String get ordersCustomer => 'Customer';
+
+  @override
+  String get ordersWalkInCustomer => 'Walk-in Customer';
+
+  @override
+  String get ordersWalkInInitials => 'WC';
+
+  @override
+  String get ordersWalkIn => 'Walk-in';
+
+  @override
+  String get ordersOrderItems => 'Order Items';
+
+  @override
+  String get ordersNoLineItems => 'No line items';
+
+  @override
+  String ordersNote(String note) {
+    return 'Note: $note';
+  }
+
+  @override
+  String get ordersItemFallback => 'Item';
+
+  @override
+  String ordersItemsOne(String count) {
+    return '$count Item';
+  }
+
+  @override
+  String ordersItemsMany(String count) {
+    return '$count Items';
+  }
+
+  @override
+  String get ordersTotals => 'Totals';
+
+  @override
+  String get ordersSubtotal => 'Subtotal';
+
+  @override
+  String ordersTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get ordersTip => 'Tip (15%)';
+
+  @override
+  String get ordersRefundedLabel => 'Refunded';
+
+  @override
+  String get ordersTotal => 'Total';
+
+  @override
+  String get ordersCloseDetails => 'Close order details';
+
+  @override
+  String get ordersPrintTooltip => 'Print order';
+
+  @override
+  String get ordersCopyTooltip => 'Copy order';
+
+  @override
+  String get ordersResumeInPos => 'Resume in POS';
+
+  @override
+  String ordersDisabledSemantics(String label) {
+    return '$label disabled';
+  }
+
+  @override
+  String get ordersPay => 'Pay';
+
+  @override
+  String get ordersRefund => 'Refund';
+
+  @override
+  String get ordersPaymentTitle => 'Payment';
+
+  @override
+  String ordersPaymentAuth(String status, String auth) {
+    return '$status - Auth: $auth';
+  }
+
+  @override
+  String ordersRefundAmountLine(String amount) {
+    return 'Refund $amount';
+  }
+
+  @override
+  String get ordersNoPaymentYet => 'No payment recorded yet.';
+
+  @override
+  String get ordersMethodWallet => 'Wallet';
+
+  @override
+  String get ordersMethodShamCash => 'Sham Cash';
+
+  @override
+  String get ordersMethodSplit => 'Split';
+
+  @override
+  String get ordersPaymentStatusPending => 'Pending';
+
+  @override
+  String get ordersPaymentStatusCompleted => 'Completed';
+
+  @override
+  String get ordersPaymentStatusFailed => 'Failed';
+
+  @override
+  String get ordersPaymentStatusApproved => 'Approved';
+
+  @override
+  String get ordersPaymentStatusVoided => 'Voided';
+
+  @override
+  String get ordersPaymentStatusRefunded => 'Refunded';
+
+  @override
+  String get ordersTimeline => 'Timeline';
+
+  @override
+  String get ordersBackendEvent => 'System event';
+
+  @override
+  String get ordersEventCreated => 'Order created';
+
+  @override
+  String get ordersEventHeld => 'Order held';
+
+  @override
+  String get ordersEventClosed => 'Order closed';
+
+  @override
+  String get ordersEventRefundCompleted => 'Refund completed';
+
+  @override
+  String get ordersEventPaymentReceived => 'Payment received';
+
+  @override
+  String get ordersEventCompleted => 'Order completed';
+
+  @override
+  String get ordersEventReady => 'Order ready';
+
+  @override
+  String get ordersEventPreparing => 'Order preparing';
+
+  @override
+  String get ordersAm => 'AM';
+
+  @override
+  String get ordersPm => 'PM';
+
+  @override
+  String get ordersJustNow => 'Just now';
+
+  @override
+  String ordersMinutesAgo(String n) {
+    return '${n}m ago';
+  }
+
+  @override
+  String ordersHoursAgo(String n) {
+    return '${n}h ago';
+  }
+
+  @override
+  String ordersDaysAgo(String n) {
+    return '${n}d ago';
+  }
+
+  @override
+  String get ordersRefundReasonCustomerRequest => 'Customer Request';
+
+  @override
+  String get ordersRefundReasonWrongItem => 'Wrong Item';
+
+  @override
+  String get ordersRefundReasonQuality => 'Item Quality Issue';
+
+  @override
+  String get ordersRefundReasonDuplicate => 'Duplicate Charge';
+
+  @override
+  String get ordersRefundReasonOrderCancelled => 'Order Cancelled';
+
+  @override
+  String get ordersRefundReasonManagerApproved => 'Manager Approved';
+
+  @override
+  String get ordersRefundReasonOther => 'Other';
+
+  @override
+  String get ordersRefundTypeFull => 'Full Refund';
+
+  @override
+  String get ordersRefundTypePartial => 'Partial Refund';
+
+  @override
+  String get ordersRefundCustomAmount => 'Custom amount';
+
+  @override
+  String get ordersRefundEnterAmount => 'Enter a refund amount.';
+
+  @override
+  String get ordersRefundAmountPositive =>
+      'Refund amount must be greater than zero.';
+
+  @override
+  String get ordersRefundAmountExceeds =>
+      'Refund amount cannot exceed refundable balance.';
+
+  @override
+  String get ordersRefundFieldAmount => 'REFUND AMOUNT';
+
+  @override
+  String get ordersRefundFieldReason => 'REASON FOR REFUND';
+
+  @override
+  String get ordersRefundFieldNotes => 'MANAGER NOTES (OPTIONAL)';
+
+  @override
+  String get ordersRefundNotesHint => 'Add context for end of day reporting...';
+
+  @override
+  String ordersRefundDialogTitle(String number) {
+    return 'Refund Order $number';
+  }
+
+  @override
+  String get ordersRefundCloseDialog => 'Close refund dialog';
+
+  @override
+  String get ordersRefundConfirm => 'Confirm Refund';
+
+  @override
+  String get ordersRefundOrderTotal => 'ORDER TOTAL';
+
+  @override
+  String get ordersRefundPaidVia => 'PAID VIA';
+
+  @override
+  String get ordersRefundWarning =>
+      'Safety First: This action will reverse the payment and cannot be undone.\nPlease verify all details before confirming.';
+
+  @override
+  String get ordersMsgNoActiveBranches => 'No active branches are available.';
+
+  @override
+  String get ordersMsgPageRecoveryInvalid =>
+      'Order page recovery returned invalid pagination metadata.';
+
+  @override
+  String get ordersMsgLoadFailed =>
+      'Could not load orders. Check backend connection.';
+
+  @override
+  String get ordersMsgDetailsLoadFailed =>
+      'Could not load order details. Check backend connection.';
+
+  @override
+  String get ordersMsgResumeInvalidId =>
+      'This order cannot be resumed because its backend id is invalid.';
+
+  @override
+  String get ordersMsgDifferentOrder =>
+      'The backend returned a different order. Refresh and try again.';
+
+  @override
+  String get ordersMsgNotInBranch =>
+      'This order is not in the selected branch.';
+
+  @override
+  String get ordersMsgOnlyHeldResume =>
+      'Only an unpaid held order can be resumed.';
+
+  @override
+  String get ordersMsgResumeInPosFailed =>
+      'Could not resume this order in POS. Please try again.';
+
+  @override
+  String get ordersMsgResumeConnFailed =>
+      'Could not resume this order. Check backend connection.';
+
+  @override
+  String get ordersMsgCancelInvalidId =>
+      'This order cannot be cancelled because its backend id is invalid.';
+
+  @override
+  String get ordersMsgCancelVerifyFailed =>
+      'Could not verify this order before cancellation.';
+
+  @override
+  String get ordersMsgOnlyDraftHeldCancel =>
+      'Only an unpaid draft or held order can be cancelled.';
+
+  @override
+  String get ordersMsgCancelNoChange =>
+      'Could not cancel this order. No changes were confirmed.';
+
+  @override
+  String get ordersMsgOrderIdInvalid => 'Order id is not a backend id.';
+
+  @override
+  String get ordersMsgPaymentPrepareAccess =>
+      'Could not prepare payment. Check order access and try again.';
+
+  @override
+  String get ordersMsgPaymentNotReady =>
+      'Payment is not ready. Refresh the order and try again.';
+
+  @override
+  String get ordersMsgCannotPayState =>
+      'This order cannot be paid in its current state.';
+
+  @override
+  String get ordersMsgPaymentPrepareFailed =>
+      'Could not prepare payment. Please try again.';
+
+  @override
+  String get ordersMsgPaymentNeedsBackend =>
+      'Payment requires an authenticated backend connection.';
+
+  @override
+  String get ordersMsgPaymentRecordFailed =>
+      'Could not record payment. Please try again.';
+
+  @override
+  String get ordersMsgPaymentNotCompleted =>
+      'Payment was not completed. You can retry safely with the same operation.';
+
+  @override
+  String get ordersMsgReceiptLoadFailed =>
+      'Payment completed, but the receipt could not be loaded.';
+
+  @override
+  String get ordersMsgPaymentSummaryMismatch =>
+      'Payment summary did not match the selected order.';
+
+  @override
+  String get ordersMsgNoSupportedMethod =>
+      'No supported payment method is available for this order.';
+
+  @override
+  String get ordersMsgPaymentUncertain =>
+      'Payment status could not be confirmed. Check the order before retrying.';
+
+  @override
+  String get ordersMsgNoRefundable =>
+      'This order has no completed payment or refundable balance.';
+
+  @override
+  String get ordersMsgRefundPrepareFailed =>
+      'Could not prepare the refund. Please try again.';
+
+  @override
+  String get ordersMsgRefundRecordFailed =>
+      'Could not record the refund. Please try again.';
+
+  @override
+  String get ordersMsgRefundNotFound =>
+      'Refund was not found on the server. Check the order, then retry with the same operation.';
+
+  @override
+  String get ordersMsgRefundUncertain =>
+      'Refund status could not be confirmed. Check the order before retrying.';
+
+  @override
+  String get ordersMsgCancelUncertain =>
+      'Cancellation status could not be confirmed. Check status before retrying.';
+
+  @override
+  String get ordersMsgCancelUnresolved =>
+      'Cancellation status is unresolved. Check status before retrying.';
+
+  @override
+  String get ordersMsgStillActive =>
+      'Order is still active and unpaid. Check status, then retry cancellation explicitly.';
+
+  @override
+  String get posSelectOrderType => 'Order type';
+
+  @override
+  String get posOrderTypeRequired => 'Choose the order type to continue.';
+
+  @override
+  String get posSelectDeliveryCompany => 'Delivery company';
+
+  @override
+  String get posDeliveryCompanyRequired => 'Choose the delivery company.';
+
+  @override
+  String get posNoDeliveryCompanies =>
+      'No delivery company is set up. Ask the manager to add one under payment methods.';
+
+  @override
+  String get posDeliveryPaymentHint =>
+      'The amount is recorded on the delivery company\'s account.';
+
+  @override
+  String get posDeliveryOwn => 'Own delivery';
+
+  @override
+  String get posDeliveryCollection => 'Collection';
+
+  @override
+  String get posDeliveryCashNow => 'Cash now';
+
+  @override
+  String get posDeliveryOnAccount => 'On the company\'s account (later)';
+}

@@ -1,0 +1,9708 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Arabic (`ar`).
+class AppLocalizationsAr extends AppLocalizations {
+  AppLocalizationsAr([String locale = 'ar']) : super(locale);
+
+  @override
+  String get inventoryReportTitle => 'المخزون';
+
+  @override
+  String get inventoryReportSubtitle =>
+      'تحليل قيمة المخزون ومستويات التوفر والحركات والهدر وفروقات الجرد عبر المواقع.';
+
+  @override
+  String get inventoryReportAllLocations => 'كل المواقع';
+
+  @override
+  String get inventoryReportAllCategories => 'كل الفئات';
+
+  @override
+  String get inventoryReportExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get inventoryReportCurrentValue => 'قيمة المخزون الحالية';
+
+  @override
+  String get inventoryReportLowStock => 'أصناف منخفضة المخزون';
+
+  @override
+  String get inventoryReportOutOfStock => 'أصناف نافدة';
+
+  @override
+  String get inventoryReportWasteValue => 'قيمة الهدر';
+
+  @override
+  String get inventoryReportCountVariance => 'فروقات الجرد';
+
+  @override
+  String get inventoryReportConsumption => 'إجمالي الاستهلاك';
+
+  @override
+  String get inventoryReportReceived => 'المخزون المستلم';
+
+  @override
+  String get inventoryReportTransfers => 'التحويلات';
+
+  @override
+  String get inventoryReportValueByLocation => 'قيمة المخزون حسب الموقع';
+
+  @override
+  String get inventoryReportMovement => 'حركة المخزون';
+
+  @override
+  String get inventoryReportHealth => 'حالة المخزون';
+
+  @override
+  String get inventoryReportLowOut => 'أصناف منخفضة ونافدة المخزون';
+
+  @override
+  String get inventoryReportConsumptionAnalysis => 'تحليل الاستهلاك';
+
+  @override
+  String get inventoryReportWasteAnalysis => 'تحليل الهدر';
+
+  @override
+  String get inventoryReportVariance => 'فروقات الجرد';
+
+  @override
+  String get inventoryReportLocationComparison => 'مقارنة المواقع';
+
+  @override
+  String get inventoryReportExceptions => 'استثناءات المخزون';
+
+  @override
+  String get inventoryReportItem => 'الصنف';
+
+  @override
+  String get inventoryReportCategory => 'الفئة';
+
+  @override
+  String get inventoryReportLocation => 'الموقع';
+
+  @override
+  String get inventoryReportAvailable => 'الكمية المتوفرة';
+
+  @override
+  String get inventoryReportMinimum => 'الحد الأدنى';
+
+  @override
+  String get inventoryReportUnit => 'الوحدة';
+
+  @override
+  String get inventoryReportStatus => 'الحالة';
+
+  @override
+  String get inventoryReportQuantity => 'الكمية';
+
+  @override
+  String get inventoryReportValue => 'القيمة';
+
+  @override
+  String get inventoryReportReason => 'السبب';
+
+  @override
+  String get inventoryReportExpected => 'المتوقع';
+
+  @override
+  String get inventoryReportCounted => 'المعدود';
+
+  @override
+  String get inventoryReportDifference => 'الفرق';
+
+  @override
+  String get inventoryReportVarianceValue => 'قيمة الفرق';
+
+  @override
+  String get inventoryReportItems => 'الأصناف';
+
+  @override
+  String get inventoryReportAvailableStatus => 'متوفر';
+
+  @override
+  String get inventoryReportLowStatus => 'مخزون منخفض';
+
+  @override
+  String get inventoryReportOutStatus => 'نافد';
+
+  @override
+  String get inventoryReportOverstockStatus => 'مخزون زائد';
+
+  @override
+  String get inventoryReportMatched => 'مطابق';
+
+  @override
+  String get inventoryReportShortage => 'عجز';
+
+  @override
+  String get inventoryReportOverage => 'زيادة';
+
+  @override
+  String get inventoryReportNoLocations =>
+      'لا توجد مواقع كافية لإجراء المقارنة.';
+
+  @override
+  String get inventoryReportNoMovements =>
+      'لا توجد حركات مخزون ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoLowStock =>
+      'لا توجد أصناف منخفضة المخزون ضمن الفلاتر الحالية.';
+
+  @override
+  String get inventoryReportNoWaste => 'لا توجد حركات هدر ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoVariance =>
+      'لا توجد فروقات جرد ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoExceptions =>
+      'لا توجد استثناءات مخزون تحتاج إلى مراجعة.';
+
+  @override
+  String get inventoryReportError => 'تعذّر تحميل تقرير المخزون.';
+
+  @override
+  String get appName => 'نظام كافيه 618';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageArabic => 'العربية';
+
+  @override
+  String get languageSelection => 'اختر اللغة';
+
+  @override
+  String get commonSave => 'حفظ';
+
+  @override
+  String get commonCancel => 'إلغاء';
+
+  @override
+  String get commonClose => 'إغلاق';
+
+  @override
+  String get commonDelete => 'حذف';
+
+  @override
+  String get commonEdit => 'تعديل';
+
+  @override
+  String get commonAdd => 'إضافة';
+
+  @override
+  String get commonRetry => 'إعادة المحاولة';
+
+  @override
+  String get commonRefresh => 'تحديث';
+
+  @override
+  String get commonSearch => 'بحث';
+
+  @override
+  String get commonLoading => 'جارٍ التحميل…';
+
+  @override
+  String get commonError => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get errorConnectionUnavailable => 'تعذر الاتصال.';
+
+  @override
+  String get errorAuthenticationRequired => 'المصادقة مطلوبة.';
+
+  @override
+  String get errorPermissionDenied => 'ليس لديك صلاحية لتنفيذ هذا الإجراء.';
+
+  @override
+  String get errorConflict => 'يتعارض هذا الإجراء مع الحالة الحالية.';
+
+  @override
+  String get errorServer => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get commonNoData => 'لا توجد بيانات متاحة.';
+
+  @override
+  String get commonUnknown => 'غير معروف';
+
+  @override
+  String get commonActive => 'نشط';
+
+  @override
+  String get commonDeactivate => 'إلغاء التنشيط';
+
+  @override
+  String get commonActivate => 'تنشيط';
+
+  @override
+  String get commonArchive => 'أرشفة';
+
+  @override
+  String get commonRestore => 'استعادة';
+
+  @override
+  String get commonArchived => 'مؤرشف';
+
+  @override
+  String get commonAll => 'الكل';
+
+  @override
+  String get commonInactive => 'غير نشط';
+
+  @override
+  String get commonAvailable => 'متاح';
+
+  @override
+  String get commonSoldOut => 'نفد';
+
+  @override
+  String get posNoPublishedMenu => 'لم يتم نشر قائمة لهذا الفرع بعد.';
+
+  @override
+  String get posNoAvailableMenu => 'لا توجد قائمة منشورة متاحة حالياً.';
+
+  @override
+  String get posNoAvailableItems => 'لا توجد عناصر متاحة في هذا القسم.';
+
+  @override
+  String get posUnableToLoadMenu => 'تعذر تحميل القائمة المنشورة.';
+
+  @override
+  String get posMenuRefreshRequired => 'يجب تحديث بيانات القائمة قبل المتابعة.';
+
+  @override
+  String get posOfflineUsingSavedMenu =>
+      'غير متصل — يتم استخدام القائمة المحفوظة';
+
+  @override
+  String get posSyncErrorUsingSavedMenu =>
+      'تعذر مزامنة القائمة — يتم استخدام القائمة المحفوظة';
+
+  @override
+  String posLastSynced(String time) {
+    return 'آخر مزامنة: $time';
+  }
+
+  @override
+  String get posMenuUpdateReady =>
+      'تحديث القائمة جاهز — سيُطبّق بعد الطلب الحالي';
+
+  @override
+  String get posNoSavedMenu =>
+      'لا توجد قائمة محفوظة. أعد الاتصال لتحميل القائمة.';
+
+  @override
+  String get posConnectionRequiredToCompleteOrder =>
+      'الاتصال مطلوب لإتمام هذا الطلب.';
+
+  @override
+  String get posMenuChangedReviewOrder => 'تغيرت القائمة — راجع الطلب.';
+
+  @override
+  String get posBranchSwitchBlockedWithCart =>
+      'أكمل الطلب الحالي أو علّقه أو ألغِه قبل تبديل الفرع.';
+
+  @override
+  String get posTemporarilyUnavailable => 'غير متاح مؤقتاً';
+
+  @override
+  String get commonYes => 'نعم';
+
+  @override
+  String get commonNo => 'لا';
+
+  @override
+  String get commonBack => 'رجوع';
+
+  @override
+  String get navigationDashboard => 'لوحة التحكم';
+
+  @override
+  String get navigationPos => 'نقطة البيع';
+
+  @override
+  String get navigationOrders => 'الطلبات';
+
+  @override
+  String get navigationCustomers => 'العملاء';
+
+  @override
+  String get navigationDiscounts => 'الخصومات';
+
+  @override
+  String get navigationMenuManagement => 'إدارة القائمة';
+
+  @override
+  String get navigationInventory => 'المخزون';
+
+  @override
+  String get navigationFinance => 'المالية';
+
+  @override
+  String get navigationReports => 'التقارير';
+
+  @override
+  String get navigationSettings => 'الإعدادات';
+
+  @override
+  String get operationalHub => 'مركز العمليات';
+
+  @override
+  String get shiftStatusOpen => 'الوردية مفتوحة';
+
+  @override
+  String get shiftStatusClosed => 'الوردية مغلقة';
+
+  @override
+  String get shiftCloseTitle => 'إغلاق الوردية';
+
+  @override
+  String get shiftCloseSubtitle => 'احسب النقد في الصندوق ثم أغلق ورديتك.';
+
+  @override
+  String get shiftCloseClosingCashLabel => 'النقد عند الإغلاق';
+
+  @override
+  String get shiftCloseNoteLabel => 'ملاحظة (اختياري)';
+
+  @override
+  String get shiftCloseSubmit => 'إغلاق الوردية';
+
+  @override
+  String get shiftCloseSuccess => 'تم إغلاق الوردية.';
+
+  @override
+  String get shiftCloseRedirectingToBarCheck =>
+      'يجب إجراء فحص البار قبل إغلاق هذه الوردية.';
+
+  @override
+  String get barCheckTitle => 'فحص البار';
+
+  @override
+  String get barCheckSubtitle =>
+      'احسب كل صنف، ثم أرسل الفحص لمتابعة إغلاق ورديتك.';
+
+  @override
+  String get barCheckExpectedLabel => 'المتوقع';
+
+  @override
+  String get barCheckCountedLabel => 'المحسوب';
+
+  @override
+  String get barCheckReasonLabel => 'سبب الفرق';
+
+  @override
+  String get barCheckSubmitAndClose => 'إرسال فحص البار';
+
+  @override
+  String get barCheckPendingManagerReview =>
+      'يجب على مدير مراجعة أحد الفروقات في هذا الفحص قبل إتمامه. اطلب من مدير مراجعته ثم أعد المحاولة.';
+
+  @override
+  String get barCheckAllLinesRequired => 'احسب كل صنف قبل الإرسال.';
+
+  @override
+  String get tooltipCart => 'السلة';
+
+  @override
+  String get tooltipRefreshScreenData => 'تحديث بيانات الشاشة';
+
+  @override
+  String get tooltipNotifications => 'الإشعارات';
+
+  @override
+  String get tooltipProfile => 'الملف الشخصي';
+
+  @override
+  String get invalidCatalogRoute => 'مسار الكتالوج المطلوب غير صالح.';
+
+  @override
+  String get productsEmptyMessage => 'لا توجد منتجات.';
+
+  @override
+  String get ordersEmptyMessage => 'لا توجد طلبات.';
+
+  @override
+  String get menusEmptyMessage => 'لا توجد قوائم.';
+
+  @override
+  String productCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count منتج',
+      many: '$count منتجًا',
+      few: '$count منتجات',
+      two: 'منتجان',
+      one: 'منتج واحد',
+      zero: 'لا توجد منتجات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String orderCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count طلب',
+      many: '$count طلبًا',
+      few: '$count طلبات',
+      two: 'طلبان',
+      one: 'طلب واحد',
+      zero: 'لا توجد طلبات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String variantCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count خيار',
+      many: '$count خيارًا',
+      few: '$count خيارات',
+      two: 'خياران',
+      one: 'خيار واحد',
+      zero: 'لا توجد خيارات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validationIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مشكلة تحقق',
+      many: '$count مشكلة تحقق',
+      few: '$count مشكلات تحقق',
+      two: 'مشكلتا تحقق',
+      one: 'مشكلة تحقق واحدة',
+      zero: 'لا توجد مشكلات تحقق',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statusPending => 'قيد الانتظار';
+
+  @override
+  String get statusOpen => 'مفتوح';
+
+  @override
+  String get statusCompleted => 'مكتمل';
+
+  @override
+  String get statusCancelled => 'ملغى';
+
+  @override
+  String get statusPaid => 'مدفوع';
+
+  @override
+  String get statusUnpaid => 'غير مدفوع';
+
+  @override
+  String get statusArchived => 'مؤرشف';
+
+  @override
+  String get statusDraft => 'مسودة';
+
+  @override
+  String get statusPublished => 'منشور';
+
+  @override
+  String get statusScheduled => 'مجدول';
+
+  @override
+  String get statusTemporarilyUnavailable => 'غير متاح مؤقتًا';
+
+  @override
+  String get statusAssigned => 'مُعيَّن';
+
+  @override
+  String get statusUnassigned => 'غير مُعيَّن';
+
+  @override
+  String get priceSourceBase => 'السعر الأساسي';
+
+  @override
+  String get priceSourceOverride => 'سعر مخصص';
+
+  @override
+  String get validationSeverityError => 'خطأ';
+
+  @override
+  String get validationSeverityWarning => 'تحذير';
+
+  @override
+  String get validationSeverityInfo => 'معلومات';
+
+  @override
+  String get salesChannelPos => 'نقطة البيع';
+
+  @override
+  String get salesChannelOnline => 'عبر الإنترنت';
+
+  @override
+  String get productTypeSimple => 'منتج بسيط';
+
+  @override
+  String get productTypeVariant => 'منتج متعدد الخيارات';
+
+  @override
+  String get genericFormError =>
+      'تعذر حفظ التغييرات. راجع الحقول المميزة وحاول مرة أخرى.';
+
+  @override
+  String get menuPublishTab => 'نشر';
+
+  @override
+  String get menuPublishAction => 'نشر القائمة';
+
+  @override
+  String get menuPublishPublishing => 'جارٍ النشر…';
+
+  @override
+  String get menuPublishBranch => 'الفرع';
+
+  @override
+  String get menuPublishChannel => 'قناة البيع';
+
+  @override
+  String get menuPublishScope => 'النطاق';
+
+  @override
+  String get menuPublishCollectionScope => 'مجموعة القوائم المعينة كاملة';
+
+  @override
+  String get menuPublishOneMenu => 'قائمة واحدة';
+
+  @override
+  String get menuPublishValidation => 'آخر تحقق';
+
+  @override
+  String get menuPublishValidationRequired => 'يلزم إجراء التحقق';
+
+  @override
+  String get menuPublishCanPublish => 'يمكن النشر';
+
+  @override
+  String get menuPublishCannotPublish => 'لا يمكن النشر';
+
+  @override
+  String get menuPublishErrors => 'الأخطاء';
+
+  @override
+  String get menuPublishWarnings => 'التحذيرات';
+
+  @override
+  String get menuPublishRunValidationFirst =>
+      'أجرِ التحقق للنطاق المحدد قبل النشر.';
+
+  @override
+  String get menuPublishBlockedByValidation =>
+      'النشر معطل لأن نتيجة التحقق المحملة تحتوي على أخطاء.';
+
+  @override
+  String get menuPublishWarningsAllowed =>
+      'التحذيرات لا تمنع النشر. راجعها وأكد النشر صراحةً.';
+
+  @override
+  String get menuPublishConfirmTitle => 'تأكيد نشر القائمة';
+
+  @override
+  String get menuPublishCurrentVersion => 'الإصدار المنشور الحالي';
+
+  @override
+  String get menuPublishConfirmationExplanation =>
+      'ينشئ النشر إصدارًا ثابتًا جديدًا للقائمة للفرع وقناة البيع المحددين عند تغير محتوى القائمة المحلول. لا يتم تعديل الطلبات الحالية.';
+
+  @override
+  String get menuPublishLoadingCurrentVersion =>
+      'جارٍ تحميل الإصدار المنشور الحالي…';
+
+  @override
+  String get menuPublishNoCurrentVersion =>
+      'لا يوجد إصدار قائمة منشور لهذا الفرع وقناة البيع.';
+
+  @override
+  String get menuPublishVersionNumber => 'الإصدار';
+
+  @override
+  String get menuPublishStatus => 'الحالة';
+
+  @override
+  String get menuPublishPublishedAt => 'نُشر في';
+
+  @override
+  String get menuPublishChecksum => 'البصمة';
+
+  @override
+  String get menuPublishPublicationId => 'معرف النشر';
+
+  @override
+  String get menuPublishSuccess => 'تم نشر القائمة بنجاح.';
+
+  @override
+  String get menuPublishNoChanges => 'لم يتم اكتشاف أي تغييرات في القائمة.';
+
+  @override
+  String get menuPublishNoChangesExplanation =>
+      'يبقى الإصدار المنشور الحالي دون تغيير.';
+
+  @override
+  String get menuPublishBackendBlocked =>
+      'حظر تحقق الخادم النشر. لم يتم إنشاء إصدار.';
+
+  @override
+  String get versionHistory => 'سجل الإصدارات';
+
+  @override
+  String get versionDetail => 'تفاصيل الإصدار';
+
+  @override
+  String get compareVersions => 'مقارنة الإصدارات';
+
+  @override
+  String get identicalContent => 'محتوى متطابق';
+
+  @override
+  String get versionsAdded => 'مضاف';
+
+  @override
+  String get versionsRemoved => 'محذوف';
+
+  @override
+  String get versionsChanged => 'متغير';
+
+  @override
+  String get versionPriceChanges => 'تغييرات الأسعار';
+
+  @override
+  String get versionModifierChanges => 'تغييرات الخيارات';
+
+  @override
+  String get versionScheduleChanges => 'تغييرات الجداول';
+
+  @override
+  String get versionRollback => 'تراجع';
+
+  @override
+  String get versionRollbackReason => 'سبب التراجع';
+
+  @override
+  String get versionNewRollback => 'إصدار تراجع جديد';
+
+  @override
+  String get versionNoChangeRollback => 'تراجع بدون تغيير';
+
+  @override
+  String get versionTruncatedComparison => 'يعرض جزء محدود من الاختلافات.';
+
+  @override
+  String get versionImmutableSnapshot => 'هذه لقطة تاريخية غير قابلة للتعديل.';
+
+  @override
+  String get versionStatusCurrent => 'حالي';
+
+  @override
+  String get versionStatusSuperseded => 'مستبدل';
+
+  @override
+  String get versionStatusRolledBack => 'تم التراجع عنه';
+
+  @override
+  String get versionView => 'عرض';
+
+  @override
+  String versionSelectForCompare(int version) {
+    return 'حدد الإصدار $version للمقارنة';
+  }
+
+  @override
+  String versionCompareSelected(int count) {
+    return 'مقارنة المحدد ($count)';
+  }
+
+  @override
+  String get versionHistoryEmptyTitle => 'لا يوجد سجل إصدارات';
+
+  @override
+  String versionHistoryEmptyDescription(Object branch, Object channel) {
+    return 'لم يُنشر إصدار قائمة لـ $branch · $channel بعد.';
+  }
+
+  @override
+  String get versionHistoryLoadError => 'تعذر تحميل سجل الإصدارات.';
+
+  @override
+  String get versionDetailLoadError => 'تعذر تحميل هذا الإصدار.';
+
+  @override
+  String get versionCompareError => 'تعذرت مقارنة هذين الإصدارين.';
+
+  @override
+  String get versionRestoreError => 'تعذرت استعادة هذا الإصدار.';
+
+  @override
+  String get versionPreviousPage => 'السابق';
+
+  @override
+  String get versionNextPage => 'التالي';
+
+  @override
+  String versionPage(int page) {
+    return 'الصفحة $page';
+  }
+
+  @override
+  String versionChangeCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تغيير',
+      many: '$count تغييرًا',
+      few: '$count تغييرات',
+      two: 'تغييران',
+      one: 'تغيير واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionChangesSince(num count, int version) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تغيير',
+      many: '$count تغييرًا',
+      few: '$count تغييرات',
+      two: 'تغييران',
+      one: 'تغيير واحد',
+    );
+    return '$_temp0 منذ الإصدار $version';
+  }
+
+  @override
+  String versionPublishedAt(Object date) {
+    return 'نُشر $date';
+  }
+
+  @override
+  String get versionMenus => 'القوائم';
+
+  @override
+  String get versionSections => 'الأقسام';
+
+  @override
+  String get versionProducts => 'المنتجات';
+
+  @override
+  String get versionPricing => 'التسعير';
+
+  @override
+  String get versionModifiers => 'الخيارات';
+
+  @override
+  String get versionRecipes => 'الوصفات';
+
+  @override
+  String get versionSchedules => 'الجدولة';
+
+  @override
+  String get versionChanges => 'تغييرات';
+
+  @override
+  String get versionChangeSummary => 'ملخص التغييرات';
+
+  @override
+  String get versionChangeSummaryAvailable =>
+      'يتضمن هذا الإصدار ملخصًا مسجلًا للتغييرات.';
+
+  @override
+  String get versionChangeSummaryUnavailable =>
+      'لا يتوفر ملخص للتغييرات لهذا الإصدار.';
+
+  @override
+  String get versionRestoreThisVersion => 'استعادة هذا الإصدار';
+
+  @override
+  String versionRestoreTitle(int version) {
+    return 'استعادة الإصدار $version؟';
+  }
+
+  @override
+  String versionRestoreExplanation(int version) {
+    return 'سيُنشأ إصدار منشور جديد بمحتوى الإصدار $version. ستبقى الإصدارات المنشورة بعد الإصدار $version في السجل.';
+  }
+
+  @override
+  String get versionRestoreReason => 'سبب الاستعادة (اختياري)';
+
+  @override
+  String get versionRestoreReasonHint =>
+      'مثال: استعادة بعد تغيير سعر غير مقصود';
+
+  @override
+  String get versionRestoreAsNewVersion => 'استعادة كإصدار جديد';
+
+  @override
+  String get versionRestoring => 'جارٍ الاستعادة…';
+
+  @override
+  String get versionRestoreResultTitle => 'تمت استعادة الإصدار';
+
+  @override
+  String versionRestoreSuccess(int newVersion, int sourceVersion) {
+    return 'أُنشئ الإصدار $newVersion من الإصدار $sourceVersion. الإصدار $newVersion هو الحالي الآن.';
+  }
+
+  @override
+  String versionRestoreNoChanges(int version) {
+    return 'الإصدار $version يطابق المحتوى المنشور الحالي بالفعل. لم يُنشأ إصدار جديد.';
+  }
+
+  @override
+  String versionComparisonDirection(int fromVersion, int toVersion) {
+    return 'الإصدار $fromVersion ← الإصدار $toVersion';
+  }
+
+  @override
+  String get versionNoContentDifferences => 'لم يُعثر على اختلافات في المحتوى.';
+
+  @override
+  String get versionComparisonTruncated => 'لا تُعرض التغييرات الإضافية.';
+
+  @override
+  String get catalogSetupTitle => 'إعداد الكتالوج';
+
+  @override
+  String get catalogSetupCategoriesTitle => 'فئات الكتالوج';
+
+  @override
+  String get catalogSetupReportingCategoriesTitle => 'فئات التقارير';
+
+  @override
+  String get catalogSetupKitchenStationsTitle => 'محطات المطبخ';
+
+  @override
+  String get catalogSetupCategory => 'فئة';
+
+  @override
+  String get catalogSetupReportingCategory => 'فئة تقارير';
+
+  @override
+  String get catalogSetupKitchenStation => 'محطة مطبخ';
+
+  @override
+  String get catalogSetupCategoriesExplanation =>
+      'تصنف الفئات المنتجات في الكتالوج.';
+
+  @override
+  String get catalogSetupReportingCategoriesExplanation =>
+      'تجمع فئات التقارير المنتجات للمبيعات وتقارير الأداء. لا تتحكم في موضع المنتجات في قائمة العملاء.';
+
+  @override
+  String get catalogSetupKitchenStationsExplanation =>
+      'تحدد محطات المطبخ منطقة تحضير المنتجات؛ ولا تعد إعدادًا لاتصال الطابعة.';
+
+  @override
+  String get catalogSetupAll => 'الكل';
+
+  @override
+  String get catalogSetupProducts => 'المنتجات';
+
+  @override
+  String get catalogSetupOrder => 'الترتيب';
+
+  @override
+  String get catalogSetupActions => 'الإجراءات';
+
+  @override
+  String get catalogSetupCodePrinter => 'الرمز / الطابعة';
+
+  @override
+  String get catalogSetupNoMatchingRecords => 'لا توجد سجلات مطابقة.';
+
+  @override
+  String get catalogSetupUnableToLoad => 'تعذر تحميل إعداد الكتالوج.';
+
+  @override
+  String catalogSetupCreate(String type) {
+    return 'إنشاء $type';
+  }
+
+  @override
+  String catalogSetupEdit(String type) {
+    return 'تعديل $type';
+  }
+
+  @override
+  String catalogSetupArchive(String type) {
+    return 'أرشفة $type';
+  }
+
+  @override
+  String get catalogSetupRestore => 'استعادة';
+
+  @override
+  String get catalogSetupMoveUp => 'نقل لأعلى';
+
+  @override
+  String get catalogSetupMoveDown => 'نقل لأسفل';
+
+  @override
+  String get catalogSetupName => 'الاسم';
+
+  @override
+  String get catalogSetupNameArabic => 'الاسم بالعربية';
+
+  @override
+  String get catalogSetupNameEnglish => 'الاسم بالإنجليزية';
+
+  @override
+  String get catalogSetupCode => 'الرمز';
+
+  @override
+  String get catalogSetupDescription => 'الوصف';
+
+  @override
+  String get catalogSetupPrinterName => 'اسم الطابعة';
+
+  @override
+  String catalogSetupPage(int page) {
+    return 'الصفحة $page';
+  }
+
+  @override
+  String get catalogSetupPrevious => 'السابق';
+
+  @override
+  String get catalogSetupNext => 'التالي';
+
+  @override
+  String catalogSetupArchiveConfirmation(String name, int count) {
+    return '$name مستخدم في $count من المنتجات. تبقى تعيينات المنتجات الحالية خاضعة لقواعد الخادم.';
+  }
+
+  @override
+  String get recipeMaterials => 'الوصفة / المواد';
+
+  @override
+  String get manageRecipe => 'إدارة الوصفة';
+
+  @override
+  String get baseRecipe => 'الوصفة الأساسية';
+
+  @override
+  String get material => 'المادة';
+
+  @override
+  String get quantity => 'الكمية';
+
+  @override
+  String get unit => 'الوحدة';
+
+  @override
+  String get addMaterial => 'إضافة مادة';
+
+  @override
+  String get removeMaterial => 'إزالة';
+
+  @override
+  String get materialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get effectiveFrom => 'فعال من';
+
+  @override
+  String get global => 'عام';
+
+  @override
+  String get productOverride => 'تجاوز المنتج';
+
+  @override
+  String get variantOverride => 'تجاوز الخيار';
+
+  @override
+  String get inherited => 'موروث';
+
+  @override
+  String get createOverride => 'إنشاء تجاوز';
+
+  @override
+  String get suppressInheritedEffects => 'إلغاء التأثيرات الموروثة';
+
+  @override
+  String get restoreInheritance => 'استعادة التوريث';
+
+  @override
+  String get recipeSimulation => 'محاكاة الوصفة';
+
+  @override
+  String get selectedModifiers => 'المعدلات المحددة';
+
+  @override
+  String get resolvedRecipe => 'الوصفة النهائية';
+
+  @override
+  String get recipeUnavailableMaterial =>
+      'المواد ذات الوحدة غير المعرفة معطلة ولا يمكن حفظها.';
+
+  @override
+  String get recipeReadOnly => 'هذا الخيار مؤرشف. تكوين الوصفة للعرض فقط.';
+
+  @override
+  String get recipeEmpty => 'لا توجد مكونات وصفة معدة.';
+
+  @override
+  String get recipeInheritedDraft =>
+      'هذه المسودة منسوخة من الملف الموروث. الحفظ ينشئ تجاوزاً كاملاً.';
+
+  @override
+  String get recipeEmptyOverride =>
+      'هذا التجاوز لا يحتوي على أي تأثيرات للمواد.';
+
+  @override
+  String get recipeSuppressConfirmationTitle => 'إلغاء التأثيرات الموروثة؟';
+
+  @override
+  String get recipeSuppressConfirmationBody =>
+      'حفظ ملف فارغ محدد النطاق يزيل كل تأثيرات ADD وREMOVE الموروثة من هذا النطاق.';
+
+  @override
+  String get recipeRemoveOverrideTitle => 'إزالة هذا التجاوز؟';
+
+  @override
+  String get recipeRemoveOverrideBody =>
+      'إزالته تستعيد أقرب تأثيرات المواد الموروثة.';
+
+  @override
+  String get menuManagementWorkflow => 'مسار إدارة القائمة';
+
+  @override
+  String get menuManagementBuild => 'بناء';
+
+  @override
+  String get menuManagementConfigure => 'إعداد';
+
+  @override
+  String get menuManagementRelease => 'مراجعة ونشر';
+
+  @override
+  String get menuManagementProducts => 'المنتجات';
+
+  @override
+  String get menuManagementModifiers => 'المعدلات';
+
+  @override
+  String get menuManagementMenus => 'القوائم';
+
+  @override
+  String get menuManagementAssignments => 'التعيينات والجداول';
+
+  @override
+  String get menuManagementReview => 'مراجعة ومعاينة';
+
+  @override
+  String get menuManagementCatalogSetup => 'إعداد الكتالوج';
+
+  @override
+  String get recipeConsumptionHelp =>
+      'حدد المواد المستهلكة عند تحضير وحدة واحدة من هذا الخيار.';
+
+  @override
+  String get recipeNoComponentsHelp =>
+      'لم تُعد أي مواد بعد. أضف كل مادة تُستخدم لتحضير وحدة واحدة من هذا الخيار.';
+
+  @override
+  String get recipeOverrideGlobal => 'الإعداد العام';
+
+  @override
+  String get recipeOverrideProduct => 'تجاوز لهذا المنتج';
+
+  @override
+  String get recipeOverrideVariant => 'تجاوز لهذا الخيار';
+
+  @override
+  String get recipeInheritedFromGlobal => 'موروث من الإعداد العام';
+
+  @override
+  String get recipeInheritedFromProduct => 'موروث من هذا المنتج';
+
+  @override
+  String get recipeSimulationHelp =>
+      'حدد المعدلات، ثم احسب الوصفة وراجع المواد المستهلكة.';
+
+  @override
+  String get recipeSimulationResultHelp => 'المواد المستهلكة';
+
+  @override
+  String get recipeSimulationStartHelp =>
+      'حدد المعدلات، ثم احسب الوصفة لترى المواد المستهلكة.';
+
+  @override
+  String get reviewWorkflowHelp =>
+      'تحقق من القائمة المحددة، وعاين ما يصل إلى الفرع وقناة البيع، ثم انرها وراجع سجل الإصدارات.';
+
+  @override
+  String get reviewCheckMenu => '1. تحقق من القائمة';
+
+  @override
+  String get reviewPreviewStep => '2. معاينة';
+
+  @override
+  String get reviewPublishStep => '3. نشر';
+
+  @override
+  String get reviewVersionsStep => '4. سجل الإصدارات';
+
+  @override
+  String get validationNoBlockingErrors => 'لم يُعثر على أخطاء تحقق مانعة.';
+
+  @override
+  String get validationResolveErrors =>
+      'اعالج الأخطاء أدناه قبل أن يمكن نشر هذه القائمة.';
+
+  @override
+  String validationIssueCode(String code) {
+    return 'الرمز: $code';
+  }
+
+  @override
+  String modifierSelectionExactly(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب أن يختار العميل $_temp0 بالضبط.';
+  }
+
+  @override
+  String modifierSelectionRange(num min, num max) {
+    return 'يمكن للعميل اختيار من $min إلى $max خيارات.';
+  }
+
+  @override
+  String get reviewAdvancedOptions => 'خيارات معاينة متقدمة';
+
+  @override
+  String get technicalDetails => 'التفاصيل التقنية';
+
+  @override
+  String get managerAvailabilityScheduledHelp =>
+      'متى ينبغي أن يكون هذا العنصر متاحًا بشكل عاد؟';
+
+  @override
+  String get managerAvailabilityOperationalHelp =>
+      'هل العنصر غير متاح مؤقتًا الآن؟';
+
+  @override
+  String get menuManagementNavigation => 'التنقل في إدارة القوائم';
+
+  @override
+  String get menuManagementCatalog => 'الكتالوج';
+
+  @override
+  String get menuManagementMenusGroup => 'القوائم';
+
+  @override
+  String get menuManagementReleaseGroup => 'الإصدار';
+
+  @override
+  String get menuManagementReviewPublish => 'مراجعة ونشر';
+
+  @override
+  String get menuBreadcrumbProduct => 'المنتج';
+
+  @override
+  String get menuBreadcrumbVariant => 'الخيار';
+
+  @override
+  String get menuBreadcrumbCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get menuBreadcrumbEditProduct => 'تعديل المنتج';
+
+  @override
+  String get menuBreadcrumbVariants => 'الخيارات';
+
+  @override
+  String get menuBreadcrumbModifiers => 'المعدلات';
+
+  @override
+  String get menuBreadcrumbPricing => 'التسعير';
+
+  @override
+  String get menuBreadcrumbRecipe => 'الوصفة';
+
+  @override
+  String get menuBreadcrumbRecipeSimulation => 'محاكاة الوصفة';
+
+  @override
+  String get menuBreadcrumbAvailability => 'التوفر';
+
+  @override
+  String get menuBreadcrumbOperationalAvailability => 'التوفر التشغيلي';
+
+  @override
+  String get menuBreadcrumbMaterialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get menuBreadcrumbModifierGroup => 'مجموعة المعدلات';
+
+  @override
+  String get menuBreadcrumbCreateModifierGroup => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get menuBreadcrumbEditModifierGroup => 'تعديل مجموعة المعدلات';
+
+  @override
+  String get menuBreadcrumbMenu => 'القائمة';
+
+  @override
+  String get menuBreadcrumbCreateMenu => 'إنشاء قائمة';
+
+  @override
+  String get menuBreadcrumbEditMenu => 'تعديل القائمة';
+
+  @override
+  String get menuBreadcrumbComposition => 'التكوين';
+
+  @override
+  String get menuBreadcrumbVersionHistory => 'سجل الإصدارات';
+
+  @override
+  String get productCatalogTitle => 'المنتجات';
+
+  @override
+  String get productCatalogSubtitle => 'أدر المنتجات المتاحة عبر قوائمك.';
+
+  @override
+  String get productCatalogCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get productCatalogRefresh => 'تحديث المنتجات';
+
+  @override
+  String get productCatalogSearch => 'ابحث عن المنتجات أو SKU أو الباركود';
+
+  @override
+  String get productCatalogLifecycle => 'الحالة';
+
+  @override
+  String get productCatalogAllProducts => 'كل المنتجات';
+
+  @override
+  String get productCatalogMoreFilters => 'مزيد من الفلاتر';
+
+  @override
+  String productCatalogMoreFiltersSemantic(int count) {
+    return 'مزيد من الفلاتر، $count نشط';
+  }
+
+  @override
+  String get productCatalogClearAll => 'مسح الكل';
+
+  @override
+  String get productCatalogClear => 'مسح';
+
+  @override
+  String get productCatalogApply => 'تطبيق';
+
+  @override
+  String get productCatalogSort => 'فرز';
+
+  @override
+  String get productCatalogSortOrder => 'ترتيب العرض';
+
+  @override
+  String get productCatalogNameAscending => 'الاسم أ–ي';
+
+  @override
+  String get productCatalogNameDescending => 'الاسم ي–أ';
+
+  @override
+  String get productCatalogNewest => 'الأحدث أولاً';
+
+  @override
+  String get productCatalogProductType => 'نوع المنتج';
+
+  @override
+  String get productCatalogHasVariants => 'لديه خيارات';
+
+  @override
+  String get productCatalogNoVariants => 'بدون خيارات';
+
+  @override
+  String get productCatalogHasModifiers => 'لديه معدلات';
+
+  @override
+  String get productCatalogNoModifiers => 'بدون معدلات';
+
+  @override
+  String get productCatalogStandard => 'عادي';
+
+  @override
+  String get productCatalogOpenPrice => 'سعر مفتوح';
+
+  @override
+  String get productCatalogCombo => 'وجبة مجمعة';
+
+  @override
+  String get productCatalogSetup => 'الإعداد';
+
+  @override
+  String get productCatalogDefaultVariant => 'الافتراضي';
+
+  @override
+  String get productCatalogStatus => 'الحالة';
+
+  @override
+  String get productCatalogOpen => 'فتح';
+
+  @override
+  String get productCatalogManageVariants => 'إدارة الخيارات';
+
+  @override
+  String get productCatalogManageModifiers => 'إدارة المعدلات';
+
+  @override
+  String get productCatalogArchive => 'أرشفة';
+
+  @override
+  String get productCatalogRestore => 'استعادة';
+
+  @override
+  String productCatalogActionsFor(String name) {
+    return 'إجراءات المنتج $name';
+  }
+
+  @override
+  String productCatalogSetupSummary(int variants, int modifiers) {
+    return '$variants خيارات · $modifiers معدلات';
+  }
+
+  @override
+  String get productCatalogLoadMore => 'تحميل مزيد من المنتجات';
+
+  @override
+  String get productCatalogUnableToLoad => 'تعذر تحميل المنتجات.';
+
+  @override
+  String get productCatalogNoArchived => 'لا توجد منتجات مؤرشفة.';
+
+  @override
+  String get productCatalogNoActive => 'لا توجد منتجات نشطة.';
+
+  @override
+  String get productCatalogNoMatches => 'لا تطابق أي منتجات هذه الفلاتر.';
+
+  @override
+  String get productCatalogNoProductsYet => 'لم يتم إنشاء أي منتجات بعد.';
+
+  @override
+  String get productCatalogMoreFiltersHelper =>
+      'ضيّق قائمة المنتجات بمعايير إضافية.';
+
+  @override
+  String get productCatalogFilterClassification => 'التصنيف';
+
+  @override
+  String get productCatalogFilterPreparation => 'التحضير';
+
+  @override
+  String get productCatalogFilterProductSetup => 'إعداد المنتج';
+
+  @override
+  String get productCatalogClearFilters => 'مسح الفلاتر';
+
+  @override
+  String get productCatalogApplyFilters => 'تطبيق الفلاتر';
+
+  @override
+  String get productUxGeneral => 'عام';
+
+  @override
+  String get productUxClassification => 'التصنيف';
+
+  @override
+  String get productUxSellingPreparation => 'البيع والتحضير';
+
+  @override
+  String get productUxInitialSellingOption => 'خيار البيع الأولي';
+
+  @override
+  String get productUxTranslations => 'الترجمات';
+
+  @override
+  String get productUxAdvanced => 'متقدم';
+
+  @override
+  String get productUxOverview => 'نظرة عامة';
+
+  @override
+  String get productUxUsage => 'الاستخدام';
+
+  @override
+  String get productUxVariants => 'الأنواع';
+
+  @override
+  String get productUxModifiers => 'الإضافات';
+
+  @override
+  String get productUxRecipeMaterials => 'الوصفة والمواد';
+
+  @override
+  String get productUxAvailability => 'التوفر';
+
+  @override
+  String get productUxCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get productUxSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get productUxCancel => 'إلغاء';
+
+  @override
+  String get productUxManageCatalogSetup => 'إدارة إعدادات الكتالوج';
+
+  @override
+  String get productUxEditProduct => 'تعديل المنتج';
+
+  @override
+  String get productUxArchived => 'مؤرشف';
+
+  @override
+  String get productOverviewBasePrice => 'السعر الأساسي';
+
+  @override
+  String get productOverviewVariants => 'الأنواع';
+
+  @override
+  String get productOverviewModifierGroups => 'مجموعات الإضافات';
+
+  @override
+  String get productOverviewStockTracking => 'تتبع المخزون';
+
+  @override
+  String get productOverviewEnabled => 'مفعّل';
+
+  @override
+  String get productOverviewDisabled => 'غير مفعّل';
+
+  @override
+  String get productOverviewNotConfigured => 'غير مهيأ';
+
+  @override
+  String get productOverviewProductSetup => 'إعداد المنتج';
+
+  @override
+  String get productOverviewCategory => 'الفئة';
+
+  @override
+  String get productOverviewDefaultVariant => 'النوع الافتراضي';
+
+  @override
+  String get productOverviewKitchenStation => 'محطة التحضير';
+
+  @override
+  String get productOverviewProductType => 'نوع المنتج';
+
+  @override
+  String get productOverviewReportingCategory => 'فئة التقارير';
+
+  @override
+  String get productOverviewPreparationTime => 'وقت التحضير';
+
+  @override
+  String get productOverviewMinutes => 'دقائق';
+
+  @override
+  String get modifierLibraryTitle => 'مكتبة المعدلات';
+
+  @override
+  String get modifierLibrarySubtitle =>
+      'أنشئ خيارات عميل قابلة لإعادة الاستخدام ويمكن إسنادها إلى المنتجات.';
+
+  @override
+  String get modifierCreateGroup => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierSearch => 'البحث في المعدلات';
+
+  @override
+  String get modifierActive => 'نشط';
+
+  @override
+  String get modifierArchived => 'مؤرشف';
+
+  @override
+  String get modifierAll => 'الكل';
+
+  @override
+  String get modifierReorder => 'إعادة الترتيب';
+
+  @override
+  String get modifierDone => 'تم';
+
+  @override
+  String get modifierClearFiltersBeforeReorder =>
+      'امسح البحث وعوامل التصفية قبل إعادة ترتيب مجموعات المعدلات.';
+
+  @override
+  String modifierOptionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خياران',
+      one: 'خيار واحد',
+      zero: '0 خيارات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modifierOptionPreviewMore(int count) {
+    return '+ $count المزيد';
+  }
+
+  @override
+  String modifierRuleExactly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب على العميل اختيار $_temp0 بالضبط.';
+  }
+
+  @override
+  String modifierRuleOptionalExactly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'اختياري — يمكن للعميل اختيار $_temp0.';
+  }
+
+  @override
+  String modifierRuleAtLeastUpTo(int min, int max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب على العميل اختيار $min على الأقل وحتى $_temp0.';
+  }
+
+  @override
+  String modifierRuleOptionalUpTo(int max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'اختياري — يمكن للعميل اختيار ما يصل إلى $_temp0.';
+  }
+
+  @override
+  String get modifierRuleQuantity => 'يمكن إضافة الخيار نفسه أكثر من مرة.';
+
+  @override
+  String get modifierViewGroup => 'عرض المجموعة';
+
+  @override
+  String get modifierEditGroup => 'تعديل المجموعة';
+
+  @override
+  String get modifierSetDefault => 'تعيين كافتراضي';
+
+  @override
+  String get modifierMaterialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get modifierArchive => 'أرشفة';
+
+  @override
+  String get modifierRestore => 'استعادة';
+
+  @override
+  String get modifierNoGroups => 'لم يتم إنشاء مجموعات معدلات بعد.';
+
+  @override
+  String get modifierNoGroupMatches =>
+      'لا توجد مجموعات معدلات تطابق عوامل التصفية الحالية.';
+
+  @override
+  String get modifierUnableToLoad => 'تعذر تحميل مجموعات المعدلات.';
+
+  @override
+  String get modifierRetry => 'إعادة المحاولة';
+
+  @override
+  String get modifierLoadMore => 'تحميل المزيد';
+
+  @override
+  String get modifierRefresh => 'تحديث مجموعات المعدلات';
+
+  @override
+  String get modifierGroupDetailNotFound =>
+      'لم يتم العثور على مجموعة المعدلات.';
+
+  @override
+  String get modifierOptions => 'الخيارات';
+
+  @override
+  String get modifierAddOption => 'إضافة خيار';
+
+  @override
+  String get modifierOptionFilter => 'حالة الخيار';
+
+  @override
+  String get modifierNoArchivedOptions => 'لا توجد خيارات معدلات مؤرشفة.';
+
+  @override
+  String get modifierNoOptions => 'لم يتم إنشاء خيارات معدلات بعد.';
+
+  @override
+  String get modifierReorderOptions => 'إعادة ترتيب الخيارات';
+
+  @override
+  String get modifierMoveUp => 'نقل لأعلى';
+
+  @override
+  String get modifierMoveDown => 'نقل لأسفل';
+
+  @override
+  String get modifierDefault => 'افتراضي';
+
+  @override
+  String get modifierNoExtraCharge => 'بدون تكلفة إضافية';
+
+  @override
+  String get modifierPriceAdjustment => 'تعديل السعر';
+
+  @override
+  String get modifierMaterialUsageConfigured => 'تم إعداد استخدام المواد';
+
+  @override
+  String get modifierStatusActive => 'نشط';
+
+  @override
+  String get modifierStatusArchived => 'مؤرشف';
+
+  @override
+  String get modifierStatusInactive => 'غير نشط';
+
+  @override
+  String get modifierAdvancedDetails => 'التفاصيل المتقدمة';
+
+  @override
+  String get modifierSelectionMode => 'طريقة الاختيار';
+
+  @override
+  String get modifierMinimum => 'الحد الأدنى';
+
+  @override
+  String get modifierMaximum => 'الحد الأقصى';
+
+  @override
+  String get modifierAllowQuantity => 'السماح بالكمية';
+
+  @override
+  String get modifierGroupType => 'نوع المجموعة';
+
+  @override
+  String get modifierSortOrder => 'ترتيب العرض';
+
+  @override
+  String get modifierCreateTitle => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierEditTitle => 'تعديل مجموعة معدلات';
+
+  @override
+  String get modifierBasicInformation => 'المعلومات الأساسية';
+
+  @override
+  String get modifierBasicInformationHelper =>
+      'سمِّ مجموعة خيارات العميل القابلة لإعادة الاستخدام.';
+
+  @override
+  String get modifierGroupName => 'اسم مجموعة المعدلات';
+
+  @override
+  String get modifierGroupNameHint => 'مثال: نوع الحليب';
+
+  @override
+  String get modifierInternalCode => 'الرمز الداخلي';
+
+  @override
+  String get modifierGroupTypeChoice => 'اختيار';
+
+  @override
+  String get modifierGroupTypeAddOn => 'إضافة';
+
+  @override
+  String get modifierGroupTypePreparation => 'تعليمات التحضير';
+
+  @override
+  String get modifierYes => 'نعم';
+
+  @override
+  String get modifierNo => 'لا';
+
+  @override
+  String get modifierTranslations => 'الترجمات';
+
+  @override
+  String get modifierArabic => 'العربية';
+
+  @override
+  String get modifierEnglish => 'الإنجليزية';
+
+  @override
+  String get modifierClose => 'إغلاق';
+
+  @override
+  String get modifierSelectionRules => 'قواعد الاختيار';
+
+  @override
+  String get modifierSelectionRulesHelper =>
+      'حدد طريقة تفاعل العملاء مع هذه الخيارات.';
+
+  @override
+  String get modifierHowChoose => 'كيف ينبغي للعملاء الاختيار؟';
+
+  @override
+  String get modifierChooseOne => 'اختيار واحد';
+
+  @override
+  String get modifierChooseMultiple => 'اختيارات متعددة';
+
+  @override
+  String get modifierChoiceRequired => 'هل الاختيار مطلوب؟';
+
+  @override
+  String get modifierOptional => 'اختياري';
+
+  @override
+  String get modifierRequired => 'مطلوب';
+
+  @override
+  String get modifierMinimumChoices => 'الحد الأدنى للاختيارات';
+
+  @override
+  String get modifierMaximumChoices => 'الحد الأقصى للاختيارات';
+
+  @override
+  String get modifierSameOptionQuantity =>
+      'هل يمكن إضافة الخيار نفسه أكثر من مرة؟';
+
+  @override
+  String get modifierQuantityHelper => 'مثال: 2 من الإضافات.';
+
+  @override
+  String get modifierCurrentRuleSummary => 'ملخص القاعدة الحالية';
+
+  @override
+  String get modifierInitialOption => 'الخيار الأولي';
+
+  @override
+  String get modifierInitialOptions => 'الخيارات الأولية';
+
+  @override
+  String get modifierInitialOptionHelper =>
+      'أضف ما يكفي من الخيارات النشطة ليتوافق مع الحد الأقصى قبل إنشاء مجموعة المعدلات.';
+
+  @override
+  String get modifierAddAnotherOption => 'إضافة خيار آخر';
+
+  @override
+  String get modifierRemoveOption => 'إزالة الخيار';
+
+  @override
+  String modifierAtLeastActiveOptions(int count) {
+    return 'أضف $count خيارات نشطة على الأقل أو خفّض الحد الأقصى للاختيارات.';
+  }
+
+  @override
+  String get modifierOptionName => 'اسم الخيار';
+
+  @override
+  String get modifierOptionNameHint => 'مثال: حليب كامل الدسم';
+
+  @override
+  String get modifierAdvanced => 'متقدم';
+
+  @override
+  String get modifierActiveStatus => 'الحالة النشطة';
+
+  @override
+  String get modifierAvailableForUse => 'متاح للاستخدام في القوائم.';
+
+  @override
+  String get modifierCancel => 'إلغاء';
+
+  @override
+  String get modifierSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get modifierCreateAction => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierSaving => 'جارٍ الحفظ...';
+
+  @override
+  String get modifierUnsavedChanges =>
+      'لديك تغييرات غير محفوظة. هل تريد المغادرة دون حفظ؟';
+
+  @override
+  String get modifierStay => 'البقاء';
+
+  @override
+  String get modifierLeave => 'مغادرة';
+
+  @override
+  String get modifierOptionCreateTitle => 'إضافة خيار';
+
+  @override
+  String get modifierOptionEditTitle => 'تعديل الخيار';
+
+  @override
+  String get modifierOptionBasicInformation => 'المعلومات الأساسية';
+
+  @override
+  String get modifierOptionDefault => 'خيار افتراضي';
+
+  @override
+  String get modifierOptionActive => 'نشط';
+
+  @override
+  String get modifierOptionAvailable => 'متاح';
+
+  @override
+  String get modifierOptionAdvanced => 'متقدم';
+
+  @override
+  String get modifierOptionSave => 'حفظ';
+
+  @override
+  String get modifierOptionSaving => 'جارٍ الحفظ...';
+
+  @override
+  String get modifierOptionNameRequired => 'اسم الخيار مطلوب.';
+
+  @override
+  String get modifierOptionPriceInvalid => 'أدخل تعديلاً صالحاً للسعر.';
+
+  @override
+  String get modifierOptionSortInvalid => 'أدخل رقماً صحيحاً لترتيب العرض.';
+
+  @override
+  String get modifierArchiveGroupTitle => 'أرشفة مجموعة المعدلات؟';
+
+  @override
+  String get modifierArchiveOptionTitle => 'أرشفة خيار المعدلات؟';
+
+  @override
+  String get modifierArchiveMessage =>
+      'يبقى العنصر محفوظاً ويمكن استعادته لاحقاً.';
+
+  @override
+  String get modifierConfirmArchive => 'أرشفة';
+
+  @override
+  String get modifierOptionSaveError =>
+      'تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى.';
+
+  @override
+  String get modifierOptionGroupInvalid =>
+      'لا يمكن تغيير هذا الخيار لأنه سيجعل مجموعة المعدلات غير صالحة.';
+
+  @override
+  String get modifierGroupSaveError => 'تعذر حفظ مجموعة المعدلات.';
+
+  @override
+  String get modifierGroupRequired => 'اسم مجموعة المعدلات مطلوب.';
+
+  @override
+  String get modifierNumberInvalid => 'أدخل صفراً أو رقماً صحيحاً موجباً.';
+
+  @override
+  String get modifierMaximumMinimumError =>
+      'يجب أن يكون الحد الأقصى أكبر من أو مساوياً للحد الأدنى.';
+
+  @override
+  String get modifierSingleMaximumError =>
+      'لا يمكن أن يتجاوز الحد الأقصى لمجموعة الاختيار الواحد 1.';
+
+  @override
+  String get modifierRequiredMinimumError =>
+      'تحتاج المجموعات المطلوبة إلى حد أدنى لا يقل عن 1.';
+
+  @override
+  String get modifierInitialOptionRequired => 'الخيار النشط الأولي مطلوب.';
+
+  @override
+  String get modifierPriceInvalid => 'أدخل صفراً أو سعراً موجباً.';
+
+  @override
+  String get modifierInitialMaximumError =>
+      'تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1.';
+
+  @override
+  String get configuredSellPriceMustBePositive =>
+      'يجب أن يكون سعر البيع أكبر من صفر.';
+
+  @override
+  String get recipeVariant => 'النوع';
+
+  @override
+  String recipeConfigured(int count) {
+    return 'تم إعداد الوصفة · $count مواد';
+  }
+
+  @override
+  String recipeMaterialId(int materialId) {
+    return 'المادة #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
+  String get recipeMissing => 'الوصفة مفقودة';
+
+  @override
+  String get recipeNotConfigured => 'الوصفة غير معدّة';
+
+  @override
+  String get recipeModifierMaterialEffects => 'تأثيرات مواد المعدلات';
+
+  @override
+  String get recipeModifierMaterialEffectsHelp =>
+      'اطلع على كيفية تغيير اختيارات العميل للمواد المستهلكة.';
+
+  @override
+  String get recipeNoMaterialChange => 'لا تغيير في المواد';
+
+  @override
+  String get recipeUsingGlobalSettings => 'باستخدام الإعدادات العامة';
+
+  @override
+  String get recipeUsingProductSettings => 'باستخدام إعدادات المنتج';
+
+  @override
+  String get recipeUsingVariantSettings => 'باستخدام إعدادات النوع';
+
+  @override
+  String get recipeCustomizedForProduct => 'مخصص للمنتج';
+
+  @override
+  String get recipeCustomizedForVariant => 'مخصص للنوع';
+
+  @override
+  String get recipeTest => 'اختبار الوصفة';
+
+  @override
+  String get recipeBackToWorkspace => 'العودة إلى الوصفة والمواد';
+
+  @override
+  String get recipeSave => 'حفظ الوصفة';
+
+  @override
+  String get recipeSaved => 'تم حفظ الوصفة.';
+
+  @override
+  String get recipeCurrentBehavior => 'السلوك الحالي';
+
+  @override
+  String get recipeUseInherited => 'استخدام الإعدادات الموروثة';
+
+  @override
+  String get recipeUseInheritedAgain => 'استخدم الإعدادات الموروثة مجدداً';
+
+  @override
+  String get recipeClearTitle => 'مسح وصفة المنتج؟';
+
+  @override
+  String get recipeClearBody =>
+      'سيؤدي ذلك إلى إزالة كل المواد المعدة في الوصفة الأساسية للمنتج.';
+
+  @override
+  String get recipeClearAction => 'مسح الوصفة';
+
+  @override
+  String get recipeRemoveOverrideAction => 'إزالة التجاوز';
+
+  @override
+  String recipeCustomizeFor(String context) {
+    return 'تخصيص لـ $context';
+  }
+
+  @override
+  String recipeNoMaterialEffectFor(String context) {
+    return 'لا تأثير مادي لـ $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'هذا النوع';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'يستبدل $from بـ $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'يزيل $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'يضيف $materials';
+  }
+
+  @override
+  String get recipeRemoves => 'يزيل';
+
+  @override
+  String get recipeAdds => 'يضيف';
+
+  @override
+  String get recipeAddMaterialToRemove => 'إضافة مادة لإزالتها';
+
+  @override
+  String get recipeAddMaterialToAdd => 'إضافة مادة لإضافتها';
+
+  @override
+  String get recipeSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get recipeCancel => 'إلغاء';
+
+  @override
+  String get recipeQuantityRequired => 'الكمية مطلوبة.';
+
+  @override
+  String get recipeQuantityInvalid =>
+      'أدخل رقماً موجباً بحد أقصى 6 منازل عشرية.';
+
+  @override
+  String get recipeDuplicateMaterial => 'هذه المادة مستخدمة بالفعل.';
+
+  @override
+  String get recipeMaterialSearch => 'ابحث عن المواد';
+
+  @override
+  String get recipeNoMaterialResults => 'لا توجد مواد مطابقة.';
+
+  @override
+  String get recipeFinalMaterials => 'المواد النهائية';
+
+  @override
+  String get recipePreviewMaterials => 'معاينة المواد';
+
+  @override
+  String get recipeHowCalculated => 'كيف تم احتساب هذا';
+
+  @override
+  String get recipeChoicesChanged => 'تغيرت الاختيارات';
+
+  @override
+  String get recipeStaleResult => 'عاين المواد مجدداً لتحديث النتيجة.';
+
+  @override
+  String get recipeDecreaseQuantity => 'تقليل الكمية';
+
+  @override
+  String get recipeIncreaseQuantity => 'زيادة الكمية';
+
+  @override
+  String get batch8AvailabilityTitle => 'إتاحة البيع';
+
+  @override
+  String get batch8AvailabilityHelp =>
+      'راجع السعر وساعات البيع المعتادة والحالة التشغيلية الحالية لهذا السياق.';
+
+  @override
+  String get batch8Variant => 'النوع';
+
+  @override
+  String get batch8Branch => 'الفرع';
+
+  @override
+  String get batch8Channel => 'قناة البيع';
+
+  @override
+  String get batch8AvailabilityLoadError => 'تعذر تحميل بيانات الإتاحة.';
+
+  @override
+  String get batch8Retry => 'إعادة المحاولة';
+
+  @override
+  String get batch8Loading => 'جارٍ التحميل…';
+
+  @override
+  String get batch8Checking => 'جارٍ التحقق…';
+
+  @override
+  String get batch8SellingPrice => 'سعر البيع';
+
+  @override
+  String get batch8BasePrice => 'السعر الأساسي';
+
+  @override
+  String get batch8EffectiveSellingPrice => 'سعر البيع الفعلي';
+
+  @override
+  String get batch8Using => 'المصدر';
+
+  @override
+  String get batch8ManagePricing => 'إدارة الأسعار';
+
+  @override
+  String get batch8PriceLoadingHelp => 'جارٍ تحديد سعر البيع لهذا السياق.';
+
+  @override
+  String get batch8PriceFromBase => 'السعر الأساسي للنوع';
+
+  @override
+  String get batch8PriceFromBranch => 'سعر الفرع';
+
+  @override
+  String get batch8PriceFromChannel => 'سعر قناة البيع';
+
+  @override
+  String get batch8PriceFromBranchAndChannel => 'سعر الفرع وقناة البيع';
+
+  @override
+  String get batch8RegularAvailability => 'الإتاحة المعتادة';
+
+  @override
+  String get batch8NoScheduleRestrictions => 'لا توجد قيود على الجدول';
+
+  @override
+  String get batch8NoScheduleRestrictionsHelp =>
+      'متاح عادةً ما دامت نقطة البيع مفتوحة في هذا السياق.';
+
+  @override
+  String get batch8ScheduleLoadingHelp =>
+      'جارٍ التحقق من ساعات البيع المعتادة لهذا السياق.';
+
+  @override
+  String get batch8AvailableNow => 'متاح الآن';
+
+  @override
+  String get batch8UnavailableNow => 'غير متاح الآن';
+
+  @override
+  String get batch8Unavailable => 'غير متاح';
+
+  @override
+  String get batch8AvailableAccordingSchedule =>
+      'متاح وفق ساعات البيع المعتادة.';
+
+  @override
+  String get batch8UnavailableAccordingSchedule => 'خارج ساعات البيع المعتادة.';
+
+  @override
+  String get batch8ScheduleRules => 'ساعات البيع المُعدّة';
+
+  @override
+  String get batch8ManageSchedule => 'إدارة الجدول';
+
+  @override
+  String get batch8CurrentAvailability => 'الإتاحة الحالية';
+
+  @override
+  String get batch8CurrentLoadingHelp =>
+      'جارٍ التحقق من الحالة التشغيلية المؤقتة لهذا السياق.';
+
+  @override
+  String get batch8SoldOut => 'نفدت الكمية';
+
+  @override
+  String get batch8TemporarilyUnavailable => 'غير متاح مؤقتًا';
+
+  @override
+  String get batch8NoTemporaryRestriction => 'لا يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String get batch8TemporaryRestrictionActive => 'يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String batch8TemporaryUntil(String time) {
+    return 'القيد المؤقت ساري حتى $time.';
+  }
+
+  @override
+  String get batch8ManageAvailability => 'إدارة الإتاحة';
+
+  @override
+  String get batch8EffectiveSellingResult => 'نتيجة البيع الفعلية';
+
+  @override
+  String get batch8Availability => 'الإتاحة';
+
+  @override
+  String get batch8PricingBack => 'رجوع';
+
+  @override
+  String get batch8PricingRefresh => 'تحديث';
+
+  @override
+  String get batch8PricingLoadError => 'تعذر تحميل بيانات التسعير.';
+
+  @override
+  String get batch8PricingArchived =>
+      'هذا المنتج أو النوع مؤرشف. الأسعار معروضة للمرجعية ولا يمكن تعديلها.';
+
+  @override
+  String batch8PricingContext(String variant) {
+    return '$variant · سعر البيع';
+  }
+
+  @override
+  String get batch8PricingHelp => 'سعر البيع للنوع والفرع وقناة البيع المحددة.';
+
+  @override
+  String get batch8SalesChannel => 'قناة البيع';
+
+  @override
+  String get batch8NoBranch => 'بدون فرع';
+
+  @override
+  String get batch8NoChannel => 'بدون قناة';
+
+  @override
+  String get batch8ChangePrice => 'تغيير السعر';
+
+  @override
+  String get batch8MorePriceRules => 'قواعد أسعار إضافية';
+
+  @override
+  String batch8RulesConfigured(int count) {
+    return '$count قاعدة مُعدّة';
+  }
+
+  @override
+  String get batch8Show => 'عرض';
+
+  @override
+  String get batch8Hide => 'إخفاء';
+
+  @override
+  String get batch8NoPriceAdjustments => 'لا توجد تعديلات على السعر.';
+
+  @override
+  String get batch8BasePriceEverywhere => 'السعر الأساسي مطبق في كل مكان.';
+
+  @override
+  String get batch8Difference => 'الفرق';
+
+  @override
+  String get batch8AddPrice => 'إضافة سعر';
+
+  @override
+  String get batch8SetSellingPrice => 'تعيين سعر البيع';
+
+  @override
+  String get batch8Product => 'المنتج';
+
+  @override
+  String get batch8AppliesTo => 'يُطبّق على';
+
+  @override
+  String get batch8ScopeBranch => 'الفرع';
+
+  @override
+  String get batch8ScopeChannel => 'القناة';
+
+  @override
+  String get batch8ScopeBranchChannel => 'الفرع + القناة';
+
+  @override
+  String get batch8Price => 'السعر';
+
+  @override
+  String batch8PriceAboveBase(String difference) {
+    return 'أعلى من السعر الأساسي بمقدار $difference';
+  }
+
+  @override
+  String batch8PriceBelowBase(String difference) {
+    return 'أقل من السعر الأساسي بمقدار $difference';
+  }
+
+  @override
+  String get batch8PriceSameAsBase => 'مطابق للسعر الأساسي';
+
+  @override
+  String get batch8Cancel => 'إلغاء';
+
+  @override
+  String get batch8SavePrice => 'حفظ السعر';
+
+  @override
+  String get batch8Edit => 'تعديل';
+
+  @override
+  String get batch8Remove => 'إزالة';
+
+  @override
+  String get batch8RemovePriceTitle => 'إزالة قاعدة السعر؟';
+
+  @override
+  String get batch8RemovePriceMessage => 'سيُزال تعديل السعر لهذا النوع.';
+
+  @override
+  String get batch8Keep => 'إبقاء';
+
+  @override
+  String batch8BranchPriceFor(String branch) {
+    return 'سعر فرع $branch';
+  }
+
+  @override
+  String batch8ChannelPriceFor(String channel) {
+    return 'سعر قناة $channel';
+  }
+
+  @override
+  String batch8BranchChannelPriceFor(String branch, String channel) {
+    return 'سعر $branch · $channel';
+  }
+
+  @override
+  String get batch8RuleBranchPrice => 'سعر الفرع';
+
+  @override
+  String get batch8RuleChannelPrice => 'سعر القناة';
+
+  @override
+  String get batch8RuleBranchChannelPrice => 'سعر الفرع + القناة';
+
+  @override
+  String get batch8ChannelPos => 'نقطة البيع';
+
+  @override
+  String get batch8ChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get batch8ChannelKiosk => 'الكشك';
+
+  @override
+  String get batch8ChannelQrOrdering => 'الطلب عبر رمز QR';
+
+  @override
+  String get batch8ChannelDelivery => 'التوصيل';
+
+  @override
+  String get batch8ChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String get batch8UnsavedPriceChanges => 'تغييرات سعر غير محفوظة';
+
+  @override
+  String get batch8UnsavedPriceChangesMessage =>
+      'لديك تغييرات سعر غير محفوظة. هل تريد المغادرة بدون حفظ؟';
+
+  @override
+  String get batch8Leave => 'مغادرة';
+
+  @override
+  String get scheduledUnsavedChanges => 'ساعات بيع غير محفوظة';
+
+  @override
+  String get scheduledUnsavedChangesHelp =>
+      'لديك تغييرات غير محفوظة على ساعات البيع. هل تريد المغادرة دون حفظ؟';
+
+  @override
+  String get scheduledStay => 'البقاء';
+
+  @override
+  String get scheduledLeave => 'مغادرة';
+
+  @override
+  String get scheduledLoadError => 'تعذر تحميل إتاحة البيع المعتادة.';
+
+  @override
+  String get scheduledSaveError =>
+      'تعذر حفظ ساعات البيع. راجع القيم المدخلة وحاول مرة أخرى.';
+
+  @override
+  String get scheduledSaved => 'تم حفظ ساعات البيع.';
+
+  @override
+  String get scheduledArchived =>
+      'هذا المنتج أو النوع مؤرشف. تُعرض ساعات البيع للمرجعية ولا يمكن تعديلها.';
+
+  @override
+  String get scheduledRegularForProduct => 'المنتج · الإتاحة المعتادة';
+
+  @override
+  String scheduledRegularForVariant(String variant) {
+    return '$variant · الإتاحة المعتادة';
+  }
+
+  @override
+  String get scheduledProduct => 'المنتج';
+
+  @override
+  String get scheduledAllBranches => 'كل الفروع';
+
+  @override
+  String get scheduledAllChannels => 'كل القنوات';
+
+  @override
+  String get scheduledUsingProduct => 'باستخدام جدول المنتج';
+
+  @override
+  String get scheduledProductSchedule => 'جدول المنتج';
+
+  @override
+  String scheduledCustomizedFor(String variant) {
+    return 'مخصص لـ $variant';
+  }
+
+  @override
+  String scheduledCustomizeFor(String variant) {
+    return 'تخصيص لـ $variant';
+  }
+
+  @override
+  String get scheduledUseProductAgain => 'استخدام جدول المنتج مجددًا';
+
+  @override
+  String get scheduledWeeklyInAdvanced =>
+      'تظهر ساعات الأسبوع ضمن قواعد الجدول المتقدمة.';
+
+  @override
+  String get scheduledNoSpecificRestriction => 'لا يوجد قيد محدد';
+
+  @override
+  String get scheduledAvailableAllDay => 'متاح طوال اليوم';
+
+  @override
+  String get scheduledEditSellingHours => 'تعديل ساعات البيع';
+
+  @override
+  String get scheduledAdvancedRules => 'قواعد الجدول المتقدمة';
+
+  @override
+  String get scheduledNoAdvancedRules => 'لا توجد قواعد جدول متقدمة';
+
+  @override
+  String get scheduledViewRules => 'عرض القواعد';
+
+  @override
+  String get scheduledInactiveRule => 'قاعدة جدول غير نشطة';
+
+  @override
+  String get scheduledPriorityRule => 'قاعدة جدول ذات أولوية';
+
+  @override
+  String get scheduledDateBoundRule => 'قاعدة جدول محددة بالتاريخ';
+
+  @override
+  String get scheduledCheckAvailability => 'فحص الإتاحة';
+
+  @override
+  String get scheduledCheckHelp => 'افحص التاريخ والوقت ضمن سياق البيع المحدد.';
+
+  @override
+  String get scheduledDate => 'التاريخ';
+
+  @override
+  String get scheduledTime => 'الوقت';
+
+  @override
+  String get scheduledCheck => 'فحص';
+
+  @override
+  String get scheduledCheckError => 'تعذر فحص الإتاحة. حاول مرة أخرى.';
+
+  @override
+  String get scheduledAvailableUsingProduct => 'متاح وفق جدول المنتج.';
+
+  @override
+  String get scheduledDay => 'اليوم';
+
+  @override
+  String get scheduledEveryDay => 'كل يوم';
+
+  @override
+  String get scheduledAvailability => 'الإتاحة';
+
+  @override
+  String get scheduledAvailableAllDayHelp => 'لا يوجد قيد زمني لهذا اليوم.';
+
+  @override
+  String get scheduledCustomHours => 'ساعات مخصصة';
+
+  @override
+  String get scheduledCustomHoursHelp => 'حدد وقت البدء والانتهاء المعتادين.';
+
+  @override
+  String get scheduledStartTime => 'وقت البدء';
+
+  @override
+  String get scheduledEndTime => 'وقت الانتهاء';
+
+  @override
+  String scheduledOvernightUntil(String time) {
+    return 'متاح ليلًا حتى $time في اليوم التالي.';
+  }
+
+  @override
+  String get scheduledDateLimits => 'حدود التاريخ';
+
+  @override
+  String get scheduledOptional => 'اختياري';
+
+  @override
+  String get scheduledStartDate => 'تاريخ البدء';
+
+  @override
+  String get scheduledEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String get scheduledSelectDate => 'اختر التاريخ';
+
+  @override
+  String get scheduledAdvanced => 'متقدم';
+
+  @override
+  String get scheduledPriority => 'الأولوية';
+
+  @override
+  String get scheduledActive => 'نشط';
+
+  @override
+  String get scheduledSaveSellingHours => 'حفظ ساعات البيع';
+
+  @override
+  String get scheduledFrom => 'من';
+
+  @override
+  String get scheduledUntil => 'حتى';
+
+  @override
+  String get scheduledSunday => 'الأحد';
+
+  @override
+  String get scheduledMonday => 'الإثنين';
+
+  @override
+  String get scheduledTuesday => 'الثلاثاء';
+
+  @override
+  String get scheduledWednesday => 'الأربعاء';
+
+  @override
+  String get scheduledThursday => 'الخميس';
+
+  @override
+  String get scheduledFriday => 'الجمعة';
+
+  @override
+  String get scheduledSaturday => 'السبت';
+
+  @override
+  String get operationalAvailabilityTitle => 'الإتاحة التشغيلية';
+
+  @override
+  String get operationalAvailabilityPurpose =>
+      'هل يمكن للعملاء طلب هذا الصنف الآن؟ للاستثناءات التشغيلية المؤقتة فقط.';
+
+  @override
+  String get operationalAvailabilityContext => 'السياق الحالي';
+
+  @override
+  String get operationalAvailabilityProductVariant => 'المنتج / النوع';
+
+  @override
+  String get operationalAvailabilityProductOnly => 'المنتج';
+
+  @override
+  String get operationalAvailabilityBranch => 'الفرع';
+
+  @override
+  String get operationalAvailabilityChannel => 'قناة البيع';
+
+  @override
+  String get operationalAvailabilitySelectBranch => 'اختر فرعًا نشطًا';
+
+  @override
+  String get operationalAvailabilitySelectChannel => 'اختر قناة بيع';
+
+  @override
+  String get operationalAvailabilityAvailableNow => 'متوفر الآن';
+
+  @override
+  String get operationalAvailabilitySoldOut => 'نفدت الكمية';
+
+  @override
+  String get operationalAvailabilityTemporarilyUnavailable =>
+      'غير متوفر مؤقتًا';
+
+  @override
+  String get operationalAvailabilityNoRestriction =>
+      'لا يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String get operationalAvailabilityActiveRestriction =>
+      'يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String operationalAvailabilityUntil(String time) {
+    return 'حتى: $time';
+  }
+
+  @override
+  String get operationalAvailabilityReason => 'السبب';
+
+  @override
+  String get operationalAvailabilityMarkUnavailable => 'جعله غير متوفر مؤقتًا';
+
+  @override
+  String get operationalAvailabilityMakeAvailable => 'إعادة التوفر الآن';
+
+  @override
+  String get operationalAvailabilityEditStatus => 'تعديل الحالة';
+
+  @override
+  String get operationalAvailabilityEditTemporary => 'تعديل القيد المؤقت';
+
+  @override
+  String get operationalAvailabilityUseDefault => 'استخدام الحالة الافتراضية';
+
+  @override
+  String get operationalAvailabilityUseDefaultTitle =>
+      'استخدام الحالة الافتراضية؟';
+
+  @override
+  String get operationalAvailabilityUseDefaultMessage =>
+      'سيؤدي ذلك إلى إزالة الحالة المضبوطة لهذا السياق المحدد فقط، ثم التحقق من الإتاحة الناتجة مرة أخرى.';
+
+  @override
+  String get operationalAvailabilityDefaultAction => 'استخدام الافتراضي';
+
+  @override
+  String get operationalAvailabilityAllVariants =>
+      'تنطبق هذه الحالة على جميع أنواع هذا المنتج.';
+
+  @override
+  String operationalAvailabilityOnlyVariant(String variant) {
+    return 'تؤثر هذه الحالة في $variant فقط.';
+  }
+
+  @override
+  String get operationalAvailabilityLoadingCurrent =>
+      'جارٍ تحديث الإتاحة الحالية…';
+
+  @override
+  String get operationalAvailabilityNoContext =>
+      'اختر فرعًا نشطًا وقناة بيع لعرض الإتاحة الحالية.';
+
+  @override
+  String get operationalAvailabilityLoadError =>
+      'تعذر تحميل الإتاحة الحالية. حاول مرة أخرى.';
+
+  @override
+  String get operationalAvailabilityArchived =>
+      'هذا الصنف مؤرشف. تُعرض الإتاحة الحالية للرجوع إليها ولا يمكن تعديلها.';
+
+  @override
+  String get operationalAvailabilitySetStatus => 'تعيين حالة الإتاحة';
+
+  @override
+  String get operationalAvailabilityEditStatusTitle => 'تعديل حالة الإتاحة';
+
+  @override
+  String get operationalAvailabilityStatus => 'الحالة';
+
+  @override
+  String get operationalAvailabilityDuration => 'المدة';
+
+  @override
+  String get operationalAvailabilitySpecificTime => 'حتى وقت محدد';
+
+  @override
+  String get operationalAvailabilityEndTimeRequired =>
+      'اختر وقت انتهاء هذا القيد المؤقت.';
+
+  @override
+  String get operationalAvailabilitySelectEndTime => 'اختر تاريخ ووقت الانتهاء';
+
+  @override
+  String get operationalAvailabilityBranchTime =>
+      'يُعرض الوقت بالتوقيت المحلي للفرع المحدد.';
+
+  @override
+  String get operationalAvailabilitySave => 'حفظ الحالة';
+
+  @override
+  String get operationalAvailabilitySaving => 'جارٍ الحفظ…';
+
+  @override
+  String get operationalAvailabilityCancel => 'إلغاء';
+
+  @override
+  String get operationalAvailabilityExplicitAvailable =>
+      'متوفر في سياق البيع هذا.';
+
+  @override
+  String get operationalAvailabilitySaveError =>
+      'تعذر حفظ حالة الإتاحة. راجع التفاصيل وحاول مرة أخرى.';
+
+  @override
+  String get catalogSetupWorkspaceHelp =>
+      'اضبط التصنيفات ووجهات التحضير المستخدمة للمنتجات.';
+
+  @override
+  String get catalogSetupCategoriesPurpose =>
+      'نظّم المنتجات ضمن مجموعات واضحة في الكتالوج والقائمة.';
+
+  @override
+  String get catalogSetupReportingPurpose =>
+      'جمّع المنتجات لأغراض تقارير المبيعات والأداء.';
+
+  @override
+  String get catalogSetupReportingNote =>
+      'لا تحدد فئات التقارير مكان ظهور المنتجات في القائمة.';
+
+  @override
+  String get catalogSetupStationsPurpose =>
+      'حدد المكان الذي تُحضَّر فيه المنتجات والأصناف.';
+
+  @override
+  String get catalogSetupSearchCategories => 'ابحث في الفئات...';
+
+  @override
+  String get catalogSetupSearchReporting => 'ابحث في فئات التقارير...';
+
+  @override
+  String get catalogSetupSearchStations => 'ابحث في محطات التحضير...';
+
+  @override
+  String catalogSetupAdd(String type) {
+    return 'إضافة $type';
+  }
+
+  @override
+  String catalogSetupSave(String type) {
+    return 'حفظ $type';
+  }
+
+  @override
+  String get catalogSetupNoCategories => 'لا توجد فئات بعد';
+
+  @override
+  String get catalogSetupNoReportingCategories => 'لا توجد فئات تقارير بعد';
+
+  @override
+  String get catalogSetupNoKitchenStations => 'لا توجد محطات تحضير بعد';
+
+  @override
+  String get catalogSetupEmptyCategoriesHelp =>
+      'تساعد الفئات في تنظيم المنتجات ضمن مجموعات واضحة.';
+
+  @override
+  String get catalogSetupEmptyReportingHelp =>
+      'تساعد فئات التقارير في تجميع المنتجات لتقارير مبيعات مفيدة.';
+
+  @override
+  String get catalogSetupEmptyStationsHelp =>
+      'تساعد محطات التحضير في تحديد مكان تحضير كل منتج.';
+
+  @override
+  String get catalogSetupCouldNotLoad => 'تعذر تحميل البيانات';
+
+  @override
+  String get catalogSetupLoadHelp => 'تحقق من الاتصال ثم حاول مرة أخرى.';
+
+  @override
+  String catalogSetupShowing(int shown, int total) {
+    return 'عرض $shown من $total';
+  }
+
+  @override
+  String get catalogSetupActive => 'نشط';
+
+  @override
+  String get catalogSetupArchived => 'مؤرشف';
+
+  @override
+  String get catalogSetupInactive => 'غير نشط';
+
+  @override
+  String get catalogSetupEditorHelp =>
+      'استخدم الأسماء التي يتعرف إليها الموظفون والعملاء.';
+
+  @override
+  String get catalogSetupPrimaryName => 'الاسم';
+
+  @override
+  String catalogSetupArchiveTitle(String name) {
+    return 'أرشفة $name؟';
+  }
+
+  @override
+  String get catalogSetupArchiveHelp =>
+      'يمكن استعادة السجلات المؤرشفة لاحقًا. تظل إسنادات المنتجات الحالية محكومة بقواعد النظام.';
+
+  @override
+  String get catalogSetupValidationRequired => 'أدخل اسمًا للمتابعة.';
+
+  @override
+  String get catalogSetupRefreshInProgress => 'جارٍ تحديث إعداد الكتالوج';
+
+  @override
+  String get menuListTitle => 'القوائم';
+
+  @override
+  String get menuListSubtitle =>
+      'أنشئ ونظّم القوائم التي يمكن للعملاء الطلب منها.';
+
+  @override
+  String get menuListAdd => 'إضافة قائمة';
+
+  @override
+  String get menuListSearch => 'ابحث في القوائم...';
+
+  @override
+  String get menuListStatus => 'الحالة';
+
+  @override
+  String get menuListSort => 'فرز';
+
+  @override
+  String get menuListDirection => 'الاتجاه';
+
+  @override
+  String get menuListRefresh => 'تحديث القوائم';
+
+  @override
+  String get menuListMenu => 'القائمة';
+
+  @override
+  String get menuListSections => 'الأقسام';
+
+  @override
+  String get menuListVisibleProducts => 'المنتجات الظاهرة';
+
+  @override
+  String get menuListLastUpdated => 'آخر تحديث';
+
+  @override
+  String get menuListActions => 'الإجراءات';
+
+  @override
+  String get menuListOpen => 'فتح';
+
+  @override
+  String get menuListClearFilters => 'مسح التصفيات';
+
+  @override
+  String get menuListNoMenusYet => 'لا توجد قوائم بعد';
+
+  @override
+  String get menuListNoMenusHelp =>
+      'أنشئ أول قائمة وابدأ بتنظيم المنتجات ضمن الأقسام.';
+
+  @override
+  String get menuListNoMatches => 'لا توجد قوائم تطابق التصفيات.';
+
+  @override
+  String get menuListNoMatchesHelp => 'جرّب تغيير البحث أو تصفية الحالة.';
+
+  @override
+  String get menuListCouldNotLoad => 'تعذّر تحميل القوائم';
+
+  @override
+  String get menuListCouldNotLoadHelp => 'تحقق من اتصالك ثم حاول مرة أخرى.';
+
+  @override
+  String get menuListLoadMore => 'عرض المزيد';
+
+  @override
+  String get menuListArchiveTitle => 'أرشفة القائمة؟';
+
+  @override
+  String get menuListArchiveHelp =>
+      'يمكن استعادة القائمة لاحقًا. لا تتغير الطلبات والإصدارات المنشورة.';
+
+  @override
+  String get menuListRestoreTitle => 'استعادة القائمة؟';
+
+  @override
+  String get menuListRestoreHelp =>
+      'تجعل الاستعادة القائمة قابلة للتعديل مرة أخرى. لا يؤدّي ذلك إلى نشرها.';
+
+  @override
+  String menuListActionsFor(String name) {
+    return 'إجراءات القائمة $name';
+  }
+
+  @override
+  String get menuListPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuListPriority => 'الأولوية';
+
+  @override
+  String get menuListName => 'الاسم';
+
+  @override
+  String get menuListCreated => 'تاريخ الإنشاء';
+
+  @override
+  String get menuListUpdated => 'آخر تحديث';
+
+  @override
+  String get menuListAscending => 'تصاعدي';
+
+  @override
+  String get menuListDescending => 'تنازلي';
+
+  @override
+  String get menuListAll => 'الكل';
+
+  @override
+  String get menuListDraft => 'مسودة';
+
+  @override
+  String get menuListActive => 'نشطة';
+
+  @override
+  String get menuListArchived => 'مؤرشفة';
+
+  @override
+  String get menuListEdit => 'تعديل';
+
+  @override
+  String get menuListArchive => 'أرشفة';
+
+  @override
+  String get menuListRestore => 'استعادة';
+
+  @override
+  String get menuListCancel => 'إلغاء';
+
+  @override
+  String get menuListRetry => 'إعادة المحاولة';
+
+  @override
+  String get menuEditorAddTitle => 'إضافة قائمة';
+
+  @override
+  String get menuEditorEditTitle => 'تعديل القائمة';
+
+  @override
+  String get menuEditorAddHelp =>
+      'ابدأ بالأسماء التي يتعرّف عليها الموظفون والعملاء.';
+
+  @override
+  String get menuEditorEditHelp =>
+      'حدّث هوية القائمة من دون مغادرة مساحة العمل.';
+
+  @override
+  String get menuEditorClose => 'إغلاق محرر القائمة';
+
+  @override
+  String get menuEditorEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get menuEditorArabicName => 'الاسم بالعربية';
+
+  @override
+  String get menuEditorMoreDetails => 'تفاصيل أكثر';
+
+  @override
+  String get menuEditorHideDetails => 'إخفاء التفاصيل';
+
+  @override
+  String get menuEditorEnglishDescription => 'الوصف بالإنجليزية';
+
+  @override
+  String get menuEditorArabicDescription => 'الوصف بالعربية';
+
+  @override
+  String get menuEditorCoverImageUrl => 'رابط صورة الغلاف';
+
+  @override
+  String get menuEditorPriority => 'الأولوية';
+
+  @override
+  String get menuEditorPriorityHelp => 'تحدد ترتيب عرض القوائم معًا.';
+
+  @override
+  String get menuEditorStatus => 'حالة القائمة';
+
+  @override
+  String get menuEditorCreate => 'إنشاء قائمة';
+
+  @override
+  String get menuEditorSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get menuEditorDraftHelp =>
+      'تبدأ القوائم الجديدة كمسودة. يمكنك تفعيلها لاحقًا.';
+
+  @override
+  String get menuEditorNameRequired =>
+      'أدخل اسمًا بالإنجليزية أو العربية للمتابعة.';
+
+  @override
+  String get menuEditorPriorityInvalid => 'أدخل رقمًا صحيحًا للأولوية.';
+
+  @override
+  String get menuEditorSaveFailed => 'تعذّر حفظ هذه القائمة. حاول مرة أخرى.';
+
+  @override
+  String get menuEditorArchivedReadOnly =>
+      'القوائم المؤرشفة للعرض فقط. استعد القائمة قبل تعديلها.';
+
+  @override
+  String get menuEditorStatusDraft => 'مسودة';
+
+  @override
+  String get menuEditorStatusActive => 'نشطة';
+
+  @override
+  String get menuEditorStatusPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuEditorStatusArchived => 'مؤرشفة';
+
+  @override
+  String get menuOverviewEditMenu => 'تعديل القائمة';
+
+  @override
+  String get menuOverviewActions => 'إجراءات القائمة';
+
+  @override
+  String get menuOverviewTab => 'نظرة عامة';
+
+  @override
+  String get menuOverviewSectionsTab => 'الأقسام';
+
+  @override
+  String get menuOverviewProductsTab => 'المنتجات';
+
+  @override
+  String get menuOverviewWorkspaceTabs => 'علامات تبويب مساحة عمل القائمة';
+
+  @override
+  String get menuOverviewDetails => 'تفاصيل القائمة';
+
+  @override
+  String get menuOverviewName => 'الاسم';
+
+  @override
+  String get menuOverviewStatus => 'الحالة';
+
+  @override
+  String get menuOverviewComposition => 'التكوين';
+
+  @override
+  String get menuOverviewManageSections => 'إدارة الأقسام';
+
+  @override
+  String get menuOverviewManageProducts => 'إدارة المنتجات';
+
+  @override
+  String menuOverviewCompositionValue(
+    int sectionCount,
+    int visibleProductCount,
+  ) {
+    return '$sectionCount أقسام · $visibleProductCount منتج ظاهر';
+  }
+
+  @override
+  String get menuOverviewDraft => 'مسودة';
+
+  @override
+  String get menuOverviewActive => 'نشطة';
+
+  @override
+  String get menuOverviewPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuOverviewArchived => 'مؤرشفة';
+
+  @override
+  String get menuOverviewArchivedReadOnly =>
+      'هذه القائمة مؤرشفة وللعرض فقط. استعد القائمة قبل تعديل تكوينها.';
+
+  @override
+  String get menuOverviewLoading => 'جارٍ تحميل مساحة عمل القائمة';
+
+  @override
+  String get menuOverviewCouldNotLoad => 'تعذّر تحميل هذه القائمة';
+
+  @override
+  String get menuOverviewArchive => 'أرشفة';
+
+  @override
+  String get menuOverviewRestore => 'استعادة';
+
+  @override
+  String get menuSectionsTitle => 'الأقسام';
+
+  @override
+  String get menuSectionsHelp =>
+      'نظّم هذه القائمة ضمن مجموعات يسهل على العميل تصفحها.';
+
+  @override
+  String get menuSectionsAdd => 'إضافة قسم';
+
+  @override
+  String get menuSectionsReorder => 'ترتيب الأقسام';
+
+  @override
+  String get menuSectionsDone => 'تم';
+
+  @override
+  String get menuSectionsReorderHelp =>
+      'استخدم الأسهم لتغيير الترتيب الذي يراه العملاء.';
+
+  @override
+  String menuSectionsProducts(int count) {
+    return '$count منتجات';
+  }
+
+  @override
+  String get menuSectionsArchived => 'مؤرشف';
+
+  @override
+  String get menuSectionsInactive => 'غير نشط';
+
+  @override
+  String menuSectionsActions(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get menuSectionsEdit => 'تعديل';
+
+  @override
+  String get menuSectionsArchive => 'أرشفة';
+
+  @override
+  String get menuSectionsRestore => 'استعادة';
+
+  @override
+  String get menuSectionsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get menuSectionsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get menuSectionsNoSections => 'لا توجد أقسام بعد';
+
+  @override
+  String get menuSectionsEmptyHelp => 'أنشئ قسمًا قبل إضافة المنتجات.';
+
+  @override
+  String get menuSectionsLoadError => 'تعذر تحميل الأقسام';
+
+  @override
+  String get menuSectionEditorAddTitle => 'إضافة قسم';
+
+  @override
+  String get menuSectionEditorEditTitle => 'تعديل القسم';
+
+  @override
+  String get menuSectionEditorAddHelp =>
+      'أنشئ مجموعة واضحة يمكن للعملاء تصفحها.';
+
+  @override
+  String get menuSectionEditorEditHelp =>
+      'حدّث هذه المجموعة دون مغادرة مساحة عمل القائمة.';
+
+  @override
+  String get menuSectionEditorClose => 'إغلاق محرر القسم';
+
+  @override
+  String get menuSectionEditorEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get menuSectionEditorArabicName => 'الاسم بالعربية';
+
+  @override
+  String get menuSectionEditorMoreDetails => 'تفاصيل أكثر';
+
+  @override
+  String get menuSectionEditorHideDetails => 'إخفاء التفاصيل';
+
+  @override
+  String get menuSectionEditorDescription => 'الوصف';
+
+  @override
+  String get menuSectionEditorImageUrl => 'رابط الصورة';
+
+  @override
+  String get menuSectionEditorActive => 'قسم نشط';
+
+  @override
+  String get menuSectionEditorNameRequired =>
+      'أدخل اسمًا بالإنجليزية أو العربية للمتابعة.';
+
+  @override
+  String get menuSectionEditorSaveFailed =>
+      'تعذر حفظ هذا القسم. راجع الحقول وحاول مرة أخرى.';
+
+  @override
+  String get menuSectionEditorSave => 'حفظ التغييرات';
+
+  @override
+  String get menuProductsTitle => 'المنتجات';
+
+  @override
+  String get menuProductsHelp =>
+      'نظّم المنتجات التي يراها العملاء داخل كل قسم.';
+
+  @override
+  String get menuProductsAdd => 'إضافة منتجات';
+
+  @override
+  String get menuProductsReorder => 'ترتيب المنتجات';
+
+  @override
+  String get menuProductsDone => 'تم';
+
+  @override
+  String get menuProductsReorderHelp =>
+      'استخدم الأسهم لتغيير ترتيب المنتجات داخل كل قسم.';
+
+  @override
+  String get menuProductsSearchHint => 'ابحث عن منتج في هذه القائمة';
+
+  @override
+  String menuProductsCount(int count) {
+    return '$count منتجات';
+  }
+
+  @override
+  String get menuProductsPickerTitle => 'إضافة منتجات';
+
+  @override
+  String get menuProductsPickerTargetSection => 'إضافة إلى قسم';
+
+  @override
+  String get menuProductsPickerSearchHint => 'البحث عن منتجات...';
+
+  @override
+  String menuProductsPickerAlreadyInSection(String section) {
+    return 'مضاف مسبقًا في $section';
+  }
+
+  @override
+  String menuProductsPickerSelected(int count) {
+    return 'المحدد: $count';
+  }
+
+  @override
+  String get menuProductsPickerNoMatches => 'لا توجد منتجات مطابقة لبحثك.';
+
+  @override
+  String get menuProductsPickerNoEligible =>
+      'جميع المنتجات المتاحة مضافة بالفعل إلى هذا القسم.';
+
+  @override
+  String get menuProductsPickerLoadError => 'تعذر تحميل المنتجات.';
+
+  @override
+  String menuProductsPickerPartialAdded(int added, int failed) {
+    return 'تمت إضافة $added منتجات. تعذر إضافة $failed.';
+  }
+
+  @override
+  String menuProductsPickerConflict(String section) {
+    return 'هذا المنتج موجود بالفعل في $section.';
+  }
+
+  @override
+  String menuProductsBasePrice(String price) {
+    return 'السعر الأساسي $price';
+  }
+
+  @override
+  String get menuProductsFeatured => 'مميز';
+
+  @override
+  String get menuProductsHidden => 'مخفي';
+
+  @override
+  String get menuProductsArchivedPlacement => 'تمت إزالته من القائمة';
+
+  @override
+  String get menuProductsArchivedProduct => 'منتج مؤرشف';
+
+  @override
+  String get menuProductsInactive => 'غير نشط';
+
+  @override
+  String get menuProductsActions => 'إجراءات المنتج';
+
+  @override
+  String get menuProductsMarkFeatured => 'تعيين كمميز';
+
+  @override
+  String get menuProductsRemoveFeatured => 'إزالة التمييز';
+
+  @override
+  String get menuProductsHide => 'إخفاء من القائمة';
+
+  @override
+  String get menuProductsShow => 'إظهار في القائمة';
+
+  @override
+  String get menuProductsMove => 'نقل إلى قسم';
+
+  @override
+  String get menuProductsRemove => 'إزالة من القائمة';
+
+  @override
+  String get menuProductsRestore => 'استعادة الموضع';
+
+  @override
+  String get menuProductsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get menuProductsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get menuProductsEmpty => 'لا توجد منتجات في هذا القسم بعد.';
+
+  @override
+  String get menuProductsNoMatches => 'لا توجد منتجات مطابقة في هذا القسم.';
+
+  @override
+  String get menuProductsNoSections => 'لا توجد أقسام بعد';
+
+  @override
+  String get menuProductsNoSectionsHelp => 'أنشئ قسمًا قبل إضافة المنتجات.';
+
+  @override
+  String get menuProductsArchivedMenuReadOnly =>
+      'هذه القائمة مؤرشفة وللعرض فقط. لا يزال تكوينها متاحًا للمراجعة.';
+
+  @override
+  String get menuProductsLoadError => 'تعذر تحميل المنتجات';
+
+  @override
+  String get menuProductsRemoveHelp =>
+      'يؤدي هذا إلى إزالة المنتج من هذا القسم والقائمة فقط. يبقى المنتج في الكتالوج.';
+
+  @override
+  String get menuProductsRestoreHelp =>
+      'يؤدي هذا إلى استعادة هذا الموضع فقط. ولا يستعيد المنتج أو يعيد تنشيطه.';
+
+  @override
+  String get assignmentsWorkspaceTitle => 'التخصيصات والجدولة';
+
+  @override
+  String get assignmentsWorkspaceHelp =>
+      'اختر فرعًا وقناة بيع، ثم تحكم بالقوائم المتاحة في سياق البيع هذا.';
+
+  @override
+  String get assignmentsBranch => 'الفرع';
+
+  @override
+  String get assignmentsSalesChannel => 'قناة البيع';
+
+  @override
+  String get assignmentsTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get assignmentsChooseBranch => 'اختر فرعًا';
+
+  @override
+  String get assignmentsChooseChannel => 'اختر قناة بيع';
+
+  @override
+  String get assignmentsTimezonePending => 'اختر فرعًا';
+
+  @override
+  String get assignmentsNoContextTitle => 'اختر سياق بيع';
+
+  @override
+  String get assignmentsNoContextHelp => 'اختر فرعًا وقناة بيع لإدارة قوائمه.';
+
+  @override
+  String get assignmentsAssignedMenus => 'القوائم المخصصة';
+
+  @override
+  String assignmentsMenuCount(int count) {
+    return '$count قوائم مخصصة';
+  }
+
+  @override
+  String get assignmentsReorderMenus => 'ترتيب القوائم';
+
+  @override
+  String get assignmentsReorderHelp =>
+      'استخدم الأسهم لتغيير ترتيب ظهور القوائم في سياق البيع هذا. لا يحدد الترتيب القائمة الفائزة.';
+
+  @override
+  String get assignmentsReorderDone => 'تم';
+
+  @override
+  String get assignmentsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get assignmentsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get assignmentsReorderSaveFailed =>
+      'تعذر حفظ ترتيب القوائم. حاول مرة أخرى.';
+
+  @override
+  String get assignmentsReorderArchivedUnavailable =>
+      'لا يتوفر ترتيب القوائم بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.';
+
+  @override
+  String get assignmentsAddMenus => 'إضافة قوائم';
+
+  @override
+  String get assignmentsNoMenusTitle => 'لا توجد قوائم مخصصة';
+
+  @override
+  String assignmentsNoMenusHelp(String branch, String channel) {
+    return 'أضف قائمة إلى $branch · $channel.';
+  }
+
+  @override
+  String get assignmentsLoadErrorTitle => 'تعذر تحميل التخصيصات';
+
+  @override
+  String assignmentsLifecycle(String status) {
+    return 'القائمة: $status';
+  }
+
+  @override
+  String get assignmentsPaused => 'موقوفة';
+
+  @override
+  String get assignmentsActive => 'التخصيص نشط';
+
+  @override
+  String get assignmentsInactive => 'التخصيص غير نشط';
+
+  @override
+  String get assignmentsAvailableNow => 'متاحة الآن';
+
+  @override
+  String get assignmentsOutsideHours => 'خارج ساعات الجدولة';
+
+  @override
+  String get assignmentsNoScheduleRestriction => 'لا توجد قيود للجدولة';
+
+  @override
+  String get assignmentsScheduleUnknown => 'حالة الجدولة غير متاحة';
+
+  @override
+  String get assignmentsManageSchedule => 'إدارة الجدول';
+
+  @override
+  String get assignmentsRemove => 'إزالة من سياق البيع هذا';
+
+  @override
+  String get assignmentsArchivedDiagnostic =>
+      'قائمة مؤرشفة — الإجراءات غير متاحة';
+
+  @override
+  String get assignmentsChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get assignmentsChannelKiosk => 'الكشك';
+
+  @override
+  String get assignmentsChannelQrOrdering => 'طلب QR';
+
+  @override
+  String get assignmentsChannelDelivery => 'التوصيل';
+
+  @override
+  String get assignmentsChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String get assignmentsMenuFallback => 'قائمة';
+
+  @override
+  String get assignmentsAddSearch => 'البحث في القوائم';
+
+  @override
+  String get assignmentsAddEmpty =>
+      'جميع القوائم المتاحة مخصصة بالفعل لسياق البيع هذا.';
+
+  @override
+  String assignmentsAddSelected(int count) {
+    return 'المحدد: $count';
+  }
+
+  @override
+  String assignmentsAddSelectedAction(int count) {
+    return 'إضافة $count قوائم';
+  }
+
+  @override
+  String get assignmentsAddAlreadyAssigned => 'مخصصة بالفعل';
+
+  @override
+  String get assignmentsAddArchivedUnavailable =>
+      'لا يمكن تخصيص القوائم المؤرشفة.';
+
+  @override
+  String get assignmentsAddNoMatches => 'لا توجد قوائم تطابق بحثك.';
+
+  @override
+  String get assignmentsAddLoadError => 'تعذر تحميل القوائم';
+
+  @override
+  String get assignmentsAddSaveError => 'تعذر إضافة القوائم. حاول مرة أخرى.';
+
+  @override
+  String get assignmentsAddDuplicateError =>
+      'قائمة واحدة أو أكثر مخصصة بالفعل لسياق البيع هذا.';
+
+  @override
+  String get assignmentsAddArchivedScopeError =>
+      'إضافة القوائم غير متاحة بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.';
+
+  @override
+  String get menuScheduleTitle => 'جدول القائمة';
+
+  @override
+  String menuScheduleTimesShownIn(String timezone) {
+    return 'الأوقات معروضة بتوقيت $timezone';
+  }
+
+  @override
+  String get menuScheduleUsingBroader => 'يُستخدم جدول القائمة الأوسع';
+
+  @override
+  String menuScheduleCustomizedFor(String context) {
+    return 'مخصص لـ $context';
+  }
+
+  @override
+  String get menuScheduleCustomize => 'تخصيص لهذا السياق';
+
+  @override
+  String get menuScheduleUseBroader => 'استخدام الجدول الأوسع';
+
+  @override
+  String get menuScheduleAvailableAllDay => 'متاح طوال اليوم';
+
+  @override
+  String get menuScheduleUnavailable => 'غير متاح';
+
+  @override
+  String get menuScheduleCustomHours => 'ساعات مخصصة';
+
+  @override
+  String get menuScheduleStartTime => 'وقت البدء';
+
+  @override
+  String get menuScheduleEndTime => 'وقت الانتهاء';
+
+  @override
+  String menuScheduleEditDay(String day) {
+    return 'تحرير $day';
+  }
+
+  @override
+  String get menuScheduleSaveDay => 'تطبيق';
+
+  @override
+  String get menuScheduleSave => 'حفظ الجدول';
+
+  @override
+  String get menuScheduleLoadError => 'تعذر تحميل جدول القائمة';
+
+  @override
+  String get menuScheduleSaveError => 'تعذر حفظ جدول القائمة. حاول مرة أخرى.';
+
+  @override
+  String menuScheduleMultipleWindows(int count) {
+    return '$count فترات زمنية';
+  }
+
+  @override
+  String get menuScheduleMultipleWindowsReadOnly =>
+      'يحتوي هذا اليوم على عدة فترات زمنية. سيتم الحفاظ عليها ويمكن تحريرها لاحقًا في الجدول المتقدم.';
+
+  @override
+  String get menuScheduleUnavailableNotSupported =>
+      'يستخدم هذا اليوم قاعدة يومية. احتفظ بها كما هي حتى توفر الجدولة المتقدمة.';
+
+  @override
+  String get menuScheduleInvalidTimes => 'أدخل وقتين مختلفين بصيغة HH:mm.';
+
+  @override
+  String get menuScheduleMonday => 'الاثنين';
+
+  @override
+  String get menuScheduleTuesday => 'الثلاثاء';
+
+  @override
+  String get menuScheduleWednesday => 'الأربعاء';
+
+  @override
+  String get menuScheduleThursday => 'الخميس';
+
+  @override
+  String get menuScheduleFriday => 'الجمعة';
+
+  @override
+  String get menuScheduleSaturday => 'السبت';
+
+  @override
+  String get menuScheduleSunday => 'الأحد';
+
+  @override
+  String get menuScheduleMoreOptions => 'خيارات الجدول الإضافية';
+
+  @override
+  String get menuScheduleDateLimits => 'حدود التاريخ';
+
+  @override
+  String get menuScheduleStartDate => 'تاريخ البدء (اختياري)';
+
+  @override
+  String get menuScheduleEndDate => 'تاريخ الانتهاء (اختياري)';
+
+  @override
+  String get menuScheduleAddTimeWindow => 'إضافة فترة زمنية';
+
+  @override
+  String menuScheduleOvernightUntil(String time) {
+    return 'يمتد لليوم التالي — متاح حتى $time';
+  }
+
+  @override
+  String get menuScheduleEveryDayReadOnly =>
+      'تنطبق هذه القاعدة على كل يوم، لذلك يتم الاحتفاظ بها كما هي للحفاظ على معنى الجدول.';
+
+  @override
+  String get menuScheduleCheckTitle => 'التحقق من الجدول';
+
+  @override
+  String get menuScheduleDate => 'التاريخ';
+
+  @override
+  String get menuScheduleTime => 'الوقت';
+
+  @override
+  String menuScheduleCheckTimezone(String timezone) {
+    return 'تُقيَّم الأوقات بتوقيت $timezone';
+  }
+
+  @override
+  String get menuScheduleCheckSaveFirst =>
+      'احفظ تغييرات الجدول أولاً للتحقق من الجدول المحفوظ.';
+
+  @override
+  String get menuScheduleCheckFailed => 'تعذر التحقق من الجدول. حاول مرة أخرى.';
+
+  @override
+  String get menuScheduleInvalidDateRange =>
+      'يجب أن يكون تاريخ الانتهاء في تاريخ البدء أو بعده.';
+
+  @override
+  String get menuScheduleDiscardTitle => 'تجاهل تغييرات الجدول؟';
+
+  @override
+  String get menuScheduleDiscardMessage => 'لم يتم حفظ تغييرات الجدول.';
+
+  @override
+  String get menuScheduleDiscard => 'تجاهل التغييرات';
+
+  @override
+  String menuScheduleCustomizeDayTitle(String day) {
+    return 'تخصيص $day';
+  }
+
+  @override
+  String get menuScheduleCustomizeDayMessage =>
+      'ينطبق هذا الجدول حاليًا على كل الأيام. سيحافظ تخصيص يوم واحد على الجدول نفسه للأيام الأخرى ويسمح بتغيير ذلك اليوم بشكل مستقل.';
+
+  @override
+  String menuScheduleCustomizeDayAction(String day) {
+    return 'تخصيص $day';
+  }
+
+  @override
+  String get menuScheduleDateLimitsMixed =>
+      'تحتوي هذه القواعد على حدود تاريخ مختلفة. تُترك حدود التاريخ دون تغيير هنا حتى لا يستبدلها هذا المحرر.';
+
+  @override
+  String get menuListNotAvailable => '—';
+
+  @override
+  String get reviewPublishPageHelp =>
+      'راجِع جاهزية القائمة، وعاين تجربة البيع، وانشر إصدارًا لسياق البيع هذا.';
+
+  @override
+  String get reviewSellingContext => 'سياق البيع';
+
+  @override
+  String get reviewSellingContextHelp =>
+      'تغطي هذه المراجعة القوائم المعيّنة لسياق البيع المحدد.';
+
+  @override
+  String get reviewBranch => 'الفرع';
+
+  @override
+  String get reviewSalesChannel => 'قناة البيع';
+
+  @override
+  String get reviewTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get reviewScope => 'النطاق';
+
+  @override
+  String get reviewScopeAssignedMenus => 'القوائم المعيّنة لهذا السياق';
+
+  @override
+  String get reviewReadinessTab => 'الجاهزية';
+
+  @override
+  String get reviewPreviewTab => 'المعاينة';
+
+  @override
+  String get reviewPublishTab => 'النشر';
+
+  @override
+  String get reviewVersionsTab => 'الإصدارات';
+
+  @override
+  String get reviewCurrentlyPublished => 'المنشور حاليًا';
+
+  @override
+  String get reviewNotPublishedYet => 'لم يُنشر بعد';
+
+  @override
+  String get reviewNoCurrentVersion => 'لم يُنشر إصدار قائمة لسياق البيع هذا.';
+
+  @override
+  String get reviewCurrentVersionLoadError =>
+      'تعذر تحميل الإصدار المنشور الحالي.';
+
+  @override
+  String reviewVersionNumber(int version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String reviewPublishedAt(String date) {
+    return 'نُشر $date';
+  }
+
+  @override
+  String get reviewViewVersions => 'عرض الإصدارات';
+
+  @override
+  String get reviewReadiness => 'الجاهزية';
+
+  @override
+  String get reviewReadinessHelp => 'راجِع التحقق المعتمد لسياق البيع هذا.';
+
+  @override
+  String get reviewCheckAgain => 'تحقق مجددًا';
+
+  @override
+  String get reviewNeedsAttention => 'تحتاج إلى اهتمام';
+
+  @override
+  String get reviewReadyToPublish => 'جاهز للنشر';
+
+  @override
+  String get reviewFixBlockingErrors => 'أصلح الأخطاء المانعة قبل النشر.';
+
+  @override
+  String get reviewErrors => 'أخطاء';
+
+  @override
+  String get reviewWarnings => 'تحذيرات';
+
+  @override
+  String reviewWarningsToReview(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تحذير للمراجعة.',
+      many: '$count تحذيرًا للمراجعة.',
+      few: '$count تحذيرات للمراجعة.',
+      two: 'تحذيران للمراجعة.',
+      one: 'تحذير واحد للمراجعة.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reviewNoIssuesForScope(String branch, String channel) {
+    return 'لم تُعثر على مشكلات لـ $branch · $channel.';
+  }
+
+  @override
+  String get reviewNoMenusAssigned => 'لا توجد قوائم معيّنة';
+
+  @override
+  String reviewNoMenusAssignedHelp(String branch, String channel) {
+    return 'عيّن قائمة نشطة واحدة على الأقل لـ $branch · $channel قبل النشر.';
+  }
+
+  @override
+  String get reviewGoToAssignments => 'انتقل إلى التعيينات';
+
+  @override
+  String get reviewReadinessLoadError => 'تعذر تحميل نتائج الجاهزية.';
+
+  @override
+  String get reviewTryAgain => 'حاول مرة أخرى.';
+
+  @override
+  String get reviewIssuesAll => 'الكل';
+
+  @override
+  String get reviewSearchIssues => 'البحث في المشكلات...';
+
+  @override
+  String get reviewNoMatchingIssues => 'لا توجد مشكلات مطابقة';
+
+  @override
+  String get reviewTryDifferentSearch => 'جرّب بحثًا أو تصفية مختلفة.';
+
+  @override
+  String reviewIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مشكلة',
+      many: '$count مشكلة',
+      few: '$count مشكلات',
+      two: 'مشكلتان',
+      one: 'مشكلة واحدة',
+      zero: 'لا توجد مشكلات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewIssueGroupMenus => 'القوائم';
+
+  @override
+  String get reviewIssueGroupSections => 'الأقسام';
+
+  @override
+  String get reviewIssueGroupProducts => 'المنتجات';
+
+  @override
+  String get reviewIssueGroupVariants => 'الخيارات';
+
+  @override
+  String get reviewIssueGroupRecipesMaterials => 'الوصفات والمواد';
+
+  @override
+  String get reviewIssueGroupModifiers => 'المعدّلات';
+
+  @override
+  String get reviewIssueGroupPricing => 'التسعير';
+
+  @override
+  String get reviewIssueGroupAvailability => 'التوفّر';
+
+  @override
+  String get reviewIssueGroupAssignmentsScope => 'التعيينات والنطاق';
+
+  @override
+  String get reviewIssueGroupOther => 'أخرى / عامة';
+
+  @override
+  String get reviewIssueGeneral => 'عام';
+
+  @override
+  String get reviewOpenMenu => 'فتح القائمة';
+
+  @override
+  String get reviewOpenProduct => 'فتح المنتج';
+
+  @override
+  String get reviewOpenSections => 'فتح الأقسام';
+
+  @override
+  String get reviewReviewMenu => 'مراجعة القائمة';
+
+  @override
+  String get reviewIssueContextMenu => 'مشكلة في القائمة';
+
+  @override
+  String get reviewIssueContextSection => 'مشكلة في القسم';
+
+  @override
+  String get reviewIssueContextProduct => 'مشكلة في المنتج';
+
+  @override
+  String get reviewIssueContextVariant => 'مشكلة في الخيار';
+
+  @override
+  String get reviewIssueContextPlacement => 'مشكلة في موضع القائمة';
+
+  @override
+  String get reviewIssueContextModifier => 'مشكلة في المعدِّل';
+
+  @override
+  String get reviewIssueContextRecipe => 'مشكلة في الوصفة أو المادة';
+
+  @override
+  String get reviewIssueContextScope => 'مشكلة في سياق البيع';
+
+  @override
+  String get reviewIssueContextGeneral => 'مشكلة عامة';
+
+  @override
+  String get reviewPreviewContext =>
+      'عاين مجموعة القوائم المعيّنة لسياق البيع هذا.';
+
+  @override
+  String get reviewPreviewLanguage => 'لغة المعاينة';
+
+  @override
+  String get reviewPreviewLanguageDefault => 'اللغة الافتراضية';
+
+  @override
+  String get reviewPreviewLanguageArabic => 'العربية';
+
+  @override
+  String get reviewPreviewLanguageEnglish => 'الإنجليزية';
+
+  @override
+  String get reviewPreviewShowHidden => 'إظهار العناصر المخفية';
+
+  @override
+  String get reviewPreviewShowUnavailable => 'إظهار العناصر غير المتاحة';
+
+  @override
+  String get reviewPreviewRefresh => 'تحديث المعاينة';
+
+  @override
+  String get reviewPreviewLoading => 'جارٍ تحميل المعاينة';
+
+  @override
+  String get reviewPreviewBlockingBanner =>
+      'تحتوي هذه المعاينة على مشكلات يجب إصلاحها قبل النشر.';
+
+  @override
+  String get reviewPreviewReviewReadiness => 'مراجعة الجاهزية';
+
+  @override
+  String get reviewPreviewAvailableNow => 'متاح الآن';
+
+  @override
+  String get reviewPreviewOutsideScheduledHours => 'خارج ساعات الجدول';
+
+  @override
+  String get reviewPreviewHidden => 'مخفي';
+
+  @override
+  String get reviewPreviewUnavailable => 'غير متاح';
+
+  @override
+  String get reviewPreviewSoldOut => 'نفد المخزون';
+
+  @override
+  String get reviewPreviewTemporarilyUnavailable => 'غير متاح مؤقتًا';
+
+  @override
+  String get reviewPreviewAvailable => 'متاح';
+
+  @override
+  String get reviewPreviewFeatured => 'مميّز';
+
+  @override
+  String get reviewPreviewDefault => 'افتراضي';
+
+  @override
+  String get reviewPreviewVariants => 'الخيارات';
+
+  @override
+  String get reviewPreviewModifiers => 'المعدّلات';
+
+  @override
+  String get reviewPreviewRecipeConfigured => 'الوصفة مهيأة';
+
+  @override
+  String reviewPreviewRecipeComponents(int count) {
+    return '$count مكوّنات';
+  }
+
+  @override
+  String get reviewPreviewNoMenus => 'لا توجد قوائم للمعاينة';
+
+  @override
+  String get reviewPreviewNoMenusHelp =>
+      'عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا.';
+
+  @override
+  String get reviewPreviewEmptySection => 'لا توجد منتجات مضمنة في هذا القسم.';
+
+  @override
+  String get reviewPreviewError => 'تعذر تحميل المعاينة.';
+
+  @override
+  String get reviewPreviewRetry => 'إعادة المحاولة';
+
+  @override
+  String get reviewPreviewBasePrice => 'السعر الأساسي';
+
+  @override
+  String get reviewPreviewRequired => 'مطلوب';
+
+  @override
+  String get reviewPreviewOptional => 'اختياري';
+
+  @override
+  String get reviewPreviewOptionUnavailable => 'خيار غير متاح';
+
+  @override
+  String reviewPublishQuestion(String branch, String channel) {
+    return 'نشر $branch · $channel؟';
+  }
+
+  @override
+  String get reviewPublishScopeHelp =>
+      'سينشئ هذا إصدارًا منشورًا للقائمة لسياق البيع الدقيق هذا.';
+
+  @override
+  String get reviewPublishCurrentVersion => 'الإصدار الحالي';
+
+  @override
+  String get reviewPublishCheckingReadiness => 'جارٍ التحقق من الجاهزية…';
+
+  @override
+  String get reviewPublishWaitForReadiness =>
+      'انتظر اكتمال فحص الجاهزية الحالي قبل النشر.';
+
+  @override
+  String get reviewPublishNoAssignedMenu =>
+      'عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا قبل النشر.';
+
+  @override
+  String get reviewPublishCannotPublish => 'لا يمكن النشر بعد';
+
+  @override
+  String get reviewPublishReviewErrors => 'مراجعة الأخطاء';
+
+  @override
+  String get reviewPublishReviewIssues => 'مراجعة المشكلات';
+
+  @override
+  String reviewPublishWarningsCanProceed(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تبقى $count تحذيرات. يمكنك مع ذلك نشر هذا الإصدار.',
+      one: 'تبقى تحذير واحد. يمكنك مع ذلك نشر هذا الإصدار.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPublishCleanReady =>
+      'لم يُعثر على مشكلات مانعة. يمكنك نشر هذا الإصدار.';
+
+  @override
+  String get reviewPublishAction => 'نشر إصدار القائمة';
+
+  @override
+  String get reviewPublishPublishing => 'جارٍ النشر…';
+
+  @override
+  String reviewPublishConfirmTitle(String branch, String channel) {
+    return 'نشر $branch · $channel؟';
+  }
+
+  @override
+  String get reviewPublishImmutableExplanation =>
+      'سيُنشأ إصدار قائمة غير قابل للتعديل إذا تغيّر التكوين.';
+
+  @override
+  String get reviewPublishAlreadyUpToDate => 'محدّث بالفعل';
+
+  @override
+  String reviewPublishNoChanges(int version) {
+    return 'لم يُعثر على تغييرات في القائمة منذ الإصدار $version. لم يُنشأ إصدار جديد.';
+  }
+
+  @override
+  String get reviewPublishSuccess => 'تم النشر بنجاح';
+
+  @override
+  String reviewPublishCurrentForScope(String branch, String channel) {
+    return 'هذا هو الإصدار المنشور الحالي لـ $branch · $channel.';
+  }
+
+  @override
+  String get reviewPublishRevalidationFailedTitle =>
+      'تغيّرت القائمة ولم تعد جاهزة للنشر.';
+
+  @override
+  String get reviewPublishRevalidationFailedMessage =>
+      'تم اكتشاف مشكلات جديدة أثناء التحقق النهائي.';
+
+  @override
+  String get reviewPublishRequestFailed => 'تعذّر نشر إصدار القائمة.';
+
+  @override
+  String get reviewPublishTryAgain => 'حاول مرة أخرى';
+
+  @override
+  String get menuUiUnsavedChangesTitle => 'تغييرات غير محفوظة';
+
+  @override
+  String get menuUiUnsavedChangesMessage =>
+      'لديك تغييرات غير محفوظة. إذا غادرت الآن، سيتم تجاهلها.';
+
+  @override
+  String get menuUiStay => 'بقاء';
+
+  @override
+  String get menuUiLeaveWithoutSaving => 'المغادرة دون حفظ';
+
+  @override
+  String get productEditorCreated => 'تم إنشاء المنتج بنجاح.';
+
+  @override
+  String get productEditorUpdated => 'تم تحديث المنتج بنجاح.';
+
+  @override
+  String get productEditorCreateHelp =>
+      'حدد ماهية هذا المنتج، ومكانه في الكتالوج، وكيفية بيعه.';
+
+  @override
+  String get productEditorEditHelp =>
+      'حدّث بيانات المنتج التي يستخدمها المديرون يوميًا.';
+
+  @override
+  String get productEditorArchivedReadOnly =>
+      'المنتجات المؤرشفة متاحة للرجوع إليها فقط. استعد المنتج لتعديله.';
+
+  @override
+  String get productEditorViewWorkspace => 'عرض مساحة عمل المنتج';
+
+  @override
+  String get productEditorDefaultName => 'اسم المنتج الافتراضي';
+
+  @override
+  String get productEditorDefaultDescription => 'الوصف الافتراضي';
+
+  @override
+  String get productEditorImage => 'صورة المنتج';
+
+  @override
+  String get productEditorUploadingImage => 'جارٍ رفع الصورة…';
+
+  @override
+  String get productEditorChooseImage => 'اختر صورة';
+
+  @override
+  String get productEditorChangeImage => 'تغيير الصورة';
+
+  @override
+  String get productEditorRemoveImage => 'إزالة الصورة';
+
+  @override
+  String get productEditorImageFormats =>
+      'PNG، JPG، WEBP، أو GIF بحد أقصى 5 ميغابايت';
+
+  @override
+  String get productEditorTranslationsClose => 'إغلاق الترجمات';
+
+  @override
+  String get productEditorDefaultContent => 'المحتوى الافتراضي';
+
+  @override
+  String get productEditorLocalizedName => 'الاسم المترجم';
+
+  @override
+  String get productEditorLocalizedDescription => 'الوصف المترجم';
+
+  @override
+  String get productEditorStockTracking => 'تتبع المخزون';
+
+  @override
+  String get productEditorStockTrackingHelp =>
+      'تتبع المواد المستهلكة عند تحضير المنتج.';
+
+  @override
+  String get productEditorNoDefaultVariant => 'لم يتم إرجاع خيار افتراضي.';
+
+  @override
+  String get productEditorManageVariants => 'إدارة الخيارات';
+
+  @override
+  String get productDetailNotFound => 'المنتج غير موجود.';
+
+  @override
+  String get productDetailEdit => 'تعديل المنتج';
+
+  @override
+  String get productDetailArchiveTitle => 'أرشفة المنتج؟';
+
+  @override
+  String get productDetailRestoreTitle => 'استعادة المنتج؟';
+
+  @override
+  String get productDetailArchiveAction => 'أرشفة المنتج';
+
+  @override
+  String get productDetailRestoreAction => 'استعادة المنتج';
+
+  @override
+  String get productDetailUsageEmpty =>
+      'هذا المنتج غير مستخدم حاليًا في أي قوائم.';
+
+  @override
+  String get variantTitle => 'الخيارات';
+
+  @override
+  String get variantHelp => 'أدِر خيارات البيع المتاحة لهذا المنتج.';
+
+  @override
+  String get variantAdd => 'إضافة خيار';
+
+  @override
+  String get variantEdit => 'تعديل الخيار';
+
+  @override
+  String get variantReorder => 'إعادة الترتيب';
+
+  @override
+  String get variantDone => 'تم';
+
+  @override
+  String get variantRefresh => 'تحديث الخيارات';
+
+  @override
+  String get variantReadOnly => 'هذا المنتج مؤرشف وخياراته للعرض فقط.';
+
+  @override
+  String get variantCannotArchiveDefaultTitle =>
+      'لا يمكن أرشفة الخيار الافتراضي';
+
+  @override
+  String get variantCannotArchiveDefaultMessage =>
+      'لا يمكن أرشفة الخيار النشط الوحيد.';
+
+  @override
+  String get variantArchiveMessage =>
+      'سيتم أرشفة هذا الخيار ويمكن استعادته لاحقًا.';
+
+  @override
+  String get variantSelectReplacement =>
+      'اختر خيارًا نشطًا بديلًا للخيار الافتراضي.';
+
+  @override
+  String get variantOrder => 'الترتيب';
+
+  @override
+  String get variantName => 'اسم الخيار';
+
+  @override
+  String get variantBasePrice => 'السعر الأساسي';
+
+  @override
+  String get variantCostPrice => 'سعر التكلفة';
+
+  @override
+  String get variantDefault => 'الافتراضي';
+
+  @override
+  String get variantActions => 'الإجراءات';
+
+  @override
+  String get variantActiveStatus => 'حالة النشاط';
+
+  @override
+  String get variantMakeDefault => 'تعيينه كخيار افتراضي';
+
+  @override
+  String get variantDefaultMustBeActive =>
+      'يجب أن يكون الخيار الافتراضي نشطًا.';
+
+  @override
+  String get variantSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get variantNoArchived => 'لا توجد خيارات مؤرشفة.';
+
+  @override
+  String get variantEmpty => 'لم يُعد أي خيارات لهذا المنتج.';
+
+  @override
+  String get modifierAssignmentTitle => 'المعدّلات';
+
+  @override
+  String get modifierAssignmentSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get modifierAssignmentAddGroup => 'إضافة مجموعة معدّلات';
+
+  @override
+  String get modifierAssignmentNoAssigned =>
+      'لا تُعيّن أي مجموعات معدّلات لهذا المنتج.';
+
+  @override
+  String get modifierAssignmentNoAvailable =>
+      'لم يُعثر على مجموعات معدّلات متاحة.';
+
+  @override
+  String get modifierAssignmentSearch => 'البحث في مجموعات المعدّلات';
+
+  @override
+  String get modifierAssignmentRemoveTitle => 'إزالة مجموعة المعدّلات؟';
+
+  @override
+  String get modifierAssignmentRemoveMessage =>
+      'إزالة مجموعة المعدّلات من المنتج؟ ستبقى المجموعة وخياراتها متاحة في مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentUseLibrarySettings => 'استخدام إعدادات المكتبة';
+
+  @override
+  String get modifierAssignmentApply => 'تطبيق';
+
+  @override
+  String get modifierAssignmentCurrentBehavior => 'السلوك الحالي';
+
+  @override
+  String get modifierAssignmentNonNegative => 'استخدم أرقامًا صحيحة غير سالبة.';
+
+  @override
+  String get modifierAssignmentInvalidConstraints =>
+      'قيود الاختيار الفعّالة غير صالحة.';
+
+  @override
+  String get productDetailUncategorized => 'منتج بلا فئة';
+
+  @override
+  String get productDetailArchiveMenuAction => 'أرشفة المنتج';
+
+  @override
+  String get productDetailRestoreMenuAction => 'استعادة المنتج';
+
+  @override
+  String get productDetailBasePrice => 'السعر الأساسي';
+
+  @override
+  String get productDetailKitchenStation => 'محطة التحضير';
+
+  @override
+  String get productDetailWorkspaceNavigation => 'تنقل مساحة عمل المنتج';
+
+  @override
+  String get productDetailSetupHelp => 'تفاصيل الكتالوج والتحضير لهذا المنتج.';
+
+  @override
+  String get productDetailDescription => 'الوصف';
+
+  @override
+  String get productDetailAdvancedTechnical => 'متقدم وتقني';
+
+  @override
+  String get productDetailUsageHelp =>
+      'القوائم التي يُستخدم فيها هذا المنتج حاليًا.';
+
+  @override
+  String productDetailUsageCount(int count) {
+    return '$count مواضع نشطة في القوائم.';
+  }
+
+  @override
+  String get productDetailArchivedVariantsMessage =>
+      'هذا المنتج مؤرشف وخياراته للعرض فقط.';
+
+  @override
+  String get productDetailArchivedModifiersMessage =>
+      'هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.';
+
+  @override
+  String get productDetailViewAction => 'عرض تفاصيل المنتج';
+
+  @override
+  String get variantActive => 'نشط';
+
+  @override
+  String get variantInactive => 'غير نشط';
+
+  @override
+  String get variantArchived => 'مؤرشف';
+
+  @override
+  String get variantAll => 'الكل';
+
+  @override
+  String variantSetDefaultTitle(String name) {
+    return 'تعيين «$name» كخيار افتراضي؟';
+  }
+
+  @override
+  String get variantSetDefaultMessage =>
+      'سيُستخدم سعر المنتج الأساسي وSKU والباركود وتوافق POS القديم من هذا الخيار. لا تتغير الطلبات الحالية.';
+
+  @override
+  String variantArchiveTitle(String name) {
+    return 'أرشفة «$name»؟';
+  }
+
+  @override
+  String variantRestoreDefaultTitle(String name) {
+    return 'استعادة «$name» كخيار افتراضي؟';
+  }
+
+  @override
+  String get variantRestoreDefaultMessage =>
+      'لا يوجد لهذا المنتج خيار افتراضي نشط، لذا يجب تعيين هذا الخيار المستعاد كافتراضي.';
+
+  @override
+  String get variantSetDefaultAction => 'تعيين افتراضي';
+
+  @override
+  String get variantRestoreDefaultAction => 'استعادة كافتراضي';
+
+  @override
+  String get variantMoveUp => 'نقل للأعلى';
+
+  @override
+  String get variantMoveDown => 'نقل للأسفل';
+
+  @override
+  String variantActionsFor(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get variantReorderSemantic => 'إعادة الترتيب';
+
+  @override
+  String variantSku(String sku) {
+    return 'SKU: $sku';
+  }
+
+  @override
+  String get variantRecipeConfigured => 'الوصفة مُعدّة';
+
+  @override
+  String get variantRecipeMissing => 'الوصفة مفقودة';
+
+  @override
+  String get variantRecipeNotConfigured => 'الوصفة غير مُعدّة';
+
+  @override
+  String get variantManageRecipe => 'إدارة الوصفة';
+
+  @override
+  String get variantPricing => 'التسعير';
+
+  @override
+  String get variantSellingHours => 'ساعات البيع';
+
+  @override
+  String get variantCurrentAvailability => 'الإتاحة الحالية';
+
+  @override
+  String get variantArabicName => 'الاسم بالعربية';
+
+  @override
+  String get variantEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get variantSortOrder => 'ترتيب العرض';
+
+  @override
+  String get modifierAssignmentArchivedReadOnly =>
+      'هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.';
+
+  @override
+  String get modifierAssignmentViewProduct => 'عرض تفاصيل المنتج';
+
+  @override
+  String get modifierAssignmentProduct => 'المنتج';
+
+  @override
+  String modifierAssignmentAssignedGroups(int count) {
+    return 'المجموعات المعيّنة ($count)';
+  }
+
+  @override
+  String get modifierAssignmentAvailableGroups => 'المجموعات المتاحة';
+
+  @override
+  String get modifierAssignmentReorder => 'إعادة الترتيب';
+
+  @override
+  String get modifierAssignmentDone => 'تم';
+
+  @override
+  String get modifierAssignmentMoveUp => 'نقل للأعلى';
+
+  @override
+  String get modifierAssignmentMoveDown => 'نقل للأسفل';
+
+  @override
+  String modifierAssignmentActionsFor(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get modifierAssignmentChooseGroupHelp =>
+      'اختر مجموعة لإتاحة خياراتها لعملاء هذا المنتج.';
+
+  @override
+  String modifierAssignmentCustomizeFor(String name) {
+    return 'تخصيص لـ $name';
+  }
+
+  @override
+  String modifierAssignmentCustomizedFor(String name) {
+    return 'مخصّص لـ $name';
+  }
+
+  @override
+  String get modifierAssignmentUsingLibrarySettings => 'يستخدم إعدادات المكتبة';
+
+  @override
+  String get modifierAssignmentHowChoose => 'كيف ينبغي للعملاء الاختيار؟';
+
+  @override
+  String get modifierAssignmentChooseOne => 'اختر واحدًا';
+
+  @override
+  String get modifierAssignmentChooseMultiple => 'اختر عدة خيارات';
+
+  @override
+  String get modifierAssignmentMultipleHelp =>
+      'تستخدم هذه المجموعة خيارات متعددة من مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentSingleHelp =>
+      'تستخدم هذه المجموعة خيارًا واحدًا من مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentMinimumChoices => 'الحد الأدنى للخيارات';
+
+  @override
+  String get modifierAssignmentMaximumChoices => 'الحد الأقصى للخيارات';
+
+  @override
+  String get modifierAssignmentAllowDuplicate =>
+      'هل يمكن إضافة الخيار نفسه أكثر من مرة؟';
+
+  @override
+  String modifierAssignmentConfigure(String name) {
+    return 'تهيئة $name';
+  }
+
+  @override
+  String modifierAssignmentOverride(String label) {
+    return 'تجاوز $label';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultBoolean(String value) {
+    return 'افتراضي المكتبة: $value';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultNumber(int value) {
+    return 'افتراضي المكتبة: $value';
+  }
+
+  @override
+  String modifierAssignmentEffectiveSetting(String value) {
+    return 'الإعداد الفعّال: $value';
+  }
+
+  @override
+  String get modifierAssignmentHelp =>
+      'اختر مجموعات المعدّلات التي يمكن للعملاء استخدامها مع هذا المنتج.';
+
+  @override
+  String get modifierAssignmentMaterialImpact => 'تم إعداد تأثير المواد';
+
+  @override
+  String get modifierAssignmentViewGroup => 'عرض مجموعة المعدّلات';
+
+  @override
+  String get modifierAssignmentCustomizeForProduct => 'تخصيص للمنتج';
+
+  @override
+  String get modifierAssignmentRemoveFromProduct => 'إزالة من المنتج';
+
+  @override
+  String get menuDetailArchiveTitle => 'أرشفة القائمة؟';
+
+  @override
+  String get menuDetailRestoreTitle => 'استعادة القائمة؟';
+
+  @override
+  String get menuDetailArchiveMessage =>
+      'تؤرشف هذه القائمة دون حذفها. يبقى تكوينها متاحًا للمراجعة.';
+
+  @override
+  String get menuDetailRestoreMessage =>
+      'تعيد استعادة هذه القائمة إلى المسودة. لا تستعيد الأقسام المؤرشفة.';
+
+  @override
+  String get productEditorProductType => 'نوع المنتج';
+
+  @override
+  String get productEditorStandard => 'عادي';
+
+  @override
+  String get productEditorOpenPrice => 'سعر مفتوح';
+
+  @override
+  String get productEditorPreparationTime => 'وقت التحضير';
+
+  @override
+  String get productEditorMinutes => 'دقائق';
+
+  @override
+  String get productEditorInitialOptionHelp =>
+      'يبدأ كل منتج بخيار بيع واحد. يمكنك إضافة خيارات أخرى لاحقًا.';
+
+  @override
+  String get productEditorVariantName => 'اسم خيار البيع';
+
+  @override
+  String get productEditorDefaultVariant => 'الخيار الافتراضي';
+
+  @override
+  String get productEditorDefaultVariantHelp =>
+      'تُدار خيارات البيع بشكل منفصل ليبقى تفاصيل المنتج مركّزة.';
+
+  @override
+  String get productEditorTranslationsHelp =>
+      'أضف محتوى مترجمًا دون إزدحام نموذج المنتج الرئيسي.';
+
+  @override
+  String get productEditorTranslationsPanelHelp =>
+      'استخدم لوحة الترجمات لإدخال أسماء وأوصاف عربية وإنجليزية.';
+
+  @override
+  String get productEditorSortOrder => 'ترتيب العرض';
+
+  @override
+  String get productEditorVariantCost => 'تكلفة خيار البيع';
+
+  @override
+  String get productEditorNone => 'لا شيء';
+
+  @override
+  String get productEditorPreviewUnavailable => 'المعاينة غير متاحة';
+
+  @override
+  String get productEditorDropImage => 'أفلت صورة هنا أو انقر للتصفح';
+
+  @override
+  String get productEditorImageLoadFailed => 'تعذر تحميل الصورة';
+
+  @override
+  String get productEditorWhatIsProduct => 'ما هو هذا المنتج؟';
+
+  @override
+  String get productEditorClassificationHelp =>
+      'اختر موضع هذا المنتج في الكتالوج وتدفق التحضير.';
+
+  @override
+  String get productEditorKitchenStationHelp =>
+      'الموضع العادي لتحضير هذا المنتج.';
+
+  @override
+  String get productEditorReportingCategoryHelp =>
+      'تُستخدم لتقارير المبيعات والأداء.';
+
+  @override
+  String get productEditorSellingPreparationHelp =>
+      'حدد كيفية بيع هذا المنتج وما يلزم فريق العمل من معلومات تحضير.';
+
+  @override
+  String get productEditorArabicConfigured => 'تم إعداد العربية';
+
+  @override
+  String get productEditorEnglishConfigured => 'تم إعداد الإنجليزية';
+
+  @override
+  String productEditorBasePriceValue(String price) {
+    return 'السعر الأساسي $price';
+  }
+
+  @override
+  String get productDetailArchiveMessage =>
+      'لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي. لا تتغير الطلبات الحالية والإصدارات المنشورة السابقة.';
+
+  @override
+  String get productDetailRestoreMessage =>
+      'يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.';
+
+  @override
+  String get productCatalogArchiveMessage =>
+      'لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي.\n\nلا يُحذف المنتج نهائيًا. لا تُحذف مجموعات المعدّلات المركزية، وتبقى الخيارات مخزنة حسب سلوك الخلفية.';
+
+  @override
+  String get productCatalogRestoreMessage =>
+      'يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته في القوائم معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.';
+
+  @override
+  String productCatalogUsageMessage(int count, String names) {
+    return 'يُستخدم هذا المنتج حاليًا في $count مواضع في القوائم$names.';
+  }
+
+  @override
+  String get operationalOverrideClearTitle => 'مسح التجاوز التشغيلي؟';
+
+  @override
+  String operationalOverrideClearMessage(String level, String scope) {
+    return 'مسح تجاوز $level لـ $scope؟\n\nلن يتم تغيير الإتاحة المجدولة، أو إعدادات المنتج، أو الإصدارات المنشورة السابقة.';
+  }
+
+  @override
+  String get operationalOverrideClearAction => 'مسح التجاوز';
+
+  @override
+  String get productDetailProductId => 'معرّف المنتج';
+
+  @override
+  String get productDetailUpdated => 'آخر تحديث';
+
+  @override
+  String get productDetailImageUrl => 'رابط الصورة';
+
+  @override
+  String get authLoginTitle => 'تسجيل الدخول إلى مساحة العمل';
+
+  @override
+  String get authLoginSubtitle => 'تسجيل دخول مركز العمليات';
+
+  @override
+  String get authEmailOrUsername => 'البريد الإلكتروني أو اسم المستخدم';
+
+  @override
+  String get authIdentifierRequired => 'أدخل بريدك الإلكتروني أو اسم المستخدم.';
+
+  @override
+  String get authPassword => 'كلمة المرور';
+
+  @override
+  String get authPasswordRequired => 'أدخل كلمة المرور.';
+
+  @override
+  String get authLogIn => 'تسجيل الدخول';
+
+  @override
+  String get authLoggingIn => 'جاري تسجيل الدخول…';
+
+  @override
+  String get authLoginHelp =>
+      'استخدم بريد العمل أو اسم مستخدم الموظف للمتابعة.';
+
+  @override
+  String get authLoginFailed =>
+      'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مجددًا.';
+
+  @override
+  String get authInvalidCredentials =>
+      'البريد الإلكتروني أو اسم المستخدم أو كلمة المرور غير صحيحة.';
+
+  @override
+  String get authTooManyAttempts =>
+      'تم إجراء محاولات كثيرة لتسجيل الدخول. انتظر قليلًا ثم حاول مجددًا.';
+
+  @override
+  String get authNetworkUnavailable =>
+      'يتعذر الاتصال بالخادم. تحقق من اتصال الشبكة ثم حاول مجددًا.';
+
+  @override
+  String get authConnectionTimeout =>
+      'انتهت مهلة الاتصال. تحقق من الاتصال ثم حاول مجددًا.';
+
+  @override
+  String get authServerUnavailable =>
+      'الخدمة غير متاحة مؤقتًا. يرجى المحاولة بعد قليل.';
+
+  @override
+  String get authValidationFailed =>
+      'يرجى مراجعة الحقول المميزة ثم المحاولة مجددًا.';
+
+  @override
+  String get authFieldValidationFailed => 'تحقق من هذه القيمة ثم حاول مجددًا.';
+
+  @override
+  String get authInvalidResponse =>
+      'تعذر التحقق من استجابة تسجيل الدخول. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authSecureStorageFailure =>
+      'تعذر حفظ الجلسة بأمان. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authVerifiedSessionSaveFailed =>
+      'تعذر حفظ جلستك المتحقق منها بأمان. أعد محاولة التحقق أو سجّل الخروج.';
+
+  @override
+  String get authPasswordChangedSessionSaveFailed =>
+      'تم تغيير كلمة المرور، لكن تعذر حفظ الجلسة. يرجى تسجيل الدخول مجددًا باستخدام كلمة المرور الجديدة.';
+
+  @override
+  String get authUnexpectedError => 'حدث خطأ غير متوقع. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authIncorrectCurrentPassword => 'كلمة المرور الحالية غير صحيحة.';
+
+  @override
+  String get authWeakNewPassword => 'اختر كلمة مرور جديدة أقوى.';
+
+  @override
+  String get authPasswordConfirmationMismatch => 'تأكيد كلمة المرور غير مطابق.';
+
+  @override
+  String get authChangePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get authChangePasswordExplanation =>
+      'يتطلب تسجيل الدخول الأول أو إعادة التعيين من مدير تعيين كلمة مرور جديدة.';
+
+  @override
+  String get authCurrentPassword => 'كلمة المرور الحالية';
+
+  @override
+  String get authNewPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get authConfirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String authMinimumPassword(int count) {
+    return 'استخدم ما لا يقل عن $count محرفًا.';
+  }
+
+  @override
+  String get authManagerPasswordRule =>
+      'يحتاج المالكون والمديرون إلى 10 محارف على الأقل.';
+
+  @override
+  String get authEmployeePasswordRule =>
+      'يحتاج الموظفون إلى 8 محارف على الأقل.';
+
+  @override
+  String get authPasswordsDoNotMatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get authSavePassword => 'حفظ كلمة المرور';
+
+  @override
+  String get authSavingPassword => 'جاري حفظ كلمة المرور…';
+
+  @override
+  String get authPasswordChangeFailed =>
+      'تعذر تغيير كلمة المرور. تحقق من كلمة المرور الحالية وحاول مجددًا.';
+
+  @override
+  String get authRestoringSession => 'جاري استعادة الجلسة الآمنة…';
+
+  @override
+  String get authSessionExpired => 'انتهت جلستك. يرجى تسجيل الدخول مجددًا.';
+
+  @override
+  String get authOfflineSessionExpired =>
+      'انتهت جلستك بدون اتصال. اتصل بالإنترنت وسجل الدخول مجددًا.';
+
+  @override
+  String get authVerificationRequiredTitle => 'تحقق من جلستك';
+
+  @override
+  String get authUnableToVerifySession =>
+      'تعذر التحقق من جلستك المحفوظة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get authRetryVerification => 'إعادة محاولة التحقق';
+
+  @override
+  String get authRetryingVerification => 'جارٍ التحقق من الجلسة…';
+
+  @override
+  String get authReturnToLogin => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get authSecureStorageReadFailure =>
+      'التخزين الآمن غير متاح. حاول مرة أخرى أو عد إلى تسجيل الدخول.';
+
+  @override
+  String get authCorruptSavedSession =>
+      'تعذر قراءة جلستك المحفوظة. يرجى تسجيل الدخول مرة أخرى.';
+
+  @override
+  String get authConnectionRequiredToVerifySession =>
+      'يلزم اتصال للتحقق من هذه الجلسة المحفوظة قبل متابعة الوصول.';
+
+  @override
+  String get authTenantNotOperationalTitle => 'مساحة العمل غير متاحة مؤقتًا';
+
+  @override
+  String get authTenantNotOperationalExplanation =>
+      'مساحة العمل هذه غير متاحة مؤقتًا.';
+
+  @override
+  String get authContactAdministration =>
+      'يرجى التواصل مع الإدارة للحصول على المساعدة.';
+
+  @override
+  String get authSettingsSubtitle => 'إعدادات الحساب والجلسة';
+
+  @override
+  String get authAccount => 'الحساب';
+
+  @override
+  String get authSignedInTenant => 'مسجل الدخول إلى';
+
+  @override
+  String get authLogout => 'تسجيل الخروج';
+
+  @override
+  String get authLogoutConfirmation =>
+      'هل أنت متأكد من رغبتك في تسجيل الخروج من هذا الجهاز؟';
+
+  @override
+  String get reportsOverviewTitle => 'نظرة عامة على التقارير';
+
+  @override
+  String get reportsOverviewSubtitle =>
+      'تابع المبيعات والربحية والنقدية والمخزون وأداء الفروع من مكان واحد.';
+
+  @override
+  String get reportsOverviewDateRange => 'الفترة الزمنية';
+
+  @override
+  String get reportsOverviewComparePrevious => 'مقارنة بالفترة السابقة';
+
+  @override
+  String get reportsOverviewExport => 'تصدير';
+
+  @override
+  String get reportsOverviewExportTooltip => 'متاح في شاشات التقارير التفصيلية';
+
+  @override
+  String get reportsOverviewAllBranches => 'كل الفروع';
+
+  @override
+  String get reportsOverviewKpiNetSales => 'الإجمالي';
+
+  @override
+  String get reportsOverviewKpiSalesSum => 'مجموع المبيعات';
+
+  @override
+  String get reportsOverviewKpiSalesNet => 'صافي المبيعات';
+
+  @override
+  String get reportsOverviewKpiInfoSalesSum =>
+      'المبيعات المكتملة قبل الخصومات والمرتجعات.';
+
+  @override
+  String get reportsOverviewKpiInfoSalesNet =>
+      'الإجمالي بعد المشتريات والمصروفات المدفوعة.';
+
+  @override
+  String get reportsOverviewKpiGrossProfit => 'إجمالي الربح';
+
+  @override
+  String get reportsOverviewKpiGrossMargin => 'هامش الربح الإجمالي';
+
+  @override
+  String get reportsOverviewKpiTotalExpenses => 'إجمالي المصروفات';
+
+  @override
+  String get reportsOverviewKpiNetProfit => 'صافي الربح';
+
+  @override
+  String get reportsOverviewKpiInfoNetSales =>
+      'مجموع المبيعات بعد المرتجعات والخصومات.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossProfit =>
+      'الإجمالي مطروحاً منه تكلفة البضاعة المباعة.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossMargin =>
+      'إجمالي الربح كنسبة من الإجمالي.';
+
+  @override
+  String get reportsOverviewKpiInfoTotalExpenses =>
+      'المصروفات التشغيلية المسجلة لهذه الفترة.';
+
+  @override
+  String get reportsOverviewKpiInfoNetProfit =>
+      'إجمالي الربح مطروحاً منه إجمالي المصروفات.';
+
+  @override
+  String get reportsOverviewNotAvailableYet => 'غير متاح بعد';
+
+  @override
+  String get reportsOverviewComparisonUnavailable => 'المقارنة غير متاحة';
+
+  @override
+  String reportsOverviewDeltaPercent(String value) {
+    return '$value مقارنة بالفترة السابقة';
+  }
+
+  @override
+  String reportsOverviewDeltaPoints(String value) {
+    return '$value نقطة مقارنة بالفترة السابقة';
+  }
+
+  @override
+  String get reportsOverviewSalesTrendTitle => 'اتجاه المبيعات';
+
+  @override
+  String get reportsOverviewNoSalesData => 'لا توجد مبيعات مسجلة لهذه الفترة.';
+
+  @override
+  String get reportsOverviewBranchComparisonTitle => 'مقارنة الفروع';
+
+  @override
+  String get reportsOverviewBranchColumnBranch => 'الفرع';
+
+  @override
+  String get reportsOverviewBranchColumnNetSales => 'صافي المبيعات';
+
+  @override
+  String get reportsOverviewChooseAllBranches =>
+      'اختر كل الفروع لمقارنة الأداء.';
+
+  @override
+  String get reportsOverviewTopProductsTitle => 'أفضل المنتجات';
+
+  @override
+  String get reportsOverviewNoProductsSold =>
+      'لم يتم بيع أي منتجات لهذه الفترة.';
+
+  @override
+  String get reportsOverviewProductPerformanceComingNext =>
+      'تقرير أداء المنتج قادم في المرحلة التالية.';
+
+  @override
+  String get reportsOverviewExceptionsTitle => 'الاستثناءات الأخيرة';
+
+  @override
+  String get reportsOverviewNoExceptions =>
+      'لم يتم العثور على استثناءات تشغيلية لهذه الفترة.';
+
+  @override
+  String get reportsOverviewBrowseByCategory => 'تصفح حسب الفئة';
+
+  @override
+  String get reportsOverviewComingNext => 'قادم لاحقاً';
+
+  @override
+  String get reportsOverviewCategorySalesProfitability => 'المبيعات والربحية';
+
+  @override
+  String get reportsOverviewCategoryCashShifts => 'النقدية والورديات';
+
+  @override
+  String get reportsOverviewCategoryInventory => 'المخزون';
+
+  @override
+  String get reportsOverviewCategoryExpenses => 'المصروفات';
+
+  @override
+  String get reportsOverviewCategoryPurchasingSuppliers =>
+      'المشتريات والموردون';
+
+  @override
+  String get reportsOverviewCategoryFinancialReports => 'التقارير المالية';
+
+  @override
+  String get reportsOverviewCategoryCustomReportBuilder =>
+      'أداة إنشاء تقارير مخصصة';
+
+  @override
+  String get reportsOverviewFinancialReportsTooltip =>
+      'فتح مركز التقارير المالية';
+
+  @override
+  String get reportsOverviewErrorDefault => 'تعذّر تحميل النظرة العامة.';
+
+  @override
+  String get reportsOverviewRelativeCurrent => 'الآن';
+
+  @override
+  String reportsOverviewMinutesAgo(int m) {
+    return 'قبل $m د';
+  }
+
+  @override
+  String reportsOverviewHoursAgo(int h) {
+    return 'قبل $h س';
+  }
+
+  @override
+  String get salesProfitabilityTitle => 'المبيعات والربحية';
+
+  @override
+  String get salesProfitabilitySubtitle =>
+      'تحليل المبيعات والأرباح والخصومات والمرتجعات وأداء المنتجات والفروع.';
+
+  @override
+  String get salesProfitabilityBack => 'نظرة عامة على التقارير';
+
+  @override
+  String get salesProfitabilityGroupBy => 'التجميع';
+
+  @override
+  String get salesProfitabilityDaily => 'يومي';
+
+  @override
+  String get salesProfitabilityWeekly => 'أسبوعي';
+
+  @override
+  String get salesProfitabilityMonthly => 'شهري';
+
+  @override
+  String get salesProfitabilityExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get salesProfitabilityGrossSales => 'مجموع المبيعات';
+
+  @override
+  String get salesProfitabilityNetSales => 'الإجمالي';
+
+  @override
+  String get salesProfitabilityDiscounts => 'الخصومات';
+
+  @override
+  String get salesProfitabilityRefunds => 'المرتجعات';
+
+  @override
+  String get salesProfitabilityCogs => 'تكلفة البضاعة المباعة COGS';
+
+  @override
+  String get salesProfitabilityGrossProfit => 'إجمالي الربح';
+
+  @override
+  String get salesProfitabilityGrossMargin => 'هامش الربح %';
+
+  @override
+  String get salesProfitabilityAverageOrder => 'متوسط قيمة الطلب';
+
+  @override
+  String get salesProfitabilityCashCollected => 'المحصّل نقداً';
+
+  @override
+  String get salesProfitabilityBankCollected => 'المحصّل عبر البنك';
+
+  @override
+  String get salesProfitabilitySalesBySource => 'المبيعات حسب المصدر';
+
+  @override
+  String get salesProfitabilityNoSalesBySource =>
+      'لا تتوفر بيانات مبيعات حسب المصدر لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityTrend => 'اتجاه المبيعات والأرباح';
+
+  @override
+  String get salesProfitabilitySalesByHour => 'المبيعات بالساعة';
+
+  @override
+  String get salesProfitabilitySalesByCategory => 'المبيعات حسب الفئة';
+
+  @override
+  String get salesProfitabilityBranchPerformance => 'أداء الفروع';
+
+  @override
+  String get salesProfitabilityProductPerformance => 'أداء المنتجات';
+
+  @override
+  String get salesProfitabilityTopSelling => 'الأكثر مبيعاً';
+
+  @override
+  String get salesProfitabilityMostProfitable => 'الأكثر ربحية';
+
+  @override
+  String get salesProfitabilityUnderperforming => 'الأقل أداءً';
+
+  @override
+  String salesProfitabilityPeak(String value) {
+    return 'الأعلى: $value';
+  }
+
+  @override
+  String get salesProfitabilityNoTrend =>
+      'لا تتوفر بيانات لاتجاه المبيعات والأرباح لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoHourly =>
+      'لا تتوفر بيانات مبيعات حسب الساعة لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoCategories =>
+      'لا تتوفر بيانات مبيعات حسب الفئة لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoBranches => 'اختر كل الفروع لمقارنة الأداء.';
+
+  @override
+  String get salesProfitabilityNoProducts =>
+      'لا تتوفر بيانات أداء المنتجات لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityUnavailable => 'غير متاح بعد';
+
+  @override
+  String get salesProfitabilityError => 'تعذّر تحميل هذا التقرير.';
+
+  @override
+  String get salesProfitabilityProduct => 'المنتج';
+
+  @override
+  String get salesProfitabilityCategory => 'الفئة';
+
+  @override
+  String get salesProfitabilityQuantity => 'الكمية المباعة';
+
+  @override
+  String get salesProfitabilityOrders => 'الطلبات';
+
+  @override
+  String get salesProfitabilityMargin => 'الهامش';
+
+  @override
+  String get cashShiftsTitle => 'النقدية والورديات';
+
+  @override
+  String get cashShiftsSubtitle =>
+      'متابعة أداء الورديات، حركة النقدية، طرق الدفع وفروقات الصندوق.';
+
+  @override
+  String get cashShiftsAllEmployees => 'كل الموظفين';
+
+  @override
+  String get cashShiftsTotalSales => 'مجموع المبيعات';
+
+  @override
+  String get cashShiftsExpectedCash => 'النقد المتوقع';
+
+  @override
+  String get cashShiftsActualCash => 'النقد الفعلي';
+
+  @override
+  String get cashShiftsDifference => 'فرق الصندوق';
+
+  @override
+  String get cashShiftsClosed => 'الورديات المغلقة';
+
+  @override
+  String get cashShiftsOpen => 'الورديات المفتوحة';
+
+  @override
+  String get cashShiftsAverage => 'متوسط مبيعات الوردية';
+
+  @override
+  String get cashShiftsReconciliation => 'مطابقة النقدية';
+
+  @override
+  String get cashShiftsMatched => 'مطابق';
+
+  @override
+  String get cashShiftsMinor => 'فرق بسيط';
+
+  @override
+  String get cashShiftsReview => 'فرق يحتاج مراجعة';
+
+  @override
+  String get cashShiftsShortage => 'عجز';
+
+  @override
+  String get cashShiftsOverage => 'زيادة';
+
+  @override
+  String get cashShiftsPerformance => 'أداء الورديات';
+
+  @override
+  String get cashShiftsPayments => 'توزيع طرق الدفع';
+
+  @override
+  String get cashShiftsTrend => 'اتجاه مبيعات الورديات';
+
+  @override
+  String get cashShiftsTop => 'أفضل الورديات أداءً';
+
+  @override
+  String get cashShiftsExceptions => 'الاستثناءات';
+
+  @override
+  String get cashShiftsNoShifts => 'لا توجد ورديات ضمن الفترة المحددة.';
+
+  @override
+  String get cashShiftsNoPayments =>
+      'لا توجد بيانات لطرق الدفع ضمن الفترة المحددة.';
+
+  @override
+  String get cashShiftsNoExceptions => 'لا توجد فروقات نقدية تحتاج إلى مراجعة.';
+
+  @override
+  String get cashShiftsNoTrend =>
+      'لا تتوفر بيانات لاتجاه مبيعات الورديات لهذه الفترة.';
+
+  @override
+  String get cashShiftsError => 'تعذّر تحميل تقرير النقدية والورديات.';
+
+  @override
+  String get cashShiftsExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get financeSectionOverview => 'نظرة عامة';
+
+  @override
+  String get financeSectionTransactions => 'الحركات المالية';
+
+  @override
+  String get financeSectionCashBanks => 'النقدية والبنوك';
+
+  @override
+  String get financeSectionExpenses => 'المصروفات';
+
+  @override
+  String get financeSectionSuppliers => 'الموردون والمستحقات';
+
+  @override
+  String get financeSectionReconciliation => 'التسويات';
+
+  @override
+  String get financeSectionJournals => 'القيود المحاسبية';
+
+  @override
+  String get financeSectionClosing => 'الإغلاق اليومي';
+
+  @override
+  String get financeSectionReports => 'التقارير المالية';
+
+  @override
+  String get financeSectionAccounts => 'دليل الحسابات';
+
+  @override
+  String get financeSectionPeriods => 'الفترات المحاسبية';
+
+  @override
+  String get financeSectionSettings => 'إعدادات المالية';
+
+  @override
+  String financeBreadcrumb(String module, String section) {
+    return '$module / $section';
+  }
+
+  @override
+  String get financeStatusApproved => 'معتمد';
+
+  @override
+  String get financeStatusCompleted => 'مكتمل';
+
+  @override
+  String get financeStatusPendingApproval => 'بانتظار الموافقة';
+
+  @override
+  String get financeStatusPendingReview => 'قيد المراجعة';
+
+  @override
+  String get financeStatusRejected => 'مرفوض';
+
+  @override
+  String get financeStatusReversed => 'معكوس';
+
+  @override
+  String get financeStatusPartiallyPaid => 'مدفوع جزئياً';
+
+  @override
+  String get financeStatusInactive => 'غير نشط';
+
+  @override
+  String get financeStatusLocked => 'مقفلة نهائياً';
+
+  @override
+  String get financeStatusUnmatched => 'غير مطابق';
+
+  @override
+  String get financeStatusCurrent => 'حالي';
+
+  @override
+  String get financeTermDebit => 'مدين';
+
+  @override
+  String get financeTermCredit => 'دائن';
+
+  @override
+  String get financeTermBalance => 'الرصيد';
+
+  @override
+  String get financeTermOpeningBalance => 'الرصيد الافتتاحي';
+
+  @override
+  String get financeTermClosingBalance => 'الرصيد الختامي';
+
+  @override
+  String get financeTermRunningBalance => 'الرصيد الجاري';
+
+  @override
+  String get financeTermRevenue => 'الإيرادات';
+
+  @override
+  String get financeTermCogs => 'تكلفة البضاعة المباعة';
+
+  @override
+  String get financeTermGrossProfit => 'مجمل الربح';
+
+  @override
+  String get financeTermOperatingExpenses => 'المصروفات التشغيلية';
+
+  @override
+  String get financeTermOperatingProfit => 'الربح التشغيلي';
+
+  @override
+  String get financeTermAssets => 'الأصول';
+
+  @override
+  String get financeTermLiabilities => 'الالتزامات';
+
+  @override
+  String get financeTermEquity => 'حقوق الملكية';
+
+  @override
+  String get financeTermAccountsPayable => 'الذمم الدائنة للموردين';
+
+  @override
+  String get financeTermGeneralLedger => 'دفتر الأستاذ العام';
+
+  @override
+  String get financeTermTrialBalance => 'ميزان المراجعة';
+
+  @override
+  String get financeTermProfitLoss => 'قائمة الدخل';
+
+  @override
+  String get financeTermBalanceSheet => 'الميزانية العمومية';
+
+  @override
+  String get financeTermCashFlow => 'التدفقات النقدية';
+
+  @override
+  String get financeFiltersReset => 'إعادة تعيين';
+
+  @override
+  String get financeReadinessPanelTitle => 'الجاهزية التشغيلية';
+
+  @override
+  String get financeLoadingDefaultLabel => 'جارٍ تحميل البيانات…';
+
+  @override
+  String get financeEmptyDefaultMessage => 'لا توجد بيانات لعرضها';
+
+  @override
+  String get financeExpectedAccountingImpact => 'الأثر المحاسبي المتوقع';
+
+  @override
+  String get financeExpenseScreenTitle => 'المصروفات';
+
+  @override
+  String get financeExpenseScreenSubtitle =>
+      'تسجيل ومتابعة اعتماد المصروفات التشغيلية';
+
+  @override
+  String get financeExpenseAddAction => 'إضافة مصروف';
+
+  @override
+  String get financeExpenseLoadingLabel => 'جارٍ تحميل المصروفات…';
+
+  @override
+  String get financeExpenseLoadErrorMessage =>
+      'تعذّر تحميل المصروفات. لم يتم اعتبار الخطأ صفراً.';
+
+  @override
+  String get financeExpenseFilterStatusLabel => 'الحالة';
+
+  @override
+  String get financeExpenseFilterCategoryLabel => 'الفئة';
+
+  @override
+  String get financeExpenseSearchHint => 'بحث بالوصف أو المرجع…';
+
+  @override
+  String get financeExpenseDateRangePickerHelp => 'اختيار فترة مالية';
+
+  @override
+  String get financeExpenseFilterRefreshError =>
+      'تعذّر تحديث المصروفات لهذه الفلاتر. تُعرض آخر بيانات محمّلة.';
+
+  @override
+  String get financeExpenseEmptyPeriod =>
+      'لا توجد مصروفات مسجلة للفترة المحددة';
+
+  @override
+  String get financeExpenseEmptyFiltered =>
+      'لا توجد مصروفات مطابقة للفلاتر المحددة';
+
+  @override
+  String get financeExpenseEmptyResetAction => 'إعادة تعيين الفلاتر';
+
+  @override
+  String get financeExpenseKpiTotalAmount => 'إجمالي المصروفات';
+
+  @override
+  String get financeExpenseKpiRejectedAmount => 'مرفوضة';
+
+  @override
+  String get financeExpenseKpiAverageAmount => 'متوسط المصروف';
+
+  @override
+  String get financeExpenseColumnDate => 'التاريخ';
+
+  @override
+  String get financeExpenseColumnReference => 'المرجع';
+
+  @override
+  String get financeExpenseColumnDescription => 'الوصف';
+
+  @override
+  String get financeExpenseColumnBranch => 'الفرع';
+
+  @override
+  String get financeExpenseColumnAmount => 'المبلغ';
+
+  @override
+  String get financeExpenseBranchGeneralFallback => 'عام';
+
+  @override
+  String get financeExpenseBranchGeneralOption => 'عام (كل الفروع)';
+
+  @override
+  String get financeExpenseAllBranchesLabel => 'كل الفروع';
+
+  @override
+  String financeExpenseSubmittedBy(String name) {
+    return 'قدّمه $name';
+  }
+
+  @override
+  String get financeExpenseReversedNote =>
+      'تم عكس هذا المصروف. استخدم الأزرار أدناه لعرض القيد الأصلي وقيد العكس.';
+
+  @override
+  String get financeExpenseSubmissionDateLabel => 'تاريخ التقديم';
+
+  @override
+  String get financeExpenseLedgerAccountLabel => 'حساب الأستاذ';
+
+  @override
+  String get financeExpensePreTaxAmountLabel => 'المبلغ قبل الضريبة';
+
+  @override
+  String get financeExpenseTaxLabel => 'الضريبة';
+
+  @override
+  String get financeExpenseNotesLabel => 'ملاحظات';
+
+  @override
+  String get financeExpenseNotesOptionalLabel => 'ملاحظات (اختياري)';
+
+  @override
+  String get financeExpensePaymentMethodLabel => 'طريقة الدفع';
+
+  @override
+  String get financeExpensePaymentAccountLabel => 'حساب الدفع';
+
+  @override
+  String get financeExpenseApprovedAtLabel => 'اعتُمد في';
+
+  @override
+  String get financeExpensePaidAtLabel => 'دُفع في';
+
+  @override
+  String get financeExpenseActionSubmit => 'إرسال للموافقة';
+
+  @override
+  String get financeExpenseActionApprove => 'اعتماد';
+
+  @override
+  String get financeExpenseActionReject => 'رفض';
+
+  @override
+  String get financeExpenseActionPay => 'تسجيل دفعة';
+
+  @override
+  String get financeExpenseActionReverse => 'عكس المصروف';
+
+  @override
+  String get financeExpenseViewJournalAction => 'عرض القيد';
+
+  @override
+  String get financeExpenseViewReversalJournalAction => 'عرض قيد العكس';
+
+  @override
+  String get financeExpenseRejectDialogTitle => 'رفض المصروف';
+
+  @override
+  String get financeExpenseRejectReasonLabel => 'سبب الرفض';
+
+  @override
+  String get financeExpensePaymentValidationError =>
+      'اختر طريقة دفع وحساباً نقدياً أو بنكياً نشطاً.';
+
+  @override
+  String financeExpensePaymentDialogTitle(String reference) {
+    return 'دفع $reference';
+  }
+
+  @override
+  String get financeExpensePaymentPostAction => 'ترحيل الدفع';
+
+  @override
+  String get financeExpensePaymentLoadingOptions => 'جارٍ تحميل خيارات الدفع…';
+
+  @override
+  String get financeExpenseNoPaymentOptionsMessage =>
+      'لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.';
+
+  @override
+  String financeExpensePaymentAmountLine(String amount) {
+    return 'المبلغ: $amount';
+  }
+
+  @override
+  String get financeExpenseCashBankAccountLabel => 'الحساب النقدي/البنكي';
+
+  @override
+  String get financeExpenseFormValidationError =>
+      'أدخل مبلغاً صالحاً، فئة، ووصفاً.';
+
+  @override
+  String get financeExpenseEditDialogTitle => 'تعديل مصروف';
+
+  @override
+  String get financeExpenseFieldBranchOptional => 'الفرع (اختياري)';
+
+  @override
+  String get financeExpenseTotalLabel => 'الإجمالي';
+
+  @override
+  String get financeExpenseCategoryScreenTitle => 'فئات المصروفات';
+
+  @override
+  String get financeExpenseCategoryScreenSubtitle =>
+      'كل فئة مرتبطة بحساب مصروف فعّال في دليل الحسابات.';
+
+  @override
+  String get financeExpenseCategoryAddAction => 'إضافة فئة';
+
+  @override
+  String get financeExpenseCategoryEmptyMessage =>
+      'لا توجد فئات مصروفات مهيأة.';
+
+  @override
+  String get financeExpenseCategoryCodeLabel => 'الرمز';
+
+  @override
+  String get financeExpenseCategoryNameLabel => 'الاسم';
+
+  @override
+  String get financeExpenseCategoryAccountLabel => 'حساب المصروف';
+
+  @override
+  String get financeExpenseCategoryColumnStatus => 'الحالة';
+
+  @override
+  String get financeExpenseCategoryColumnAction => 'إجراء';
+
+  @override
+  String get financeExpenseCategorySortOrderLabel => 'ترتيب العرض (اختياري)';
+
+  @override
+  String get financeExpenseCategoryValidationError =>
+      'أدخل رمزاً واسماً صالحين.';
+
+  @override
+  String get financeExpenseCategoryEditDialogTitle => 'تعديل فئة';
+
+  @override
+  String get financeExpenseCategoryDeactivateDialogTitle => 'تعطيل الفئة';
+
+  @override
+  String get financeExpenseCategoryActivateDialogTitle => 'تفعيل الفئة';
+
+  @override
+  String financeExpenseCategoryDeactivateConfirm(String name) {
+    return 'هل تريد تعطيل فئة \"$name\"؟ لن تظهر بعد ذلك عند إنشاء مصروف جديد.';
+  }
+
+  @override
+  String financeExpenseCategoryActivateConfirm(String name) {
+    return 'هل تريد تفعيل فئة \"$name\"؟';
+  }
+
+  @override
+  String get financeExpenseCategoryDeactivateAction => 'تعطيل';
+
+  @override
+  String get financeExpenseCategoryActivateAction => 'تفعيل';
+
+  @override
+  String get financePeriodToday => 'اليوم';
+
+  @override
+  String get financePeriodThisWeek => 'هذا الأسبوع';
+
+  @override
+  String get financePeriodThisMonth => 'هذا الشهر';
+
+  @override
+  String get financePeriodCustom => 'مخصص';
+
+  @override
+  String get financeGlobalContextTitle => 'السياق العام';
+
+  @override
+  String get financeGlobalContextBranchAll => 'الفرع: كل الفروع';
+
+  @override
+  String financeGlobalContextBranchNamed(String name) {
+    return 'الفرع: $name';
+  }
+
+  @override
+  String get financeSupplierListSubtitle =>
+      'The supplier balance is derived exclusively from posted invoices and payments';
+
+  @override
+  String get financeSupplierAddAction => 'Add Supplier';
+
+  @override
+  String get financeSupplierListLoading => 'Loading suppliers…';
+
+  @override
+  String get financeSupplierListLoadError =>
+      'Could not load suppliers. The error is not being disregarded.';
+
+  @override
+  String get financeSupplierStatusLabel => 'Status';
+
+  @override
+  String get financeSupplierSearchHint => 'Supplier name or code…';
+
+  @override
+  String get financeSupplierFilterRefreshError =>
+      'Could not refresh suppliers for these filters. Showing the last loaded data.';
+
+  @override
+  String get financeSupplierEmptyFiltered =>
+      'No suppliers match the selected filters';
+
+  @override
+  String get financeSupplierEmptyNone => 'No suppliers registered yet';
+
+  @override
+  String get financeSupplierResetFiltersAction => 'Reset Filters';
+
+  @override
+  String get financeSupplierKpiTotalOutstanding => 'Total Payables';
+
+  @override
+  String get financeSupplierKpiOverdueLabel => 'Overdue Payments';
+
+  @override
+  String get financeSupplierKpiActiveCount => 'Active Suppliers';
+
+  @override
+  String get financeSupplierKpiAvgPaymentTerms => 'Average Payment Terms';
+
+  @override
+  String financeSupplierDaysUnit(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get financeSupplierColumnSupplier => 'Supplier';
+
+  @override
+  String get financeSupplierOutstandingBalanceLabel => 'Outstanding Balance';
+
+  @override
+  String get financeSupplierOverdueLabel => 'Overdue';
+
+  @override
+  String get financeSupplierColumnOpenInvoices => 'Open Invoices';
+
+  @override
+  String get financeSupplierColumnLastInvoice => 'Last Invoice';
+
+  @override
+  String get financeSupplierEditAction => 'Edit Supplier';
+
+  @override
+  String get financeSupplierNameRequired => 'Enter the supplier name.';
+
+  @override
+  String get financeSupplierFieldName => 'Name';
+
+  @override
+  String get financeSupplierFieldPhone => 'Phone';
+
+  @override
+  String get financeSupplierFieldEmail => 'Email';
+
+  @override
+  String get financeSupplierFieldAddress => 'Address';
+
+  @override
+  String get financeSupplierFieldContactPerson => 'Contact Person';
+
+  @override
+  String get financeSupplierFieldTaxNumber => 'Tax Number';
+
+  @override
+  String get financeSupplierFieldPaymentTermsDays => 'Payment Terms (Days)';
+
+  @override
+  String get financeSupplierFieldNotes => 'Notes';
+
+  @override
+  String get financeSupplierInactiveBadge => 'Inactive';
+
+  @override
+  String get financeSupplierProfileSubtitle =>
+      'Supplier profile and financial activity';
+
+  @override
+  String get financeSupplierBackToList => 'Back to Suppliers';
+
+  @override
+  String get financeSupplierProfileLoading => 'Loading supplier profile…';
+
+  @override
+  String financeSupplierProfileLoadError(String error) {
+    return 'Could not load the supplier profile. $error';
+  }
+
+  @override
+  String get financeSupplierNotFound =>
+      'Could not find the requested supplier.';
+
+  @override
+  String financeSupplierPaymentTermsWithDays(int days) {
+    return 'Payment terms $days days';
+  }
+
+  @override
+  String get financeSupplierStatementAction => 'Supplier Statement';
+
+  @override
+  String get financeSupplierNewInvoiceAction => 'New Invoice';
+
+  @override
+  String get financeSupplierNewPaymentAction => 'New Payment';
+
+  @override
+  String get financeSupplierKpiTotalInvoiced => 'Total Invoiced';
+
+  @override
+  String get financeSupplierKpiTotalPaid => 'Total Paid';
+
+  @override
+  String get financeSupplierTabInvoices => 'Invoices';
+
+  @override
+  String get financeSupplierTabPayments => 'Payments';
+
+  @override
+  String get financeSupplierTabStatement => 'Statement';
+
+  @override
+  String get financeSupplierNoInvoices => 'No invoices for this supplier yet';
+
+  @override
+  String get financeSupplierColumnReference => 'Reference';
+
+  @override
+  String get financeSupplierColumnDate => 'Date';
+
+  @override
+  String get financeSupplierColumnDueDate => 'Due';
+
+  @override
+  String get financeSupplierTotalLabel => 'Total';
+
+  @override
+  String get financeSupplierColumnRemaining => 'Remaining';
+
+  @override
+  String get financeSupplierViewJournalAction => 'View Journal Entry';
+
+  @override
+  String get financeSupplierNoPayments => 'No payments for this supplier yet';
+
+  @override
+  String get financeSupplierColumnAmount => 'Amount';
+
+  @override
+  String get financeSupplierColumnPaymentMethod => 'Payment Method';
+
+  @override
+  String get financeSupplierNoStatementLines => 'No statement activity yet';
+
+  @override
+  String get financeSupplierKpiTotalPayments => 'Total Payments';
+
+  @override
+  String get financeSupplierColumnType => 'Type';
+
+  @override
+  String get financeSupplierTypeInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierTypePayment => 'Payment';
+
+  @override
+  String get financeSupplierReverseInvoiceTitle => 'Reverse Invoice';
+
+  @override
+  String financeSupplierReverseInvoiceMessage(String reference) {
+    return 'A reversing entry will be created for invoice $reference. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierPostInvoiceError(String error) {
+    return 'Could not post the invoice: $error';
+  }
+
+  @override
+  String financeSupplierReverseInvoiceError(String error) {
+    return 'Could not reverse the invoice: $error';
+  }
+
+  @override
+  String get financeSupplierReversePaymentTitle => 'Reverse Payment';
+
+  @override
+  String financeSupplierReversePaymentMessage(String reference) {
+    return 'A reversing entry will be created and the balances of invoices linked to payment $reference will be restored. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierReversePaymentError(String error) {
+    return 'Could not reverse the payment: $error';
+  }
+
+  @override
+  String get financeSupplierConfirmAction => 'Confirm';
+
+  @override
+  String get financeSupplierInvoiceNumberSubtotalRequired =>
+      'Enter an invoice number and a valid subtotal.';
+
+  @override
+  String get financeSupplierExpenseCategoryRequired =>
+      'Select an expense category.';
+
+  @override
+  String get financeSupplierDebitAccountRequired => 'Select the debit account.';
+
+  @override
+  String financeSupplierInvoiceDialogTitleWithRef(String reference) {
+    return 'Invoice $reference';
+  }
+
+  @override
+  String get financeSupplierInvoiceLockedMessage =>
+      'The invoice is posted and cannot be edited. Use the reverse action if needed.';
+
+  @override
+  String get financeSupplierNewInvoiceDialogTitle => 'New Supplier Invoice';
+
+  @override
+  String financeSupplierEditInvoiceDialogTitle(String reference) {
+    return 'Edit invoice $reference';
+  }
+
+  @override
+  String get financeSupplierSaveAsDraftAction => 'Save as Draft';
+
+  @override
+  String get financeSupplierLoadingOptions => 'Loading options…';
+
+  @override
+  String get financeSupplierFieldBranchOptional => 'Branch (Optional)';
+
+  @override
+  String get financeSupplierGeneralOption => 'General';
+
+  @override
+  String get financeSupplierFieldSupplierInvoiceNumber =>
+      'Supplier Invoice Number';
+
+  @override
+  String get financeSupplierFieldInvoiceDate => 'Invoice Date';
+
+  @override
+  String get financeSupplierFieldDueDate => 'Due Date';
+
+  @override
+  String get financeSupplierFieldInvoiceType => 'Invoice Type';
+
+  @override
+  String get financeSupplierInvoiceTypeExpense => 'Expense';
+
+  @override
+  String get financeSupplierInvoiceTypeInventory =>
+      'Inventory (accounting liability only, does not create stock quantity)';
+
+  @override
+  String get financeSupplierInvoiceTypeOther => 'Other';
+
+  @override
+  String get financeSupplierFieldExpenseCategory => 'Expense Category';
+
+  @override
+  String get financeSupplierFieldDebitAccount => 'Debit Account';
+
+  @override
+  String get financeSupplierFieldSubtotal => 'Subtotal';
+
+  @override
+  String get financeSupplierFieldTax => 'Tax';
+
+  @override
+  String get financeSupplierFieldDescription => 'Description';
+
+  @override
+  String get financeSupplierInvoiceDetailTitle => 'Supplier Invoice';
+
+  @override
+  String get financeSupplierPostAction => 'Post';
+
+  @override
+  String get financeSupplierReverseAction => 'Reverse';
+
+  @override
+  String get financeSupplierFieldBranch => 'Branch';
+
+  @override
+  String get financeSupplierPaymentDetailTitle => 'Supplier Payment';
+
+  @override
+  String get financeSupplierFieldPaymentDate => 'Payment Date';
+
+  @override
+  String get financeSupplierFieldCashBankAccount => 'Cash/Bank Account';
+
+  @override
+  String get financeSupplierFieldExternalReference => 'External Reference';
+
+  @override
+  String get financeSupplierPaymentAllocationTitle =>
+      'Payment Allocation to Invoices';
+
+  @override
+  String get financeSupplierColumnInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierPaymentMethodLocationRequired =>
+      'Select a payment method and an active cash or bank account.';
+
+  @override
+  String get financeSupplierPaymentAmountRequired =>
+      'Enter a valid payment amount greater than zero.';
+
+  @override
+  String get financeSupplierAllocationRequired =>
+      'Allocate an amount to at least one invoice.';
+
+  @override
+  String financeSupplierAllocationExceedsRemaining(String reference) {
+    return 'The allocation for $reference exceeds its remaining balance.';
+  }
+
+  @override
+  String financeSupplierAllocationMustMatchPayment(String remaining) {
+    return 'The total allocations must exactly equal the payment amount. Unallocated remaining: $remaining';
+  }
+
+  @override
+  String get financeSupplierNewPaymentDialogTitle => 'New Supplier Payment';
+
+  @override
+  String get financeSupplierPostPaymentAction => 'Post Payment';
+
+  @override
+  String get financeSupplierLoadingPaymentOptions => 'Loading payment options…';
+
+  @override
+  String get financeSupplierNoPaymentMethodOrAccount =>
+      'No active payment method or cash/bank account. Add one from Finance Settings first.';
+
+  @override
+  String get financeSupplierFieldCashBankSource => 'Cash/Bank Account (Source)';
+
+  @override
+  String get financeSupplierFieldPaymentAmount => 'Payment Amount';
+
+  @override
+  String get financeSupplierFieldExternalReferenceOptional =>
+      'External Reference (Optional)';
+
+  @override
+  String get financeSupplierFieldNotesOptional => 'Notes (Optional)';
+
+  @override
+  String get financeSupplierAllocationOpenInvoicesTitle =>
+      'Payment Allocation to Open Invoices';
+
+  @override
+  String financeSupplierInvoiceRemainingLabel(
+    String reference,
+    String remaining,
+  ) {
+    return '$reference — remaining $remaining';
+  }
+
+  @override
+  String get financeSupplierFieldAllocation => 'Allocation';
+
+  @override
+  String get financeSupplierAllocatedAmountLabel => 'Allocated Amount';
+
+  @override
+  String get financeSupplierUnallocatedRemainingLabel =>
+      'Unallocated Remaining';
+
+  @override
+  String get financeSupplierOverdueBadge => 'Overdue';
+
+  @override
+  String get financeWarehouseTitle => 'إعداد المخازن';
+
+  @override
+  String get financeWarehouseSubtitle =>
+      'إدارة المخازن التشغيلية وربطها بالفروع.';
+
+  @override
+  String get financeWarehouseAdd => 'إضافة مخزن';
+
+  @override
+  String get financeWarehouseEmpty => 'لا توجد مخازن مضافة بعد.';
+
+  @override
+  String get financeWarehouseAllBranches => 'كل الفروع';
+
+  @override
+  String get financeWarehouseAllStatuses => 'كل الحالات';
+
+  @override
+  String get financeWarehouseName => 'المخزن';
+
+  @override
+  String get financeWarehouseCode => 'الرمز';
+
+  @override
+  String get financeWarehouseType => 'النوع';
+
+  @override
+  String get financeWarehouseBranch => 'الفرع';
+
+  @override
+  String get financeWarehouseEdit => 'تعديل المخزن';
+
+  @override
+  String get financeWarehouseCentral => 'مركزي';
+
+  @override
+  String get financeWarehouseBranchType => 'فرع';
+
+  @override
+  String get financeTransactionSale => 'مبيعات';
+
+  @override
+  String get financeTransactionRefund => 'استرجاع';
+
+  @override
+  String get financeTransactionExpense => 'مصروف';
+
+  @override
+  String get financeTransactionCashTransfer => 'تحويل نقدي';
+
+  @override
+  String get financeTransactionSupplierInvoice => 'فاتورة مورد';
+
+  @override
+  String get financeTransactionSupplierPayment => 'دفعة مورد';
+
+  @override
+  String get financeTransactionInventoryWaste => 'هدر مخزون';
+
+  @override
+  String get financeTransactionStockCountVariance => 'فرق جرد';
+
+  @override
+  String get financeTransactionInventoryMovement => 'حركة مخزون';
+
+  @override
+  String get financeTransactionManualJournal => 'قيد يدوي';
+
+  @override
+  String get financeTransactionReversalJournal => 'قيد عكسي';
+
+  @override
+  String get financeTransactionJournalEntry => 'قيد محاسبي';
+
+  @override
+  String get financeStatusReady => 'جاهز';
+
+  @override
+  String get financeStatusWarning => 'تحذير';
+
+  @override
+  String get financeStatusBlocked => 'محظور';
+
+  @override
+  String get financeStatusActive => 'نشط';
+
+  @override
+  String get financeWarehouseUnassignedBranch => 'غير مخصص';
+
+  @override
+  String get financeStatusClosed => 'مغلق';
+
+  @override
+  String financeDailyClosingIssueOpenShifts(int count) {
+    return 'يوجد $count ورديات مفتوحة يجب إغلاقها.';
+  }
+
+  @override
+  String financeDailyClosingIssuePendingExpenseApproval(int count) {
+    return 'يوجد $count مصروفات بانتظار الاعتماد.';
+  }
+
+  @override
+  String get financeDailyClosingIssueMissingActualCash =>
+      'لم يتم إدخال النقد الفعلي بعد.';
+
+  @override
+  String financeDailyClosingIssueCashDifference(String amount) {
+    return 'يوجد فرق نقدي بقيمة $amount.';
+  }
+
+  @override
+  String financeDailyClosingIssueDraftJournals(int count) {
+    return 'يوجد $count قيود مسودة لهذا اليوم.';
+  }
+
+  @override
+  String financeDailyClosingIssueUnpostedInventoryEvent(int count) {
+    return 'يوجد $count حركات مخزون بلا ترحيل محاسبي.';
+  }
+
+  @override
+  String get financeDailyClosingIssueCashReconciliationIncomplete =>
+      'تسوية الصندوق النقدي غير مكتملة لهذا اليوم.';
+
+  @override
+  String get financeDailyClosingIssueCardReconciliationIncomplete =>
+      'تسوية البطاقة غير مكتملة لهذا اليوم.';
+
+  @override
+  String get financeDailyClosingIssueBankReconciliationIncomplete =>
+      'تسوية بنكية غير مكتملة لهذا اليوم.';
+
+  @override
+  String get financeDailyClosingIssueUnknown =>
+      'يوجد شرط للإغلاق اليومي يحتاج إلى المراجعة.';
+
+  @override
+  String financePaginationRange(int start, int end, int total) {
+    return 'عرض $start–$end من $total';
+  }
+
+  @override
+  String get financePaginationPrevious => 'السابق';
+
+  @override
+  String financePaginationPage(int current, int last) {
+    return 'صفحة $current من $last';
+  }
+
+  @override
+  String get financePaginationNext => 'التالي';
+
+  @override
+  String get financeSourceActionViewSource => 'عرض المصدر';
+
+  @override
+  String get financeSourceActionViewJournal => 'عرض القيد';
+
+  @override
+  String get financeSourceActionRelatedJournal => 'القيد المرتبط';
+
+  @override
+  String get navigationCafeConfiguration => 'إعدادات المقهى';
+
+  @override
+  String get cafeConfigurationTitle => 'إعدادات المقهى';
+
+  @override
+  String get cafeConfigurationOverview => 'نظرة عامة';
+
+  @override
+  String get cafeConfigurationProfile => 'ملف المقهى';
+
+  @override
+  String get cafeConfigurationBranches => 'الفروع';
+
+  @override
+  String get cafeConfigurationPrinting => 'الطباعة';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'اضبط إعدادات طابعة الإيصالات الافتراضية لكل فرع.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled => 'تفعيل طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationPrinterName => 'اسم الطابعة';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'عنوان IP أو اسم المضيف للطابعة';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'منفذ الطابعة';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'عرض الورق';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'الطباعة التلقائية بعد الدفع';
+
+  @override
+  String get cafeConfigurationPrintingSaved =>
+      'تم حفظ إعدادات الطباعة الافتراضية.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'هل تريد تجاهل تغييرات الطباعة غير المحفوظة والانتقال إلى فرع آخر؟';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'أدخل عنوان طابعة صالحًا ومنفذًا بين 1 و65535.';
+
+  @override
+  String get cafeConfigurationPrintingBranchDefaultsNotice =>
+      'هذه إعدادات افتراضية للفرع: تُطبَّق على جميع أجهزة هذا الفرع ما لم يتم تجاوزها من الإعدادات ← إعداد الطابعة على ذلك الجهاز.';
+
+  @override
+  String get cafeConfigurationSavePrinterConfig => 'حفظ إعدادات الطابعة';
+
+  @override
+  String get cafeConfigurationSaveReceiptDesign => 'حفظ تصميم الإيصال';
+
+  @override
+  String get cafeConfigurationPrinterConfigSaved => 'تم حفظ إعدادات الطابعة.';
+
+  @override
+  String get cafeConfigurationReceiptDesignSaved => 'تم حفظ تصميم الإيصال.';
+
+  @override
+  String get cafeConfigurationReceiptDesign => 'تصميم الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptHeaderSection => 'الترويسة';
+
+  @override
+  String get cafeConfigurationReceiptHeaderLogo => 'شعار المقهى';
+
+  @override
+  String get cafeConfigurationReceiptHeaderCafeName => 'اسم المقهى';
+
+  @override
+  String get cafeConfigurationReceiptHeaderBranchName => 'اسم الفرع';
+
+  @override
+  String get cafeConfigurationReceiptHeaderAddress => 'العنوان';
+
+  @override
+  String get cafeConfigurationReceiptHeaderPhone => 'الهاتف';
+
+  @override
+  String get cafeConfigurationReceiptOrderInfoSection => 'معلومات الطلب';
+
+  @override
+  String get cafeConfigurationReceiptOrderNumber => 'رقم الطلب';
+
+  @override
+  String get cafeConfigurationReceiptDateTime => 'التاريخ والوقت';
+
+  @override
+  String get cafeConfigurationReceiptCashier => 'أمين الصندوق';
+
+  @override
+  String get cafeConfigurationReceiptCustomer => 'العميل';
+
+  @override
+  String get cafeConfigurationReceiptOrderType => 'نوع الطلب';
+
+  @override
+  String get cafeConfigurationReceiptItemsSection => 'الأصناف';
+
+  @override
+  String get cafeConfigurationReceiptProductName => 'اسم المنتج';
+
+  @override
+  String get cafeConfigurationReceiptQuantity => 'الكمية';
+
+  @override
+  String get cafeConfigurationReceiptUnitPrice => 'سعر الوحدة';
+
+  @override
+  String get cafeConfigurationReceiptModifiers => 'الإضافات';
+
+  @override
+  String get cafeConfigurationReceiptNotes => 'ملاحظات الصنف';
+
+  @override
+  String get cafeConfigurationReceiptTotalsSection => 'الإجماليات';
+
+  @override
+  String get cafeConfigurationReceiptSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get cafeConfigurationReceiptDiscount => 'الخصم';
+
+  @override
+  String get cafeConfigurationReceiptTax => 'الضريبة';
+
+  @override
+  String get cafeConfigurationReceiptTotal => 'الإجمالي';
+
+  @override
+  String get cafeConfigurationReceiptPaymentSection => 'الدفع';
+
+  @override
+  String get cafeConfigurationReceiptPaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get cafeConfigurationReceiptPaidAmount => 'المبلغ المدفوع';
+
+  @override
+  String get cafeConfigurationReceiptChange => 'الباقي';
+
+  @override
+  String get cafeConfigurationReceiptFooterSection => 'التذييل';
+
+  @override
+  String get cafeConfigurationReceiptFooterEnabled => 'إظهار التذييل';
+
+  @override
+  String get cafeConfigurationReceiptFooterText => 'نص التذييل';
+
+  @override
+  String get cafeConfigurationReceiptPreview => 'معاينة الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptPreviewTitle => 'معاينة الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptMoveUp => 'تحريك لأعلى';
+
+  @override
+  String get cafeConfigurationReceiptMoveDown => 'تحريك لأسفل';
+
+  @override
+  String get cafeConfigurationReceiptLockedField => 'يظهر دائماً';
+
+  @override
+  String get cafeConfigurationTeamAccess => 'الفريق والوصول';
+
+  @override
+  String get cafeConfigurationTax => 'الضريبة';
+
+  @override
+  String get cafeConfigurationOverviewSubtitle => 'ملخص موجز لإعدادات التشغيل.';
+
+  @override
+  String get cafeConfigurationProfileSubtitle =>
+      'أدر معلومات الأعمال الأساسية المستخدمة عبر النظام.';
+
+  @override
+  String get cafeConfigurationBranchesSubtitle =>
+      'أنشئ وأدر المواقع الفعلية التي يعمل فيها مقهاك.';
+
+  @override
+  String get cafeConfigurationCreateBranchSubtitle =>
+      'أضف موقعًا جديدًا يعمل فيه مقهاك.';
+
+  @override
+  String get cafeConfigurationEditBranchSubtitle => 'حدّث تفاصيل موقع المقهى.';
+
+  @override
+  String get cafeConfigurationConfigured => 'مُعد';
+
+  @override
+  String get cafeConfigurationTotal => 'إجمالي';
+
+  @override
+  String get cafeConfigurationNotAvailable => 'غير متاح';
+
+  @override
+  String get cafeConfigurationAvailablePhase2 => 'متاح في المرحلة 2';
+
+  @override
+  String get cafeConfigurationCouldNotLoad =>
+      'تعذر تحميل الإعدادات. تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String get cafeConfigurationBusinessInformation => 'معلومات العمل';
+
+  @override
+  String get cafeConfigurationCafeName => 'اسم المقهى';
+
+  @override
+  String get cafeConfigurationEmail => 'البريد الإلكتروني';
+
+  @override
+  String get cafeConfigurationPhone => 'الهاتف';
+
+  @override
+  String get cafeConfigurationTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get cafeConfigurationReadOnly => 'للعرض فقط';
+
+  @override
+  String get cafeConfigurationCurrency => 'العملة';
+
+  @override
+  String get cafeConfigurationStatus => 'الحالة';
+
+  @override
+  String get cafeConfigurationReset => 'إعادة ضبط';
+
+  @override
+  String get cafeConfigurationSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get cafeConfigurationProfileSaved => 'تم حفظ ملف المقهى.';
+
+  @override
+  String get cafeConfigurationSaveFailed =>
+      'تعذر حفظ التغييرات. تم الاحتفاظ بتعديلاتك.';
+
+  @override
+  String get cafeConfigurationAddBranch => 'إضافة فرع';
+
+  @override
+  String get cafeConfigurationCreateBranch => 'إنشاء فرع';
+
+  @override
+  String get cafeConfigurationEditBranch => 'تعديل الفرع';
+
+  @override
+  String get cafeConfigurationBranchName => 'اسم الفرع';
+
+  @override
+  String get cafeConfigurationAddress => 'العنوان';
+
+  @override
+  String get cafeConfigurationActions => 'الإجراءات';
+
+  @override
+  String get cafeConfigurationNoBranches => 'لا توجد فروع بعد';
+
+  @override
+  String get cafeConfigurationNoBranchesHelp => 'أنشئ أول موقع لمقهاك للبدء.';
+
+  @override
+  String get cafeConfigurationBranchCreated => 'تم إنشاء الفرع.';
+
+  @override
+  String get cafeConfigurationBranchSaved => 'تم حفظ الفرع.';
+
+  @override
+  String get cafeConfigurationTaxSummary => 'ضريبة حصرية على مستوى المقهى';
+
+  @override
+  String get teamAccessSubtitle =>
+      'أدِر المديرين والموظفين الذين لديهم وصول إلى مقهاك.';
+
+  @override
+  String get teamAddMember => 'إضافة عضو فريق';
+
+  @override
+  String get teamSearch => 'ابحث في الفريق';
+
+  @override
+  String get teamRole => 'الدور';
+
+  @override
+  String get teamName => 'الاسم';
+
+  @override
+  String get teamLogin => 'تسجيل الدخول';
+
+  @override
+  String get teamDeactivated => 'معطّل';
+
+  @override
+  String get teamArchived => 'مؤرشف';
+
+  @override
+  String get teamProtected => 'محمي';
+
+  @override
+  String get teamAllBranches => 'كل الفروع';
+
+  @override
+  String get teamOwner => 'المالك';
+
+  @override
+  String get teamManager => 'مدير';
+
+  @override
+  String get teamEmployee => 'موظف';
+
+  @override
+  String get teamFactoryManager => 'مدير معمل';
+
+  @override
+  String get teamNoMembers => 'لا يوجد مديرون أو موظفون بعد.';
+
+  @override
+  String get teamNoResults => 'لا تطابق أي أعضاء مع عوامل التصفية.';
+
+  @override
+  String get teamEditMember => 'تعديل عضو الفريق';
+
+  @override
+  String get teamUsername => 'اسم المستخدم';
+
+  @override
+  String get teamBranchAccess => 'وصول الفروع';
+
+  @override
+  String get teamActiveBranchesOnly => 'يمكن تعيين الفروع النشطة فقط.';
+
+  @override
+  String get teamTemporaryPassword => 'كلمة مرور مؤقتة';
+
+  @override
+  String get teamConfirmPassword => 'تأكيد كلمة المرور المؤقتة';
+
+  @override
+  String teamTemporaryPasswordMinimum(int count) {
+    return 'استخدم ما لا يقل عن $count محارف.';
+  }
+
+  @override
+  String get teamRoleChangePassword =>
+      'تغيير الدور يتطلب كلمة مرور مؤقتة جديدة وإعادة ضبط تسجيل الدخول.';
+
+  @override
+  String get teamCreate => 'إنشاء';
+
+  @override
+  String get teamMemberCreated => 'تم إنشاء عضو الفريق';
+
+  @override
+  String get teamPasswordVisibleOnce =>
+      'يمكن عرض كلمة المرور المؤقتة هذه المرة فقط.';
+
+  @override
+  String get teamCopy => 'نسخ';
+
+  @override
+  String get teamResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get teamResetPasswordExplanation =>
+      'سيتم إلغاء الجلسات النشطة. يجب على المستخدم تغيير كلمة المرور بعد تسجيل الدخول القادم.';
+
+  @override
+  String get teamPasswordMismatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get teamDeactivate => 'إلغاء التفعيل';
+
+  @override
+  String get teamActivate => 'تفعيل';
+
+  @override
+  String get teamArchive => 'أرشفة';
+
+  @override
+  String get teamDeactivateExplanation =>
+      'لن يتمكن هذا المستخدم من تسجيل الدخول. تبقى النشاطات التاريخية محتفظة.';
+
+  @override
+  String get teamActivateExplanation => 'يمكن لهذا المريد تسجيل الدخول مجددًا.';
+
+  @override
+  String get teamArchiveExplanation =>
+      'يتم الاحتفاظ بالسجلات التاريخية. لا يمكن استعادة المستخدمين المؤرشفين حاليًا.';
+
+  @override
+  String get teamConfirm => 'تأكيد';
+
+  @override
+  String get teamMutationFailed => 'تعذر إتمام الطلب. تم الاحتفاظ بتعديلاتك.';
+
+  @override
+  String get teamLoadFailed =>
+      'تعذر تحميل هذا القسم. تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String get taxSubtitle => 'حدد معدل الضريبة الواحد المستخدم عبر مقهاك.';
+
+  @override
+  String get taxRate => 'معدل الضريبة';
+
+  @override
+  String get taxHelp => 'أدخل نسبة مئوية من 0 إلى 100.';
+
+  @override
+  String get taxExplanation =>
+      'هذه ضريبة حصرية على مستوى المقهى وتُطبق بعد الخصومات. تُطبق التغييرات على الطلبات الجديدة، وتحتفظ الطلبات الحالية بمعدلها المحفوظ.';
+
+  @override
+  String get taxInvalid => 'أدخل نسبة مئوية صحيحة من 0 إلى 100.';
+
+  @override
+  String get taxSaved => 'تم حفظ معدل الضريبة.';
+
+  @override
+  String get taxConfirm => 'تحديث معدل الضريبة؟';
+
+  @override
+  String get taxCurrent => 'الحالي';
+
+  @override
+  String get taxNew => 'الجديد';
+
+  @override
+  String get taxNewOrdersOnly => 'يُطبق هذا على الطلبات الجديدة.';
+
+  @override
+  String get customerManagementTitle => 'إدارة العملاء';
+
+  @override
+  String get customerManagementCustomers => 'العملاء';
+
+  @override
+  String get customerManagementGroups => 'مجموعات العملاء';
+
+  @override
+  String get customerManagementCreateCustomer => 'عميل جديد';
+
+  @override
+  String get customerManagementCreateGroup => 'مجموعة جديدة';
+
+  @override
+  String get customerManagementSearch => 'بحث';
+
+  @override
+  String get customerManagementActive => 'نشط';
+
+  @override
+  String get customerManagementInactive => 'غير نشط';
+
+  @override
+  String get customerManagementArchived => 'مؤرشف';
+
+  @override
+  String get customerManagementAll => 'الكل';
+
+  @override
+  String get customerManagementNoPhone => 'لا يوجد هاتف';
+
+  @override
+  String get customerManagementNotAvailable => 'غير متاح';
+
+  @override
+  String get customerManagementValueSeparator => ' · ';
+
+  @override
+  String get customerManagementLoading => 'جار تحميل معلومات العملاء…';
+
+  @override
+  String get customerManagementEmptyCustomers => 'لا يوجد عملاء بعد.';
+
+  @override
+  String get customerManagementEmptyGroups => 'لا توجد مجموعات عملاء بعد.';
+
+  @override
+  String get customerManagementNoResults => 'لا توجد نتائج مطابقة.';
+
+  @override
+  String get customerManagementRetry => 'إعادة المحاولة';
+
+  @override
+  String get customerManagementClearFilters => 'مسح عوامل التصفية';
+
+  @override
+  String get customerManagementAccessDenied =>
+      'ليس لديك صلاحية الوصول إلى إدارة العملاء.';
+
+  @override
+  String get customerManagementNotFound => 'لم يتم العثور على السجل المطلوب.';
+
+  @override
+  String get customerManagementCustomerNumber => 'رقم العميل';
+
+  @override
+  String get customerManagementName => 'الاسم';
+
+  @override
+  String get customerManagementPhone => 'الهاتف';
+
+  @override
+  String get customerManagementGroupsLabel => 'المجموعات';
+
+  @override
+  String get customerManagementStatus => 'الحالة';
+
+  @override
+  String get customerManagementEmail => 'البريد الإلكتروني';
+
+  @override
+  String get customerManagementBirthDate => 'تاريخ الميلاد';
+
+  @override
+  String get customerManagementNotes => 'ملاحظات';
+
+  @override
+  String get customerManagementPrimary => 'أساسي';
+
+  @override
+  String get customerManagementMembers => 'الأعضاء';
+
+  @override
+  String customerManagementMemberCount(int count) {
+    return 'الأعضاء: $count';
+  }
+
+  @override
+  String get customerManagementPreviousPage => 'الصفحة السابقة';
+
+  @override
+  String get customerManagementNextPage => 'الصفحة التالية';
+
+  @override
+  String customerManagementPage(int page, int total) {
+    return 'الصفحة $page من $total';
+  }
+
+  @override
+  String get customerManagementView => 'عرض';
+
+  @override
+  String get customerManagementEdit => 'تعديل';
+
+  @override
+  String get customerManagementSave => 'حفظ';
+
+  @override
+  String get customerManagementCancel => 'إلغاء';
+
+  @override
+  String get customerManagementActivate => 'تفعيل';
+
+  @override
+  String get customerManagementDeactivate => 'إلغاء التفعيل';
+
+  @override
+  String get customerManagementArchive => 'أرشفة';
+
+  @override
+  String get customerManagementRestore => 'استعادة';
+
+  @override
+  String get customerManagementConfirm => 'تأكيد';
+
+  @override
+  String get customerManagementDiscardChanges =>
+      'تجاهل التغييرات غير المحفوظة؟';
+
+  @override
+  String get customerManagementChangesKept => 'تم الاحتفاظ بتغييراتك.';
+
+  @override
+  String get customerManagementRequestFailed => 'تعذر إتمام الطلب.';
+
+  @override
+  String get customerManagementValidationFailed => 'راجع الحقول المميزة.';
+
+  @override
+  String get customerManagementAddMembers => 'إضافة أعضاء';
+
+  @override
+  String get customerManagementRemoveMember => 'إزالة العضو';
+
+  @override
+  String customerManagementRemoveMemberConfirm(Object customer, Object group) {
+    return 'إزالة $customer من $group؟';
+  }
+
+  @override
+  String get customerManagementCreateTitle => 'عميل جديد';
+
+  @override
+  String get customerManagementEditTitle => 'تعديل العميل';
+
+  @override
+  String get customerManagementCustomerName => 'اسم العميل';
+
+  @override
+  String get customerManagementAddPhone => 'إضافة هاتف';
+
+  @override
+  String get customerManagementRemovePhone => 'إزالة الهاتف';
+
+  @override
+  String get customerManagementPhoneType => 'نوع الهاتف';
+
+  @override
+  String get customerManagementPhoneMobile => 'محمول';
+
+  @override
+  String get customerManagementPhoneHome => 'منزلي';
+
+  @override
+  String get customerManagementPhoneWork => 'عمل';
+
+  @override
+  String get customerManagementPhoneOther => 'أخرى';
+
+  @override
+  String get customerManagementSelectGroups => 'المجموعات';
+
+  @override
+  String get customerManagementActiveGroups => 'المجموعات النشطة';
+
+  @override
+  String get customerManagementArchivedGroupRetained =>
+      'المجموعة المؤرشفة محفوظة';
+
+  @override
+  String get customerManagementDateHint => 'YYYY-MM-DD';
+
+  @override
+  String get customerManagementStay => 'البقاء في التعديل';
+
+  @override
+  String get customerManagementLeave => 'مغادرة';
+
+  @override
+  String get customerManagementRequiredName => 'أدخل اسم العميل.';
+
+  @override
+  String get customerManagementRequiredPhone => 'أدخل رقم هاتف.';
+
+  @override
+  String get customerManagementPrimaryRequired => 'اختر هاتفاً أساسياً واحداً.';
+
+  @override
+  String get customerManagementNoActiveGroups => 'لا توجد مجموعات نشطة.';
+
+  @override
+  String customerManagementDeactivateConfirm(Object name) {
+    return 'إلغاء تنشيط $name؟';
+  }
+
+  @override
+  String get customerManagementDeactivateConsequence =>
+      'لن يعود هذا العميل متاحاً للاستخدام التشغيلي الجديد. تبقى السجلات التاريخية محفوظة.';
+
+  @override
+  String customerManagementArchiveConfirm(Object name) {
+    return 'أرشفة $name؟';
+  }
+
+  @override
+  String get customerManagementArchiveConsequence =>
+      'سيتم أرشفة هذا العميل دون حذف السجلات التاريخية. يمكن استعادته لاحقاً.';
+
+  @override
+  String customerManagementRestoreConfirm(Object name) {
+    return 'استعادة $name؟';
+  }
+
+  @override
+  String get customerManagementRestoreConsequence =>
+      'سيتم استعادة هذا العميل بحالة غير نشط. قم بتنشيطه بشكل منفصل قبل الاستخدام التشغيلي الجديد.';
+
+  @override
+  String get customerManagementMutationFailed =>
+      'لم يتم تغيير العميل. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get cmvpCustomersDescription =>
+      'إدارة سجلات العملاء وهواتفهم ومجموعاتهم وحالة دورة حياتهم.';
+
+  @override
+  String get cmvpGroupsDescription =>
+      'تنظيم مجموعات العملاء وعضوياتها المحدودة.';
+
+  @override
+  String get cmvpCustomerDetailDescription =>
+      'مراجعة معلومات العميل وعضوياته المعتمدة من الخادم.';
+
+  @override
+  String get cmvpCustomerFormDescription =>
+      'إدخال معلومات العميل التي يديرها الخادم.';
+
+  @override
+  String get cmvpGroupDetailDescription =>
+      'مراجعة هوية المجموعة وحالتها وأعضائها الحاليين.';
+
+  @override
+  String get cmvpGroupFormDescription => 'إنشاء مجموعة عملاء أو إعادة تسميتها.';
+
+  @override
+  String get cmvpBreadcrumbCustomers => 'العملاء';
+
+  @override
+  String get cmvpBreadcrumbGroups => 'مجموعات العملاء';
+
+  @override
+  String get cmvpBreadcrumbDetails => 'التفاصيل';
+
+  @override
+  String get cmvpBreadcrumbEdit => 'تعديل';
+
+  @override
+  String get cmvpBreadcrumbCreate => 'جديد';
+
+  @override
+  String cmvpCustomersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عميل',
+      many: '$count عميلاً',
+      few: '$count عملاء',
+      two: 'عميلان',
+      one: 'عميل واحد',
+      zero: 'لا يوجد عملاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpGroupsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مجموعة',
+      many: '$count مجموعة',
+      few: '$count مجموعات',
+      two: 'مجموعتان',
+      one: 'مجموعة واحدة',
+      zero: 'لا توجد مجموعات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عضو',
+      many: '$count عضواً',
+      few: '$count أعضاء',
+      two: 'عضوان',
+      one: 'عضو واحد',
+      zero: 'لا يوجد أعضاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpMoreActions => 'إجراءات إضافية';
+
+  @override
+  String get cmvpOpenActions => 'فتح إجراءات الصف';
+
+  @override
+  String get cmvpSelectRow => 'تحديد الصف';
+
+  @override
+  String get cmvpRemoveGroup => 'إزالة المجموعة';
+
+  @override
+  String get cmvpInformationSection => 'معلومات العميل';
+
+  @override
+  String get cmvpPhoneSection => 'أرقام الهواتف';
+
+  @override
+  String get cmvpGroupsSection => 'مجموعات العملاء';
+
+  @override
+  String get cmvpNotesSection => 'ملاحظات';
+
+  @override
+  String get cmvpLifecycleSection => 'دورة الحياة';
+
+  @override
+  String get cmvpGeneratedNumberHint => 'يتم إنشاء رقم العميل من الخادم.';
+
+  @override
+  String get cmvpCreatedAt => 'تاريخ الإنشاء';
+
+  @override
+  String get cmvpAbsenceValue => 'غير متاح';
+
+  @override
+  String get cmvpManageGroups => 'إدارة المجموعات';
+
+  @override
+  String get cmvpGroupName => 'اسم المجموعة';
+
+  @override
+  String get cmvpMemberSearch => 'البحث في الأعضاء';
+
+  @override
+  String get cmvpNoMembers => 'لا يوجد أعضاء في هذه المجموعة.';
+
+  @override
+  String get cmvpNoCandidates => 'لم يتم العثور على عملاء مؤهلين.';
+
+  @override
+  String get cmvpCandidateSearch => 'البحث في العملاء المؤهلين';
+
+  @override
+  String cmvpSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'إضافة $count عضو',
+      many: 'إضافة $count عضواً',
+      few: 'إضافة $count أعضاء',
+      two: 'إضافة عضوين',
+      one: 'إضافة عضو واحد',
+      zero: 'إضافة أعضاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpAddMembersDialogTitle => 'إضافة أعضاء';
+
+  @override
+  String get cmvpConfirmRemoveMember => 'إزالة العضو';
+
+  @override
+  String get cmvpLoadingCustomers => 'جار تحميل العملاء';
+
+  @override
+  String get cmvpLoadingGroups => 'جار تحميل مجموعات العملاء';
+
+  @override
+  String get cmvpLoadingRecord => 'جار تحميل السجل';
+
+  @override
+  String get cmvpForbiddenTitle => 'الوصول غير متاح';
+
+  @override
+  String get cmvpNotFoundTitle => 'لم يتم العثور على السجل';
+
+  @override
+  String get cmvpRetryableTitle => 'تعذر تحميل هذا العرض';
+
+  @override
+  String get cmvpNoResultsTitle => 'لا توجد نتائج مطابقة';
+
+  @override
+  String get cmvpEmptyTitle => 'لا توجد بيانات بعد';
+
+  @override
+  String get cmvpStateLoadingSemantics => 'جار تحميل محتوى إدارة العملاء';
+
+  @override
+  String get cmvpRetryableMessage => 'تحقق من الاتصال ثم حاول مرة أخرى.';
+
+  @override
+  String get cmvpNoResultsMessage => 'حاول تغيير البحث أو مسح عوامل التصفية.';
+
+  @override
+  String get cmvpEmptyCustomersMessage => 'أضف العميل الأول للبدء.';
+
+  @override
+  String get cmvpEmptyGroupsMessage => 'أنشئ المجموعة الأولى للبدء.';
+
+  @override
+  String get cmvpForbiddenMessage => 'ليس لديك صلاحية عرض هذا المحتوى.';
+
+  @override
+  String get cmvpNotFoundMessage => 'السجل المطلوب لم يعد متاحاً.';
+
+  @override
+  String get cmvpSubmitting => 'جار الحفظ';
+
+  @override
+  String get cmvpAddingMembers => 'جار إضافة الأعضاء';
+
+  @override
+  String get cmvpRemovingMember => 'جار إزالة العضو';
+
+  @override
+  String get cmvpDiscardChangesMessage => 'ستفقد التغييرات غير المحفوظة.';
+
+  @override
+  String get cmvpDialogCancel => 'إلغاء';
+
+  @override
+  String get cmvpDialogConfirm => 'تأكيد';
+
+  @override
+  String get cmvpMemberRemoveConsequence => 'ستتم إزالة هذا العضو من المجموعة.';
+
+  @override
+  String get cmvpGroupLifecycleMessage =>
+      'ستبقى المجموعة متاحة في السجلات التاريخية.';
+
+  @override
+  String get cmvpOrders => 'الطلبات';
+
+  @override
+  String get cmvpOrderHistory => 'طلبات العميل';
+
+  @override
+  String get cmvpFromDate => 'من تاريخ';
+
+  @override
+  String get cmvpToDate => 'إلى تاريخ';
+
+  @override
+  String get cmvpBranch => 'الفرع';
+
+  @override
+  String get cmvpAllBranches => 'كل الفروع';
+
+  @override
+  String get cmvpOrderStatus => 'حالة الطلب';
+
+  @override
+  String get cmvpPaymentStatus => 'حالة الدفع';
+
+  @override
+  String get cmvpOrderNumber => 'رقم الطلب';
+
+  @override
+  String get cmvpOrderDateTime => 'التاريخ والوقت';
+
+  @override
+  String get cmvpOrderTotal => 'الإجمالي';
+
+  @override
+  String get cmvpOrderStatusCompleted => 'مكتمل';
+
+  @override
+  String get cmvpOrderStatusHeld => 'قيد التحضير';
+
+  @override
+  String get cmvpOrderStatusCancelled => 'ملغي';
+
+  @override
+  String get cmvpOrderStatusDraft => 'مسودة';
+
+  @override
+  String get cmvpPaymentStatusPaid => 'مدفوع';
+
+  @override
+  String get cmvpPaymentStatusUnpaid => 'غير مدفوع';
+
+  @override
+  String get cmvpPaymentStatusPartiallyRefunded => 'مسترد جزئياً';
+
+  @override
+  String get cmvpPaymentStatusRefunded => 'مسترد';
+
+  @override
+  String get cmvpNoOrders => 'لا توجد طلبات.';
+
+  @override
+  String cmvpOrdersShowing(int start, int end, int total) {
+    return 'عرض $start–$end من $total';
+  }
+
+  @override
+  String get cmvpOverview => 'نظرة عامة';
+
+  @override
+  String get cmvpTotalOrders => 'إجمالي الطلبات';
+
+  @override
+  String get cmvpTotalSpending => 'إجمالي الإنفاق';
+
+  @override
+  String get cmvpAverageOrderValue => 'متوسط قيمة الطلب';
+
+  @override
+  String get cmvpLastVisit => 'آخر زيارة';
+
+  @override
+  String get cmvpRecentOrders => 'آخر الطلبات';
+
+  @override
+  String get cmvpViewAllOrders => 'عرض جميع الطلبات';
+
+  @override
+  String get expensesReportTitle => 'المصروفات';
+
+  @override
+  String get expensesReportSubtitle =>
+      'تحليل المصروفات التشغيلية حسب الفئة والفرع والفترة الزمنية.';
+
+  @override
+  String get expensesReportAllCategories => 'كل الفئات';
+
+  @override
+  String get expensesReportAllStatuses => 'كل الحالات';
+
+  @override
+  String get expensesReportExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get expensesReportTotal => 'إجمالي المصروفات';
+
+  @override
+  String get expensesReportPosted => 'المصروفات المرحلة';
+
+  @override
+  String get expensesReportPending => 'المصروفات المعلقة';
+
+  @override
+  String get expensesReportAverageDaily => 'متوسط المصروف اليومي';
+
+  @override
+  String get expensesReportRatio => 'نسبة المصروفات إلى الإجمالي';
+
+  @override
+  String get expensesReportLargestCategory => 'أكبر فئة مصروفات';
+
+  @override
+  String get expensesReportTrend => 'اتجاه المصروفات';
+
+  @override
+  String get expensesReportByCategory => 'المصروفات حسب الفئة';
+
+  @override
+  String get expensesReportLargest => 'أكبر المصروفات';
+
+  @override
+  String get expensesReportBranchComparison => 'مقارنة مصروفات الفروع';
+
+  @override
+  String get expensesReportPeriodComparison => 'مقارنة بالفترة السابقة';
+
+  @override
+  String get expensesReportTable => 'جدول المصروفات';
+
+  @override
+  String get expensesReportDate => 'التاريخ';
+
+  @override
+  String get expensesReportExpense => 'المصروف';
+
+  @override
+  String get expensesReportCategory => 'الفئة';
+
+  @override
+  String get expensesReportBranch => 'الفرع';
+
+  @override
+  String get expensesReportPayee => 'المستفيد';
+
+  @override
+  String get expensesReportPaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get expensesReportAmount => 'المبلغ';
+
+  @override
+  String get expensesReportStatus => 'الحالة';
+
+  @override
+  String get expensesReportNetSales => 'الإجمالي';
+
+  @override
+  String get expensesReportExpenseSales => 'المصروفات / المبيعات';
+
+  @override
+  String get expensesReportCompanyWide => 'على مستوى الشركة';
+
+  @override
+  String get expensesReportUnavailable => 'غير متاح';
+
+  @override
+  String get expensesReportNoExpenses => 'لا توجد مصروفات ضمن الفترة المحددة.';
+
+  @override
+  String get expensesReportNoCategories => 'لا توجد بيانات مصروفات حسب الفئة.';
+
+  @override
+  String get expensesReportNoBranches => 'لا توجد بيانات كافية لمقارنة الفروع.';
+
+  @override
+  String get expensesReportNoLargest => 'لا توجد مصروفات لعرضها.';
+
+  @override
+  String get expensesReportError => 'تعذّر تحميل تقرير المصروفات.';
+
+  @override
+  String get expensesReportCurrentPeriod => 'الفترة الحالية';
+
+  @override
+  String get expensesReportPreviousPeriod => 'الفترة السابقة';
+
+  @override
+  String get expensesReportDifference => 'الفرق';
+
+  @override
+  String get expensesReportDraft => 'مسودة';
+
+  @override
+  String get expensesReportPendingApproval => 'معلّق للاعتماد';
+
+  @override
+  String get expensesReportApproved => 'معتمد';
+
+  @override
+  String get expensesReportPaid => 'مدفوع';
+
+  @override
+  String get expensesReportRejected => 'مرفوض';
+
+  @override
+  String get expensesReportReversed => 'معكوس';
+
+  @override
+  String get expensesReportComparisonUnavailable => 'المقارنة غير متاحة';
+
+  @override
+  String get expensesReportPercentOfTotal => 'من الإجمالي';
+
+  @override
+  String get cashierHomeTitle => 'الرئيسية';
+
+  @override
+  String get cashierDashboardTitle => 'عمليات الكاشير';
+
+  @override
+  String get cashierDashboardSubtitle =>
+      'كل ما تحتاجه لإدارة ورديتك على نقطة البيع.';
+
+  @override
+  String get cashierBranchLabel => 'الفرع';
+
+  @override
+  String get cashierNameLabel => 'الكاشير';
+
+  @override
+  String get cashierShiftLabel => 'الوردية';
+
+  @override
+  String get cashierShiftOpenedAt => 'بدأت';
+
+  @override
+  String get cashierShiftDuration => 'المدة';
+
+  @override
+  String get cashierShiftStatus => 'الحالة';
+
+  @override
+  String get cashierShiftStatusOpen => 'مفتوحة';
+
+  @override
+  String get cashierNoOpenShift => 'لا توجد وردية مفتوحة';
+
+  @override
+  String get cashierNoOpenShiftHint =>
+      'تظهر أرقام الوردية بعد فتح وردية في هذا الفرع.';
+
+  @override
+  String get cashierScopeCurrentShift => 'الوردية الحالية';
+
+  @override
+  String get cashierScopeBranch => 'الفرع';
+
+  @override
+  String get cashierSectionCashAndShift => 'الصندوق والوردية';
+
+  @override
+  String get cashierSectionSalesAndOrders => 'المبيعات والطلبات';
+
+  @override
+  String get cashierSectionFinance => 'المالية';
+
+  @override
+  String get cashierSectionInventory => 'المخزون';
+
+  @override
+  String get cashierSectionQuickAccess => 'وصول سريع';
+
+  @override
+  String get cashierSectionAlerts => 'تنبيهات تشغيلية';
+
+  @override
+  String get cashierExpectedDrawer => 'إجمالي الصندوق المتوقع';
+
+  @override
+  String get cashierExpectedDrawerHint =>
+      'مبلغ متوقع وليس فعلياً. الجرد النقدي يتم عند إغلاق الوردية.';
+
+  @override
+  String get cashierOpeningFloat => 'عهدة بداية الوردية';
+
+  @override
+  String get cashierCashSales => 'مبيعات نقدية';
+
+  @override
+  String get cashierReceiptVouchers => 'سندات قبض نقدية';
+
+  @override
+  String get cashierPaymentVouchers => 'سندات دفع نقدية';
+
+  @override
+  String get cashierCashRefunds => 'مرتجعات نقدية';
+
+  @override
+  String get cashierShiftSales => 'مبيعات الوردية';
+
+  @override
+  String get cashierOrderCount => 'عدد الطلبات';
+
+  @override
+  String get cashierAverageOrder => 'متوسط الطلب';
+
+  @override
+  String get cashierCardSales => 'مبيعات بطاقة';
+
+  @override
+  String get cashierOtherMethods => 'وسائل دفع أخرى';
+
+  @override
+  String get cashierDiscounts => 'الخصومات';
+
+  @override
+  String get cashierRefunds => 'المرتجعات';
+
+  @override
+  String get cashierOrdersActive => 'نشطة';
+
+  @override
+  String get cashierOrdersHeld => 'معلقة';
+
+  @override
+  String get cashierOrdersCompleted => 'مكتملة';
+
+  @override
+  String get cashierPosWarehouse => 'مخزن نقطة البيع';
+
+  @override
+  String get cashierItemCount => 'عدد المواد';
+
+  @override
+  String get cashierLowStock => 'مخزون منخفض';
+
+  @override
+  String get cashierZeroStock => 'مخزون صفر';
+
+  @override
+  String get cashierNegativeStock => 'مخزون سالب';
+
+  @override
+  String get cashierShiftCountStatus => 'جرد الوردية';
+
+  @override
+  String get cashierShiftCountComplete => 'مكتمل';
+
+  @override
+  String get cashierShiftCountPending => 'غير مكتمل';
+
+  @override
+  String get cashierShiftCountNotRequired => 'غير مطلوب';
+
+  @override
+  String get cashierQuickPos => 'نقطة البيع';
+
+  @override
+  String get cashierQuickOrders => 'الطلبات';
+
+  @override
+  String get cashierQuickDiscounts => 'الخصومات';
+
+  @override
+  String get cashierQuickReceiptVoucher => 'سند قبض';
+
+  @override
+  String get cashierQuickPaymentVoucher => 'سند دفع';
+
+  @override
+  String get cashierQuickPurchases => 'المشتريات';
+
+  @override
+  String get cashierQuickSales => 'المبيعات';
+
+  @override
+  String get cashierQuickInventory => 'مخزون نقطة البيع';
+
+  @override
+  String get cashierQuickLowStock => 'المواد المنخفضة';
+
+  @override
+  String get cashierQuickNegativeStock => 'المواد السالبة';
+
+  @override
+  String get cashierCloseShift => 'إغلاق الوردية';
+
+  @override
+  String get cashierCloseShiftUnavailable =>
+      'تدفق إغلاق الوردية غير متاح في هذا التطبيق بعد.';
+
+  @override
+  String cashierOperationsCount(int count) {
+    return '$count عملية';
+  }
+
+  @override
+  String cashierPendingTemplates(int count) {
+    return '$count متبقٍ';
+  }
+
+  @override
+  String get cashierAlertNoBranch => 'لا يوجد فرع تشغيلي مرتبط بهذا الحساب.';
+
+  @override
+  String get cashierAlertNoShift => 'لا توجد وردية مفتوحة حالياً.';
+
+  @override
+  String get cashierAlertWarehouseMissing =>
+      'لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.';
+
+  @override
+  String get cashierAlertWarehouseAmbiguous =>
+      'يوجد أكثر من مخزن لنقطة البيع في هذا الفرع.';
+
+  @override
+  String cashierAlertBlockingOrders(int count) {
+    return '$count طلبات يجب إنهاؤها قبل إغلاق الوردية.';
+  }
+
+  @override
+  String cashierAlertNegativeStock(int count) {
+    return '$count مواد بمخزون سالب.';
+  }
+
+  @override
+  String cashierAlertLowStock(int count) {
+    return '$count مواد منخفضة المخزون.';
+  }
+
+  @override
+  String get cashierAlertShiftCount => 'الجرد غير مكتمل.';
+
+  @override
+  String get cashierAlertsNone => 'لا توجد تنبيهات تشغيلية.';
+
+  @override
+  String get cashierRetry => 'إعادة المحاولة';
+
+  @override
+  String get cashierLoadError => 'تعذر تحميل لوحة العمليات.';
+
+  @override
+  String get cashierInventoryTitle => 'مخزون نقطة البيع';
+
+  @override
+  String get cashierInventorySubtitle =>
+      'الكميات التشغيلية للمخزن الذي تبيع منه نقطة البيع.';
+
+  @override
+  String get cashierInventorySearchHint => 'ابحث بالاسم أو الرمز';
+
+  @override
+  String get cashierInventoryFilterAll => 'الكل';
+
+  @override
+  String get cashierInventoryStateNormal => 'طبيعي';
+
+  @override
+  String get cashierInventoryStateLow => 'منخفض';
+
+  @override
+  String get cashierInventoryStateZero => 'صفر';
+
+  @override
+  String get cashierInventoryStateNegative => 'سالب';
+
+  @override
+  String get cashierInventoryColumnItem => 'المادة';
+
+  @override
+  String get cashierInventoryColumnQuantity => 'الكمية';
+
+  @override
+  String get cashierInventoryColumnState => 'الحالة';
+
+  @override
+  String get cashierInventoryColumnLastMovement => 'آخر حركة';
+
+  @override
+  String get cashierInventoryEmpty => 'لا توجد مواد في هذا المخزن.';
+
+  @override
+  String get cashierInventoryUnavailable =>
+      'لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.';
+
+  @override
+  String get cashierInventoryError => 'تعذر تحميل مخزون نقطة البيع.';
+
+  @override
+  String get discountV2PackageBundle => 'حزمة / باقة';
+
+  @override
+  String get discountV2PackageRequirements => 'متطلبات الباقة';
+
+  @override
+  String get discountV2AllPackageItems =>
+      'يجب أن تكون جميع عناصر الباقة موجودة في الطلب لتطبيق هذا الخصم.';
+
+  @override
+  String get discountV2RequiredQuantity => 'الكمية المطلوبة';
+
+  @override
+  String get discountV2AddProduct => 'إضافة منتج';
+
+  @override
+  String get discountV2SelectedCustomers => 'عملاء محددون';
+
+  @override
+  String get discountV2SelectCustomers => 'اختيار العملاء';
+
+  @override
+  String get discountV2Channels => 'القنوات';
+
+  @override
+  String get discountV2AllChannels => 'كل القنوات';
+
+  @override
+  String get discountV2SelectedChannels => 'قنوات محددة';
+
+  @override
+  String get discountV2BranchChannelHelp => 'تُطبق قيود الفرع والقناة معاً.';
+
+  @override
+  String get discountV2DailyLimit => 'الحد اليومي لكل عميل';
+
+  @override
+  String get discountV2DailyLimitDetails =>
+      'يمكن لكل عميل استخدام هذا الخصم حتى الحد الإجمالي، وبحد يومي لكل يوم عمل.';
+
+  @override
+  String get discountV2Regenerate => 'إعادة التوليد';
+
+  @override
+  String get discountV2CodeGenerationFailed => 'تعذر توليد الرمز.';
+
+  @override
+  String get discountV2Retry => 'إعادة المحاولة';
+
+  @override
+  String get discountV2Search => 'بحث';
+
+  @override
+  String posCustomerPoints(String points) {
+    return '$points نقطة';
+  }
+
+  @override
+  String get posWalkInCustomer => 'عميل عابر';
+
+  @override
+  String get posUseWalkInCustomer => 'استخدام عميل عابر';
+
+  @override
+  String get posSelectCustomer => 'اختيار العميل';
+
+  @override
+  String get posSearchCustomers => 'ابحث عن العملاء...';
+
+  @override
+  String get posNoCustomers => 'لا يوجد عملاء.';
+
+  @override
+  String get posNoCustomerMatches => 'لا توجد عملاء مطابقون.';
+
+  @override
+  String get posCreateNewCustomer => 'إنشاء جديد';
+
+  @override
+  String get posCloseCustomerSelector => 'إغلاق اختيار العميل';
+
+  @override
+  String get posCustomerCreateTitle => 'إنشاء عميل';
+
+  @override
+  String get posCustomerGroupsLoading => 'جاري تحميل المجموعات النشطة...';
+
+  @override
+  String get posCustomerGroupsEmpty => 'لا توجد مجموعات نشطة.';
+
+  @override
+  String get posCustomerGroupsForbidden => 'لا يمكنك تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerGroupsRetry => 'تعذر تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerCreateForbidden => 'لا يمكنك إنشاء عميل من نقطة البيع.';
+
+  @override
+  String get posCustomerCreateFailed =>
+      'تعذر إنشاء العميل. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get posCustomerAttachmentFailed =>
+      'تم إنشاء العميل، لكن تعذر إلحاقه بهذا الطلب. أعد المحاولة بأمان.';
+
+  @override
+  String get posCustomerSearchForbidden => 'لا يمكنك البحث عن العملاء.';
+
+  @override
+  String get posCustomerSearchFailed => 'البحث عن العملاء غير متاح مؤقتاً.';
+
+  @override
+  String get discountManual => 'يدوي';
+
+  @override
+  String get discountCode => 'الرمز';
+
+  @override
+  String get discountCoupon => 'قسيمة';
+
+  @override
+  String discountCodeValue(String code) {
+    return 'الرمز: $code';
+  }
+
+  @override
+  String get discountPercentage => 'نسبة مئوية';
+
+  @override
+  String get discountFixedAmount => 'مبلغ ثابت';
+
+  @override
+  String get discountActive => 'نشط';
+
+  @override
+  String get discountInactive => 'غير نشط';
+
+  @override
+  String get discountScheduled => 'مجدول';
+
+  @override
+  String get discountExpired => 'منتهي';
+
+  @override
+  String get discountEntireOrder => 'الطلب بالكامل';
+
+  @override
+  String get discountSelectedProducts => 'المنتجات المحددة';
+
+  @override
+  String get discountSelectedCategories => 'الفئات المحددة';
+
+  @override
+  String get discountNoConditions => 'بلا شروط';
+
+  @override
+  String get discountAlwaysValid => 'صالح دائماً';
+
+  @override
+  String discountAmountOff(String amount) {
+    return 'خصم $amount';
+  }
+
+  @override
+  String discountPercentOff(String value) {
+    return 'خصم $value%';
+  }
+
+  @override
+  String discountBundleValue(int quantity) {
+    return 'اشترِ $quantity واحصل على $quantity';
+  }
+
+  @override
+  String discountUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String discountFrom(String date) {
+    return 'من $date';
+  }
+
+  @override
+  String discountDateRange(String start, String end) {
+    return '$start - $end';
+  }
+
+  @override
+  String get discountsTitle => 'الخصومات والقسائم';
+
+  @override
+  String get discountsSubtitle => 'إدارة العروض الترويجية وقواعد التسعير';
+
+  @override
+  String get discountsCreate => 'إنشاء خصم';
+
+  @override
+  String get discountsSearchHint => 'البحث في الخصومات...';
+
+  @override
+  String get discountsAllStatuses => 'كل الحالات';
+
+  @override
+  String get discountsAdvancedFilters => 'فلاتر متقدمة';
+
+  @override
+  String get discountsAdvancedFiltersSoon => 'ستتوفر الفلاتر المتقدمة قريباً.';
+
+  @override
+  String get discountsEmpty => 'لا توجد خصومات تطابق البحث أو فلتر الحالة.';
+
+  @override
+  String get discountsTableName => 'اسم الخصم';
+
+  @override
+  String get discountsTableType => 'النوع';
+
+  @override
+  String get discountsTableValue => 'القيمة';
+
+  @override
+  String get discountsTableConditions => 'الشروط';
+
+  @override
+  String get discountsTablePeriod => 'فترة الصلاحية';
+
+  @override
+  String get discountsTableStatus => 'الحالة';
+
+  @override
+  String get discountsTableActions => 'الإجراءات';
+
+  @override
+  String get discountsViewTooltip => 'عرض الخصم';
+
+  @override
+  String get discountsEditTooltip => 'تعديل الخصم';
+
+  @override
+  String get discountsDeactivateTooltip => 'إلغاء تنشيط الخصم';
+
+  @override
+  String get discountsActivateTooltip => 'تنشيط الخصم';
+
+  @override
+  String get discountsDeleteTooltip => 'حذف الخصم';
+
+  @override
+  String discountsPagination(int start, int end, int total) {
+    return 'عرض $start إلى $end من $total إدخال';
+  }
+
+  @override
+  String get discountsActiveMetric => 'الخصومات النشطة';
+
+  @override
+  String get discountsUsageMetric => 'إجمالي الاستخدام هذا الشهر';
+
+  @override
+  String get discountsSavedMetric => 'القيمة التقديرية الموفرة';
+
+  @override
+  String get discountsDeleteTitle => 'حذف الخصم؟';
+
+  @override
+  String discountsDeleteBody(String name) {
+    return 'لن يعود $name متاحاً.';
+  }
+
+  @override
+  String get discountsDeleted => 'تم حذف الخصم.';
+
+  @override
+  String get discountsDeleteFailed => 'تعذر حذف الخصم.';
+
+  @override
+  String discountsStatusUpdated(String status) {
+    return 'الخصم $status.';
+  }
+
+  @override
+  String get discountsStatusUpdateFailed => 'تعذر تحديث حالة الخصم.';
+
+  @override
+  String discountsUsedSaved(int count, String amount) {
+    return 'استخدم $count مرة - تم توفير $amount';
+  }
+
+  @override
+  String get discountFormBasic => 'المعلومات الأساسية';
+
+  @override
+  String get discountFormName => 'اسم الخصم';
+
+  @override
+  String get discountFormApplicationMode => 'وضع التطبيق';
+
+  @override
+  String get discountFormCouponOrCode => 'قسيمة / رمز';
+
+  @override
+  String get discountFormDescription => 'الوصف';
+
+  @override
+  String get discountFormDescriptionHint => 'وصف داخلي لسياسة الخصم...';
+
+  @override
+  String get discountFormScopeValue => 'النطاق والقيمة';
+
+  @override
+  String get discountFormAppliesTo => 'يطبق على';
+
+  @override
+  String get discountFormValueType => 'نوع القيمة';
+
+  @override
+  String get discountFormValue => 'القيمة';
+
+  @override
+  String get discountFormMinSpendOptional => 'الحد الأدنى للطلب (اختياري)';
+
+  @override
+  String get discountFormMaxDiscountOptional => 'الحد الأقصى للخصم (اختياري)';
+
+  @override
+  String get discountFormQuickPercentages => 'قيم نسب مئوية سريعة';
+
+  @override
+  String get discountFormQuickFixed => 'قيم ثابتة سريعة';
+
+  @override
+  String get discountFormEligibility => 'شروط الأهلية';
+
+  @override
+  String get discountFormAllCustomers => 'كل العملاء';
+
+  @override
+  String get discountFormSelectedCustomerGroups => 'مجموعات عملاء محددة';
+
+  @override
+  String get discountFormAllPaymentMethods => 'كل طرق الدفع';
+
+  @override
+  String get discountFormSelectedPaymentMethods => 'طرق دفع محددة';
+
+  @override
+  String get discountFormAllBranches => 'كل الفروع';
+
+  @override
+  String get discountFormSelectedBranches => 'فروع محددة';
+
+  @override
+  String get discountFormCustomerGroups => 'مجموعات العملاء';
+
+  @override
+  String get discountFormSelectCustomerGroups => 'اختيار مجموعات العملاء';
+
+  @override
+  String get discountFormSelectPaymentMethods => 'اختيار طرق الدفع';
+
+  @override
+  String get discountFormSelectBranches => 'اختيار الفروع';
+
+  @override
+  String get discountFormSchedule => 'الجدولة';
+
+  @override
+  String get discountFormActiveWeekdays => 'أيام الأسبوع النشطة (اختياري)';
+
+  @override
+  String get discountFormStartDate => 'تاريخ البدء';
+
+  @override
+  String get discountFormEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String get discountFormStartTime => 'وقت البدء';
+
+  @override
+  String get discountFormEndTime => 'وقت الانتهاء';
+
+  @override
+  String get discountFormOvernightHelp =>
+      'وقت انتهاء أسبق من وقت البدء يعني نافذة ليلية.';
+
+  @override
+  String get discountFormUsageLimits => 'حدود الاستخدام';
+
+  @override
+  String get discountFormGlobalUsageOptional => 'حد الاستخدام العام (اختياري)';
+
+  @override
+  String get discountFormLifetimeUsageOptional =>
+      'حد العميل مدى الحياة (اختياري)';
+
+  @override
+  String get discountFormUnlimited => 'غير محدود';
+
+  @override
+  String get discountFormProduct => 'المنتج';
+
+  @override
+  String get discountFormLoading => 'جارٍ التحميل...';
+
+  @override
+  String get discountFormNoOptions => 'لا توجد خيارات نشطة متاحة.';
+
+  @override
+  String get discountFormDone => 'تم';
+
+  @override
+  String get discountFormLoadTitle => 'تعذر تحميل الخصم';
+
+  @override
+  String get discountFormRetryOptions => 'إعادة محاولة تحميل خيارات الاختيار';
+
+  @override
+  String get discountFormDiscard => 'تجاهل التغييرات';
+
+  @override
+  String get discountFormSaveDraft => 'حفظ كمسودة';
+
+  @override
+  String get discountFormActivate => 'تنشيط الخصم';
+
+  @override
+  String get discountFormSummary => 'الملخص';
+
+  @override
+  String get discountFormReady => 'السياسة جاهزة للمراجعة قبل التنشيط.';
+
+  @override
+  String get discountFormNotReady =>
+      'أكمل الحقول المطلوبة قبل تنشيط هذا الخصم.';
+
+  @override
+  String get discountFormDiscount => 'الخصم';
+
+  @override
+  String get discountFormScope => 'النطاق';
+
+  @override
+  String get discountFormBranches => 'الفروع';
+
+  @override
+  String get discountFormScheduleLabel => 'الجدولة';
+
+  @override
+  String get discountFormCustomers => 'العملاء';
+
+  @override
+  String get discountFormPackage => 'الحزمة';
+
+  @override
+  String get discountFormUsage => 'الاستخدام';
+
+  @override
+  String get discountFormAnyDay => 'أي يوم';
+
+  @override
+  String discountFormSelectedCount(int count) {
+    return '$count محدد';
+  }
+
+  @override
+  String discountFormDaysSelected(int count) {
+    return 'تم تحديد $count أيام';
+  }
+
+  @override
+  String discountFormSelectedCustomers(int count) {
+    return '$count عملاء محددون';
+  }
+
+  @override
+  String discountFormPerDay(int count) {
+    return '$count يومياً';
+  }
+
+  @override
+  String discountFormLifetime(int count) {
+    return '$count مدى الحياة';
+  }
+
+  @override
+  String discountFormUsageBoth(int lifetime, int daily) {
+    return '$lifetime مدى الحياة / $daily يومياً';
+  }
+
+  @override
+  String get discountFormSavedActivated => 'تم حفظ الخصم وتنشيطه.';
+
+  @override
+  String get discountFormSaved => 'تم حفظ الخصم.';
+
+  @override
+  String get discountFormSaveFailed => 'تعذر حفظ الخصم.';
+
+  @override
+  String get discountValidationName => 'اسم الخصم مطلوب.';
+
+  @override
+  String get discountValidationNonNegativeValue =>
+      'أدخل قيمة تساوي صفراً أو أكبر.';
+
+  @override
+  String get discountValidationPercentage =>
+      'لا يمكن أن تتجاوز نسبة الخصم 100.';
+
+  @override
+  String get discountValidationCode => 'رمز مطلوب لخصومات القسائم.';
+
+  @override
+  String get discountValidationProducts => 'اختر منتجاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationCategories => 'اختر فئة واحدة أو أكثر.';
+
+  @override
+  String get discountValidationBundle => 'أضف منتج حزمة واحداً على الأقل.';
+
+  @override
+  String get discountValidationBundleProduct => 'اختر منتجاً لكل متطلب حزمة.';
+
+  @override
+  String get discountValidationBundleUnique =>
+      'لا يمكن إضافة منتج الحزمة أكثر من مرة.';
+
+  @override
+  String get discountValidationBundleQuantity =>
+      'يجب أن تكون كميات الحزمة أكبر من صفر.';
+
+  @override
+  String get discountValidationGroups => 'اختر مجموعة عملاء واحدة أو أكثر.';
+
+  @override
+  String get discountValidationCustomers => 'اختر عميلاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationBranches => 'اختر فرعاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationMoney => 'أدخل مبالغ نقدية صالحة.';
+
+  @override
+  String get discountValidationNegativeMoney =>
+      'لا يمكن أن تكون المبالغ النقدية سالبة.';
+
+  @override
+  String get discountValidationUsage =>
+      'يجب أن تكون حدود الاستخدام أرقاماً صحيحة موجبة.';
+
+  @override
+  String get discountValidationDailyUsage =>
+      'يجب أن تكون حدود الاستخدام اليومية أرقاماً صحيحة موجبة.';
+
+  @override
+  String get discountValidationDate => 'يجب أن تستخدم التواريخ YYYY-MM-DD.';
+
+  @override
+  String get discountValidationEndDate =>
+      'لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.';
+
+  @override
+  String get discountValidationTimesTogether =>
+      'يجب تقديم وقت البدء والانتهاء معاً.';
+
+  @override
+  String get discountValidationTime => 'يجب أن تستخدم الأوقات HH:mm.';
+
+  @override
+  String get discountFormCreate => 'إنشاء خصم';
+
+  @override
+  String get discountFormEdit => 'تعديل الخصم';
+
+  @override
+  String get discountFormCreatePolicy => 'إنشاء سياسة خصم';
+
+  @override
+  String get discountFormEditPolicy => 'تعديل سياسة خصم';
+
+  @override
+  String get discountFormHeadingSubtitle =>
+      'إعداد نطاق السياسة وأهليتها وجدولها.';
+
+  @override
+  String get discountCustomerEligibility => 'أهلية العملاء';
+
+  @override
+  String get discountPaymentMethods => 'طرق الدفع';
+
+  @override
+  String get discountWeekdayMonday => 'الاثنين';
+
+  @override
+  String get discountWeekdayTuesday => 'الثلاثاء';
+
+  @override
+  String get discountWeekdayWednesday => 'الأربعاء';
+
+  @override
+  String get discountWeekdayThursday => 'الخميس';
+
+  @override
+  String get discountWeekdayFriday => 'الجمعة';
+
+  @override
+  String get discountWeekdaySaturday => 'السبت';
+
+  @override
+  String get discountWeekdaySunday => 'الأحد';
+
+  @override
+  String get discountPosPreview => 'معاينة نقطة البيع';
+
+  @override
+  String get discountSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get discountTotal => 'الإجمالي';
+
+  @override
+  String discountTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get discountRequestFailed =>
+      'تعذر إكمال طلب الخصم. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String discountServerFieldInvalid(String field) {
+    return 'يرجى مراجعة حقل $field.';
+  }
+
+  @override
+  String get discountCurrency => 'العملة';
+
+  @override
+  String get discountChannelPos => 'نقطة البيع';
+
+  @override
+  String get discountChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get discountChannelKiosk => 'الكشك';
+
+  @override
+  String get discountChannelQrOrdering => 'الطلب عبر رمز QR';
+
+  @override
+  String get discountChannelDelivery => 'التوصيل';
+
+  @override
+  String get discountChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String discountFormSelectedCountPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count محدد',
+      many: '$count محدداً',
+      few: '$count محددة',
+      two: 'محددان',
+      one: 'محدد واحد',
+      zero: 'لا يوجد محدد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormDaysSelectedPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم محدد',
+      many: '$count يوماً محدداً',
+      few: '$count أيام محددة',
+      two: 'يومان محددان',
+      one: 'يوم واحد محدد',
+      zero: 'أي يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormSelectedCustomersPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عميل محدد',
+      many: '$count عميلاً محدداً',
+      few: '$count عملاء محددون',
+      two: 'عميلان محددان',
+      one: 'عميل واحد محدد',
+      zero: 'لا يوجد عملاء محددون',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormPerDayPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مرة يومياً',
+      many: '$count مرة يومياً',
+      few: '$count مرات يومياً',
+      two: 'مرتان يومياً',
+      one: 'مرة واحدة يومياً',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormLifetimePlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مرة مدى الحياة',
+      many: '$count مرة مدى الحياة',
+      few: '$count مرات مدى الحياة',
+      two: 'مرتان مدى الحياة',
+      one: 'مرة واحدة مدى الحياة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posApplyDiscount => 'تطبيق خصم';
+
+  @override
+  String get posCouponCode => 'رمز القسيمة';
+
+  @override
+  String get posEnterCouponCode => 'أدخل رمز القسيمة';
+
+  @override
+  String get posCouponCodeRequired => 'أدخل رمز القسيمة.';
+
+  @override
+  String get posCouponDiscount => 'خصم القسيمة';
+
+  @override
+  String get posAvailableDiscounts => 'الخصومات المتاحة';
+
+  @override
+  String get posSearchDiscounts => 'البحث في الخصومات';
+
+  @override
+  String get posNoDiscountsAvailable => 'لا توجد خصومات متاحة لهذا الطلب.';
+
+  @override
+  String get posNoDiscountsMatch => 'لا توجد خصومات تطابق بحثك.';
+
+  @override
+  String get posApply => 'تطبيق';
+
+  @override
+  String get posClose => 'إغلاق';
+
+  @override
+  String get posCancel => 'إلغاء';
+
+  @override
+  String get posPayment => 'الدفع';
+
+  @override
+  String posOrderNumber(String number) {
+    return 'الطلب $number';
+  }
+
+  @override
+  String get posSelectPaymentMethod => 'اختر طريقة الدفع';
+
+  @override
+  String get posPaymentMethodCash => 'نقداً';
+
+  @override
+  String get posPaymentMethodCard => 'بطاقة';
+
+  @override
+  String get posPaymentMethodWallet => 'محفظة';
+
+  @override
+  String get posPaymentMethodSplit => 'دفع مقسم';
+
+  @override
+  String get posAmountReceived => 'النقد المستلم';
+
+  @override
+  String get posChangeDue => 'الباقي المستحق';
+
+  @override
+  String get posEnterAmountReceived => 'أدخل النقد المستلم.';
+
+  @override
+  String get posAmountBelowTotal => 'النقد المستلم أقل من الإجمالي المستحق.';
+
+  @override
+  String get posSplitUnavailable => 'سيتوفر الدفع المقسم لاحقاً.';
+
+  @override
+  String get posExternalTerminalPending =>
+      'سيتم ربط جهاز الدفع الخارجي لاحقاً.';
+
+  @override
+  String get posConfirmPayment => 'تأكيد الدفع';
+
+  @override
+  String get posPaymentFailed => 'تعذر إكمال الدفع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get posNoPaymentMethods =>
+      'لا توجد طريقة دفع فعالة مرتبطة بحساب مالي.';
+
+  @override
+  String get posPaymentUncertain =>
+      'حالة الدفع غير مؤكدة. تحقق من حالة الدفع قبل إعادة المحاولة.';
+
+  @override
+  String get posReceiptUnavailable =>
+      'تعذر تحميل الإيصال. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get posRetryReceipt => 'إعادة محاولة الإيصال';
+
+  @override
+  String get posCheckPaymentStatus => 'التحقق من حالة الدفع';
+
+  @override
+  String get posOrderTypeDineIn => 'طلب محلي';
+
+  @override
+  String get posOrderTypeTakeaway => 'طلب سفري';
+
+  @override
+  String get posOrderTypeDelivery => 'توصيل';
+
+  @override
+  String get posCurrentOrder => 'الطلب الحالي';
+
+  @override
+  String get posSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get posDiscount => 'خصم';
+
+  @override
+  String posTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get posTotal => 'الإجمالي';
+
+  @override
+  String get posRemoveDiscount => 'إزالة';
+
+  @override
+  String get posAddDiscount => 'إضافة خصم';
+
+  @override
+  String get posHoldOrder => 'تعليق الطلب';
+
+  @override
+  String get posCancelOrder => 'إلغاء الطلب';
+
+  @override
+  String get posPrint => 'طباعة';
+
+  @override
+  String posPayAmount(String amount) {
+    return 'دفع $amount';
+  }
+
+  @override
+  String get posCompleteOrder => 'إكمال الطلب';
+
+  @override
+  String get posRemoveItem => 'إزالة العنصر';
+
+  @override
+  String get posExactAmount => 'المبلغ الدقيق';
+
+  @override
+  String get posTotalDue => 'الإجمالي المستحق';
+
+  @override
+  String posItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عنصر',
+      many: '$count عنصراً',
+      few: '$count عناصر',
+      two: 'عنصران',
+      one: 'عنصر واحد',
+      zero: 'لا توجد عناصر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posViewDetails => 'عرض التفاصيل';
+
+  @override
+  String get posCheckout => 'الدفع';
+
+  @override
+  String get posProductOptionsUnavailable => 'خيارات المنتج غير متاحة';
+
+  @override
+  String get posRetry => 'إعادة المحاولة';
+
+  @override
+  String posProductCustomization(String product) {
+    return 'تخصيص $product';
+  }
+
+  @override
+  String get posVariant => 'الخيار';
+
+  @override
+  String get posSpecialInstructions => 'تعليمات خاصة';
+
+  @override
+  String get posSpecialInstructionsHint => 'مثال: ساخن جداً، في كوب سفري...';
+
+  @override
+  String get posTemperature => 'درجة الحرارة';
+
+  @override
+  String get posSize => 'الحجم';
+
+  @override
+  String get posMilkBase => 'نوع الحليب';
+
+  @override
+  String get posAddOns => 'الإضافات';
+
+  @override
+  String get posSweetness => 'درجة الحلاوة';
+
+  @override
+  String get posQuantity => 'الكمية';
+
+  @override
+  String get posAddToOrder => 'إضافة إلى الطلب';
+
+  @override
+  String get posAdding => 'جارٍ الإضافة...';
+
+  @override
+  String get posRequiredSelection => 'اختر الخيارات المطلوبة.';
+
+  @override
+  String get posReceipt => 'الإيصال';
+
+  @override
+  String get posReceiptPreview => 'معاينة الإيصال';
+
+  @override
+  String get posCloseReceiptPreview => 'إغلاق معاينة الإيصال';
+
+  @override
+  String get posSendViaWhatsApp => 'إرسال عبر واتساب';
+
+  @override
+  String get posPrintReceipt => 'طباعة الإيصال';
+
+  @override
+  String get posWhatsAppPending => 'ستتوفر ميزة الإرسال عبر واتساب لاحقاً.';
+
+  @override
+  String get posPaymentCompleted => 'تم الدفع';
+
+  @override
+  String get posReceiptOrder => 'الطلب:';
+
+  @override
+  String get posReceiptCashier => 'أمين الصندوق:';
+
+  @override
+  String get posReceiptCustomer => 'العميل:';
+
+  @override
+  String get posReceiptDate => 'التاريخ:';
+
+  @override
+  String get posReceiptTime => 'الوقت:';
+
+  @override
+  String get posReceiptPaidVia => 'طريقة الدفع:';
+
+  @override
+  String get posReceiptAuthorization => 'التفويض:';
+
+  @override
+  String get posReceiptApproved => 'مقبول';
+
+  @override
+  String get posReceiptChange => 'الباقي';
+
+  @override
+  String posReceiptNote(String note) {
+    return 'ملاحظة: $note';
+  }
+
+  @override
+  String get posReceiptThankYou => 'شكراً لزيارتكم!';
+
+  @override
+  String get posOperationFailed =>
+      'تعذر إكمال عملية نقطة البيع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get posHoldSucceeded => 'تم تعليق الطلب بنجاح.';
+
+  @override
+  String get posHoldRetryable =>
+      'تعذر تعليق الطلب. ما زالت السلة متاحة لإعادة المحاولة.';
+
+  @override
+  String get posHoldUncertain =>
+      'تعذر تأكيد حالة تعليق الطلب. ما زالت السلة متاحة؛ تحقق من الطلبات قبل إعادة المحاولة.';
+
+  @override
+  String get posMenuVersionStale =>
+      'تغيرت القائمة. حدّث قائمة نقطة البيع وراجع الطلب.';
+
+  @override
+  String get posOpenShiftRequired => 'افتح وردية قبل المتابعة.';
+
+  @override
+  String get posOrderUnavailableForBranch =>
+      'هذا الطلب غير متاح في الفرع المحدد.';
+
+  @override
+  String get posHeldOrderRequired => 'يمكن استئناف طلب معلّق وغير مدفوع فقط.';
+
+  @override
+  String get posCustomizeItem => 'تخصيص العنصر';
+
+  @override
+  String get posRequired => 'مطلوب';
+
+  @override
+  String get posHot => 'ساخن';
+
+  @override
+  String get posIced => 'مثلج';
+
+  @override
+  String get posSmallSize => 'صغير (8 أونصات)';
+
+  @override
+  String get posMediumSize => 'متوسط (12 أونصة)';
+
+  @override
+  String get posLargeSize => 'كبير (16 أونصة)';
+
+  @override
+  String get posWholeMilk => 'حليب كامل الدسم';
+
+  @override
+  String get posOatMilk => 'حليب الشوفان';
+
+  @override
+  String get posAlmondMilk => 'حليب اللوز';
+
+  @override
+  String get posDefault => 'افتراضي';
+
+  @override
+  String get posExtraEspresso => 'جرعة إسبريسو إضافية';
+
+  @override
+  String get posCaramelSyrup => 'شراب الكراميل';
+
+  @override
+  String get posVanillaSyrup => 'شراب الفانيليا';
+
+  @override
+  String get posWhippedCream => 'كريمة مخفوقة';
+
+  @override
+  String get posProductDescriptionFallback => 'مشروب كلاسيكي محضر بالإسبريسو.';
+
+  @override
+  String posBasePrice(String variant, String price) {
+    return '$variant أساسي - $price';
+  }
+
+  @override
+  String get posSearchProducts => 'البحث عن المنتجات...';
+
+  @override
+  String get posNoItemsAvailable => 'لا توجد عناصر متاحة.';
+
+  @override
+  String get posNoCartItems => 'لم تتم إضافة عناصر بعد';
+
+  @override
+  String get posCloseCustomizationDialog => 'إغلاق نافذة تخصيص المنتج';
+
+  @override
+  String get customerImportAction => 'استيراد CSV';
+
+  @override
+  String get customerImportTitle => 'استيراد العملاء من CSV';
+
+  @override
+  String get customerImportDescription =>
+      'ارفع ملف CSV لمراجعة المعاينة والتحذيرات ثم أكد الاستيراد.';
+
+  @override
+  String get customerImportSelectFile => 'اختر ملف CSV';
+
+  @override
+  String get customerImportChooseAnother => 'اختر ملفاً آخر';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'الترميز $encoding والفاصل $delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'الإجمالي';
+
+  @override
+  String get customerImportReady => 'جاهز';
+
+  @override
+  String get customerImportWarnings => 'تحذيرات';
+
+  @override
+  String get customerImportRejected => 'مرفوض';
+
+  @override
+  String get customerImportDuplicateCandidates => 'مرشحو التكرار';
+
+  @override
+  String get customerImportCreateMissingGroups => 'إنشاء المجموعات المفقودة';
+
+  @override
+  String get customerImportIssues => 'مشكلات صفوف ممثلة';
+
+  @override
+  String get customerImportUnnamedRow => 'صف بلا اسم';
+
+  @override
+  String get customerImportSummary => 'ملخص الاستيراد';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'تم إنشاء $created، وتخطي $skipped، وفشل $failed؛ المجموعات $groups، العضويات $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'تأكيد استيراد العملاء';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'سينشئ الخادم العملاء والعضويات وفق المعاينة. لن يتم تحديث العملاء الموجودين.';
+
+  @override
+  String get customerImportConfirmAction => 'تأكيد الاستيراد';
+
+  @override
+  String get customerImportStart => 'بدء الاستيراد';
+
+  @override
+  String get customerImportCompletedWithErrors => 'اكتمل مع أخطاء';
+
+  @override
+  String get customerImportDownloadErrors => 'تنزيل تقرير الأخطاء';
+
+  @override
+  String get customerImportValidationFailed =>
+      'تعذر التحقق من ملف CSV. تحقق من الترميز والأعمدة والحجم.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'اكتمل استيراد ملف CSV هذا مسبقاً. اختر معاينة جديدة قبل التأكيد.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'تعذر إكمال استيراد العملاء. يرجى المحاولة بأمان.';
+
+  @override
+  String get posPrinting => 'جارٍ الطباعة...';
+
+  @override
+  String get posRetryPrint => 'إعادة الطباعة';
+
+  @override
+  String get posPrinterSetup => 'إعداد الطابعة';
+
+  @override
+  String get posPrintOrderRequired => 'لا يوجد طلب محفوظ على الخادم للطباعة.';
+
+  @override
+  String get posPrintItemsRequired => 'لا يحتوي هذا الطلب على عناصر للطباعة.';
+
+  @override
+  String get posPreBillUnavailable => 'تتوفر معاينة الطلب قبل الدفع فقط.';
+
+  @override
+  String get posPrintPrinterNotConfigured => 'طابعة الإيصالات غير معدّة.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'إعدادات طابعة الإيصالات غير صالحة.';
+
+  @override
+  String get posPrintConfigurationUnavailable => 'تعذر تحميل إعدادات الطابعة.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'تعذر تحميل إيصال الطلب المعتمد من الخادم.';
+
+  @override
+  String get posPrintRenderingFailed => 'تعذر تجهيز الإيصال للطباعة.';
+
+  @override
+  String get posPrintUnreachable => 'تعذر الاتصال بطابعة الإيصالات.';
+
+  @override
+  String get posPrintTimeout => 'انتهت مهلة الاتصال بالطابعة.';
+
+  @override
+  String get posPrintUnsupported => 'الطباعة غير متاحة على هذا الجهاز.';
+
+  @override
+  String get posPrintFailed => 'فشلت الطباعة. تحقق من الطابعة ثم أعد المحاولة.';
+
+  @override
+  String get printerSetupTitle => 'إعداد الطابعة';
+
+  @override
+  String get printerSetupThisDevice => 'هذا الجهاز';
+
+  @override
+  String get printerSetupDescription =>
+      'قم بتهيئة طابعة الإيصالات الحرارية الشبكية المستخدمة على جهاز الويندوز أو الجهاز اللوحي هذا.';
+
+  @override
+  String get printerSetupNoActiveBranch => 'لا يوجد فرع نشط محدد';
+
+  @override
+  String get printerSetupCouldNotLoadBranch => 'تعذر تحميل الفرع النشط.';
+
+  @override
+  String get printerSetupCouldNotLoad => 'تعذر تحميل إعدادات الطابعة.';
+
+  @override
+  String get printerSetupUseBranchDefaults =>
+      'استخدام إعدادات الفرع الافتراضية';
+
+  @override
+  String get printerSetupUsingBranchDefaults =>
+      'يتم استخدام الطابعة الافتراضية المشتركة لهذا الفرع.';
+
+  @override
+  String get printerSetupUsingLocalOverride =>
+      'يتم استخدام إعداد طابعة خاص بهذا الجهاز فقط.';
+
+  @override
+  String get printerSetupSaveDeviceSettings => 'حفظ إعدادات الجهاز';
+
+  @override
+  String get printerTestPrint => 'طباعة تجريبية';
+
+  @override
+  String get printerTesting => 'جارٍ الطباعة...';
+
+  @override
+  String get printerRetryTestPrint => 'إعادة الطباعة التجريبية';
+
+  @override
+  String get printerTestPrintSuccessful => 'تمت الطباعة بنجاح';
+
+  @override
+  String get ordersTitle => 'إدارة الطلبات';
+
+  @override
+  String get ordersSubtitle =>
+      'عرض وإدارة جميع الطلبات النشطة والمعلّقة والحديثة.';
+
+  @override
+  String get ordersNoMatchFilter => 'لا توجد طلبات تطابق هذا الفلتر حتى الآن.';
+
+  @override
+  String get ordersPrintLater => 'ستتم إضافة الطباعة لاحقاً.';
+
+  @override
+  String get ordersCopyLater => 'ستتم إضافة نسخ الطلب لاحقاً.';
+
+  @override
+  String get ordersCannotResume => 'لا يمكن استئناف هذا الطلب.';
+
+  @override
+  String get ordersResumeFailed => 'تعذّر استئناف هذا الطلب. حاول مرة أخرى.';
+
+  @override
+  String get ordersCancelledDone => 'تم إلغاء الطلب.';
+
+  @override
+  String get ordersCancelFailed => 'تعذّر إلغاء هذا الطلب.';
+
+  @override
+  String get ordersCheckStatus => 'فحص الحالة';
+
+  @override
+  String get ordersCancellationConfirmed => 'تم تأكيد إلغاء الطلب.';
+
+  @override
+  String get ordersStillActiveRetryCancel =>
+      'الطلب ما زال نشطاً. أعد محاولة الإلغاء بشكل صريح.';
+
+  @override
+  String get ordersPaymentRecordFailed => 'تعذّر تسجيل الدفعة. حاول مرة أخرى.';
+
+  @override
+  String get ordersPaymentConfirmed => 'تم تأكيد الدفع.';
+
+  @override
+  String get ordersPaymentConfirmedNoReceipt =>
+      'تم تأكيد الدفع لكن الإيصال غير متاح.';
+
+  @override
+  String get ordersRetryReceipt => 'إعادة محاولة الإيصال';
+
+  @override
+  String get ordersRefundRecorded => 'تم تسجيل الاسترداد.';
+
+  @override
+  String get ordersRefundRecordFailed =>
+      'تعذّر تسجيل الاسترداد. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersPrevious => 'السابق';
+
+  @override
+  String get ordersNext => 'التالي';
+
+  @override
+  String ordersPageOf(int current, int last) {
+    return 'صفحة $current من $last';
+  }
+
+  @override
+  String ordersTotalCount(int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total طلب',
+      many: '$total طلبًا',
+      few: '$total طلبات',
+      two: 'طلبان',
+      one: 'طلب واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordersReplaceCartTitle => 'استبدال سلة نقطة البيع الحالية؟';
+
+  @override
+  String get ordersReplaceCartBody =>
+      'استئناف هذا الطلب المعلّق سيستبدل سلة نقطة البيع الحالية، وسيتم تجاهل أي تغييرات غير محفوظة.';
+
+  @override
+  String get ordersKeepCart => 'إبقاء السلة الحالية';
+
+  @override
+  String get ordersReplaceAndResume => 'استبدال واستئناف';
+
+  @override
+  String get ordersCancelOrderTitle => 'إلغاء الطلب؟';
+
+  @override
+  String ordersCancelOrderBody(String number) {
+    return 'إلغاء $number؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
+  String get ordersKeepOrder => 'إبقاء الطلب';
+
+  @override
+  String get ordersCancelOrder => 'إلغاء الطلب';
+
+  @override
+  String get ordersCancelOrderSubmitting => 'جارٍ إلغاء الطلب';
+
+  @override
+  String get ordersStatusPreparing => 'قيد التحضير';
+
+  @override
+  String get ordersStatusHeld => 'معلّق';
+
+  @override
+  String get ordersStatusReady => 'جاهز';
+
+  @override
+  String get ordersStatusPaid => 'مدفوع';
+
+  @override
+  String get ordersStatusCompleted => 'مكتمل';
+
+  @override
+  String get ordersStatusCancelled => 'ملغى';
+
+  @override
+  String get ordersStatusRefunded => 'مُسترد';
+
+  @override
+  String get ordersStatusPartiallyRefunded => 'استرداد جزئي';
+
+  @override
+  String get ordersFilterActive => 'الطلبات النشطة';
+
+  @override
+  String get ordersFilterHeld => 'الطلبات المعلّقة';
+
+  @override
+  String get ordersFilterDineIn => 'داخل المحل';
+
+  @override
+  String get ordersFilterTakeaway => 'سفري';
+
+  @override
+  String get ordersActionResume => 'استئناف';
+
+  @override
+  String get ordersActionPay => 'دفع';
+
+  @override
+  String get ordersActionCancel => 'إلغاء';
+
+  @override
+  String get ordersActionDetails => 'التفاصيل';
+
+  @override
+  String ordersActionSemantics(String action) {
+    return 'إجراء الطلب: $action';
+  }
+
+  @override
+  String get ordersCustomer => 'العميل';
+
+  @override
+  String get ordersWalkInCustomer => 'عميل عابر';
+
+  @override
+  String get ordersWalkInInitials => 'عع';
+
+  @override
+  String get ordersWalkIn => 'عميل عابر';
+
+  @override
+  String get ordersOrderItems => 'عناصر الطلب';
+
+  @override
+  String get ordersNoLineItems => 'لا توجد عناصر';
+
+  @override
+  String ordersNote(String note) {
+    return 'ملاحظة: $note';
+  }
+
+  @override
+  String get ordersItemFallback => 'عنصر';
+
+  @override
+  String ordersItemsOne(String count) {
+    return '$count عنصر';
+  }
+
+  @override
+  String ordersItemsMany(String count) {
+    return '$count عناصر';
+  }
+
+  @override
+  String get ordersTotals => 'الإجماليات';
+
+  @override
+  String get ordersSubtotal => 'المجموع الفرعي';
+
+  @override
+  String ordersTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get ordersTip => 'البقشيش (15%)';
+
+  @override
+  String get ordersRefundedLabel => 'مُسترد';
+
+  @override
+  String get ordersTotal => 'الإجمالي';
+
+  @override
+  String get ordersCloseDetails => 'إغلاق تفاصيل الطلب';
+
+  @override
+  String get ordersPrintTooltip => 'طباعة الطلب';
+
+  @override
+  String get ordersCopyTooltip => 'نسخ الطلب';
+
+  @override
+  String get ordersResumeInPos => 'استئناف في نقطة البيع';
+
+  @override
+  String ordersDisabledSemantics(String label) {
+    return '$label (غير متاح)';
+  }
+
+  @override
+  String get ordersPay => 'دفع';
+
+  @override
+  String get ordersRefund => 'استرداد';
+
+  @override
+  String get ordersPaymentTitle => 'الدفع';
+
+  @override
+  String ordersPaymentAuth(String status, String auth) {
+    return '$status - رمز التفويض: $auth';
+  }
+
+  @override
+  String ordersRefundAmountLine(String amount) {
+    return 'استرداد $amount';
+  }
+
+  @override
+  String get ordersNoPaymentYet => 'لم تُسجَّل أي دفعة بعد.';
+
+  @override
+  String get ordersMethodWallet => 'محفظة';
+
+  @override
+  String get ordersMethodShamCash => 'شام كاش';
+
+  @override
+  String get ordersMethodSplit => 'دفع مقسّم';
+
+  @override
+  String get ordersPaymentStatusPending => 'قيد الانتظار';
+
+  @override
+  String get ordersPaymentStatusCompleted => 'مكتمل';
+
+  @override
+  String get ordersPaymentStatusFailed => 'فشل';
+
+  @override
+  String get ordersPaymentStatusApproved => 'موافق عليه';
+
+  @override
+  String get ordersPaymentStatusVoided => 'ملغى';
+
+  @override
+  String get ordersPaymentStatusRefunded => 'مُسترد';
+
+  @override
+  String get ordersTimeline => 'السجل الزمني';
+
+  @override
+  String get ordersBackendEvent => 'حدث في النظام';
+
+  @override
+  String get ordersEventCreated => 'تم إنشاء الطلب';
+
+  @override
+  String get ordersEventHeld => 'تم تعليق الطلب';
+
+  @override
+  String get ordersEventClosed => 'تم إغلاق الطلب';
+
+  @override
+  String get ordersEventRefundCompleted => 'تم الاسترداد';
+
+  @override
+  String get ordersEventPaymentReceived => 'تم استلام الدفعة';
+
+  @override
+  String get ordersEventCompleted => 'اكتمل الطلب';
+
+  @override
+  String get ordersEventReady => 'الطلب جاهز';
+
+  @override
+  String get ordersEventPreparing => 'الطلب قيد التحضير';
+
+  @override
+  String get ordersAm => 'ص';
+
+  @override
+  String get ordersPm => 'م';
+
+  @override
+  String get ordersJustNow => 'الآن';
+
+  @override
+  String ordersMinutesAgo(String n) {
+    return 'قبل $n د';
+  }
+
+  @override
+  String ordersHoursAgo(String n) {
+    return 'قبل $n س';
+  }
+
+  @override
+  String ordersDaysAgo(String n) {
+    return 'قبل $n ي';
+  }
+
+  @override
+  String get ordersRefundReasonCustomerRequest => 'طلب العميل';
+
+  @override
+  String get ordersRefundReasonWrongItem => 'صنف خاطئ';
+
+  @override
+  String get ordersRefundReasonQuality => 'مشكلة في جودة الصنف';
+
+  @override
+  String get ordersRefundReasonDuplicate => 'دفع مكرر';
+
+  @override
+  String get ordersRefundReasonOrderCancelled => 'طلب ملغى';
+
+  @override
+  String get ordersRefundReasonManagerApproved => 'بموافقة المدير';
+
+  @override
+  String get ordersRefundReasonOther => 'أخرى';
+
+  @override
+  String get ordersRefundTypeFull => 'استرداد كامل';
+
+  @override
+  String get ordersRefundTypePartial => 'استرداد جزئي';
+
+  @override
+  String get ordersRefundCustomAmount => 'مبلغ مخصص';
+
+  @override
+  String get ordersRefundEnterAmount => 'أدخل مبلغ الاسترداد.';
+
+  @override
+  String get ordersRefundAmountPositive =>
+      'يجب أن يكون مبلغ الاسترداد أكبر من الصفر.';
+
+  @override
+  String get ordersRefundAmountExceeds =>
+      'لا يمكن أن يتجاوز مبلغ الاسترداد الرصيد القابل للاسترداد.';
+
+  @override
+  String get ordersRefundFieldAmount => 'مبلغ الاسترداد';
+
+  @override
+  String get ordersRefundFieldReason => 'سبب الاسترداد';
+
+  @override
+  String get ordersRefundFieldNotes => 'ملاحظات المدير (اختياري)';
+
+  @override
+  String get ordersRefundNotesHint => 'أضف تفاصيل لتقرير نهاية اليوم...';
+
+  @override
+  String ordersRefundDialogTitle(String number) {
+    return 'استرداد الطلب $number';
+  }
+
+  @override
+  String get ordersRefundCloseDialog => 'إغلاق نافذة الاسترداد';
+
+  @override
+  String get ordersRefundConfirm => 'تأكيد الاسترداد';
+
+  @override
+  String get ordersRefundOrderTotal => 'إجمالي الطلب';
+
+  @override
+  String get ordersRefundPaidVia => 'طريقة الدفع';
+
+  @override
+  String get ordersRefundWarning =>
+      'تنبيه: سيؤدي هذا الإجراء إلى عكس الدفعة ولا يمكن التراجع عنه.\nيرجى التحقق من جميع التفاصيل قبل التأكيد.';
+
+  @override
+  String get ordersMsgNoActiveBranches => 'لا توجد فروع نشطة متاحة.';
+
+  @override
+  String get ordersMsgPageRecoveryInvalid =>
+      'أعادت استعادة صفحة الطلبات بيانات ترقيم غير صالحة.';
+
+  @override
+  String get ordersMsgLoadFailed =>
+      'تعذّر تحميل الطلبات. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgDetailsLoadFailed =>
+      'تعذّر تحميل تفاصيل الطلب. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgResumeInvalidId =>
+      'لا يمكن استئناف هذا الطلب لأن معرّفه غير صالح.';
+
+  @override
+  String get ordersMsgDifferentOrder =>
+      'أعاد الخادم طلباً مختلفاً. حدّث الصفحة وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgNotInBranch => 'هذا الطلب ليس ضمن الفرع المحدد.';
+
+  @override
+  String get ordersMsgOnlyHeldResume =>
+      'يمكن استئناف الطلب المعلّق غير المدفوع فقط.';
+
+  @override
+  String get ordersMsgResumeInPosFailed =>
+      'تعذّر استئناف الطلب في نقطة البيع. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgResumeConnFailed =>
+      'تعذّر استئناف هذا الطلب. تحقق من الاتصال بالخادم.';
+
+  @override
+  String get ordersMsgCancelInvalidId =>
+      'لا يمكن إلغاء هذا الطلب لأن معرّفه غير صالح.';
+
+  @override
+  String get ordersMsgCancelVerifyFailed =>
+      'تعذّر التحقق من هذا الطلب قبل الإلغاء.';
+
+  @override
+  String get ordersMsgOnlyDraftHeldCancel =>
+      'يمكن إلغاء المسودة أو الطلب المعلّق غير المدفوع فقط.';
+
+  @override
+  String get ordersMsgCancelNoChange =>
+      'تعذّر إلغاء هذا الطلب. لم يتم تأكيد أي تغيير.';
+
+  @override
+  String get ordersMsgOrderIdInvalid => 'معرّف الطلب غير صالح.';
+
+  @override
+  String get ordersMsgPaymentPrepareAccess =>
+      'تعذّر تجهيز الدفع. تحقق من صلاحية الوصول إلى الطلب وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNotReady =>
+      'الدفع غير جاهز. حدّث الطلب وحاول مرة أخرى.';
+
+  @override
+  String get ordersMsgCannotPayState =>
+      'لا يمكن دفع هذا الطلب في حالته الحالية.';
+
+  @override
+  String get ordersMsgPaymentPrepareFailed =>
+      'تعذّر تجهيز الدفع. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNeedsBackend =>
+      'يتطلب الدفع اتصالاً موثّقاً بالخادم.';
+
+  @override
+  String get ordersMsgPaymentRecordFailed =>
+      'تعذّر تسجيل الدفعة. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgPaymentNotCompleted =>
+      'لم يكتمل الدفع. يمكنك إعادة المحاولة بأمان بنفس العملية.';
+
+  @override
+  String get ordersMsgReceiptLoadFailed =>
+      'اكتمل الدفع لكن تعذّر تحميل الإيصال.';
+
+  @override
+  String get ordersMsgPaymentSummaryMismatch =>
+      'ملخص الدفع لا يطابق الطلب المحدد.';
+
+  @override
+  String get ordersMsgNoSupportedMethod =>
+      'لا توجد طريقة دفع مدعومة لهذا الطلب.';
+
+  @override
+  String get ordersMsgPaymentUncertain =>
+      'تعذّر تأكيد حالة الدفع. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgNoRefundable =>
+      'لا توجد دفعة مكتملة أو رصيد قابل للاسترداد لهذا الطلب.';
+
+  @override
+  String get ordersMsgRefundPrepareFailed =>
+      'تعذّر تجهيز الاسترداد. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgRefundRecordFailed =>
+      'تعذّر تسجيل الاسترداد. حاول مرة أخرى.';
+
+  @override
+  String get ordersMsgRefundNotFound =>
+      'لم يتم العثور على الاسترداد في الخادم. تحقق من الطلب ثم أعد المحاولة بنفس العملية.';
+
+  @override
+  String get ordersMsgRefundUncertain =>
+      'تعذّر تأكيد حالة الاسترداد. تحقق من الطلب قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgCancelUncertain =>
+      'تعذّر تأكيد حالة الإلغاء. افحص الحالة قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgCancelUnresolved =>
+      'حالة الإلغاء غير محسومة. افحص الحالة قبل إعادة المحاولة.';
+
+  @override
+  String get ordersMsgStillActive =>
+      'الطلب ما زال نشطاً وغير مدفوع. افحص الحالة ثم أعد محاولة الإلغاء بشكل صريح.';
+
+  @override
+  String get posSelectOrderType => 'نوع الطلب';
+
+  @override
+  String get posOrderTypeRequired => 'اختر نوع الطلب للمتابعة.';
+
+  @override
+  String get posSelectDeliveryCompany => 'شركة التوصيل';
+
+  @override
+  String get posDeliveryCompanyRequired => 'اختر شركة التوصيل.';
+
+  @override
+  String get posNoDeliveryCompanies =>
+      'لا توجد شركة توصيل مُعدّة. اطلب من المدير إضافتها من طرق الدفع.';
+
+  @override
+  String get posDeliveryPaymentHint => 'يُسجَّل المبلغ على حساب شركة التوصيل.';
+
+  @override
+  String get posDeliveryOwn => 'توصيل خاص';
+
+  @override
+  String get posDeliveryCollection => 'التحصيل';
+
+  @override
+  String get posDeliveryCashNow => 'نقداً الآن';
+
+  @override
+  String get posDeliveryOnAccount => 'آجل على حساب الشركة';
+}

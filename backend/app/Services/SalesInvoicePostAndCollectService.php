@@ -103,6 +103,10 @@ final class SalesInvoicePostAndCollectService
                 $payment = $this->payments->recordDirectSale($tenantId, $invoice, $actorId,
                     $paymentData, $method, $location, $shift);
             } else {
+                if (empty($paymentData['allocations'])) {
+                    // Collecting on an invoice must name what it settles; an advance is registered from the customer's payment screen.
+                    throw ValidationException::withMessages(['allocations' => 'يجب توزيع الدفعة على فاتورة واحدة على الأقل.']);
+                }
                 $invoice = $this->posting->post($request, $tenantId, $invoiceId, $actorId, $postData);
                 $payment = $this->payments->pay($request, $tenantId, $paymentData, $actorId);
             }

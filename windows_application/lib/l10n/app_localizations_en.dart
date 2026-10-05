@@ -7906,6 +7906,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String posCustomerWalletCredit(String amount) {
+    return 'Balance $amount';
+  }
+
+  @override
+  String posCustomerWalletDebt(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String posWalletAutoSelectedNote(String amount) {
+    return 'The customer\'s wallet is selected because it covers this order (balance $amount).';
+  }
+
+  @override
   String get posWalkInCustomer => 'Walk-in customer';
 
   @override

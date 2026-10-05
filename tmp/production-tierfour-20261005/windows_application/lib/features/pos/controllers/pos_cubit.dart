@@ -1,0 +1,2003 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/network/api_exception.dart';
+import '../models/applied_discount.dart';
+import '../models/available_discount.dart';
+import '../models/backend_order.dart';
+import '../models/backend_order_item.dart';
+import '../models/backend_product_detail.dart';
+import '../models/branch.dart';
+import '../models/cart_item.dart';
+import '../models/create_order_request.dart';
+import '../models/customer.dart';
+import '../models/order_type.dart';
+import '../models/order_receipt.dart';
+import '../models/payment_method.dart';
+import '../models/payment_result.dart';
+import '../models/pos_product.dart';
+import '../models/pos_customer_create_result.dart';
+import '../models/pos_quick_create_customer_request.dart';
+import '../models/product_customization.dart';
+import '../models/product_detail_load_result.dart';
+import '../models/receipt_line_item.dart';
+import '../models/selected_modifier.dart';
+import '../models/update_order_item_request.dart';
+import '../repositories/pos_repository.dart';
+import 'pos_state.dart';
+
+enum PaymentCompletionStatus { completed, retryableFailure, uncertain }
+
+class _HoldResponseNotConfirmed implements Exception {
+  const _HoldResponseNotConfirmed();
+}
+
+class PosCubit extends Cubit<PosState> {
+  PosCubit({
+    required this.repository,
+    String Function(String operation)? operationKeyGenerator,
+  }) : _operationKeyGenerator = operationKeyGenerator ?? _defaultOperationKey,
+       super(
+         PosState(
+           isBackendMode: repository.usesBackend,
+           // Until the POS sync flow is mounted, retain legacy direct-cubit
+           // behavior. PosScreen immediately replaces this with API-derived
+           // reachability for real backend sessions.
+           isBackendReachable: true,
+         ),
+       );
+
+  final PosRepository repository;
+  final String Function(String operation) _operationKeyGenerator;
+  Future<void> _cartMutationQueue = Future<void>.value();
+  int _queuedCartMutations = 0;
+  int? _paymentIdempotencyOrderId;
+  String? _paymentIdempotencyKey;
+  Future<void>? _inFlightHold;
+  String? _holdCreationPayloadFingerprint;
+  String? _holdCreationIdempotencyKey;
+  int _receiptRequestGeneration = 0;
+  int _productDetailRequestVersion = 0;
+  int _branchLoadGeneration = 0;
+  int _existingOrderRequestVersion = 0;
+  Future<bool>? _inFlightExistingOrder;
+  int? _inFlightExistingOrderId;
+  Future<PosCustomerCreateResult>? _inFlightCustomerCreate;
+  Future<bool>? _inFlightCustomerAttachment;
+  int? _inFlightCustomerAttachmentId;
+
+  static const String connectionRequiredMessage =
+      'pos.connectionRequiredToCompleteOrder';
+  static const String menuChangedReviewMessage = 'pos.menuChangedReviewOrder';
+  static const String holdSucceededMessage = 'pos.holdSucceeded';
+  static const String holdRetryableMessage = 'pos.holdRetryable';
+  static const String holdUncertainMessage = 'pos.holdUncertain';
+
+  Future<void> loadInitialData() async {
+    emit(
+      state.copyWith(
+        isLoading: true,
+        isBackendMode: repository.usesBackend,
+        clearErrorMessage: true,
+      ),
+    );
+
+    try {
+      final branches = await repository.getBranches();
+      final List<Customer> customers = await repository.getCustomers();
+      final Branch branch = branches.isEmpty
+          ? const Branch(
+              id: 1,
+              name: 'Default Branch',
+              currency: 'SYP',
+              timezone: 'Asia/Damascus',
+              isActive: true,
+            )
+          : branches.firstWhere(
+              (Branch item) => item.id == state.branchId,
+              orElse: () => branches.first,
+            );
+      emit(state.copyWith(branches: branches, customers: customers));
+      await _activateBranch(branch, reloadCustomers: false);
+    } catch (error) {
+      final String message = _messageFor(error);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: message,
+          apiErrorMessage: message,
+        ),
+      );
+    }
+  }
+
+  /// Changes the one POS selling context.  An order/draft is branch-bound, so
+  /// callers must leave the existing cart intact before switching branches.
+  Future<bool> selectBranch(int branchId) async {
+    if (branchId == state.branchId) return true;
+    if (state.hasCartItems || state.currentOrderId != null) return false;
+    final Branch? branch = state.branches.cast<Branch?>().firstWhere(
+      (Branch? item) => item?.id == branchId && item!.isActive,
+      orElse: () => null,
+    );
+    if (branch == null) return false;
+    await _activateBranch(branch);
+    return true;
+  }
+
+  /// Refreshes only the branch's current-shift marker. The top application
+  /// badge uses this marker, so opening or closing a shift must not wait for a
+  /// full POS catalog reload before reflecting the new operational state.
+  Future<void> refreshShiftStatus() async {
+    final int branchId = state.branchId;
+    try {
+      final shift = await repository.getCurrentShift(branchId: branchId);
+      if (isClosed || state.branchId != branchId) return;
+      emit(state.copyWith(shiftId: shift?.id, clearShiftId: shift == null));
+    } catch (_) {
+      // Keep the last known state on a transient refresh failure. The POS
+      // screen has visible connection/error handling for full loads.
+    }
+  }
+
+  Future<void> _activateBranch(
+    Branch branch, {
+    bool reloadCustomers = false,
+  }) async {
+    final int request = ++_branchLoadGeneration;
+    // This emits the authoritative context before any branch-scoped work.
+    // PosScreen clears the old published presentation immediately when it
+    // observes this branchId change.
+    emit(
+      state.copyWith(
+        branchId: branch.id,
+        taxRate: branch.taxRate,
+        isLoading: true,
+        clearShiftId: true,
+        clearErrorMessage: true,
+        clearApiErrorMessage: true,
+        requiresMenuRefresh: false,
+      ),
+    );
+
+    try {
+      final shift = await repository.getCurrentShift(branchId: branch.id);
+      final List<String> categories = repository.usesBackend
+          ? const <String>[]
+          : await repository.getCategories(branchId: branch.id);
+      final List<PosProduct> products = repository.usesBackend
+          ? const <PosProduct>[]
+          : await repository.getProducts(branchId: branch.id);
+      final List<Customer>? customers = reloadCustomers
+          ? await repository.getCustomers()
+          : null;
+      await repository.getPosState(branchId: branch.id);
+      if (isClosed || request != _branchLoadGeneration) return;
+      emit(
+        state.copyWith(
+          branchId: branch.id,
+          taxRate: branch.taxRate,
+          shiftId: shift?.id,
+          isBackendMode: repository.usesBackend,
+          customers: customers,
+          products: products,
+          categories: categories,
+          selectedCategory: categories.isEmpty ? '' : categories.first,
+          searchQuery: '',
+          isLoading: false,
+          clearErrorMessage: true,
+          clearApiErrorMessage: true,
+          requiresMenuRefresh: false,
+        ),
+      );
+    } catch (error) {
+      if (isClosed || request != _branchLoadGeneration) return;
+      final String message = _messageFor(error);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: message,
+          apiErrorMessage: message,
+        ),
+      );
+    }
+  }
+
+  /// Re-fetches the current shift for the active branch after a shift is
+  /// opened or closed elsewhere (e.g. the Close Shift screen), so the top
+  /// bar's shift badge and any shift-gated actions reflect the new state.
+  Future<void> refreshShift() async {
+    final shift = await repository.getCurrentShift(branchId: state.branchId);
+    if (isClosed) return;
+    emit(state.copyWith(shiftId: shift?.id, clearShiftId: shift == null));
+  }
+
+  void selectCategory(String category) {
+    emit(state.copyWith(selectedCategory: category, searchQuery: ''));
+  }
+
+  void updateSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+  }
+
+  /// Menu-sync request results, rather than an OS interface flag, determine
+  /// whether backend mutations may be attempted.
+  void setBackendReachability(bool reachable) {
+    if (state.isBackendReachable == reachable) return;
+    emit(state.copyWith(isBackendReachable: reachable));
+  }
+
+  void addProductToCart(PosProduct product) {
+    if (!product.isAvailable) {
+      return;
+    }
+
+    final int existingIndex = state.cartItems.indexWhere(
+      (CartItem item) => item.product.id == product.id,
+    );
+
+    if (existingIndex == -1) {
+      emit(
+        state.copyWith(
+          cartItems: <CartItem>[
+            ...state.cartItems,
+            CartItem(
+              id: product.id,
+              product: product,
+              quantity: 1,
+              unitPrice: product.price,
+              modifiers: _defaultModifiersFor(product),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final List<CartItem> updatedItems = List<CartItem>.of(state.cartItems);
+    final CartItem existingItem = updatedItems[existingIndex];
+    updatedItems[existingIndex] = existingItem.copyWith(
+      quantity: existingItem.quantity + 1,
+    );
+
+    emit(state.copyWith(cartItems: updatedItems));
+  }
+
+  Future<ProductDetailLoadResult> loadProductDetail(PosProduct product) async {
+    final int? productId = product.backendId;
+    // Published runtime cards already contain the complete variant and
+    // modifier contract. This guard makes the no-legacy-detail-request rule
+    // hold even if a future caller bypasses PosScreen's published-card path.
+    if (product.isPublishedRuntime ||
+        !repository.usesBackend ||
+        productId == null) {
+      return const ProductDetailNotRequired();
+    }
+
+    if (state.isProductDetailLoading && state.loadingProductId == productId) {
+      return const ProductDetailLoadStale();
+    }
+
+    final int requestVersion = ++_productDetailRequestVersion;
+    emit(
+      state.copyWith(
+        loadingProductId: productId,
+        isProductDetailLoading: true,
+        clearProductDetailError: true,
+      ),
+    );
+
+    try {
+      final BackendProductDetail detail = await repository.getProductDetail(
+        productId: productId,
+        branchId: state.branchId,
+      );
+      if (isClosed || requestVersion != _productDetailRequestVersion) {
+        return const ProductDetailLoadStale();
+      }
+      emit(
+        state.copyWith(
+          isProductDetailLoading: false,
+          clearLoadingProductId: true,
+          clearProductDetailError: true,
+        ),
+      );
+      return ProductDetailLoaded(detail);
+    } catch (error) {
+      if (isClosed || requestVersion != _productDetailRequestVersion) {
+        return const ProductDetailLoadStale();
+      }
+      const String message =
+          'Could not load product options. Please try again.';
+      emit(
+        state.copyWith(
+          isProductDetailLoading: false,
+          clearLoadingProductId: true,
+          productDetailError: message,
+        ),
+      );
+      return const ProductDetailLoadFailed(message);
+    }
+  }
+
+  Future<bool> addCustomizedProductToCart(
+    ProductCustomization customization,
+  ) async {
+    if (!customization.product.isAvailable) {
+      return false;
+    }
+
+    if (customization.isPublishedRuntime) {
+      if (state.currentOrderId != null) {
+        return _enqueueCartMutation(
+          fallbackMessage: 'Could not add item. Please try again.',
+          action: () => _addPublishedProductToBackendOrder(customization),
+        );
+      }
+      return _addPublishedProductToLocalCart(customization);
+    }
+
+    if (repository.usesBackend && customization.product.backendId != null) {
+      return _enqueueCartMutation(
+        fallbackMessage: 'Could not add item. Please try again.',
+        action: () => _addCustomizedProductToBackendOrder(customization),
+      );
+    }
+
+    final String cartItemId = customization.configurationKey;
+    final int existingIndex = state.cartItems.indexWhere(
+      (CartItem item) => item.id == cartItemId,
+    );
+
+    if (existingIndex == -1) {
+      emit(
+        state.copyWith(
+          cartItems: <CartItem>[
+            ...state.cartItems,
+            CartItem(
+              id: cartItemId,
+              product: customization.product,
+              quantity: customization.quantity,
+              unitPrice: customization.unitPrice,
+              modifiers: customization.modifierLabels,
+              specialInstructions: customization.specialInstructions.trim(),
+            ),
+          ],
+        ),
+      );
+      return true;
+    }
+
+    final List<CartItem> updatedItems = List<CartItem>.of(state.cartItems);
+    final CartItem existingItem = updatedItems[existingIndex];
+    updatedItems[existingIndex] = existingItem.copyWith(
+      quantity: existingItem.quantity + customization.quantity,
+    );
+
+    emit(state.copyWith(cartItems: updatedItems));
+    return true;
+  }
+
+  Future<void> increaseQuantity(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      await _syncOrder(
+        () => repository.updateOrderItem(
+          orderId: state.currentOrderId!,
+          itemId: item.backendItemId!,
+          request: UpdateOrderItemRequest(quantity: item.quantity + 1),
+        ),
+      );
+      return;
+    }
+
+    final List<CartItem> updatedItems = state.cartItems
+        .map((CartItem item) {
+          if (item.id != cartItemId) {
+            return item;
+          }
+
+          return item.copyWith(quantity: item.quantity + 1);
+        })
+        .toList(growable: false);
+
+    emit(state.copyWith(cartItems: updatedItems));
+  }
+
+  Future<void> decreaseQuantity(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      if (item.quantity <= 1) {
+        await _syncOrder(
+          () => repository.removeOrderItem(
+            orderId: state.currentOrderId!,
+            itemId: item.backendItemId!,
+          ),
+        );
+      } else {
+        await _syncOrder(
+          () => repository.updateOrderItem(
+            orderId: state.currentOrderId!,
+            itemId: item.backendItemId!,
+            request: UpdateOrderItemRequest(quantity: item.quantity - 1),
+          ),
+        );
+      }
+      return;
+    }
+
+    final List<CartItem> updatedItems = <CartItem>[];
+
+    for (final CartItem item in state.cartItems) {
+      if (item.id != cartItemId) {
+        updatedItems.add(item);
+        continue;
+      }
+
+      final int nextQuantity = item.quantity - 1;
+      if (nextQuantity > 0) {
+        updatedItems.add(item.copyWith(quantity: nextQuantity));
+      }
+    }
+
+    _emitCartItems(updatedItems);
+  }
+
+  Future<void> removeCartItem(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      await _syncOrder(
+        () => repository.removeOrderItem(
+          orderId: state.currentOrderId!,
+          itemId: item.backendItemId!,
+        ),
+      );
+      return;
+    }
+
+    _emitCartItems(
+      state.cartItems
+          .where((CartItem item) => item.id != cartItemId)
+          .toList(growable: false),
+    );
+  }
+
+  Future<bool> changeOrderType(OrderType orderType) {
+    if (state.orderType == orderType) {
+      return Future<bool>.value(true);
+    }
+    if (state.currentOrderId == null) {
+      emit(state.copyWith(orderType: orderType, clearCartMutationError: true));
+      return Future<bool>.value(true);
+    }
+    final int orderId = state.currentOrderId!;
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not update order type. Please try again.',
+      action: () async {
+        final BackendOrder order = await repository.updateOrderContext(
+          orderId: orderId,
+          orderType: orderType.apiValue,
+          clearTable: true,
+        );
+        _emitBackendOrder(order);
+      },
+    );
+  }
+
+  Future<bool> selectCustomer(Customer? customer) {
+    if (_sameCustomer(state.selectedCustomer, customer)) {
+      return Future<bool>.value(true);
+    }
+    if (state.currentOrderId == null) {
+      emit(
+        state.copyWith(
+          selectedCustomer: customer,
+          clearSelectedCustomer: customer == null,
+          clearCartMutationError: true,
+        ),
+      );
+      return Future<bool>.value(true);
+    }
+
+    final int orderId = state.currentOrderId!;
+    final int? customerId = customer?.backendId;
+    if (customer != null && customerId == null) {
+      return Future<bool>.value(false);
+    }
+    if (customerId != null &&
+        _inFlightCustomerAttachmentId == customerId &&
+        _inFlightCustomerAttachment != null) {
+      return _inFlightCustomerAttachment!;
+    }
+    final Future<bool> request = _enqueueCartMutation(
+      fallbackMessage: customerAttachmentFailedMessage,
+      exposeApiMessage: false,
+      action: () async {
+        final BackendOrder order = await repository.updateOrderContext(
+          orderId: orderId,
+          customerId: customerId,
+          clearCustomer: customer == null,
+        );
+        _emitBackendOrder(order);
+      },
+    );
+    if (customerId != null) {
+      _inFlightCustomerAttachmentId = customerId;
+      _inFlightCustomerAttachment = request;
+      request.whenComplete(() {
+        if (identical(_inFlightCustomerAttachment, request)) {
+          _inFlightCustomerAttachment = null;
+          _inFlightCustomerAttachmentId = null;
+        }
+      });
+    }
+    return request;
+  }
+
+  static const String customerAttachmentFailedMessage =
+      'pos.customerAttachmentFailed';
+
+  Future<PosCustomerCreateResult> quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) {
+    final Future<PosCustomerCreateResult>? current = _inFlightCustomerCreate;
+    if (current != null) return current;
+    final Future<PosCustomerCreateResult> operation = _quickCreateCustomer(
+      request,
+    );
+    _inFlightCustomerCreate = operation;
+    return operation.whenComplete(() {
+      if (identical(_inFlightCustomerCreate, operation)) {
+        _inFlightCustomerCreate = null;
+      }
+    });
+  }
+
+  Future<PosCustomerCreateResult> _quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) async {
+    final Customer customer = await repository.quickCreateCustomer(request);
+    _upsertCustomer(customer);
+    if (state.currentOrderId == null) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            selectedCustomer: customer,
+            clearCartMutationError: true,
+          ),
+        );
+      }
+      return PosCustomerCreateResult(
+        customer: customer,
+        attachedToOrder: false,
+      );
+    }
+
+    final bool attached = await selectCustomer(customer);
+    return PosCustomerCreateResult(
+      customer: customer,
+      attachedToOrder: attached,
+      attachmentFailed: !attached,
+    );
+  }
+
+  void _upsertCustomer(Customer customer) {
+    final int index = state.customers.indexWhere(
+      (Customer item) =>
+          customer.backendId != null && item.backendId == customer.backendId,
+    );
+    final List<Customer> customers = List<Customer>.from(state.customers);
+    if (index >= 0) {
+      customers[index] = customer;
+    } else {
+      customers.add(customer);
+    }
+    if (!isClosed) emit(state.copyWith(customers: customers));
+  }
+
+  bool _sameCustomer(Customer? first, Customer? second) {
+    if (first == null || second == null) return first == second;
+    if (first.backendId != null && second.backendId != null) {
+      return first.backendId == second.backendId;
+    }
+    return first.id == second.id;
+  }
+
+  Future<bool> clearSelectedCustomer() {
+    return selectCustomer(null);
+  }
+
+  Future<void> applyDiscount(AppliedDiscount discount) async {
+    if (!state.hasCartItems) {
+      return;
+    }
+
+    if (state.currentOrderId != null) {
+      await _syncOrder(
+        () => repository.applyDiscount(
+          orderId: state.currentOrderId!,
+          code: discount.code,
+          discountId: discount.backendId,
+        ),
+      );
+      return;
+    }
+
+    emit(state.copyWith(appliedDiscount: discount));
+  }
+
+  /// Makes the current cart authoritative before loading configured
+  /// discounts. Published-menu carts normally stay local until payment, but
+  /// discount eligibility is calculated from persisted order state and a
+  /// selected policy must be applied to that same backend order.
+  Future<List<AvailableDiscount>> getAvailableDiscountsForCurrentCart() async {
+    if (!repository.usesBackend) {
+      return const <AvailableDiscount>[];
+    }
+
+    if (state.currentOrderId == null) {
+      final bool created = await _ensureBackendOrderForCurrentCart();
+      if (!created || state.currentOrderId == null) {
+        throw ApiException(
+          message:
+              state.cartMutationError ??
+              'Could not prepare the order for discount lookup.',
+        );
+      }
+    }
+
+    return repository.getAvailableDiscounts(state.currentOrderId!);
+  }
+
+  Future<void> removeDiscount() async {
+    if (state.currentOrderId != null) {
+      await _syncOrder(() => repository.removeDiscount(state.currentOrderId!));
+      return;
+    }
+
+    emit(state.copyWith(clearAppliedDiscount: true));
+  }
+
+  Future<void> clearCart() async {
+    if (state.currentOrderId != null) {
+      await _enqueueCartMutation(
+        fallbackMessage: 'Could not cancel order. Please try again.',
+        action: () async {
+          await repository.cancelOrder(state.currentOrderId!);
+          _clearCurrentOrderState();
+        },
+      );
+      return;
+    }
+
+    _clearCurrentOrderState();
+  }
+
+  Future<void> holdCurrentOrder() {
+    final Future<void>? inFlight = _inFlightHold;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final PosState expectedState = state;
+    if (!expectedState.canHoldCurrentOrder || !repository.usesBackend) {
+      return Future<void>.value();
+    }
+
+    CreateOrderRequest? creationRequest;
+    if (expectedState.currentOrderId == null) {
+      try {
+        final CreateOrderRequest request = _createPublishedOrderRequest(
+          sourceState: expectedState,
+        );
+        final String fingerprint = jsonEncode(request.toJson());
+        if (_holdCreationPayloadFingerprint != fingerprint) {
+          _holdCreationPayloadFingerprint = fingerprint;
+          _holdCreationIdempotencyKey = null;
+        }
+        final String idempotencyKey = _holdCreationIdempotencyKey ??=
+            _operationKey('hold-create');
+        if (idempotencyKey.trim().isEmpty) {
+          throw StateError('Hold creation operation key is empty.');
+        }
+        creationRequest = _createPublishedOrderRequest(
+          sourceState: expectedState,
+          idempotencyKey: idempotencyKey,
+        );
+      } catch (_) {
+        emit(
+          state.copyWith(
+            cartMutationError: holdRetryableMessage,
+            clearHoldSuccessMessage: true,
+            clearUncertainHoldMessage: true,
+          ),
+        );
+        return Future<void>.value();
+      }
+    }
+
+    emit(
+      state.copyWith(
+        clearCartMutationError: true,
+        clearHoldSuccessMessage: true,
+        clearUncertainHoldMessage: true,
+      ),
+    );
+    final Future<void> operation = _holdCurrentOrder(
+      expectedState: expectedState,
+      creationRequest: creationRequest,
+    );
+    _inFlightHold = operation;
+    operation.whenComplete(() {
+      if (identical(_inFlightHold, operation)) {
+        _inFlightHold = null;
+      }
+    });
+    return operation;
+  }
+
+  Future<void> _holdCurrentOrder({
+    required PosState expectedState,
+    required CreateOrderRequest? creationRequest,
+  }) async {
+    await _enqueueCartMutation(
+      fallbackMessage: holdRetryableMessage,
+      exposeApiMessage: false,
+      action: () => _performHold(
+        expectedState: expectedState,
+        creationRequest: creationRequest,
+      ),
+    );
+  }
+
+  Future<void> _performHold({
+    required PosState expectedState,
+    required CreateOrderRequest? creationRequest,
+  }) async {
+    if (!_matchesHoldContext(expectedState)) {
+      _emitHoldRetryableFailure();
+      return;
+    }
+
+    int? orderId = expectedState.currentOrderId;
+    if (orderId == null) {
+      try {
+        final CreateOrderRequest request = creationRequest!;
+        final BackendOrder created = await repository.createOrder(request);
+        _validateCreatedHoldOrder(created, expectedState, request);
+        if (!_matchesHoldContext(expectedState)) {
+          _emitHoldRetryableFailure();
+          return;
+        }
+        _emitBackendOrder(created);
+        orderId = created.id;
+      } catch (_) {
+        _emitHoldRetryableFailure();
+        return;
+      }
+    }
+
+    final int holdOrderId = orderId;
+    try {
+      final BackendOrder held = await repository.holdOrder(holdOrderId);
+      _validateHeldOrder(held, holdOrderId, expectedState.branchId);
+      _confirmHeldOrder(held, holdOrderId);
+    } catch (error) {
+      if (_isPotentiallyUncertainHoldFailure(error)) {
+        await _verifyUncertainHold(holdOrderId, expectedState);
+        return;
+      }
+      _emitHoldRetryableFailure();
+    }
+  }
+
+  Future<void> _verifyUncertainHold(int orderId, PosState expectedState) async {
+    try {
+      final BackendOrder verified = await repository.getOrder(orderId);
+      if (verified.id != orderId ||
+          verified.branchId != expectedState.branchId) {
+        throw const _HoldResponseNotConfirmed();
+      }
+
+      final String status = verified.status.toLowerCase();
+      final String paymentStatus = verified.paymentStatus.toLowerCase();
+      if (status == 'held' && paymentStatus == 'unpaid') {
+        _confirmHeldOrder(verified, orderId);
+        return;
+      }
+      if (status == 'draft' && paymentStatus == 'unpaid') {
+        if (state.currentOrderId == orderId) {
+          _emitBackendOrder(verified);
+          emit(
+            state.copyWith(
+              cartMutationError: holdRetryableMessage,
+              clearUncertainHoldMessage: true,
+            ),
+          );
+        } else {
+          _emitHoldUncertainFailure();
+        }
+        return;
+      }
+      _emitHoldRetryableFailure();
+    } catch (_) {
+      _emitHoldUncertainFailure();
+    }
+  }
+
+  void _confirmHeldOrder(BackendOrder order, int orderId) {
+    if (isClosed || state.currentOrderId != orderId) {
+      _emitHoldUncertainFailure();
+      return;
+    }
+    _emitBackendOrder(order);
+    _clearCurrentOrderState();
+    emit(
+      state.copyWith(
+        holdSuccessMessage: holdSucceededMessage,
+        clearCartMutationError: true,
+        clearUncertainHoldMessage: true,
+      ),
+    );
+    _holdCreationPayloadFingerprint = null;
+    _holdCreationIdempotencyKey = null;
+  }
+
+  void _emitHoldRetryableFailure() {
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        cartMutationError: holdRetryableMessage,
+        clearUncertainHoldMessage: true,
+      ),
+    );
+  }
+
+  void _emitHoldUncertainFailure() {
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        uncertainHoldMessage: holdUncertainMessage,
+        clearCartMutationError: true,
+      ),
+    );
+  }
+
+  bool _matchesHoldContext(PosState expectedState) {
+    return !isClosed &&
+        state.currentOrderId == expectedState.currentOrderId &&
+        state.branchId == expectedState.branchId &&
+        state.shiftId == expectedState.shiftId &&
+        state.orderType == expectedState.orderType &&
+        state.tableId == expectedState.tableId &&
+        state.orderNote == expectedState.orderNote &&
+        state.publishedMenuVersionId == expectedState.publishedMenuVersionId &&
+        state.selectedCustomer?.backendId ==
+            expectedState.selectedCustomer?.backendId &&
+        identical(state.cartItems, expectedState.cartItems);
+  }
+
+  void _validateCreatedHoldOrder(
+    BackendOrder order,
+    PosState expectedState,
+    CreateOrderRequest request,
+  ) {
+    if (order.id <= 0 ||
+        order.branchId != expectedState.branchId ||
+        order.status.toLowerCase() != 'draft' ||
+        order.paymentStatus.toLowerCase() != 'unpaid' ||
+        order.items.isEmpty ||
+        order.publishedMenuVersionId != request.publishedMenuVersionId) {
+      throw const _HoldResponseNotConfirmed();
+    }
+  }
+
+  void _validateHeldOrder(BackendOrder order, int orderId, int branchId) {
+    if (order.id != orderId ||
+        order.branchId != branchId ||
+        order.status.toLowerCase() != 'held' ||
+        order.paymentStatus.toLowerCase() != 'unpaid') {
+      throw const _HoldResponseNotConfirmed();
+    }
+  }
+
+  bool _isPotentiallyUncertainHoldFailure(Object error) {
+    if (error is _HoldResponseNotConfirmed) return false;
+    if (error is! ApiException) return true;
+    final int? statusCode = error.statusCode;
+    return statusCode == null || statusCode >= 500;
+  }
+
+  Future<bool> loadExistingOrder(int orderId, {bool allowReplace = false}) {
+    if (orderId <= 0 || !repository.usesBackend || isClosed) {
+      return Future<bool>.value(false);
+    }
+    if (_inFlightExistingOrder != null) {
+      return _inFlightExistingOrderId == orderId
+          ? _inFlightExistingOrder!
+          : Future<bool>.value(false);
+    }
+    if (state.isCartMutationInProgress ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentMessage != null) {
+      return Future<bool>.value(false);
+    }
+    final bool hasDifferentContext =
+        state.currentOrderId != null && state.currentOrderId != orderId;
+    final bool hasLocalCart =
+        state.hasCartItems &&
+        !(state.currentOrderId == orderId && !hasDifferentContext);
+    if ((hasDifferentContext || hasLocalCart) && !allowReplace) {
+      emit(
+        state.copyWith(
+          cartMutationError:
+              'The current POS cart has unsaved changes. Confirm replacement before resuming another order.',
+        ),
+      );
+      return Future<bool>.value(false);
+    }
+
+    final int requestVersion = ++_existingOrderRequestVersion;
+    final int expectedBranchId = state.branchId;
+    final int? expectedCurrentOrderId = state.currentOrderId;
+    final List<CartItem> expectedCartItems = state.cartItems;
+    emit(
+      state.copyWith(
+        isCartMutationInProgress: true,
+        clearCartMutationError: true,
+      ),
+    );
+
+    final Future<bool> request = _loadExistingOrder(
+      orderId: orderId,
+      requestVersion: requestVersion,
+      expectedBranchId: expectedBranchId,
+      expectedCurrentOrderId: expectedCurrentOrderId,
+      expectedCartItems: expectedCartItems,
+    );
+    _inFlightExistingOrder = request;
+    _inFlightExistingOrderId = orderId;
+    request.whenComplete(() {
+      if (identical(_inFlightExistingOrder, request)) {
+        _inFlightExistingOrder = null;
+        _inFlightExistingOrderId = null;
+      }
+    });
+    return request;
+  }
+
+  Future<bool> _loadExistingOrder({
+    required int orderId,
+    required int requestVersion,
+    required int expectedBranchId,
+    required int? expectedCurrentOrderId,
+    required List<CartItem> expectedCartItems,
+  }) async {
+    try {
+      final BackendOrder order = await repository.getOrder(orderId);
+      if (!_isCurrentExistingOrderRequest(
+        requestVersion: requestVersion,
+        expectedBranchId: expectedBranchId,
+        expectedCurrentOrderId: expectedCurrentOrderId,
+        expectedCartItems: expectedCartItems,
+      )) {
+        return false;
+      }
+      if (order.id != orderId || order.branchId != expectedBranchId) {
+        throw const ApiException(
+          message: 'This order is not available in the selected branch.',
+        );
+      }
+      if (order.canResume == false) {
+        throw ApiException(
+          message:
+              order.resumeBlockedReason ??
+              'This order cannot be safely resumed into POS.',
+        );
+      }
+      if (order.status.toLowerCase() != 'held' ||
+          order.paymentStatus.toLowerCase() != 'unpaid') {
+        throw const ApiException(
+          message: 'Only an unpaid held order can be resumed.',
+        );
+      }
+
+      _emitBackendOrder(order);
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: false,
+          clearCartMutationError: true,
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (!_isCurrentExistingOrderRequest(
+        requestVersion: requestVersion,
+        expectedBranchId: expectedBranchId,
+        expectedCurrentOrderId: expectedCurrentOrderId,
+        expectedCartItems: expectedCartItems,
+      )) {
+        return false;
+      }
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: false,
+          cartMutationError: _messageFor(error),
+        ),
+      );
+      return false;
+    }
+  }
+
+  bool _isCurrentExistingOrderRequest({
+    required int requestVersion,
+    required int expectedBranchId,
+    required int? expectedCurrentOrderId,
+    required List<CartItem> expectedCartItems,
+  }) {
+    return !isClosed &&
+        requestVersion == _existingOrderRequestVersion &&
+        state.branchId == expectedBranchId &&
+        state.currentOrderId == expectedCurrentOrderId &&
+        identical(state.cartItems, expectedCartItems);
+  }
+
+  /// Clears only the POS context that points at the cancelled backend order.
+  /// It never calls DELETE; OrdersCubit already confirmed that operation.
+  void clearCancelledOrderContext(int orderId) {
+    if (!isClosed && state.currentOrderId == orderId) {
+      _clearCurrentOrderState();
+    }
+  }
+
+  void _clearCurrentOrderState() {
+    emit(
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        orderType: OrderType.dineIn,
+        clearAppliedDiscount: true,
+        clearSelectedCustomer: true,
+        clearTable: true,
+        clearOrderNote: true,
+        clearCurrentOrderId: true,
+        clearBackendTotals: true,
+      ),
+    );
+  }
+
+  Future<PaymentCompletionStatus> completeLocalPayment(
+    PaymentResult result,
+  ) async {
+    if (!state.hasCartItems || result.totalDue <= 0) {
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (state.isCartMutationInProgress) {
+      emit(
+        state.copyWith(
+          cartMutationError: 'Please wait for the current cart update.',
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    // The order type is chosen in the payment dialog: it must be on the cart
+    // before the order is created, and the /pay request re-sends it.
+    if (result.orderType != null && state.orderType != result.orderType) {
+      emit(state.copyWith(orderType: result.orderType));
+    }
+
+    if (state.currentOrderId != null) {
+      return completeBackendPayment(result);
+    }
+
+    if (state.isBackendMode) {
+      if (!state.isBackendReachable) {
+        emit(state.copyWith(paymentErrorMessage: connectionRequiredMessage));
+        return PaymentCompletionStatus.retryableFailure;
+      }
+      return _createPublishedOrderAndPay(result);
+    }
+
+    final OrderReceipt receipt = _buildReceiptSnapshot(result);
+
+    emit(
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        lastReceipt: receipt,
+        clearSelectedCustomer: true,
+        clearAppliedDiscount: true,
+      ),
+    );
+    return PaymentCompletionStatus.completed;
+  }
+
+  Future<PaymentCompletionStatus> completeBackendPayment(
+    PaymentResult requestedPayment,
+  ) => _completeBackendPayment(requestedPayment);
+
+  Future<PaymentCompletionStatus> _completeBackendPayment(
+    PaymentResult requestedPayment, {
+    bool paymentSubmissionAlreadyStarted = false,
+  }) async {
+    if ((!paymentSubmissionAlreadyStarted && state.isPaymentSubmitting) ||
+        state.uncertainPaymentOrderId != null) {
+      return PaymentCompletionStatus.uncertain;
+    }
+    if (!state.isBackendReachable) {
+      emit(state.copyWith(paymentErrorMessage: connectionRequiredMessage));
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    final int? orderId = state.currentOrderId;
+    final double totalDue = state.total;
+    if (orderId == null || totalDue < 0 || !state.hasCartItems) {
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    if (!paymentSubmissionAlreadyStarted) {
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: true,
+          clearPaymentErrorMessage: true,
+          clearApiErrorMessage: true,
+        ),
+      );
+    }
+
+    try {
+      if (_paymentIdempotencyOrderId != orderId) {
+        _paymentIdempotencyOrderId = orderId;
+        _paymentIdempotencyKey = null;
+      }
+      // A retry after a definite failure must reuse the same idempotency key
+      // for this order — the backend dedupes a replayed /pay request by this
+      // key, so a fresh key per attempt would defeat double-charge protection.
+      final String idempotencyKey = _paymentIdempotencyKey ??= _operationKey(
+        'payment',
+      );
+      final PaymentResult payment = await repository.payOrderWithContext(
+        orderId: orderId,
+        method: requestedPayment.method.apiValue,
+        amount: requestedPayment.amountReceived,
+        idempotencyKey: idempotencyKey,
+        reference: requestedPayment.reference,
+        totalDue: totalDue,
+        orderType: requestedPayment.orderType,
+        deliveryCompanyId: requestedPayment.deliveryCompanyId,
+        onDeliveryAccount: requestedPayment.onDeliveryAccount,
+      );
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+
+      await _confirmBackendPayment(orderId: orderId, payment: payment);
+      return PaymentCompletionStatus.completed;
+    } catch (error) {
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+      if (_isPotentiallyUncertainPaymentFailure(error)) {
+        return _verifyUncertainPayment(
+          orderId: orderId,
+          requestedPayment: requestedPayment,
+        );
+      }
+
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: false,
+          paymentErrorMessage: _messageFor(error),
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+  }
+
+  Future<void> retryPendingReceipt() async {
+    final int? orderId = state.pendingReceiptOrderId;
+    if (orderId == null || state.isReceiptLoading) {
+      return;
+    }
+
+    await _loadReceipt(orderId);
+  }
+
+  Future<void> checkUncertainPaymentStatus() async {
+    final int? orderId = state.uncertainPaymentOrderId;
+    if (orderId == null || state.isPaymentSubmitting) {
+      return;
+    }
+
+    emit(
+      state.copyWith(isPaymentSubmitting: true, clearPaymentErrorMessage: true),
+    );
+    await _verifyUncertainPayment(orderId: orderId, requestedPayment: null);
+  }
+
+  void clearLastReceipt([OrderReceipt? expectedReceipt]) {
+    if (expectedReceipt != null && state.lastReceipt != expectedReceipt) {
+      return;
+    }
+    emit(state.copyWith(clearLastReceipt: true));
+  }
+
+  void _emitCartItems(List<CartItem> cartItems) {
+    emit(
+      state.copyWith(
+        cartItems: cartItems,
+        clearAppliedDiscount: cartItems.isEmpty,
+        clearCurrentOrderId: cartItems.isEmpty && state.currentOrderId == null,
+      ),
+    );
+  }
+
+  Future<void> _addCustomizedProductToBackendOrder(
+    ProductCustomization customization,
+  ) async {
+    final int? productId = customization.product.backendId;
+    if (productId == null) {
+      throw const ApiException(message: 'Product is missing backend id.');
+    }
+
+    final AddOrderItemRequest itemRequest = AddOrderItemRequest(
+      productId: productId,
+      quantity: customization.quantity,
+      modifiers: customization.selectedModifiers,
+      note: customization.specialInstructions,
+    );
+
+    if (state.currentOrderId == null) {
+      if (state.shiftId == null) {
+        throw const ApiException(
+          message:
+              'No open shift found. Open a shift before creating an order.',
+        );
+      }
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          tableId: null,
+          customerId: state.selectedCustomer?.backendId,
+          items: <AddOrderItemRequest>[itemRequest],
+        ),
+      );
+      _emitBackendOrder(order);
+      return;
+    }
+
+    final String? configurationKey = customization.backendConfigurationKey;
+    final CartItem? existing = configurationKey == null
+        ? null
+        : state.cartItems.cast<CartItem?>().firstWhere(
+            (CartItem? item) =>
+                item?.backendItemId != null &&
+                item?.hasCompleteBackendConfiguration == true &&
+                item?.backendConfigurationKey == configurationKey,
+            orElse: () => null,
+          );
+    final BackendOrder order;
+    if (existing != null) {
+      order = await repository.updateOrderItem(
+        orderId: state.currentOrderId!,
+        itemId: existing.backendItemId!,
+        request: UpdateOrderItemRequest(
+          quantity: existing.quantity + customization.quantity,
+        ),
+      );
+    } else {
+      order = await repository.addOrderItem(
+        orderId: state.currentOrderId!,
+        request: itemRequest,
+      );
+    }
+    _emitBackendOrder(order);
+  }
+
+  Future<void> _addPublishedProductToBackendOrder(
+    ProductCustomization customization,
+  ) async {
+    final PosProduct product = customization.product;
+    final int? versionId = product.publishedMenuVersionId;
+    final int? productId = product.backendId;
+    final int? placementId = product.placementId;
+    final int? variantId = customization.publishedVariantId;
+    if (versionId == null ||
+        productId == null ||
+        placementId == null ||
+        variantId == null) {
+      throw const ApiException(message: 'Published menu item is incomplete.');
+    }
+    if ((state.currentOrderId != null &&
+            state.publishedMenuVersionId != versionId) ||
+        (state.publishedMenuVersionId != null &&
+            state.publishedMenuVersionId != versionId)) {
+      throw const ApiException(
+        message:
+            'MENU_VERSION_STALE: refresh the POS menu before adding items.',
+      );
+    }
+
+    final AddOrderItemRequest itemRequest = AddOrderItemRequest(
+      productId: productId,
+      placementId: placementId,
+      variantId: variantId,
+      modifierOptionIds: customization.publishedModifierOptionIds,
+      quantity: customization.quantity,
+      note: customization.specialInstructions,
+    );
+
+    if (state.currentOrderId == null) {
+      if (state.shiftId == null) {
+        throw const ApiException(
+          message:
+              'No open shift found. Open a shift before creating an order.',
+        );
+      }
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          tableId: null,
+          customerId: state.selectedCustomer?.backendId,
+          publishedMenuVersionId: versionId,
+          items: <AddOrderItemRequest>[itemRequest],
+        ),
+      );
+      _emitBackendOrder(order);
+      return;
+    }
+
+    final BackendOrder order = await repository.addOrderItem(
+      orderId: state.currentOrderId!,
+      request: itemRequest,
+    );
+    _emitBackendOrder(order);
+  }
+
+  Future<bool> _addPublishedProductToLocalCart(
+    ProductCustomization customization,
+  ) async {
+    final PosProduct product = customization.product;
+    final int? versionId = product.publishedMenuVersionId;
+    final int? productId = product.backendId;
+    final int? placementId = product.placementId;
+    final int? variantId = customization.publishedVariantId;
+    if (versionId == null ||
+        productId == null ||
+        placementId == null ||
+        variantId == null) {
+      emit(
+        state.copyWith(
+          cartMutationError: 'Could not add this published menu item.',
+        ),
+      );
+      return false;
+    }
+    if (state.publishedMenuVersionId != null &&
+        state.publishedMenuVersionId != versionId) {
+      emit(
+        state.copyWith(
+          cartMutationError: menuChangedReviewMessage,
+          requiresMenuRefresh: true,
+        ),
+      );
+      return false;
+    }
+
+    final String key = customization.configurationKey;
+    final int index = state.cartItems.indexWhere(
+      (CartItem item) => item.id == key,
+    );
+    final CartItem next = CartItem(
+      id: key,
+      backendProductId: productId,
+      publishedMenuVersionId: versionId,
+      placementId: placementId,
+      variantId: variantId,
+      modifierOptionIds: customization.publishedModifierOptionIds,
+      product: product,
+      quantity: customization.quantity,
+      unitPrice: customization.unitPrice,
+      modifiers: customization.modifierLabels,
+      selectedModifiers: customization.selectedModifiers,
+      specialInstructions: customization.specialInstructions.trim(),
+    );
+    if (index < 0) {
+      emit(
+        state.copyWith(
+          cartItems: <CartItem>[...state.cartItems, next],
+          publishedMenuVersionId: versionId,
+        ),
+      );
+    } else {
+      final List<CartItem> items = List<CartItem>.of(state.cartItems);
+      items[index] = items[index].copyWith(
+        quantity: items[index].quantity + customization.quantity,
+      );
+      emit(state.copyWith(cartItems: items, publishedMenuVersionId: versionId));
+    }
+    return true;
+  }
+
+  Future<PaymentCompletionStatus> _createPublishedOrderAndPay(
+    PaymentResult requestedPayment,
+  ) async {
+    int? versionId;
+    for (final CartItem item in state.cartItems) {
+      if (item.publishedMenuVersionId != null) {
+        versionId = item.publishedMenuVersionId;
+        break;
+      }
+    }
+    if (versionId == null ||
+        state.cartItems.any(
+          (CartItem item) =>
+              item.publishedMenuVersionId != versionId ||
+              item.backendProductId == null ||
+              item.placementId == null ||
+              item.variantId == null,
+        )) {
+      emit(
+        state.copyWith(
+          paymentErrorMessage: menuChangedReviewMessage,
+          requiresMenuRefresh: true,
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (state.shiftId == null) {
+      emit(
+        state.copyWith(
+          paymentErrorMessage:
+              'No open shift found. Open a shift before paying.',
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    emit(
+      state.copyWith(isPaymentSubmitting: true, clearPaymentErrorMessage: true),
+    );
+    try {
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          customerId: state.selectedCustomer?.backendId,
+          publishedMenuVersionId: versionId,
+          items: state.cartItems
+              .map(
+                (CartItem item) => AddOrderItemRequest(
+                  productId: item.backendProductId!,
+                  placementId: item.placementId,
+                  variantId: item.variantId,
+                  modifierOptionIds: item.modifierOptionIds,
+                  quantity: item.quantity,
+                  note: item.specialInstructions,
+                ),
+              )
+              .toList(growable: false),
+        ),
+      );
+      if (isClosed) return PaymentCompletionStatus.uncertain;
+      _emitBackendOrder(order);
+      // Creating a snapshot-aware order is the first half of the same payment
+      // action. Keep the UI locked, but let the owned hand-off submit /pay.
+      return _completeBackendPayment(
+        requestedPayment,
+        paymentSubmissionAlreadyStarted: true,
+      );
+    } catch (error) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isPaymentSubmitting: false,
+            paymentErrorMessage: _messageFor(error),
+            requiresMenuRefresh: _isMenuVersionStale(error),
+          ),
+        );
+      }
+      return PaymentCompletionStatus.retryableFailure;
+    }
+  }
+
+  Future<void> _syncOrder(Future<BackendOrder> Function() action) async {
+    await _enqueueCartMutation(
+      fallbackMessage: 'Could not update order. Please try again.',
+      action: () async => _emitBackendOrder(await action()),
+    );
+  }
+
+  Future<bool> _ensureBackendOrderForCurrentCart() {
+    if (state.currentOrderId != null) {
+      return Future<bool>.value(true);
+    }
+
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not prepare order for discount lookup.',
+      action: () async {
+        _emitBackendOrder(
+          await repository.createOrder(_createPublishedOrderRequest()),
+        );
+      },
+    );
+  }
+
+  CreateOrderRequest _createPublishedOrderRequest({
+    PosState? sourceState,
+    String? idempotencyKey,
+  }) {
+    final PosState source = sourceState ?? state;
+    int? versionId;
+    for (final CartItem item in source.cartItems) {
+      if (item.publishedMenuVersionId != null) {
+        versionId = item.publishedMenuVersionId;
+        break;
+      }
+    }
+    if (versionId == null ||
+        source.cartItems.any(
+          (CartItem item) =>
+              item.publishedMenuVersionId != versionId ||
+              item.backendProductId == null ||
+              item.placementId == null ||
+              item.variantId == null,
+        )) {
+      throw const ApiException(
+        message: 'MENU_VERSION_STALE: refresh the POS menu before continuing.',
+      );
+    }
+    if (source.shiftId == null) {
+      throw const ApiException(
+        message: 'No open shift found. Open a shift before creating an order.',
+      );
+    }
+
+    return CreateOrderRequest(
+      branchId: source.branchId,
+      shiftId: source.shiftId,
+      orderType: source.orderType,
+      tableId: source.tableId,
+      customerId: source.selectedCustomer?.backendId,
+      note: source.orderNote,
+      publishedMenuVersionId: versionId,
+      idempotencyKey: idempotencyKey,
+      items: source.cartItems
+          .map(
+            (CartItem item) => AddOrderItemRequest(
+              productId: item.backendProductId!,
+              modifiers: item.selectedModifiers,
+              placementId: item.placementId,
+              variantId: item.variantId,
+              modifierOptionIds: item.modifierOptionIds,
+              quantity: item.quantity,
+              note: item.specialInstructions,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Future<bool> _enqueueCartMutation({
+    required String fallbackMessage,
+    required Future<void> Function() action,
+    bool exposeApiMessage = true,
+  }) {
+    if (repository.usesBackend && !state.isBackendReachable) {
+      emit(state.copyWith(cartMutationError: connectionRequiredMessage));
+      return Future<bool>.value(false);
+    }
+    _queuedCartMutations += 1;
+    if (!isClosed && !state.isCartMutationInProgress) {
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: true,
+          isSyncingOrder: true,
+          clearCartMutationError: true,
+          requiresMenuRefresh: false,
+        ),
+      );
+    }
+
+    bool succeeded = false;
+    final Future<void> scheduled = _cartMutationQueue.then((_) async {
+      if (isClosed) {
+        return;
+      }
+      try {
+        await action();
+        succeeded = true;
+      } catch (error) {
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              cartMutationError: exposeApiMessage && error is ApiException
+                  ? _messageFor(error)
+                  : fallbackMessage,
+              requiresMenuRefresh: _isMenuVersionStale(error),
+            ),
+          );
+        }
+      } finally {
+        _queuedCartMutations -= 1;
+        if (!isClosed && _queuedCartMutations == 0) {
+          emit(
+            state.copyWith(
+              isCartMutationInProgress: false,
+              isSyncingOrder: false,
+            ),
+          );
+        }
+      }
+    });
+    _cartMutationQueue = scheduled.catchError((Object _) {});
+    return scheduled.then((_) => succeeded);
+  }
+
+  void _emitBackendOrder(BackendOrder order) {
+    final List<CartItem> cartItems = order.items
+        .map(
+          (BackendOrderItem item) => _cartItemFromBackend(
+            item,
+            publishedMenuVersionId: order.publishedMenuVersionId,
+          ),
+        )
+        .toList(growable: false);
+
+    emit(
+      state.copyWith(
+        cartItems: cartItems,
+        currentOrderId: order.id,
+        branchId: order.branchId,
+        taxRate: order.totals.taxRate,
+        shiftId: order.shiftId,
+        publishedMenuVersionId: order.publishedMenuVersionId,
+        currentOrderStatus: order.status,
+        currentOrderPaymentStatus: order.paymentStatus,
+        orderType: orderTypeFromApi(order.orderType),
+        selectedCustomer: _customerFromBackendOrder(order),
+        clearSelectedCustomer: order.customerId == null,
+        tableId: order.tableId,
+        tableName: order.tableName,
+        tableCode: order.tableCode,
+        orderNote: order.note,
+        clearTable: order.tableId == null,
+        clearOrderNote: order.note == null,
+        appliedDiscount: _discountFromBackend(order),
+        backendSubtotal: order.totals.subtotal,
+        backendDiscountTotal: order.totals.discountTotal,
+        backendTax: order.totals.taxTotal,
+        backendTotal: order.totals.total,
+        clearAppliedDiscount: order.discountAmount == null,
+      ),
+    );
+  }
+
+  Customer? _customerFromBackendOrder(BackendOrder order) {
+    final int? customerId = order.customerId;
+    if (customerId == null) {
+      return null;
+    }
+    for (final Customer customer in state.customers) {
+      if (customer.backendId == customerId) {
+        return customer;
+      }
+    }
+    return Customer(
+      id: customerId.toString(),
+      backendId: customerId,
+      name: order.customerName ?? 'Customer $customerId',
+      phone: order.customerPhone ?? '',
+    );
+  }
+
+  CartItem _cartItemFromBackend(
+    BackendOrderItem item, {
+    required int? publishedMenuVersionId,
+  }) {
+    final PosProduct product = state.products.firstWhere(
+      (PosProduct product) => product.backendId == item.productId,
+      orElse: () => PosProduct(
+        id: item.productId.toString(),
+        backendId: item.productId,
+        name: item.name,
+        category: 'MENU',
+        size: '1 item',
+        price: item.unitPrice,
+        isAvailable: true,
+      ),
+    );
+
+    return CartItem(
+      id: item.id.toString(),
+      backendItemId: item.id,
+      backendProductId: item.productId,
+      publishedMenuVersionId: publishedMenuVersionId,
+      placementId: item.placementId,
+      variantId: item.variantId,
+      modifierOptionIds: item.selectedModifiers
+          .map((SelectedModifier modifier) => modifier.optionId)
+          .toList(growable: false),
+      product: product,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      modifiers: item.modifierLabels,
+      selectedModifiers: item.selectedModifiers,
+      specialInstructions: item.note ?? '',
+    );
+  }
+
+  AppliedDiscount? _discountFromBackend(BackendOrder order) {
+    final double? amount = order.discountAmount;
+    if (amount == null || amount <= 0) {
+      return null;
+    }
+
+    return AppliedDiscount(
+      id: 'backend-${order.id}',
+      title: order.discountName ?? 'Discount',
+      type: order.discountType == 'percentage'
+          ? AppliedDiscountType.percentage
+          : AppliedDiscountType.fixedAmount,
+      value: order.discountValue ?? amount,
+    );
+  }
+
+  CartItem? _cartItemById(String cartItemId) {
+    for (final CartItem item in state.cartItems) {
+      if (item.id == cartItemId) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _confirmBackendPayment({
+    required int orderId,
+    required PaymentResult payment,
+  }) async {
+    if (isClosed) {
+      return;
+    }
+    _paymentIdempotencyOrderId = null;
+    _paymentIdempotencyKey = null;
+    _completeConfirmedOrder(orderId: orderId, payment: payment);
+    await _loadReceipt(orderId);
+  }
+
+  void _completeConfirmedOrder({
+    required int orderId,
+    required PaymentResult payment,
+  }) {
+    if (isClosed) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        orderType: OrderType.dineIn,
+        lastPaidOrderId: orderId,
+        lastPaymentResult: payment,
+        pendingReceiptOrderId: orderId,
+        isPaymentSubmitting: false,
+        clearSelectedCustomer: true,
+        clearAppliedDiscount: true,
+        clearCurrentOrderId: true,
+        clearBackendTotals: true,
+        clearPaymentErrorMessage: true,
+        clearUncertainPayment: true,
+        clearReceiptErrorMessage: true,
+      ),
+    );
+  }
+
+  Future<void> _loadReceipt(int orderId) async {
+    if (isClosed || state.pendingReceiptOrderId != orderId) {
+      return;
+    }
+    final int requestId = ++_receiptRequestGeneration;
+    emit(
+      state.copyWith(isReceiptLoading: true, clearReceiptErrorMessage: true),
+    );
+    try {
+      final OrderReceipt receipt = await repository.getReceipt(orderId);
+      if (isClosed ||
+          requestId != _receiptRequestGeneration ||
+          state.pendingReceiptOrderId != orderId) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          lastReceipt: receipt,
+          isReceiptLoading: false,
+          clearPendingReceiptOrderId: true,
+          clearReceiptErrorMessage: true,
+        ),
+      );
+    } catch (error) {
+      if (isClosed ||
+          requestId != _receiptRequestGeneration ||
+          state.pendingReceiptOrderId != orderId) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          isReceiptLoading: false,
+          receiptErrorMessage:
+              'Payment completed, but the receipt could not be loaded.',
+        ),
+      );
+    }
+  }
+
+  Future<PaymentCompletionStatus> _verifyUncertainPayment({
+    required int orderId,
+    required PaymentResult? requestedPayment,
+  }) async {
+    try {
+      final BackendOrder order = await repository.getOrder(orderId);
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+      if (_isConfirmedPaid(order)) {
+        final PaymentResult payment =
+            requestedPayment ??
+            PaymentResult(
+              method: PaymentMethod.cash,
+              totalDue: order.totals.total,
+              amountReceived: order.totals.total,
+              changeDue: 0,
+              status: order.paymentStatus,
+            );
+        await _confirmBackendPayment(orderId: orderId, payment: payment);
+        return PaymentCompletionStatus.completed;
+      }
+
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: false,
+          paymentErrorMessage: 'Payment was not completed. Please try again.',
+          clearUncertainPayment: true,
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    } catch (_) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isPaymentSubmitting: false,
+            uncertainPaymentOrderId: orderId,
+            uncertainPaymentMessage:
+                'Payment status could not be confirmed. Check the Orders screen before retrying.',
+          ),
+        );
+      }
+      return PaymentCompletionStatus.uncertain;
+    }
+  }
+
+  bool _isPotentiallyUncertainPaymentFailure(Object error) {
+    return error is! ApiException || error.statusCode == null;
+  }
+
+  String _operationKey(String operation) => _operationKeyGenerator(operation);
+
+  static String _defaultOperationKey(String operation) {
+    final int random = Random.secure().nextInt(0x100000000);
+    return '$operation-${DateTime.now().microsecondsSinceEpoch}-${random.toRadixString(16)}';
+  }
+
+  bool _isConfirmedPaid(BackendOrder order) {
+    const Set<String> paidValues = <String>{'paid', 'completed', 'complete'};
+    return paidValues.contains(order.status.toLowerCase()) ||
+        paidValues.contains(order.paymentStatus.toLowerCase());
+  }
+
+  String _messageFor(Object error) {
+    if (error is ApiException) {
+      final String? expected = switch (error.code) {
+        'NO_OPEN_SHIFT' =>
+          'لا توجد وردية مفتوحة صالحة لهذا الطلب. افتح وردية ثم أعد المحاولة.',
+        'WAREHOUSE_NOT_CONFIGURED' => 'لا يوجد مخزن رئيسي فعّال لفرع الطلب.',
+        'WAREHOUSE_CONFIGURATION_AMBIGUOUS' =>
+          'إعداد مخزن الفرع غير صالح. يوجد أكثر من مخزن رئيسي.',
+        'ACCOUNTING_CONFIGURATION_MISSING' =>
+          'إعدادات الحسابات المطلوبة لإتمام الدفع غير مكتملة.',
+        'INSUFFICIENT_STOCK' => 'المخزون غير كافٍ لإتمام عملية البيع.',
+        'PAYMENT_METHOD_INVALID' => _paymentMethodMessage(error),
+        'PAYMENT_ALREADY_COMPLETED' ||
+        'ORDER_ALREADY_PAID' => 'تم دفع هذا الطلب مسبقاً.',
+        'PAYMENT_IDEMPOTENCY_CONFLICT' =>
+          'تعارض في محاولة الدفع. حدّث الطلب قبل إعادة المحاولة.',
+        _ => null,
+      };
+      if (expected != null) return expected;
+      if (error.validationErrors?.isNotEmpty ?? false) {
+        return error.validationErrors!.values.first.first;
+      }
+      return error.message;
+    }
+
+    return error.toString();
+  }
+
+  /// The server reports every paymentMethodId problem (wallet balance too low, no registered
+  /// customer, ...) under one code. Show its Arabic reason when it gave one.
+  String _paymentMethodMessage(ApiException error) {
+    final List<String>? reasons = error.validationErrors?['paymentMethodId'];
+    if (reasons != null) {
+      for (final String reason in reasons) {
+        if (RegExp(r'[\u0600-\u06FF]').hasMatch(reason)) return reason;
+      }
+    }
+    return 'طريقة الدفع غير فعّالة أو غير مرتبطة بحساب مالي صالح.';
+  }
+
+  bool _isMenuVersionStale(Object error) =>
+      error is ApiException && error.message.contains('MENU_VERSION_STALE');
+
+  List<String> _defaultModifiersFor(PosProduct product) {
+    return switch (product.id) {
+      'cappuccino' => const <String>['Oat Milk', 'Extra Shot'],
+      'almond-croissant' => const <String>['Warmed'],
+      _ => const <String>[],
+    };
+  }
+
+  OrderReceipt _buildReceiptSnapshot(PaymentResult payment) {
+    final DateTime completedAt = DateTime.now();
+
+    return OrderReceipt(
+      orderNumber: _orderNumberFor(completedAt),
+      branchName: 'DOWNTOWN BRANCH',
+      cashierName: 'ALEX M.',
+      completedAt: completedAt,
+      items: state.cartItems
+          .map(
+            (CartItem item) => ReceiptLineItem(
+              name: item.product.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              lineTotal: item.lineTotal,
+              modifiers: item.modifiers,
+              specialInstructions: item.specialInstructions.trim().isEmpty
+                  ? null
+                  : item.specialInstructions.trim(),
+            ),
+          )
+          .toList(growable: false),
+      subtotal: state.subtotal,
+      discountTotal: state.discountTotal,
+      discountLabel: state.appliedDiscount?.title,
+      tax: state.tax,
+      taxRate: state.taxRate,
+      total: state.total,
+      payment: payment,
+      customerName: state.selectedCustomer?.name,
+    );
+  }
+
+  String _orderNumberFor(DateTime completedAt) {
+    final int suffix = completedAt.millisecondsSinceEpoch % 10000;
+    return '#618-${suffix.toString().padLeft(4, '0')}';
+  }
+}

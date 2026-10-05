@@ -1,0 +1,3966 @@
+{
+  "@@locale": "en",
+  "inventoryReportTitle": "Inventory",
+  "inventoryReportSubtitle": "Analyze inventory value, availability, movements, waste, and count variances across locations.",
+  "inventoryReportAllLocations": "All locations",
+  "inventoryReportAllCategories": "All categories",
+  "inventoryReportExportTooltip": "Export will be enabled after this report is connected to a data source.",
+  "inventoryReportCurrentValue": "Current inventory value",
+  "inventoryReportLowStock": "Low-stock items",
+  "inventoryReportOutOfStock": "Out-of-stock items",
+  "inventoryReportWasteValue": "Waste value",
+  "inventoryReportCountVariance": "Count variances",
+  "inventoryReportConsumption": "Total consumption",
+  "inventoryReportReceived": "Stock received",
+  "inventoryReportTransfers": "Transfers",
+  "inventoryReportValueByLocation": "Inventory value by location",
+  "inventoryReportMovement": "Inventory movement",
+  "inventoryReportHealth": "Stock health",
+  "inventoryReportLowOut": "Low and out-of-stock items",
+  "inventoryReportConsumptionAnalysis": "Consumption analysis",
+  "inventoryReportWasteAnalysis": "Waste analysis",
+  "inventoryReportVariance": "Stock-count variances",
+  "inventoryReportLocationComparison": "Location comparison",
+  "inventoryReportExceptions": "Inventory exceptions",
+  "inventoryReportItem": "Item",
+  "inventoryReportCategory": "Category",
+  "inventoryReportLocation": "Location",
+  "inventoryReportAvailable": "Available quantity",
+  "inventoryReportMinimum": "Minimum level",
+  "inventoryReportUnit": "Unit",
+  "inventoryReportStatus": "Status",
+  "inventoryReportQuantity": "Quantity",
+  "inventoryReportValue": "Value",
+  "inventoryReportReason": "Reason",
+  "inventoryReportExpected": "Expected",
+  "inventoryReportCounted": "Counted",
+  "inventoryReportDifference": "Difference",
+  "inventoryReportVarianceValue": "Variance value",
+  "inventoryReportItems": "Items",
+  "inventoryReportAvailableStatus": "Available",
+  "inventoryReportLowStatus": "Low stock",
+  "inventoryReportOutStatus": "Out of stock",
+  "inventoryReportOverstockStatus": "Overstock",
+  "inventoryReportMatched": "Matched",
+  "inventoryReportShortage": "Shortage",
+  "inventoryReportOverage": "Overage",
+  "inventoryReportNoLocations": "There are not enough locations to compare.",
+  "inventoryReportNoMovements": "There are no inventory movements for the selected period.",
+  "inventoryReportNoLowStock": "There are no low-stock items for the current filters.",
+  "inventoryReportNoWaste": "There are no waste movements for the selected period.",
+  "inventoryReportNoVariance": "There are no stock-count variances for the selected period.",
+  "inventoryReportNoExceptions": "There are no inventory exceptions requiring review.",
+  "inventoryReportError": "Unable to load the Inventory report.",
+  "appName": "Cafe System 618",
+  "@appName": {
+    "description": "The application name."
+  },
+  "language": "Language",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "languageSelection": "Select language",
+  "commonSave": "Save",
+  "commonCancel": "Cancel",
+  "commonClose": "Close",
+  "commonDelete": "Delete",
+  "commonEdit": "Edit",
+  "commonAdd": "Add",
+  "commonRetry": "Retry",
+  "commonRefresh": "Refresh",
+  "commonSearch": "Search",
+  "commonLoading": "Loading…",
+  "commonError": "Something went wrong. Please try again.",
+  "errorConnectionUnavailable": "Connection unavailable.",
+  "errorAuthenticationRequired": "Authentication required.",
+  "errorPermissionDenied": "You do not have permission to perform this action.",
+  "errorConflict": "This action conflicts with the current state.",
+  "errorServer": "Something went wrong. Please try again.",
+  "commonNoData": "No data available.",
+  "commonUnknown": "Unknown",
+  "commonActive": "Active",
+  "commonDeactivate": "Deactivate",
+  "commonActivate": "Activate",
+  "commonArchive": "Archive",
+  "commonRestore": "Restore",
+  "commonArchived": "Archived",
+  "commonAll": "All",
+  "commonInactive": "Inactive",
+  "commonAvailable": "Available",
+  "commonSoldOut": "Sold out",
+  "posNoPublishedMenu": "No menu has been published for this branch yet.",
+  "posNoAvailableMenu": "No published menu is currently available.",
+  "posNoAvailableItems": "No available items in this section.",
+  "posUnableToLoadMenu": "Unable to load the published menu.",
+  "posMenuRefreshRequired": "Menu data needs refresh before this order can continue.",
+  "posOfflineUsingSavedMenu": "Offline — using saved menu",
+  "posSyncErrorUsingSavedMenu": "Unable to sync menu — using saved menu",
+  "posLastSynced": "Last synced: {time}",
+  "@posLastSynced": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "posMenuUpdateReady": "Menu update ready — will apply after current order",
+  "posNoSavedMenu": "No saved menu available. Reconnect to load menu.",
+  "posConnectionRequiredToCompleteOrder": "Connection required to complete this order.",
+  "posMenuChangedReviewOrder": "Menu changed — review order.",
+  "posBranchSwitchBlockedWithCart": "Finish, hold, or cancel the current order before switching branches.",
+  "posTemporarilyUnavailable": "Temporarily unavailable",
+  "commonYes": "Yes",
+  "commonNo": "No",
+  "commonBack": "Back",
+  "navigationDashboard": "Dashboard",
+  "navigationPos": "POS",
+  "navigationOrders": "Orders",
+  "navigationCustomers": "Customers",
+  "navigationDiscounts": "Discounts",
+  "navigationMenuManagement": "Menu Management",
+  "navigationInventory": "Inventory",
+  "navigationFinance": "Finance",
+  "navigationReports": "Reports",
+  "navigationSettings": "Settings",
+  "operationalHub": "OPERATIONAL HUB",
+  "shiftStatusOpen": "SHIFT OPEN",
+  "shiftStatusClosed": "SHIFT CLOSED",
+  "shiftCloseTitle": "Close Shift",
+  "shiftCloseSubtitle": "Count the cash in your register and close your shift.",
+  "shiftCloseClosingCashLabel": "Closing cash",
+  "shiftCloseNoteLabel": "Note (optional)",
+  "shiftCloseSubmit": "Close Shift",
+  "shiftCloseSuccess": "Shift closed.",
+  "shiftCloseRedirectingToBarCheck": "A bar check is required before you can close this shift.",
+  "barCheckTitle": "Bar Check",
+  "barCheckSubtitle": "Count each item, then submit to continue closing your shift.",
+  "barCheckExpectedLabel": "Expected",
+  "barCheckCountedLabel": "Counted",
+  "barCheckReasonLabel": "Reason for variance",
+  "barCheckSubmitAndClose": "Submit Bar Check",
+  "barCheckPendingManagerReview": "A manager needs to review a variance on this count before it can be completed. Ask a manager to review it, then try again.",
+  "barCheckAllLinesRequired": "Count every item before submitting.",
+  "tooltipCart": "Cart",
+  "tooltipRefreshScreenData": "Refresh screen data",
+  "tooltipNotifications": "Notifications",
+  "tooltipProfile": "Profile",
+  "invalidCatalogRoute": "The requested catalog route is invalid.",
+  "productsEmptyMessage": "No products found.",
+  "ordersEmptyMessage": "No orders found.",
+  "menusEmptyMessage": "No menus found.",
+  "productCount": "{count, plural, =0{No products} =1{1 product} other{{count} products}}",
+  "@productCount": {
+    "description": "A count of products.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "orderCount": "{count, plural, =0{No orders} =1{1 order} other{{count} orders}}",
+  "@orderCount": {
+    "description": "A count of orders.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "variantCount": "{count, plural, =0{No variants} =1{1 variant} other{{count} variants}}",
+  "@variantCount": {
+    "description": "A count of variants.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "validationIssueCount": "{count, plural, =0{No validation issues} =1{1 validation issue} other{{count} validation issues}}",
+  "@validationIssueCount": {
+    "description": "A count of validation issues.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "statusPending": "Pending",
+  "statusOpen": "Open",
+  "statusCompleted": "Completed",
+  "statusCancelled": "Cancelled",
+  "statusPaid": "Paid",
+  "statusUnpaid": "Unpaid",
+  "statusArchived": "Archived",
+  "statusDraft": "Draft",
+  "statusPublished": "Published",
+  "statusScheduled": "Scheduled",
+  "statusTemporarilyUnavailable": "Temporarily unavailable",
+  "statusAssigned": "Assigned",
+  "statusUnassigned": "Unassigned",
+  "priceSourceBase": "Base price",
+  "priceSourceOverride": "Override price",
+  "validationSeverityError": "Error",
+  "validationSeverityWarning": "Warning",
+  "validationSeverityInfo": "Information",
+  "salesChannelPos": "POS",
+  "salesChannelOnline": "Online",
+  "productTypeSimple": "Simple product",
+  "productTypeVariant": "Variant product",
+  "genericFormError": "We could not save your changes. Review the highlighted fields and try again.",
+  "menuPublishTab": "Publish",
+  "menuPublishAction": "Publish Menu",
+  "menuPublishPublishing": "Publishing…",
+  "menuPublishBranch": "Branch",
+  "menuPublishChannel": "Sales channel",
+  "menuPublishScope": "Scope",
+  "menuPublishCollectionScope": "Complete assigned Menu collection",
+  "menuPublishOneMenu": "One Menu",
+  "menuPublishValidation": "Last validation",
+  "menuPublishValidationRequired": "Validation required",
+  "menuPublishCanPublish": "Can Publish",
+  "menuPublishCannotPublish": "Cannot Publish",
+  "menuPublishErrors": "Errors",
+  "menuPublishWarnings": "Warnings",
+  "menuPublishRunValidationFirst": "Run Validation for this selected scope before publishing.",
+  "menuPublishBlockedByValidation": "Publishing is disabled because the loaded validation contains errors.",
+  "menuPublishWarningsAllowed": "Warnings do not block publishing. Review them and confirm explicitly.",
+  "menuPublishConfirmTitle": "Confirm Menu publication",
+  "menuPublishCurrentVersion": "Current Published Version",
+  "menuPublishConfirmationExplanation": "Publishing creates a new immutable Menu Version for the selected Branch and Channel when the resolved Menu content has changed. Existing Orders are not modified.",
+  "menuPublishLoadingCurrentVersion": "Loading current published Version…",
+  "menuPublishNoCurrentVersion": "No Menu Version has been published for this Branch and Sales Channel.",
+  "menuPublishVersionNumber": "Version",
+  "menuPublishStatus": "Status",
+  "menuPublishPublishedAt": "Published at",
+  "menuPublishChecksum": "Checksum",
+  "menuPublishPublicationId": "Publication ID",
+  "menuPublishSuccess": "Menu publication successful.",
+  "menuPublishNoChanges": "No Menu changes were detected.",
+  "menuPublishNoChangesExplanation": "The current published Version remains unchanged.",
+  "menuPublishBackendBlocked": "Backend validation blocked publication. No Version was created.",
+  "versionHistory": "Version History",
+  "versionDetail": "Version Detail",
+  "compareVersions": "Compare Versions",
+  "identicalContent": "Identical content",
+  "versionsAdded": "Added",
+  "versionsRemoved": "Removed",
+  "versionsChanged": "Changed",
+  "versionPriceChanges": "Price changes",
+  "versionModifierChanges": "Modifier changes",
+  "versionScheduleChanges": "Schedule changes",
+  "versionRollback": "Rollback",
+  "versionRollbackReason": "Rollback reason",
+  "versionNewRollback": "New rollback Version",
+  "versionNoChangeRollback": "No-change rollback",
+  "versionTruncatedComparison": "Only a bounded subset of differences is displayed.",
+  "versionImmutableSnapshot": "This is an immutable historical Snapshot.",
+  "versionStatusCurrent": "Current",
+  "versionStatusSuperseded": "Superseded",
+  "versionStatusRolledBack": "Rolled back",
+  "versionView": "View",
+  "versionSelectForCompare": "Select Version {version} for comparison",
+  "@versionSelectForCompare": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionCompareSelected": "Compare selected ({count})",
+  "@versionCompareSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionHistoryEmptyTitle": "No version history",
+  "versionHistoryEmptyDescription": "No Menu version has been published for {branch} · {channel} yet.",
+  "@versionHistoryEmptyDescription": {
+    "placeholders": {
+      "branch": {},
+      "channel": {}
+    }
+  },
+  "versionHistoryLoadError": "Could not load version history.",
+  "versionDetailLoadError": "Could not load this version.",
+  "versionCompareError": "Could not compare these versions.",
+  "versionRestoreError": "Could not restore this version.",
+  "versionPreviousPage": "Previous",
+  "versionNextPage": "Next",
+  "versionPage": "Page {page}",
+  "@versionPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "versionChangeCount": "{count, plural, =1{1 change} other{{count} changes}}",
+  "@versionChangeCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "versionChangesSince": "{count, plural, =1{1 change} other{{count} changes}} since Version {version}",
+  "@versionChangesSince": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionPublishedAt": "Published {date}",
+  "@versionPublishedAt": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "versionMenus": "Menus",
+  "versionSections": "Sections",
+  "versionProducts": "Products",
+  "versionPricing": "Pricing",
+  "versionModifiers": "Modifiers",
+  "versionRecipes": "Recipes",
+  "versionSchedules": "Schedules",
+  "versionChanges": "changes",
+  "versionChangeSummary": "Change summary",
+  "versionChangeSummaryAvailable": "This version includes a recorded change summary.",
+  "versionChangeSummaryUnavailable": "No change summary is available for this version.",
+  "versionRestoreThisVersion": "Restore this Version",
+  "versionRestoreTitle": "Restore Version {version}?",
+  "@versionRestoreTitle": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreExplanation": "A new published version will be created using the contents of Version {version}. Versions published after Version {version} will remain in history.",
+  "@versionRestoreExplanation": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreReason": "Reason for restore (optional)",
+  "versionRestoreReasonHint": "For example, restore after an unintended pricing change",
+  "versionRestoreAsNewVersion": "Restore as New Version",
+  "versionRestoring": "Restoring…",
+  "versionRestoreResultTitle": "Version restored",
+  "versionRestoreSuccess": "Version {newVersion} was created from Version {sourceVersion}. Version {newVersion} is now Current.",
+  "@versionRestoreSuccess": {
+    "placeholders": {
+      "newVersion": {
+        "type": "int"
+      },
+      "sourceVersion": {
+        "type": "int"
+      }
+    }
+  },
+  "versionRestoreNoChanges": "Version {version} already matches the current published content. No new version was created.",
+  "@versionRestoreNoChanges": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "versionComparisonDirection": "Version {fromVersion} → Version {toVersion}",
+  "@versionComparisonDirection": {
+    "placeholders": {
+      "fromVersion": {
+        "type": "int"
+      },
+      "toVersion": {
+        "type": "int"
+      }
+    }
+  },
+  "versionNoContentDifferences": "No content differences found.",
+  "versionComparisonTruncated": "Additional changes are not shown.",
+  "catalogSetupTitle": "Catalog Setup",
+  "catalogSetupCategoriesTitle": "Catalog Categories",
+  "catalogSetupReportingCategoriesTitle": "Reporting Categories",
+  "catalogSetupKitchenStationsTitle": "Kitchen Stations",
+  "catalogSetupCategory": "Category",
+  "catalogSetupReportingCategory": "Reporting Category",
+  "catalogSetupKitchenStation": "Kitchen Station",
+  "catalogSetupCategoriesExplanation": "Categories classify Products for the Catalog.",
+  "catalogSetupReportingCategoriesExplanation": "Reporting Categories group Products for sales and performance reports. They do not control where Products appear in the customer Menu.",
+  "catalogSetupKitchenStationsExplanation": "Kitchen Stations identify the preparation area for Products; this does not configure printer communication.",
+  "catalogSetupAll": "All",
+  "catalogSetupProducts": "Products",
+  "catalogSetupOrder": "Order",
+  "catalogSetupActions": "Actions",
+  "catalogSetupCodePrinter": "Code / Printer",
+  "catalogSetupNoMatchingRecords": "No matching records.",
+  "catalogSetupUnableToLoad": "Unable to load Catalog Setup.",
+  "catalogSetupCreate": "Create {type}",
+  "@catalogSetupCreate": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupEdit": "Edit {type}",
+  "@catalogSetupEdit": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupArchive": "Archive {type}",
+  "@catalogSetupArchive": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupRestore": "Restore",
+  "catalogSetupMoveUp": "Move up",
+  "catalogSetupMoveDown": "Move down",
+  "catalogSetupName": "Name",
+  "catalogSetupNameArabic": "Arabic name",
+  "catalogSetupNameEnglish": "English name",
+  "catalogSetupCode": "Code",
+  "catalogSetupDescription": "Description",
+  "catalogSetupPrinterName": "Printer name",
+  "catalogSetupPage": "Page {page}",
+  "@catalogSetupPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogSetupPrevious": "Previous",
+  "catalogSetupNext": "Next",
+  "catalogSetupArchiveConfirmation": "{name} is used by {count} Products. Existing Product assignments remain governed by Backend rules.",
+  "recipeMaterials": "Recipe / Materials",
+  "manageRecipe": "Manage Recipe",
+  "baseRecipe": "Base Recipe",
+  "material": "Material",
+  "quantity": "Quantity",
+  "unit": "Unit",
+  "addMaterial": "Add Material",
+  "removeMaterial": "Remove",
+  "materialAdjustments": "Material Adjustments",
+  "effectiveFrom": "Effective from",
+  "global": "Global",
+  "productOverride": "Product Override",
+  "variantOverride": "Variant Override",
+  "inherited": "Inherited",
+  "createOverride": "Create Override",
+  "suppressInheritedEffects": "Suppress Inherited Effects",
+  "restoreInheritance": "Restore Inheritance",
+  "recipeSimulation": "Recipe Simulation",
+  "selectedModifiers": "Selected Modifiers",
+  "resolvedRecipe": "Resolved Recipe",
+  "recipeUnavailableMaterial": "Materials with an unmapped unit are disabled and cannot be saved.",
+  "recipeReadOnly": "This Variant is archived. Recipe configuration is read-only.",
+  "recipeEmpty": "No recipe components are configured.",
+  "recipeInheritedDraft": "This draft is cloned from the inherited profile. Saving creates a full replacement override.",
+  "recipeEmptyOverride": "This override deliberately has no material effects.",
+  "recipeSuppressConfirmationTitle": "Suppress inherited material effects?",
+  "recipeSuppressConfirmationBody": "Saving an empty scoped profile removes every inherited ADD and REMOVE effect for this scope.",
+  "recipeRemoveOverrideTitle": "Remove this override?",
+  "recipeRemoveOverrideBody": "Removing it restores the nearest inherited material effects.",
+  "menuManagementWorkflow": "Menu management workflow",
+  "menuManagementBuild": "Build",
+  "menuManagementConfigure": "Configure",
+  "menuManagementRelease": "Review & release",
+  "menuManagementProducts": "Products",
+  "menuManagementModifiers": "Modifiers",
+  "menuManagementMenus": "Menus",
+  "menuManagementAssignments": "Assignments & Schedules",
+  "menuManagementReview": "Review & preview",
+  "menuManagementCatalogSetup": "Catalog Setup",
+  "recipeConsumptionHelp": "Define the materials consumed when one unit of this Variant is prepared.",
+  "recipeNoComponentsHelp": "No materials are configured yet. Add each material used to prepare one unit of this Variant.",
+  "recipeOverrideGlobal": "Global default",
+  "recipeOverrideProduct": "Override for this Product",
+  "recipeOverrideVariant": "Override for this Variant",
+  "recipeInheritedFromGlobal": "Inherited from Global",
+  "recipeInheritedFromProduct": "Inherited from this Product",
+  "recipeSimulationHelp": "Select modifiers, resolve the recipe, then review the materials consumed.",
+  "recipeSimulationResultHelp": "Consumed materials",
+  "recipeSimulationStartHelp": "Select modifiers, then resolve the recipe to see the consumed materials.",
+  "reviewWorkflowHelp": "Check the selected Menu, preview what the Branch and Channel receive, then publish and review its Version history.",
+  "reviewCheckMenu": "1. Check Menu",
+  "reviewPreviewStep": "2. Preview",
+  "reviewPublishStep": "3. Publish",
+  "reviewVersionsStep": "4. Version History",
+  "validationNoBlockingErrors": "No blocking validation errors were found.",
+  "validationResolveErrors": "Resolve the errors below before this Menu can be published.",
+  "validationIssueCode": "Code: {code}",
+  "@validationIssueCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierSelectionExactly": "Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}.",
+  "@modifierSelectionExactly": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "modifierSelectionRange": "Customer may choose from {min} to {max} options.",
+  "@modifierSelectionRange": {
+    "placeholders": {
+      "min": {
+        "type": "num"
+      },
+      "max": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewAdvancedOptions": "Advanced preview options",
+  "technicalDetails": "Technical details",
+  "managerAvailabilityScheduledHelp": "When should this item normally be available?",
+  "managerAvailabilityOperationalHelp": "Is it temporarily unavailable right now?",
+  "@catalogSetupArchiveConfirmation": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuManagementNavigation": "Menu Management navigation",
+  "menuManagementCatalog": "Catalog",
+  "menuManagementMenusGroup": "Menus",
+  "menuManagementReleaseGroup": "Release",
+  "menuManagementReviewPublish": "Review & Publish",
+  "menuBreadcrumbProduct": "Product",
+  "menuBreadcrumbVariant": "Variant",
+  "menuBreadcrumbCreateProduct": "Create product",
+  "menuBreadcrumbEditProduct": "Edit product",
+  "menuBreadcrumbVariants": "Variants",
+  "menuBreadcrumbModifiers": "Modifiers",
+  "menuBreadcrumbPricing": "Pricing",
+  "menuBreadcrumbRecipe": "Recipe",
+  "menuBreadcrumbRecipeSimulation": "Recipe simulation",
+  "menuBreadcrumbAvailability": "Availability",
+  "menuBreadcrumbOperationalAvailability": "Operational availability",
+  "menuBreadcrumbMaterialAdjustments": "Material adjustments",
+  "menuBreadcrumbModifierGroup": "Modifier group",
+  "menuBreadcrumbCreateModifierGroup": "Create modifier group",
+  "menuBreadcrumbEditModifierGroup": "Edit modifier group",
+  "menuBreadcrumbMenu": "Menu",
+  "menuBreadcrumbCreateMenu": "Create menu",
+  "menuBreadcrumbEditMenu": "Edit menu",
+  "menuBreadcrumbComposition": "Composition",
+  "menuBreadcrumbVersionHistory": "Version history",
+  "productCatalogTitle": "Products",
+  "productCatalogSubtitle": "Manage the products available across your menus.",
+  "productCatalogCreateProduct": "Create Product",
+  "productCatalogRefresh": "Refresh products",
+  "productCatalogSearch": "Search products, SKU, or barcode",
+  "productCatalogLifecycle": "Lifecycle",
+  "productCatalogAllProducts": "All products",
+  "productCatalogMoreFilters": "More Filters",
+  "productCatalogMoreFiltersSemantic": "More Filters, {count} active",
+  "@productCatalogMoreFiltersSemantic": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productCatalogClearAll": "Clear All",
+  "productCatalogClear": "Clear",
+  "productCatalogApply": "Apply",
+  "productCatalogSort": "Sort",
+  "productCatalogSortOrder": "Sort order",
+  "productCatalogNameAscending": "Name A–Z",
+  "productCatalogNameDescending": "Name Z–A",
+  "productCatalogNewest": "Newest first",
+  "productCatalogProductType": "Product type",
+  "productCatalogHasVariants": "Has variants",
+  "productCatalogNoVariants": "No variants",
+  "productCatalogHasModifiers": "Has modifiers",
+  "productCatalogNoModifiers": "No modifiers",
+  "productCatalogStandard": "Standard",
+  "productCatalogOpenPrice": "Open price",
+  "productCatalogCombo": "Combo",
+  "productCatalogSetup": "Setup",
+  "productCatalogDefaultVariant": "Default",
+  "productCatalogStatus": "Status",
+  "productCatalogOpen": "Open",
+  "productCatalogManageVariants": "Manage Variants",
+  "productCatalogManageModifiers": "Manage Modifiers",
+  "productCatalogArchive": "Archive",
+  "productCatalogRestore": "Restore",
+  "productCatalogActionsFor": "Actions for {name}",
+  "@productCatalogActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productCatalogSetupSummary": "{variants} variants · {modifiers} modifiers",
+  "@productCatalogSetupSummary": {
+    "placeholders": {
+      "variants": {
+        "type": "int"
+      },
+      "modifiers": {
+        "type": "int"
+      }
+    }
+  },
+  "productCatalogLoadMore": "Load more products",
+  "productCatalogUnableToLoad": "Unable to load products.",
+  "productCatalogNoArchived": "No archived products are available.",
+  "productCatalogNoActive": "No active products are available.",
+  "productCatalogNoMatches": "No products match these filters.",
+  "productCatalogNoProductsYet": "No products have been created yet.",
+  "productCatalogMoreFiltersHelper": "Refine the product list with additional criteria.",
+  "productCatalogFilterClassification": "Classification",
+  "productCatalogFilterPreparation": "Preparation",
+  "productCatalogFilterProductSetup": "Product setup",
+  "productCatalogClearFilters": "Clear filters",
+  "productCatalogApplyFilters": "Apply filters",
+  "productUxGeneral": "General",
+  "productUxClassification": "Classification",
+  "productUxSellingPreparation": "Selling & Preparation",
+  "productUxInitialSellingOption": "Initial selling option",
+  "productUxTranslations": "Translations",
+  "productUxAdvanced": "Advanced",
+  "productUxOverview": "Overview",
+  "productUxUsage": "Usage",
+  "productUxVariants": "Variants",
+  "productUxModifiers": "Modifiers",
+  "productUxRecipeMaterials": "Recipe & Materials",
+  "productUxAvailability": "Availability",
+  "productUxCreateProduct": "Create Product",
+  "productUxSaveChanges": "Save Changes",
+  "productUxCancel": "Cancel",
+  "productUxManageCatalogSetup": "Manage catalog setup",
+  "productUxEditProduct": "Edit Product",
+  "productUxArchived": "Archived",
+  "productOverviewBasePrice": "Base Price",
+  "productOverviewVariants": "Variants",
+  "productOverviewModifierGroups": "Modifier Groups",
+  "productOverviewStockTracking": "Stock Tracking",
+  "productOverviewEnabled": "Enabled",
+  "productOverviewDisabled": "Disabled",
+  "productOverviewNotConfigured": "Not configured",
+  "productOverviewProductSetup": "Product Setup",
+  "productOverviewCategory": "Category",
+  "productOverviewDefaultVariant": "Default Variant",
+  "productOverviewKitchenStation": "Kitchen Station",
+  "productOverviewProductType": "Product Type",
+  "productOverviewReportingCategory": "Reporting Category",
+  "productOverviewPreparationTime": "Preparation Time",
+  "productOverviewMinutes": "minutes",
+  "modifierLibraryTitle": "Modifier Library",
+  "modifierLibrarySubtitle": "Create reusable customer choices that can be assigned to Products.",
+  "modifierCreateGroup": "Create Modifier Group",
+  "modifierSearch": "Search modifiers",
+  "modifierActive": "Active",
+  "modifierArchived": "Archived",
+  "modifierAll": "All",
+  "modifierReorder": "Reorder",
+  "modifierDone": "Done",
+  "modifierClearFiltersBeforeReorder": "Clear search and filters before reordering Modifier Groups.",
+  "modifierOptionsCount": "{count, plural, =0 {0 options} =1 {1 option} other {{count} options}}",
+  "@modifierOptionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierOptionPreviewMore": "+ {count} more",
+  "@modifierOptionPreviewMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleExactly": "Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}.",
+  "@modifierRuleExactly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleOptionalExactly": "Optional — customer may choose {count, plural, =1 {1 option} other {{count} options}}.",
+  "@modifierRuleOptionalExactly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleAtLeastUpTo": "Customer must choose at least {min} and up to {max, plural, =1 {1 option} other {{max} options}}.",
+  "@modifierRuleAtLeastUpTo": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleOptionalUpTo": "Optional — customer may choose up to {max, plural, =1 {1 option} other {{max} options}}.",
+  "@modifierRuleOptionalUpTo": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierRuleQuantity": "The same option may be added more than once.",
+  "modifierViewGroup": "View Group",
+  "modifierEditGroup": "Edit Group",
+  "modifierSetDefault": "Set as Default",
+  "modifierMaterialAdjustments": "Material Adjustments",
+  "modifierArchive": "Archive",
+  "modifierRestore": "Restore",
+  "modifierNoGroups": "No modifier groups have been created yet.",
+  "modifierNoGroupMatches": "No modifier groups match the current filters.",
+  "modifierUnableToLoad": "Unable to load modifier groups.",
+  "modifierRetry": "Retry",
+  "modifierLoadMore": "Load more",
+  "modifierRefresh": "Refresh modifier groups",
+  "modifierGroupDetailNotFound": "Modifier group not found.",
+  "modifierOptions": "Options",
+  "modifierAddOption": "Add Option",
+  "modifierOptionFilter": "Option status",
+  "modifierNoArchivedOptions": "No archived modifier options.",
+  "modifierNoOptions": "No modifier options have been created yet.",
+  "modifierReorderOptions": "Reorder Options",
+  "modifierMoveUp": "Move Up",
+  "modifierMoveDown": "Move Down",
+  "modifierDefault": "DEFAULT",
+  "modifierNoExtraCharge": "No extra charge",
+  "modifierPriceAdjustment": "Price adjustment",
+  "modifierMaterialUsageConfigured": "Material usage configured",
+  "modifierStatusActive": "Active",
+  "modifierStatusArchived": "Archived",
+  "modifierStatusInactive": "Inactive",
+  "modifierAdvancedDetails": "Advanced Details",
+  "modifierSelectionMode": "Selection mode",
+  "modifierMinimum": "Minimum",
+  "modifierMaximum": "Maximum",
+  "modifierAllowQuantity": "Allow quantity",
+  "modifierGroupType": "Group type",
+  "modifierSortOrder": "Sort order",
+  "modifierCreateTitle": "Create Modifier Group",
+  "modifierEditTitle": "Edit Modifier Group",
+  "modifierBasicInformation": "Basic Information",
+  "modifierBasicInformationHelper": "Name this reusable customer-choice group.",
+  "modifierGroupName": "Modifier Group Name",
+  "modifierGroupNameHint": "e.g. Milk Type",
+  "modifierInternalCode": "Internal code",
+  "modifierGroupTypeChoice": "Choice",
+  "modifierGroupTypeAddOn": "Add-on",
+  "modifierGroupTypePreparation": "Preparation instruction",
+  "modifierYes": "Yes",
+  "modifierNo": "No",
+  "modifierTranslations": "Translations",
+  "modifierArabic": "Arabic",
+  "modifierEnglish": "English",
+  "modifierClose": "Close",
+  "modifierSelectionRules": "Selection Rules",
+  "modifierSelectionRulesHelper": "Determine how customers interact with these options.",
+  "modifierHowChoose": "How should customers choose?",
+  "modifierChooseOne": "Choose one",
+  "modifierChooseMultiple": "Choose multiple",
+  "modifierChoiceRequired": "Is a choice required?",
+  "modifierOptional": "Optional",
+  "modifierRequired": "Required",
+  "modifierMinimumChoices": "Minimum choices",
+  "modifierMaximumChoices": "Maximum choices",
+  "modifierSameOptionQuantity": "Can the same Option be added more than once?",
+  "modifierQuantityHelper": "For example: 2 Extra Shots.",
+  "modifierCurrentRuleSummary": "Current Rule Summary",
+  "modifierInitialOption": "Initial Option",
+  "modifierInitialOptions": "Initial Options",
+  "modifierInitialOptionHelper": "Add enough active Options for the Maximum choices before creating the Modifier Group.",
+  "modifierAddAnotherOption": "Add another Option",
+  "modifierRemoveOption": "Remove Option",
+  "modifierAtLeastActiveOptions": "Add at least {count} active Options or reduce Maximum choices.",
+  "@modifierAtLeastActiveOptions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierOptionName": "Option name",
+  "modifierOptionNameHint": "e.g. Whole Milk",
+  "modifierAdvanced": "Advanced",
+  "modifierActiveStatus": "Active status",
+  "modifierAvailableForUse": "Available for use in menus.",
+  "modifierCancel": "Cancel",
+  "modifierSaveChanges": "Save Changes",
+  "modifierCreateAction": "Create Modifier Group",
+  "modifierSaving": "Saving...",
+  "modifierUnsavedChanges": "You have unsaved changes. Leave without saving?",
+  "modifierStay": "Stay",
+  "modifierLeave": "Leave",
+  "modifierOptionCreateTitle": "Add Option",
+  "modifierOptionEditTitle": "Edit Option",
+  "modifierOptionBasicInformation": "Basic Information",
+  "modifierOptionDefault": "Default option",
+  "modifierOptionActive": "Active",
+  "modifierOptionAvailable": "Available",
+  "modifierOptionAdvanced": "Advanced",
+  "modifierOptionSave": "Save",
+  "modifierOptionSaving": "Saving...",
+  "modifierOptionNameRequired": "Option name is required.",
+  "modifierOptionPriceInvalid": "Enter a valid price adjustment.",
+  "modifierOptionSortInvalid": "Sort order must be a whole number.",
+  "modifierArchiveGroupTitle": "Archive modifier group?",
+  "modifierArchiveOptionTitle": "Archive modifier option?",
+  "modifierArchiveMessage": "The item remains stored and can be restored later.",
+  "modifierConfirmArchive": "Archive",
+  "modifierOptionSaveError": "Unable to save this modifier option. Check the option rules and try again.",
+  "modifierOptionGroupInvalid": "This Option cannot be changed because it would make the Modifier Group invalid.",
+  "modifierGroupSaveError": "Unable to save this modifier group.",
+  "modifierGroupRequired": "Modifier group name is required.",
+  "modifierNumberInvalid": "Enter zero or a positive whole number.",
+  "modifierMaximumMinimumError": "Maximum must be at least the minimum.",
+  "modifierSingleMaximumError": "Single selection groups cannot have a maximum above 1.",
+  "modifierRequiredMinimumError": "Required groups need a minimum of at least 1.",
+  "modifierInitialOptionRequired": "An initial active option is required.",
+  "modifierPriceInvalid": "Enter zero or a positive price.",
+  "modifierInitialMaximumError": "A new group has one initial option; maximum cannot exceed 1.",
+  "configuredSellPriceMustBePositive": "Selling price must be greater than zero.",
+  "recipeVariant": "Variant",
+  "recipeConfigured": "Recipe configured · {count} materials",
+  "@recipeConfigured": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeMaterialId": "Material #{materialId}",
+  "@recipeMaterialId": {
+    "placeholders": {
+      "materialId": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeSku": "SKU {sku}",
+  "@recipeSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeMissing": "Recipe missing",
+  "recipeNotConfigured": "Recipe not configured",
+  "recipeModifierMaterialEffects": "Modifier Material Effects",
+  "recipeModifierMaterialEffectsHelp": "See how customer choices change the materials consumed.",
+  "recipeNoMaterialChange": "No material change",
+  "recipeUsingGlobalSettings": "Using Global settings",
+  "recipeUsingProductSettings": "Using Product settings",
+  "recipeUsingVariantSettings": "Using Variant settings",
+  "recipeCustomizedForProduct": "Customized for Product",
+  "recipeCustomizedForVariant": "Customized for Variant",
+  "recipeTest": "Test Recipe",
+  "recipeBackToWorkspace": "Back to Recipe & Materials",
+  "recipeSave": "Save recipe",
+  "recipeSaved": "Recipe saved.",
+  "recipeCurrentBehavior": "Current Behavior",
+  "recipeUseInherited": "Use inherited settings",
+  "recipeUseInheritedAgain": "Use inherited settings again",
+  "recipeClearTitle": "Clear the product recipe?",
+  "recipeClearBody": "This removes every material configured for the product base recipe.",
+  "recipeClearAction": "Clear recipe",
+  "recipeRemoveOverrideAction": "Remove override",
+  "recipeCustomizeFor": "Customize for {context}",
+  "@recipeCustomizeFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeNoMaterialEffectFor": "No material effect for {context}",
+  "@recipeNoMaterialEffectFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeCurrentVariant": "this Variant",
+  "recipeReplacesSummary": "Replaces {from} with {to}",
+  "@recipeReplacesSummary": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "recipeRemovesSummary": "Removes {materials}",
+  "@recipeRemovesSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeAddsSummary": "Adds {materials}",
+  "@recipeAddsSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeRemoves": "Removes",
+  "recipeAdds": "Adds",
+  "recipeAddMaterialToRemove": "Add Material to Remove",
+  "recipeAddMaterialToAdd": "Add Material to Add",
+  "recipeSaveChanges": "Save Changes",
+  "recipeCancel": "Cancel",
+  "recipeQuantityRequired": "Quantity is required.",
+  "recipeQuantityInvalid": "Enter a positive number with up to 6 decimal places.",
+  "recipeDuplicateMaterial": "This material is already used.",
+  "recipeMaterialSearch": "Search materials",
+  "recipeNoMaterialResults": "No materials found.",
+  "recipeFinalMaterials": "Final Materials",
+  "recipePreviewMaterials": "Preview Materials",
+  "recipeHowCalculated": "How this was calculated",
+  "recipeChoicesChanged": "Choices changed",
+  "recipeStaleResult": "Preview the materials again to update this result.",
+  "recipeDecreaseQuantity": "Decrease quantity",
+  "recipeIncreaseQuantity": "Increase quantity",
+  "batch8AvailabilityTitle": "Selling availability",
+  "batch8AvailabilityHelp": "Review the price, regular selling hours, and current operational status for this selling context.",
+  "batch8Variant": "Variant",
+  "batch8Branch": "Branch",
+  "batch8Channel": "Channel",
+  "batch8AvailabilityLoadError": "Availability could not be loaded.",
+  "batch8Retry": "Retry",
+  "batch8Loading": "Loading…",
+  "batch8Checking": "Checking…",
+  "batch8SellingPrice": "Selling price",
+  "batch8BasePrice": "Base price",
+  "batch8EffectiveSellingPrice": "Effective selling price",
+  "batch8Using": "Using",
+  "batch8ManagePricing": "Manage pricing",
+  "batch8PriceLoadingHelp": "Resolving the selling price for this context.",
+  "batch8PriceFromBase": "Variant base price",
+  "batch8PriceFromBranch": "Branch price",
+  "batch8PriceFromChannel": "Channel price",
+  "batch8PriceFromBranchAndChannel": "Branch and channel price",
+  "batch8RegularAvailability": "Regular availability",
+  "batch8NoScheduleRestrictions": "No schedule restrictions",
+  "batch8NoScheduleRestrictionsHelp": "Normally available whenever this selling context is open.",
+  "batch8ScheduleLoadingHelp": "Checking regular selling hours for this context.",
+  "batch8AvailableNow": "Available now",
+  "batch8UnavailableNow": "Unavailable now",
+  "batch8Unavailable": "Unavailable",
+  "batch8AvailableAccordingSchedule": "Available according to regular selling hours.",
+  "batch8UnavailableAccordingSchedule": "Outside the regular selling hours.",
+  "batch8ScheduleRules": "Configured selling hours",
+  "batch8ManageSchedule": "Manage schedule",
+  "batch8CurrentAvailability": "Current availability",
+  "batch8CurrentLoadingHelp": "Checking temporary operational status for this context.",
+  "batch8SoldOut": "Sold out",
+  "batch8TemporarilyUnavailable": "Temporarily unavailable",
+  "batch8NoTemporaryRestriction": "No temporary restriction is active.",
+  "batch8TemporaryRestrictionActive": "A temporary operational restriction is active.",
+  "batch8TemporaryUntil": "Temporary restriction active until {time}.",
+  "@batch8TemporaryUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8ManageAvailability": "Manage availability",
+  "batch8EffectiveSellingResult": "Effective selling result",
+  "batch8Availability": "Availability",
+  "batch8PricingBack": "Back",
+  "batch8PricingRefresh": "Refresh",
+  "batch8PricingLoadError": "Pricing could not be loaded.",
+  "batch8PricingArchived": "This Product or Variant is archived. Prices are shown for reference and cannot be changed.",
+  "batch8PricingContext": "{variant} · Selling price",
+  "@batch8PricingContext": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PricingHelp": "The selling price for the selected Variant, Branch, and sales channel.",
+  "batch8SalesChannel": "Sales channel",
+  "batch8NoBranch": "No Branch",
+  "batch8NoChannel": "No Channel",
+  "batch8ChangePrice": "Change Price",
+  "batch8MorePriceRules": "More Price Rules",
+  "batch8RulesConfigured": "{count} configured",
+  "@batch8RulesConfigured": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batch8Show": "Show",
+  "batch8Hide": "Hide",
+  "batch8NoPriceAdjustments": "No price adjustments.",
+  "batch8BasePriceEverywhere": "Base Price applies everywhere.",
+  "batch8Difference": "Difference",
+  "batch8AddPrice": "Add Price",
+  "batch8SetSellingPrice": "Set Selling Price",
+  "batch8Product": "Product",
+  "batch8AppliesTo": "Applies to",
+  "batch8ScopeBranch": "Branch",
+  "batch8ScopeChannel": "Channel",
+  "batch8ScopeBranchChannel": "Branch + Channel",
+  "batch8Price": "Price",
+  "batch8PriceAboveBase": "{difference} above Base Price",
+  "@batch8PriceAboveBase": {
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PriceBelowBase": "{difference} below Base Price",
+  "@batch8PriceBelowBase": {
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8PriceSameAsBase": "Same as Base Price",
+  "batch8Cancel": "Cancel",
+  "batch8SavePrice": "Save Price",
+  "batch8Edit": "Edit",
+  "batch8Remove": "Remove",
+  "batch8RemovePriceTitle": "Remove price rule?",
+  "batch8RemovePriceMessage": "This price adjustment will be removed for this Variant.",
+  "batch8Keep": "Keep",
+  "batch8BranchPriceFor": "{branch} Branch price",
+  "@batch8BranchPriceFor": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8ChannelPriceFor": "{channel} channel price",
+  "@batch8ChannelPriceFor": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8BranchChannelPriceFor": "{branch} · {channel} price",
+  "@batch8BranchChannelPriceFor": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "batch8RuleBranchPrice": "Branch price",
+  "batch8RuleChannelPrice": "Channel price",
+  "batch8RuleBranchChannelPrice": "Branch + Channel price",
+  "batch8ChannelPos": "POS",
+  "batch8ChannelWaiterApp": "Waiter App",
+  "batch8ChannelKiosk": "Kiosk",
+  "batch8ChannelQrOrdering": "QR Ordering",
+  "batch8ChannelDelivery": "Delivery",
+  "batch8ChannelOnlineOrdering": "Online Ordering",
+  "batch8UnsavedPriceChanges": "Unsaved price changes",
+  "batch8UnsavedPriceChangesMessage": "You have unsaved price changes. Leave without saving?",
+  "batch8Leave": "Leave",
+  "scheduledUnsavedChanges": "Unsaved selling hours",
+  "scheduledUnsavedChangesHelp": "You have unsaved selling-hours changes. Leave without saving?",
+  "scheduledStay": "Stay",
+  "scheduledLeave": "Leave",
+  "scheduledLoadError": "Scheduled availability could not be loaded.",
+  "scheduledSaveError": "Selling hours could not be saved. Please review the entered values and try again.",
+  "scheduledSaved": "Selling hours saved.",
+  "scheduledArchived": "This Product or Variant is archived. Selling hours are shown for reference and cannot be changed.",
+  "scheduledRegularForProduct": "Product · Regular availability",
+  "scheduledRegularForVariant": "{variant} · Regular availability",
+  "@scheduledRegularForVariant": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledProduct": "Product",
+  "scheduledAllBranches": "All branches",
+  "scheduledAllChannels": "All channels",
+  "scheduledUsingProduct": "Using Product schedule",
+  "scheduledProductSchedule": "Product schedule",
+  "scheduledCustomizedFor": "Customized for {variant}",
+  "@scheduledCustomizedFor": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledCustomizeFor": "Customize for {variant}",
+  "@scheduledCustomizeFor": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledUseProductAgain": "Use Product schedule again",
+  "scheduledWeeklyInAdvanced": "Weekly hours are shown in Advanced Schedule Rules.",
+  "scheduledNoSpecificRestriction": "No specific restriction",
+  "scheduledAvailableAllDay": "Available all day",
+  "scheduledEditSellingHours": "Edit Selling Hours",
+  "scheduledAdvancedRules": "Advanced Schedule Rules",
+  "scheduledNoAdvancedRules": "No advanced schedule rules",
+  "scheduledViewRules": "View Rules",
+  "scheduledInactiveRule": "Inactive schedule rule",
+  "scheduledPriorityRule": "Priority schedule rule",
+  "scheduledDateBoundRule": "Date-limited schedule rule",
+  "scheduledCheckAvailability": "Check Availability",
+  "scheduledCheckHelp": "Check a date and time in the selected selling context.",
+  "scheduledDate": "Date",
+  "scheduledTime": "Time",
+  "scheduledCheck": "Check",
+  "scheduledCheckError": "Availability could not be checked. Please try again.",
+  "scheduledAvailableUsingProduct": "Available according to the Product schedule.",
+  "scheduledDay": "Day",
+  "scheduledEveryDay": "Every day",
+  "scheduledAvailability": "Availability",
+  "scheduledAvailableAllDayHelp": "No time restriction for this day.",
+  "scheduledCustomHours": "Custom hours",
+  "scheduledCustomHoursHelp": "Set the normal start and end time.",
+  "scheduledStartTime": "Start time",
+  "scheduledEndTime": "End time",
+  "scheduledOvernightUntil": "Available overnight until {time} the next day.",
+  "@scheduledOvernightUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduledDateLimits": "Date Limits",
+  "scheduledOptional": "Optional",
+  "scheduledStartDate": "Start date",
+  "scheduledEndDate": "End date",
+  "scheduledSelectDate": "Select date",
+  "scheduledAdvanced": "Advanced",
+  "scheduledPriority": "Priority",
+  "scheduledActive": "Active",
+  "scheduledSaveSellingHours": "Save Selling Hours",
+  "scheduledFrom": "From",
+  "scheduledUntil": "Until",
+  "scheduledSunday": "Sunday",
+  "scheduledMonday": "Monday",
+  "scheduledTuesday": "Tuesday",
+  "scheduledWednesday": "Wednesday",
+  "scheduledThursday": "Thursday",
+  "scheduledFriday": "Friday",
+  "scheduledSaturday": "Saturday",
+  "operationalAvailabilityTitle": "Operational availability",
+  "operationalAvailabilityPurpose": "Can customers order this item right now? Temporary operational exceptions only.",
+  "operationalAvailabilityContext": "Current context",
+  "operationalAvailabilityProductVariant": "Product / Variant",
+  "operationalAvailabilityProductOnly": "Product",
+  "operationalAvailabilityBranch": "Branch",
+  "operationalAvailabilityChannel": "Sales channel",
+  "operationalAvailabilitySelectBranch": "Select an active branch",
+  "operationalAvailabilitySelectChannel": "Select a sales channel",
+  "operationalAvailabilityAvailableNow": "AVAILABLE NOW",
+  "operationalAvailabilitySoldOut": "SOLD OUT",
+  "operationalAvailabilityTemporarilyUnavailable": "TEMPORARILY UNAVAILABLE",
+  "operationalAvailabilityNoRestriction": "No temporary restriction is active.",
+  "operationalAvailabilityActiveRestriction": "A temporary operational restriction is active.",
+  "operationalAvailabilityUntil": "Until: {time}",
+  "@operationalAvailabilityUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalAvailabilityReason": "Reason",
+  "operationalAvailabilityMarkUnavailable": "Mark temporarily unavailable",
+  "operationalAvailabilityMakeAvailable": "Make available now",
+  "operationalAvailabilityEditStatus": "Edit status",
+  "operationalAvailabilityEditTemporary": "Edit temporary restriction",
+  "operationalAvailabilityUseDefault": "Use default status",
+  "operationalAvailabilityUseDefaultTitle": "Use default status?",
+  "operationalAvailabilityUseDefaultMessage": "This removes only the status set for this exact product context. The resulting availability will be checked again.",
+  "operationalAvailabilityDefaultAction": "Use default",
+  "operationalAvailabilityAllVariants": "This status applies to all variants of this product.",
+  "operationalAvailabilityOnlyVariant": "This status affects only {variant}.",
+  "@operationalAvailabilityOnlyVariant": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalAvailabilityLoadingCurrent": "Updating current availability…",
+  "operationalAvailabilityNoContext": "Choose an active branch and sales channel to view current availability.",
+  "operationalAvailabilityLoadError": "We couldn’t load current availability. Try again.",
+  "operationalAvailabilityArchived": "This item is archived. Current availability is shown for reference and cannot be changed.",
+  "operationalAvailabilitySetStatus": "Set availability status",
+  "operationalAvailabilityEditStatusTitle": "Edit availability status",
+  "operationalAvailabilityStatus": "Status",
+  "operationalAvailabilityDuration": "Duration",
+  "operationalAvailabilitySpecificTime": "Until a specific time",
+  "operationalAvailabilityEndTimeRequired": "Select when this temporary restriction should end.",
+  "operationalAvailabilitySelectEndTime": "Select end date and time",
+  "operationalAvailabilityBranchTime": "The time is shown in the selected branch’s local time.",
+  "operationalAvailabilitySave": "Save status",
+  "operationalAvailabilitySaving": "Saving…",
+  "operationalAvailabilityCancel": "Cancel",
+  "operationalAvailabilityExplicitAvailable": "Available for this selling context.",
+  "operationalAvailabilitySaveError": "We couldn’t save this availability status. Review the details and try again.",
+  "catalogSetupWorkspaceHelp": "Configure the classifications and preparation destinations used by Products.",
+  "catalogSetupCategoriesPurpose": "Organize Products into clear catalog and menu groups.",
+  "catalogSetupReportingPurpose": "Group Products for sales and performance reporting.",
+  "catalogSetupReportingNote": "Reporting Categories do not control where Products appear in the menu.",
+  "catalogSetupStationsPurpose": "Define where Products and items are prepared.",
+  "catalogSetupSearchCategories": "Search categories...",
+  "catalogSetupSearchReporting": "Search reporting categories...",
+  "catalogSetupSearchStations": "Search kitchen stations...",
+  "catalogSetupAdd": "Add {type}",
+  "@catalogSetupAdd": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupSave": "Save {type}",
+  "@catalogSetupSave": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupNoCategories": "No categories yet",
+  "catalogSetupNoReportingCategories": "No reporting categories yet",
+  "catalogSetupNoKitchenStations": "No kitchen stations yet",
+  "catalogSetupEmptyCategoriesHelp": "Categories help organize Products into clear groups.",
+  "catalogSetupEmptyReportingHelp": "Reporting Categories help group Products for useful sales reporting.",
+  "catalogSetupEmptyStationsHelp": "Kitchen Stations help define where each Product is prepared.",
+  "catalogSetupCouldNotLoad": "Couldn’t load data",
+  "catalogSetupLoadHelp": "Please check your connection and try again.",
+  "catalogSetupShowing": "Showing {shown} of {total}",
+  "@catalogSetupShowing": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogSetupActive": "Active",
+  "catalogSetupArchived": "Archived",
+  "catalogSetupInactive": "Inactive",
+  "catalogSetupEditorHelp": "Use the names that staff and customers should recognize.",
+  "catalogSetupPrimaryName": "Name",
+  "catalogSetupArchiveTitle": "Archive {name}?",
+  "@catalogSetupArchiveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogSetupArchiveHelp": "Archived records can be restored later. Existing Product assignments follow the system’s current rules.",
+  "catalogSetupValidationRequired": "Enter a name to continue.",
+  "catalogSetupRefreshInProgress": "Refreshing catalog setup",
+  "menuListTitle": "Menus",
+  "menuListSubtitle": "Create and organize the menus customers can order from.",
+  "menuListAdd": "Add Menu",
+  "menuListSearch": "Search menus...",
+  "menuListStatus": "Status",
+  "menuListSort": "Sort",
+  "menuListDirection": "Direction",
+  "menuListRefresh": "Refresh menus",
+  "menuListMenu": "Menu",
+  "menuListSections": "Sections",
+  "menuListVisibleProducts": "Visible Products",
+  "menuListLastUpdated": "Last Updated",
+  "menuListActions": "Actions",
+  "menuListOpen": "Open",
+  "menuListClearFilters": "Clear filters",
+  "menuListNoMenusYet": "No menus yet",
+  "menuListNoMenusHelp": "Create your first Menu and start organizing Products into Sections.",
+  "menuListNoMatches": "No menus match these filters.",
+  "menuListNoMatchesHelp": "Try changing the search or status filter.",
+  "menuListCouldNotLoad": "Couldn’t load menus",
+  "menuListCouldNotLoadHelp": "Check your connection and try again.",
+  "menuListLoadMore": "Load more",
+  "menuListArchiveTitle": "Archive menu?",
+  "menuListArchiveHelp": "The menu can be restored later. Existing orders and published versions are unchanged.",
+  "menuListRestoreTitle": "Restore menu?",
+  "menuListRestoreHelp": "Restoring makes the menu editable again. It does not publish the menu.",
+  "menuListActionsFor": "Actions for {name}",
+  "@menuListActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "menuListPaused": "Paused",
+  "menuListPriority": "Priority",
+  "menuListName": "Name",
+  "menuListCreated": "Created",
+  "menuListUpdated": "Last updated",
+  "menuListAscending": "Ascending",
+  "menuListDescending": "Descending",
+  "menuListAll": "All",
+  "menuListDraft": "Draft",
+  "menuListActive": "Active",
+  "menuListArchived": "Archived",
+  "menuListEdit": "Edit",
+  "menuListArchive": "Archive",
+  "menuListRestore": "Restore",
+  "menuListCancel": "Cancel",
+  "menuListRetry": "Retry",
+  "menuEditorAddTitle": "Add Menu",
+  "menuEditorEditTitle": "Edit Menu",
+  "menuEditorAddHelp": "Start with the names your staff and customers recognize.",
+  "menuEditorEditHelp": "Update the menu identity without leaving this workspace.",
+  "menuEditorClose": "Close menu editor",
+  "menuEditorEnglishName": "English Name",
+  "menuEditorArabicName": "Arabic Name",
+  "menuEditorMoreDetails": "More details",
+  "menuEditorHideDetails": "Hide details",
+  "menuEditorEnglishDescription": "English Description",
+  "menuEditorArabicDescription": "Arabic Description",
+  "menuEditorCoverImageUrl": "Cover image URL",
+  "menuEditorPriority": "Priority",
+  "menuEditorPriorityHelp": "Controls the ordering when menus are shown together.",
+  "menuEditorStatus": "Menu status",
+  "menuEditorCreate": "Create Menu",
+  "menuEditorSaveChanges": "Save Changes",
+  "menuEditorDraftHelp": "New menus start as Draft. You can activate them later.",
+  "menuEditorNameRequired": "Enter an English or Arabic name to continue.",
+  "menuEditorPriorityInvalid": "Enter a whole number for priority.",
+  "menuEditorSaveFailed": "We couldn’t save this menu. Please try again.",
+  "menuEditorArchivedReadOnly": "Archived menus are read-only. Restore this menu before editing it.",
+  "menuEditorStatusDraft": "Draft",
+  "menuEditorStatusActive": "Active",
+  "menuEditorStatusPaused": "Paused",
+  "menuEditorStatusArchived": "Archived",
+  "menuOverviewEditMenu": "Edit Menu",
+  "menuOverviewActions": "Menu actions",
+  "menuOverviewTab": "Overview",
+  "menuOverviewSectionsTab": "Sections",
+  "menuOverviewProductsTab": "Products",
+  "menuOverviewWorkspaceTabs": "Menu workspace tabs",
+  "menuOverviewDetails": "Menu details",
+  "menuOverviewName": "Name",
+  "menuOverviewStatus": "Status",
+  "menuOverviewComposition": "Composition",
+  "menuOverviewManageSections": "Manage Sections",
+  "menuOverviewManageProducts": "Manage Products",
+  "menuOverviewCompositionValue": "{sectionCount} Sections · {visibleProductCount} visible Products",
+  "@menuOverviewCompositionValue": {
+    "placeholders": {
+      "sectionCount": {
+        "type": "int"
+      },
+      "visibleProductCount": {
+        "type": "int"
+      }
+    }
+  },
+  "menuOverviewDraft": "Draft",
+  "menuOverviewActive": "Active",
+  "menuOverviewPaused": "Paused",
+  "menuOverviewArchived": "Archived",
+  "menuOverviewArchivedReadOnly": "This menu is archived and read-only. Restore it before changing its composition.",
+  "menuOverviewLoading": "Loading menu workspace",
+  "menuOverviewCouldNotLoad": "Couldn’t load this menu",
+  "menuOverviewArchive": "Archive",
+  "menuOverviewRestore": "Restore",
+  "menuSectionsTitle": "Sections",
+  "menuSectionsHelp": "Organize this menu into customer-friendly groups.",
+  "menuSectionsAdd": "Add Section",
+  "menuSectionsReorder": "Reorder Sections",
+  "menuSectionsDone": "Done",
+  "menuSectionsReorderHelp": "Use the arrows to change the order customers see.",
+  "menuSectionsProducts": "{count} Products",
+  "@menuSectionsProducts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuSectionsArchived": "Archived",
+  "menuSectionsInactive": "Inactive",
+  "menuSectionsActions": "Actions for {name}",
+  "@menuSectionsActions": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "menuSectionsEdit": "Edit",
+  "menuSectionsArchive": "Archive",
+  "menuSectionsRestore": "Restore",
+  "menuSectionsMoveUp": "Move Up",
+  "menuSectionsMoveDown": "Move Down",
+  "menuSectionsNoSections": "No Sections yet",
+  "menuSectionsEmptyHelp": "Create a Section before adding Products.",
+  "menuSectionsLoadError": "Couldn’t load Sections",
+  "menuSectionEditorAddTitle": "Add Section",
+  "menuSectionEditorEditTitle": "Edit Section",
+  "menuSectionEditorAddHelp": "Create a clear group customers can browse.",
+  "menuSectionEditorEditHelp": "Update this group without leaving the menu workspace.",
+  "menuSectionEditorClose": "Close Section editor",
+  "menuSectionEditorEnglishName": "English Name",
+  "menuSectionEditorArabicName": "Arabic Name",
+  "menuSectionEditorMoreDetails": "More details",
+  "menuSectionEditorHideDetails": "Hide details",
+  "menuSectionEditorDescription": "Description",
+  "menuSectionEditorImageUrl": "Image URL",
+  "menuSectionEditorActive": "Active Section",
+  "menuSectionEditorNameRequired": "Enter an English or Arabic name to continue.",
+  "menuSectionEditorSaveFailed": "Couldn’t save this Section. Check the fields and try again.",
+  "menuSectionEditorSave": "Save Changes",
+  "menuProductsTitle": "Products",
+  "menuProductsHelp": "Organize the Products customers see inside each Section.",
+  "menuProductsAdd": "Add Products",
+  "menuProductsReorder": "Reorder Products",
+  "menuProductsDone": "Done",
+  "menuProductsReorderHelp": "Use the arrows to set the order customers see within each Section.",
+  "menuProductsSearchHint": "Search Products in this Menu",
+  "menuProductsCount": "{count} Products",
+  "@menuProductsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerTitle": "Add Products",
+  "menuProductsPickerTargetSection": "Add to Section",
+  "menuProductsPickerSearchHint": "Search Products...",
+  "menuProductsPickerAlreadyInSection": "Already in {section}",
+  "@menuProductsPickerAlreadyInSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsPickerSelected": "Selected: {count}",
+  "@menuProductsPickerSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerNoMatches": "No Products match your search.",
+  "menuProductsPickerNoEligible": "All available Products are already in this Section.",
+  "menuProductsPickerLoadError": "Could not load Products.",
+  "menuProductsPickerPartialAdded": "{added} Products were added. {failed} could not be added.",
+  "@menuProductsPickerPartialAdded": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "menuProductsPickerConflict": "This Product is already in {section}.",
+  "@menuProductsPickerConflict": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsBasePrice": "Base {price}",
+  "@menuProductsBasePrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "menuProductsFeatured": "Featured",
+  "menuProductsHidden": "Hidden",
+  "menuProductsArchivedPlacement": "Removed from Menu",
+  "menuProductsArchivedProduct": "Archived Product",
+  "menuProductsInactive": "Inactive",
+  "menuProductsActions": "Product actions",
+  "menuProductsMarkFeatured": "Mark Featured",
+  "menuProductsRemoveFeatured": "Remove Featured",
+  "menuProductsHide": "Hide from Menu",
+  "menuProductsShow": "Show on Menu",
+  "menuProductsMove": "Move to Section",
+  "menuProductsRemove": "Remove from Menu",
+  "menuProductsRestore": "Restore Placement",
+  "menuProductsMoveUp": "Move Up",
+  "menuProductsMoveDown": "Move Down",
+  "menuProductsEmpty": "No Products in this Section yet.",
+  "menuProductsNoMatches": "No matching Products in this Section.",
+  "menuProductsNoSections": "No Sections yet",
+  "menuProductsNoSectionsHelp": "Create a Section before adding Products.",
+  "menuProductsArchivedMenuReadOnly": "This menu is archived and read-only. Its composition remains available to review.",
+  "menuProductsLoadError": "Couldn’t load Products",
+  "menuProductsRemoveHelp": "This removes the Product from this Section and Menu only. The Product remains in the Catalog.",
+  "menuProductsRestoreHelp": "This restores this Placement only. It does not restore or reactivate the Product.",
+  "assignmentsWorkspaceTitle": "Assignments & Schedules",
+  "assignmentsWorkspaceHelp": "Choose a Branch and sales channel, then control which Menus are available in that selling context.",
+  "assignmentsBranch": "Branch",
+  "assignmentsSalesChannel": "Sales Channel",
+  "assignmentsTimezone": "Timezone",
+  "assignmentsChooseBranch": "Choose a Branch",
+  "assignmentsChooseChannel": "Choose a sales channel",
+  "assignmentsTimezonePending": "Select a Branch",
+  "assignmentsNoContextTitle": "Choose a selling context",
+  "assignmentsNoContextHelp": "Select a Branch and sales channel to manage its Menus.",
+  "assignmentsAssignedMenus": "Assigned Menus",
+  "assignmentsMenuCount": "{count} Menus assigned",
+  "@assignmentsMenuCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsReorderMenus": "Reorder Menus",
+  "assignmentsReorderHelp": "Use the arrows to change the order Menus appear in this selling context. Ordering does not decide which Menu wins.",
+  "assignmentsReorderDone": "Done",
+  "assignmentsMoveUp": "Move up",
+  "assignmentsMoveDown": "Move down",
+  "assignmentsReorderSaveFailed": "We couldn't save this Menu order. Try again.",
+  "assignmentsReorderArchivedUnavailable": "Reordering is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.",
+  "assignmentsAddMenus": "Add Menus",
+  "assignmentsNoMenusTitle": "No Menus assigned",
+  "assignmentsNoMenusHelp": "Add a Menu to {branch} · {channel}.",
+  "@assignmentsNoMenusHelp": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "assignmentsLoadErrorTitle": "Couldn't load assignments",
+  "assignmentsLifecycle": "Menu: {status}",
+  "@assignmentsLifecycle": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "assignmentsPaused": "Paused",
+  "assignmentsActive": "Assignment Active",
+  "assignmentsInactive": "Assignment Inactive",
+  "assignmentsAvailableNow": "Available now",
+  "assignmentsOutsideHours": "Outside scheduled hours",
+  "assignmentsNoScheduleRestriction": "No schedule restriction",
+  "assignmentsScheduleUnknown": "Schedule status unavailable",
+  "assignmentsManageSchedule": "Manage Schedule",
+  "assignmentsRemove": "Remove from this selling context",
+  "assignmentsArchivedDiagnostic": "Archived Menu — actions unavailable",
+  "assignmentsChannelWaiterApp": "Waiter App",
+  "assignmentsChannelKiosk": "Kiosk",
+  "assignmentsChannelQrOrdering": "QR Ordering",
+  "assignmentsChannelDelivery": "Delivery",
+  "assignmentsChannelOnlineOrdering": "Online Ordering",
+  "assignmentsMenuFallback": "Menu",
+  "assignmentsAddSearch": "Search Menus",
+  "assignmentsAddEmpty": "All available Menus are already assigned to this selling context.",
+  "assignmentsAddSelected": "Selected: {count}",
+  "@assignmentsAddSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsAddSelectedAction": "Add {count} Menus",
+  "@assignmentsAddSelectedAction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignmentsAddAlreadyAssigned": "Already assigned",
+  "assignmentsAddArchivedUnavailable": "Archived Menus can’t be assigned.",
+  "assignmentsAddNoMatches": "No Menus match your search.",
+  "assignmentsAddLoadError": "Couldn’t load Menus",
+  "assignmentsAddSaveError": "Couldn’t add Menus. Try again.",
+  "assignmentsAddDuplicateError": "One or more Menus are already assigned to this selling context.",
+  "assignmentsAddArchivedScopeError": "Adding Menus is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.",
+  "menuScheduleTitle": "Menu Schedule",
+  "menuScheduleTimesShownIn": "Times shown in {timezone}",
+  "@menuScheduleTimesShownIn": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleUsingBroader": "Using broader Menu schedule",
+  "menuScheduleCustomizedFor": "Customized for {context}",
+  "@menuScheduleCustomizedFor": {
+    "placeholders": {
+      "context": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCustomize": "Customize for this context",
+  "menuScheduleUseBroader": "Use broader schedule",
+  "menuScheduleAvailableAllDay": "Available all day",
+  "menuScheduleUnavailable": "Unavailable",
+  "menuScheduleCustomHours": "Custom hours",
+  "menuScheduleStartTime": "Start time",
+  "menuScheduleEndTime": "End time",
+  "menuScheduleEditDay": "Edit {day}",
+  "@menuScheduleEditDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleSaveDay": "Apply",
+  "menuScheduleSave": "Save Schedule",
+  "menuScheduleLoadError": "Couldn't load Menu schedule",
+  "menuScheduleSaveError": "Couldn't save Menu schedule. Try again.",
+  "menuScheduleMultipleWindows": "{count} time windows",
+  "@menuScheduleMultipleWindows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "menuScheduleMultipleWindowsReadOnly": "This day has multiple time windows. They are preserved and can be edited in the advanced schedule later.",
+  "menuScheduleUnavailableNotSupported": "This day uses an Every Day rule. Keep it unchanged until advanced scheduling is available.",
+  "menuScheduleInvalidTimes": "Enter two different times in HH:mm format.",
+  "menuScheduleMonday": "Monday",
+  "menuScheduleTuesday": "Tuesday",
+  "menuScheduleWednesday": "Wednesday",
+  "menuScheduleThursday": "Thursday",
+  "menuScheduleFriday": "Friday",
+  "menuScheduleSaturday": "Saturday",
+  "menuScheduleSunday": "Sunday",
+  "menuScheduleMoreOptions": "More schedule options",
+  "menuScheduleDateLimits": "Date limits",
+  "menuScheduleStartDate": "Start date (optional)",
+  "menuScheduleEndDate": "End date (optional)",
+  "menuScheduleAddTimeWindow": "Add time window",
+  "menuScheduleOvernightUntil": "Overnight — available until {time} the next day",
+  "@menuScheduleOvernightUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleEveryDayReadOnly": "This rule applies every day. It is kept as-is so its schedule meaning is preserved.",
+  "menuScheduleCheckTitle": "Check Schedule",
+  "menuScheduleDate": "Date",
+  "menuScheduleTime": "Time",
+  "menuScheduleCheckTimezone": "Times evaluated in {timezone}",
+  "@menuScheduleCheckTimezone": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCheckSaveFirst": "Save schedule changes before checking the saved schedule.",
+  "menuScheduleCheckFailed": "Could not check the schedule. Try again.",
+  "menuScheduleInvalidDateRange": "End date must be on or after the start date.",
+  "menuScheduleDiscardTitle": "Discard schedule changes?",
+  "menuScheduleDiscardMessage": "Your schedule changes have not been saved.",
+  "menuScheduleDiscard": "Discard changes",
+  "menuScheduleCustomizeDayTitle": "Customize {day}",
+  "@menuScheduleCustomizeDayTitle": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleCustomizeDayMessage": "This schedule currently applies to every day. Customizing one day will keep the same schedule for the other days and let you change that day separately.",
+  "menuScheduleCustomizeDayAction": "Customize {day}",
+  "@menuScheduleCustomizeDayAction": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "menuScheduleDateLimitsMixed": "These rules have different date limits. Date limits are left unchanged here so this editor does not overwrite them.",
+  "menuListNotAvailable": "—",
+  "reviewPublishPageHelp": "Review Menu readiness, preview the selling experience, and publish a version for this selling context.",
+  "reviewSellingContext": "Selling Context",
+  "reviewSellingContextHelp": "This review covers the Menus assigned to the selected selling context.",
+  "reviewBranch": "Branch",
+  "reviewSalesChannel": "Sales Channel",
+  "reviewTimezone": "Timezone",
+  "reviewScope": "Scope",
+  "reviewScopeAssignedMenus": "Menus assigned to this context",
+  "reviewReadinessTab": "Readiness",
+  "reviewPreviewTab": "Preview",
+  "reviewPublishTab": "Publish",
+  "reviewVersionsTab": "Versions",
+  "reviewCurrentlyPublished": "Currently Published",
+  "reviewNotPublishedYet": "Not published yet",
+  "reviewNoCurrentVersion": "No Menu version has been published for this selling context.",
+  "reviewCurrentVersionLoadError": "Could not load the current published version.",
+  "reviewVersionNumber": "Version {version}",
+  "@reviewVersionNumber": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPublishedAt": "Published {date}",
+  "@reviewPublishedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewViewVersions": "View Versions",
+  "reviewReadiness": "Readiness",
+  "reviewReadinessHelp": "Review the authoritative validation for this selling context.",
+  "reviewCheckAgain": "Check Again",
+  "reviewNeedsAttention": "Needs Attention",
+  "reviewReadyToPublish": "Ready to Publish",
+  "reviewFixBlockingErrors": "Fix the blocking errors before publishing.",
+  "reviewErrors": "Errors",
+  "reviewWarnings": "Warnings",
+  "reviewWarningsToReview": "{count, plural, =1{1 warning to review.} other{{count} warnings to review.}}",
+  "@reviewWarningsToReview": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewNoIssuesForScope": "No issues found for {branch} · {channel}.",
+  "@reviewNoIssuesForScope": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewNoMenusAssigned": "No Menus assigned",
+  "reviewNoMenusAssignedHelp": "Assign at least one active Menu to {branch} · {channel} before publishing.",
+  "@reviewNoMenusAssignedHelp": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewGoToAssignments": "Go to Assignments",
+  "reviewReadinessLoadError": "Could not load readiness results.",
+  "reviewTryAgain": "Try again.",
+  "reviewIssuesAll": "All",
+  "reviewSearchIssues": "Search issues...",
+  "reviewNoMatchingIssues": "No matching issues",
+  "reviewTryDifferentSearch": "Try a different search or filter.",
+  "reviewIssueCount": "{count, plural, =1{1 issue} other{{count} issues}}",
+  "@reviewIssueCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewIssueGroupMenus": "Menus",
+  "reviewIssueGroupSections": "Sections",
+  "reviewIssueGroupProducts": "Products",
+  "reviewIssueGroupVariants": "Variants",
+  "reviewIssueGroupRecipesMaterials": "Recipes & Materials",
+  "reviewIssueGroupModifiers": "Modifiers",
+  "reviewIssueGroupPricing": "Pricing",
+  "reviewIssueGroupAvailability": "Availability",
+  "reviewIssueGroupAssignmentsScope": "Assignments / Scope",
+  "reviewIssueGroupOther": "Other / General",
+  "reviewIssueGeneral": "General",
+  "reviewOpenMenu": "Open Menu",
+  "reviewOpenProduct": "Open Product",
+  "reviewOpenSections": "Open Sections",
+  "reviewReviewMenu": "Review Menu",
+  "reviewIssueContextMenu": "Menu issue",
+  "reviewIssueContextSection": "Section issue",
+  "reviewIssueContextProduct": "Product issue",
+  "reviewIssueContextVariant": "Variant issue",
+  "reviewIssueContextPlacement": "Menu placement issue",
+  "reviewIssueContextModifier": "Modifier issue",
+  "reviewIssueContextRecipe": "Recipe or material issue",
+  "reviewIssueContextScope": "Selling context issue",
+  "reviewIssueContextGeneral": "General issue",
+  "reviewPreviewContext": "Inspect the assigned Menu collection for this selling context.",
+  "reviewPreviewLanguage": "Preview language",
+  "reviewPreviewLanguageDefault": "Default",
+  "reviewPreviewLanguageArabic": "Arabic",
+  "reviewPreviewLanguageEnglish": "English",
+  "reviewPreviewShowHidden": "Show hidden items",
+  "reviewPreviewShowUnavailable": "Show unavailable items",
+  "reviewPreviewRefresh": "Refresh Preview",
+  "reviewPreviewLoading": "Loading Preview",
+  "reviewPreviewBlockingBanner": "This preview contains issues that must be fixed before publishing.",
+  "reviewPreviewReviewReadiness": "Review Readiness",
+  "reviewPreviewAvailableNow": "Available now",
+  "reviewPreviewOutsideScheduledHours": "Outside scheduled hours",
+  "reviewPreviewHidden": "Hidden",
+  "reviewPreviewUnavailable": "Unavailable",
+  "reviewPreviewSoldOut": "Sold out",
+  "reviewPreviewTemporarilyUnavailable": "Temporarily unavailable",
+  "reviewPreviewAvailable": "Available",
+  "reviewPreviewFeatured": "Featured",
+  "reviewPreviewDefault": "Default",
+  "reviewPreviewVariants": "Variants",
+  "reviewPreviewModifiers": "Modifiers",
+  "reviewPreviewRecipeConfigured": "Recipe configured",
+  "reviewPreviewRecipeComponents": "{count} components",
+  "@reviewPreviewRecipeComponents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPreviewNoMenus": "No Menus to preview",
+  "reviewPreviewNoMenusHelp": "Assign at least one active Menu to this selling context.",
+  "reviewPreviewEmptySection": "No products are included in this section.",
+  "reviewPreviewError": "Could not load Preview.",
+  "reviewPreviewRetry": "Retry",
+  "reviewPreviewBasePrice": "Base price",
+  "reviewPreviewRequired": "Required",
+  "reviewPreviewOptional": "Optional",
+  "reviewPreviewOptionUnavailable": "Unavailable option",
+  "reviewPublishQuestion": "Publish {branch} · {channel}?",
+  "@reviewPublishQuestion": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishScopeHelp": "This creates a published Menu version for this exact selling context.",
+  "reviewPublishCurrentVersion": "Current version",
+  "reviewPublishCheckingReadiness": "Checking readiness…",
+  "reviewPublishWaitForReadiness": "Wait for the current readiness check before publishing.",
+  "reviewPublishNoAssignedMenu": "Assign at least one active Menu to this selling context before publishing.",
+  "reviewPublishCannotPublish": "Cannot publish yet",
+  "reviewPublishReviewErrors": "Review Errors",
+  "reviewPublishReviewIssues": "Review Issues",
+  "reviewPublishWarningsCanProceed": "{count, plural, =1{1 warning remains. You can still publish this version.} other{{count} warnings remain. You can still publish this version.}}",
+  "@reviewPublishWarningsCanProceed": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "reviewPublishCleanReady": "No blocking issues were found. You can publish this version.",
+  "reviewPublishAction": "Publish Menu Version",
+  "reviewPublishPublishing": "Publishing…",
+  "reviewPublishConfirmTitle": "Publish {branch} · {channel}?",
+  "@reviewPublishConfirmTitle": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishImmutableExplanation": "A new immutable Menu version will be created if the configuration changed.",
+  "reviewPublishAlreadyUpToDate": "Already up to date",
+  "reviewPublishNoChanges": "No Menu changes were found since Version {version}. No new version was created.",
+  "@reviewPublishNoChanges": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPublishSuccess": "Published successfully",
+  "reviewPublishCurrentForScope": "This is now the current published Menu version for {branch} · {channel}.",
+  "@reviewPublishCurrentForScope": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPublishRevalidationFailedTitle": "Menu changed and is no longer ready to publish.",
+  "reviewPublishRevalidationFailedMessage": "New issues were found during the final check.",
+  "reviewPublishRequestFailed": "Could not publish the Menu version.",
+  "reviewPublishTryAgain": "Try Again",
+  "menuUiUnsavedChangesTitle": "Unsaved changes",
+  "menuUiUnsavedChangesMessage": "You have unsaved changes. If you leave now, they will be discarded.",
+  "menuUiStay": "Stay",
+  "menuUiLeaveWithoutSaving": "Leave without saving",
+  "productEditorCreated": "Product created successfully.",
+  "productEditorUpdated": "Product updated successfully.",
+  "productEditorCreateHelp": "Define what this product is, where it belongs, and how it is sold.",
+  "productEditorEditHelp": "Update the product information managers use every day.",
+  "productEditorArchivedReadOnly": "Archived products are available for reference only. Restore this product to edit it.",
+  "productEditorViewWorkspace": "View Product Workspace",
+  "productEditorDefaultName": "Default Product Name",
+  "productEditorDefaultDescription": "Default Description",
+  "productEditorImage": "Product Image",
+  "productEditorUploadingImage": "Uploading image…",
+  "productEditorChooseImage": "Choose Image",
+  "productEditorChangeImage": "Change Image",
+  "productEditorRemoveImage": "Remove Image",
+  "productEditorImageFormats": "PNG, JPG, WEBP, or GIF up to 5 MB",
+  "productEditorTranslationsClose": "Close translations",
+  "productEditorDefaultContent": "Default content",
+  "productEditorLocalizedName": "Localized Name",
+  "productEditorLocalizedDescription": "Localized Description",
+  "productEditorStockTracking": "Stock Tracking",
+  "productEditorStockTrackingHelp": "Track the materials consumed when this Product is prepared.",
+  "productEditorNoDefaultVariant": "No default variant returned.",
+  "productEditorManageVariants": "Manage Variants",
+  "productDetailNotFound": "Product not found.",
+  "productDetailEdit": "Edit Product",
+  "productDetailArchiveTitle": "Archive Product?",
+  "productDetailRestoreTitle": "Restore Product?",
+  "productDetailArchiveAction": "Archive Product",
+  "productDetailRestoreAction": "Restore Product",
+  "productDetailUsageEmpty": "This Product is not currently used in any menus.",
+  "variantTitle": "Variants",
+  "variantHelp": "Manage the selling options available for this Product.",
+  "variantAdd": "Add Variant",
+  "variantEdit": "Edit Variant",
+  "variantReorder": "Reorder",
+  "variantDone": "Done",
+  "variantRefresh": "Refresh Variants",
+  "variantReadOnly": "This product is archived and variants are read-only.",
+  "variantCannotArchiveDefaultTitle": "Cannot archive Default Variant",
+  "variantCannotArchiveDefaultMessage": "The only active Variant cannot be archived.",
+  "variantArchiveMessage": "This Variant will be archived and can be restored later.",
+  "variantSelectReplacement": "Select an active replacement Default Variant.",
+  "variantOrder": "Order",
+  "variantName": "Variant name",
+  "variantBasePrice": "Base Price",
+  "variantCostPrice": "Cost Price",
+  "variantDefault": "Default",
+  "variantActions": "Actions",
+  "variantActiveStatus": "Active status",
+  "variantMakeDefault": "Make this the Default Variant",
+  "variantDefaultMustBeActive": "A Default Variant must be active.",
+  "variantSaving": "Saving…",
+  "variantNoArchived": "No archived Variants.",
+  "variantEmpty": "No Variants returned for this product.",
+  "modifierAssignmentTitle": "Modifiers",
+  "modifierAssignmentSaveChanges": "Save Changes",
+  "modifierAssignmentAddGroup": "Add Modifier Group",
+  "modifierAssignmentNoAssigned": "No Modifier Groups are assigned to this Product.",
+  "modifierAssignmentNoAvailable": "No available Modifier Groups found.",
+  "modifierAssignmentSearch": "Search Modifier Groups",
+  "modifierAssignmentRemoveTitle": "Remove modifier group?",
+  "modifierAssignmentRemoveMessage": "Remove this Modifier Group from the Product? The Group and its Options will remain available in the Modifier Library.",
+  "modifierAssignmentUseLibrarySettings": "Use library settings",
+  "modifierAssignmentApply": "Apply",
+  "modifierAssignmentCurrentBehavior": "Current behavior",
+  "modifierAssignmentNonNegative": "Use non-negative whole numbers.",
+  "modifierAssignmentInvalidConstraints": "The effective selection constraints are invalid.",
+  "productDetailUncategorized": "Uncategorized product",
+  "productDetailArchiveMenuAction": "Archive Product",
+  "productDetailRestoreMenuAction": "Restore Product",
+  "productDetailBasePrice": "Base Price",
+  "productDetailKitchenStation": "Kitchen Station",
+  "productDetailWorkspaceNavigation": "Product workspace navigation",
+  "productDetailSetupHelp": "The catalog and preparation details for this product.",
+  "productDetailDescription": "Description",
+  "productDetailAdvancedTechnical": "Advanced & Technical",
+  "productDetailUsageHelp": "Menus where this Product is currently used.",
+  "productDetailUsageCount": "{count} active menu placements.",
+  "@productDetailUsageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productDetailArchivedVariantsMessage": "This product is archived and variants are read-only.",
+  "productDetailArchivedModifiersMessage": "This product is archived and modifier assignments are read-only.",
+  "productDetailViewAction": "View Product Detail",
+  "variantActive": "Active",
+  "variantInactive": "Inactive",
+  "variantArchived": "Archived",
+  "variantAll": "All",
+  "variantSetDefaultTitle": "Set “{name}” as the Default Variant?",
+  "@variantSetDefaultTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantSetDefaultMessage": "The Product’s displayed base price, SKU, barcode, and legacy POS compatibility will use this Variant. Existing Orders are not changed.",
+  "variantArchiveTitle": "Archive “{name}”?",
+  "@variantArchiveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRestoreDefaultTitle": "Restore “{name}” as Default?",
+  "@variantRestoreDefaultTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRestoreDefaultMessage": "This Product has no active Default Variant, so this restored Variant must become the Default Variant.",
+  "variantSetDefaultAction": "Set Default",
+  "variantRestoreDefaultAction": "Restore as Default",
+  "variantMoveUp": "Move up",
+  "variantMoveDown": "Move down",
+  "variantActionsFor": "Actions for {name}",
+  "@variantActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "variantReorderSemantic": "Reorder",
+  "variantSku": "SKU: {sku}",
+  "@variantSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
+  "variantRecipeConfigured": "Recipe configured",
+  "variantRecipeMissing": "Recipe missing",
+  "variantRecipeNotConfigured": "Recipe not configured",
+  "variantManageRecipe": "Manage Recipe",
+  "variantPricing": "Pricing",
+  "variantSellingHours": "Selling Hours",
+  "variantCurrentAvailability": "Current Availability",
+  "variantArabicName": "Arabic name",
+  "variantEnglishName": "English name",
+  "variantSortOrder": "Sort Order",
+  "modifierAssignmentArchivedReadOnly": "This product is archived and modifier assignments are read-only.",
+  "modifierAssignmentViewProduct": "View Product Detail",
+  "modifierAssignmentProduct": "Product",
+  "modifierAssignmentAssignedGroups": "Assigned Groups ({count})",
+  "@modifierAssignmentAssignedGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierAssignmentAvailableGroups": "Available Groups",
+  "modifierAssignmentReorder": "Reorder",
+  "modifierAssignmentDone": "Done",
+  "modifierAssignmentMoveUp": "Move up",
+  "modifierAssignmentMoveDown": "Move down",
+  "modifierAssignmentActionsFor": "Actions for {name}",
+  "@modifierAssignmentActionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentChooseGroupHelp": "Choose a group to make its customer choices available for this Product.",
+  "modifierAssignmentCustomizeFor": "Customize for {name}",
+  "@modifierAssignmentCustomizeFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentCustomizedFor": "Customized for {name}",
+  "@modifierAssignmentCustomizedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentUsingLibrarySettings": "Using library settings",
+  "modifierAssignmentHowChoose": "How should customers choose?",
+  "modifierAssignmentChooseOne": "Choose one",
+  "modifierAssignmentChooseMultiple": "Choose multiple",
+  "modifierAssignmentMultipleHelp": "This group uses multiple choices from the Modifier Library.",
+  "modifierAssignmentSingleHelp": "This group uses one choice from the Modifier Library.",
+  "modifierAssignmentMinimumChoices": "Minimum choices",
+  "modifierAssignmentMaximumChoices": "Maximum choices",
+  "modifierAssignmentAllowDuplicate": "Can the same option be added more than once?",
+  "modifierAssignmentConfigure": "Configure {name}",
+  "@modifierAssignmentConfigure": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentOverride": "{label} override",
+  "@modifierAssignmentOverride": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentLibraryDefaultBoolean": "Library Default: {value}",
+  "@modifierAssignmentLibraryDefaultBoolean": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentLibraryDefaultNumber": "Library Default: {value}",
+  "@modifierAssignmentLibraryDefaultNumber": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "modifierAssignmentEffectiveSetting": "Effective Setting: {value}",
+  "@modifierAssignmentEffectiveSetting": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierAssignmentHelp": "Choose which Modifier Groups customers can use with this Product.",
+  "modifierAssignmentMaterialImpact": "Material impact configured",
+  "modifierAssignmentViewGroup": "View Modifier Group",
+  "modifierAssignmentCustomizeForProduct": "Customize for Product",
+  "modifierAssignmentRemoveFromProduct": "Remove from Product",
+  "menuDetailArchiveTitle": "Archive menu?",
+  "menuDetailRestoreTitle": "Restore menu?",
+  "menuDetailArchiveMessage": "This archives the menu without deleting it. Its composition remains available to review.",
+  "menuDetailRestoreMessage": "Restoring this menu returns it to Draft. It does not restore archived sections.",
+  "productEditorProductType": "Product Type",
+  "productEditorStandard": "Standard",
+  "productEditorOpenPrice": "Open price",
+  "productEditorPreparationTime": "Preparation Time",
+  "productEditorMinutes": "minutes",
+  "productEditorInitialOptionHelp": "Every product starts with one selling option. You can add more variants later.",
+  "productEditorVariantName": "Variant Name",
+  "productEditorDefaultVariant": "Default Variant",
+  "productEditorDefaultVariantHelp": "Selling options are managed separately so product details stay focused.",
+  "productEditorTranslationsHelp": "Add localized content without crowding the main product form.",
+  "productEditorTranslationsPanelHelp": "Use the translation panel to provide Arabic and English names and descriptions.",
+  "productEditorSortOrder": "Sort Order",
+  "productEditorVariantCost": "Variant Cost",
+  "productEditorNone": "None",
+  "productEditorPreviewUnavailable": "Preview unavailable",
+  "productEditorDropImage": "Drop an image here or click to browse",
+  "productEditorImageLoadFailed": "Image could not be loaded",
+  "productEditorWhatIsProduct": "What is this product?",
+  "productEditorClassificationHelp": "Choose where this product belongs in the catalog and preparation flow.",
+  "productEditorKitchenStationHelp": "Where this product is generally prepared.",
+  "productEditorReportingCategoryHelp": "Used for sales and performance reports.",
+  "productEditorSellingPreparationHelp": "Set how this product is sold and what preparation information the team needs.",
+  "productEditorArabicConfigured": "Arabic configured",
+  "productEditorEnglishConfigured": "English configured",
+  "productEditorBasePriceValue": "Base price {price}",
+  "@productEditorBasePriceValue": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "productDetailArchiveMessage": "This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.",
+  "productDetailRestoreMessage": "This restores the Product to the editable Catalog. Availability still depends on Menu assignments, schedules, operational status, validation, and publishing.",
+  "productCatalogArchiveMessage": "This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.",
+  "productCatalogRestoreMessage": "This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.",
+  "productCatalogUsageMessage": "This Product is currently used in {count} Menu placements{names}.",
+  "@productCatalogUsageMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalOverrideClearTitle": "Clear operational override?",
+  "operationalOverrideClearMessage": "Clear the {level} override for {scope}?\n\nScheduled Availability, Product configuration, and historical Published Versions will not be changed.",
+  "@operationalOverrideClearMessage": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      },
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "operationalOverrideClearAction": "Clear override",
+  "productDetailProductId": "Product ID",
+  "productDetailUpdated": "Updated",
+  "productDetailImageUrl": "Image URL",
+  "authLoginTitle": "Log in to your workspace",
+  "authLoginSubtitle": "Operational Hub Login",
+  "authEmailOrUsername": "Email or Username",
+  "authIdentifierRequired": "Enter your email or username.",
+  "authPassword": "Password",
+  "authPasswordRequired": "Enter your password.",
+  "authLogIn": "Log In",
+  "authLoggingIn": "Logging in…",
+  "authLoginHelp": "Use your work email or employee username to continue.",
+  "authLoginFailed": "We could not log you in. Check your details and try again.",
+  "authInvalidCredentials": "The email, username, or password is incorrect.",
+  "authTooManyAttempts": "Too many login attempts. Please wait a moment and try again.",
+  "authNetworkUnavailable": "We cannot connect to the server. Check your network connection and try again.",
+  "authConnectionTimeout": "The connection timed out. Check your connection and try again.",
+  "authServerUnavailable": "The service is temporarily unavailable. Please try again shortly.",
+  "authValidationFailed": "Please review the highlighted fields and try again.",
+  "authFieldValidationFailed": "Check this value and try again.",
+  "authInvalidResponse": "We could not verify the sign-in response. Please try again.",
+  "authSecureStorageFailure": "We could not securely save this session. Please try again.",
+  "authVerifiedSessionSaveFailed": "Your verified session could not be saved securely. Retry verification or log out.",
+  "authPasswordChangedSessionSaveFailed": "Your password was changed, but we could not save this session. Please log in again using your new password.",
+  "authUnexpectedError": "Something unexpected went wrong. Please try again.",
+  "authIncorrectCurrentPassword": "The current password is incorrect.",
+  "authWeakNewPassword": "Choose a stronger new password.",
+  "authPasswordConfirmationMismatch": "The password confirmation does not match.",
+  "authChangePassword": "Change Password",
+  "authChangePasswordExplanation": "Your first login or an administrator reset requires you to set a new password.",
+  "authCurrentPassword": "Current Password",
+  "authNewPassword": "New Password",
+  "authConfirmNewPassword": "Confirm New Password",
+  "authMinimumPassword": "Use at least {count} characters.",
+  "@authMinimumPassword": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authManagerPasswordRule": "Owners and managers need at least 10 characters.",
+  "authEmployeePasswordRule": "Employees need at least 8 characters.",
+  "authPasswordsDoNotMatch": "The passwords do not match.",
+  "authSavePassword": "Save Password",
+  "authSavingPassword": "Saving password…",
+  "authPasswordChangeFailed": "We could not change your password. Please check the current password and try again.",
+  "authRestoringSession": "Restoring your secure session…",
+  "authSessionExpired": "Your session has expired. Please log in again.",
+  "authOfflineSessionExpired": "Your offline session has expired. Connect to the internet and log in again.",
+  "authVerificationRequiredTitle": "Verify your session",
+  "authUnableToVerifySession": "We could not verify your saved session. Please try again.",
+  "authRetryVerification": "Retry verification",
+  "authRetryingVerification": "Verifying session…",
+  "authReturnToLogin": "Return to Login",
+  "authSecureStorageReadFailure": "Secure storage is unavailable. Please try again or return to Login.",
+  "authCorruptSavedSession": "Your saved session could not be read. Please log in again.",
+  "authConnectionRequiredToVerifySession": "A connection is required to verify this saved session before access can continue.",
+  "authTenantNotOperationalTitle": "Workspace temporarily unavailable",
+  "authTenantNotOperationalExplanation": "This workspace is temporarily unavailable.",
+  "authContactAdministration": "Please contact administration for assistance.",
+  "authSettingsSubtitle": "Account and session controls",
+  "authAccount": "Account",
+  "authSignedInTenant": "Signed in to",
+  "authLogout": "Log Out",
+  "authLogoutConfirmation": "Are you sure you want to log out from this device?",
+  "reportsOverviewTitle": "Reports Overview",
+  "reportsOverviewSubtitle": "Track sales, profitability, cash, inventory, and branch performance from one place.",
+  "reportsOverviewDateRange": "Date range",
+  "reportsOverviewComparePrevious": "vs. Previous Period",
+  "reportsOverviewExport": "Export",
+  "reportsOverviewExportTooltip": "Available in detailed report screens",
+  "reportsOverviewAllBranches": "All branches",
+  "reportsOverviewKpiNetSales": "Total",
+  "reportsOverviewKpiSalesSum": "Gross sales",
+  "reportsOverviewKpiSalesNet": "Net sales",
+  "reportsOverviewKpiInfoSalesSum": "Completed sales before discounts and refunds.",
+  "reportsOverviewKpiInfoSalesNet": "Total after paid purchases and expenses.",
+  "reportsOverviewKpiGrossProfit": "Gross Profit",
+  "reportsOverviewKpiGrossMargin": "Gross Margin",
+  "reportsOverviewKpiTotalExpenses": "Total Expenses",
+  "reportsOverviewKpiNetProfit": "Net Profit",
+  "reportsOverviewKpiInfoNetSales": "Gross sales after refunds and discounts.",
+  "reportsOverviewKpiInfoGrossProfit": "Total minus the cost of goods sold.",
+  "reportsOverviewKpiInfoGrossMargin": "Gross profit as a percentage of total.",
+  "reportsOverviewKpiInfoTotalExpenses": "Operating expenses recorded for the selected period.",
+  "reportsOverviewKpiInfoNetProfit": "Gross profit minus total expenses.",
+  "reportsOverviewNotAvailableYet": "Not available yet",
+  "reportsOverviewComparisonUnavailable": "Comparison unavailable",
+  "reportsOverviewDeltaPercent": "{value} vs prev.",
+  "@reportsOverviewDeltaPercent": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsOverviewDeltaPoints": "{value} pts vs prev.",
+  "@reportsOverviewDeltaPoints": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsOverviewSalesTrendTitle": "Sales Trend",
+  "reportsOverviewNoSalesData": "No sales recorded for this period.",
+  "reportsOverviewBranchComparisonTitle": "Branch Comparison",
+  "reportsOverviewBranchColumnBranch": "Branch",
+  "reportsOverviewBranchColumnNetSales": "Net sales",
+  "reportsOverviewChooseAllBranches": "Choose all branches to compare performance.",
+  "reportsOverviewTopProductsTitle": "Top Products",
+  "reportsOverviewNoProductsSold": "No products were sold for this period.",
+  "reportsOverviewProductPerformanceComingNext": "Product Performance report is coming next.",
+  "reportsOverviewExceptionsTitle": "Recent Exceptions",
+  "reportsOverviewNoExceptions": "No operational exceptions found for this period.",
+  "reportsOverviewBrowseByCategory": "Browse by Category",
+  "reportsOverviewComingNext": "Coming next",
+  "reportsOverviewCategorySalesProfitability": "Sales & Profitability",
+  "reportsOverviewCategoryCashShifts": "Cash & Shifts",
+  "reportsOverviewCategoryInventory": "Inventory",
+  "reportsOverviewCategoryExpenses": "Expenses",
+  "reportsOverviewCategoryPurchasingSuppliers": "Purchasing & Suppliers",
+  "reportsOverviewCategoryFinancialReports": "Financial Reports",
+  "reportsOverviewCategoryCustomReportBuilder": "Custom Report Builder",
+  "reportsOverviewFinancialReportsTooltip": "Open the Financial Reports center",
+  "reportsOverviewErrorDefault": "The overview could not be loaded.",
+  "reportsOverviewRelativeCurrent": "Current",
+  "reportsOverviewMinutesAgo": "{m}m ago",
+  "@reportsOverviewMinutesAgo": {
+    "placeholders": {
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "reportsOverviewHoursAgo": "{h}h ago",
+  "salesProfitabilityTitle": "Sales & Profitability",
+  "salesProfitabilitySubtitle": "Analyze sales, profit, discounts, refunds, and product and branch performance.",
+  "salesProfitabilityBack": "Reports Overview",
+  "salesProfitabilityGroupBy": "Group by",
+  "salesProfitabilityDaily": "Daily",
+  "salesProfitabilityWeekly": "Weekly",
+  "salesProfitabilityMonthly": "Monthly",
+  "salesProfitabilityExportTooltip": "Export will be enabled after the report is connected to a data source.",
+  "salesProfitabilityGrossSales": "Gross sales",
+  "salesProfitabilityNetSales": "Total",
+  "salesProfitabilityDiscounts": "Discounts",
+  "salesProfitabilityRefunds": "Refunds",
+  "salesProfitabilityCogs": "Cost of Goods Sold (COGS)",
+  "salesProfitabilityGrossProfit": "Gross Profit",
+  "salesProfitabilityGrossMargin": "Gross Margin %",
+  "salesProfitabilityAverageOrder": "Average Order Value",
+  "salesProfitabilityCashCollected": "Cash Collected",
+  "salesProfitabilityBankCollected": "Bank Collected",
+  "salesProfitabilitySalesBySource": "Sales by Source",
+  "salesProfitabilityNoSalesBySource": "No sales-by-source data is available for this period.",
+  "salesProfitabilityTrend": "Sales & Profit Trend",
+  "salesProfitabilitySalesByHour": "Sales by Hour",
+  "salesProfitabilitySalesByCategory": "Sales by Category",
+  "salesProfitabilityBranchPerformance": "Branch Performance",
+  "salesProfitabilityProductPerformance": "Product Performance",
+  "salesProfitabilityTopSelling": "Top Selling",
+  "salesProfitabilityMostProfitable": "Most Profitable",
+  "salesProfitabilityUnderperforming": "Underperforming",
+  "salesProfitabilityPeak": "Peak: {value}",
+  "@salesProfitabilityPeak": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "salesProfitabilityNoTrend": "No sales and profit trend is available for this period.",
+  "salesProfitabilityNoHourly": "No hourly sales are available for this period.",
+  "salesProfitabilityNoCategories": "No category sales are available for this period.",
+  "salesProfitabilityNoBranches": "Choose all branches to compare performance.",
+  "salesProfitabilityNoProducts": "No product performance is available for this period.",
+  "salesProfitabilityUnavailable": "Not available yet",
+  "salesProfitabilityError": "This report could not be loaded.",
+  "salesProfitabilityProduct": "Product",
+  "salesProfitabilityCategory": "Category",
+  "salesProfitabilityQuantity": "Quantity sold",
+  "salesProfitabilityOrders": "Orders",
+  "salesProfitabilityMargin": "Margin",
+  "cashShiftsTitle": "Cash & Shifts",
+  "cashShiftsSubtitle": "Monitor shift performance, cash movement, payment methods, and drawer differences.",
+  "cashShiftsAllEmployees": "All employees",
+  "cashShiftsTotalSales": "Gross sales",
+  "cashShiftsExpectedCash": "Expected Cash",
+  "cashShiftsActualCash": "Actual Cash",
+  "cashShiftsDifference": "Cash Difference",
+  "cashShiftsClosed": "Closed Shifts",
+  "cashShiftsOpen": "Open Shifts",
+  "cashShiftsAverage": "Average Shift Sales",
+  "cashShiftsReconciliation": "Cash Reconciliation",
+  "cashShiftsMatched": "Matched",
+  "cashShiftsMinor": "Minor difference",
+  "cashShiftsReview": "Difference needs review",
+  "cashShiftsShortage": "Shortage",
+  "cashShiftsOverage": "Overage",
+  "cashShiftsPerformance": "Shift Performance",
+  "cashShiftsPayments": "Payment Method Breakdown",
+  "cashShiftsTrend": "Shift Sales Trend",
+  "cashShiftsTop": "Best Performing Shifts",
+  "cashShiftsExceptions": "Exceptions",
+  "cashShiftsNoShifts": "No shifts exist for the selected period.",
+  "cashShiftsNoPayments": "No payment-method data exists for the selected period.",
+  "cashShiftsNoExceptions": "No cash differences need review.",
+  "cashShiftsNoTrend": "No shift-sales trend is available for this period.",
+  "cashShiftsError": "Cash & Shifts report could not be loaded.",
+  "cashShiftsExportTooltip": "Export will be enabled after the report is connected to a data source.",
+  "@reportsOverviewHoursAgo": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      }
+    }
+  },
+  "financeSectionOverview": "Overview",
+  "financeSectionTransactions": "Financial Transactions",
+  "financeSectionCashBanks": "Cash & Banks",
+  "financeSectionExpenses": "Expenses",
+  "financeSectionSuppliers": "Suppliers & Payables",
+  "financeSectionReconciliation": "Reconciliation",
+  "financeSectionJournals": "Journal Entries",
+  "financeSectionClosing": "Daily Closing",
+  "financeSectionReports": "Financial Reports",
+  "financeSectionAccounts": "Chart of Accounts",
+  "financeSectionPeriods": "Accounting Periods",
+  "financeSectionSettings": "Finance Settings",
+  "financeBreadcrumb": "{module} / {section}",
+  "@financeBreadcrumb": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      },
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "financeStatusApproved": "Approved",
+  "financeStatusCompleted": "Completed",
+  "financeStatusPendingApproval": "Pending Approval",
+  "financeStatusPendingReview": "Pending Review",
+  "financeStatusRejected": "Rejected",
+  "financeStatusReversed": "Reversed",
+  "financeStatusPartiallyPaid": "Partially Paid",
+  "financeStatusInactive": "Inactive",
+  "financeStatusLocked": "Locked",
+  "financeStatusUnmatched": "Unmatched",
+  "financeStatusCurrent": "Current",
+  "financeTermDebit": "Debit",
+  "financeTermCredit": "Credit",
+  "financeTermBalance": "Balance",
+  "financeTermOpeningBalance": "Opening Balance",
+  "financeTermClosingBalance": "Closing Balance",
+  "financeTermRunningBalance": "Running Balance",
+  "financeTermRevenue": "Revenue",
+  "financeTermCogs": "COGS",
+  "financeTermGrossProfit": "Gross Profit",
+  "financeTermOperatingExpenses": "Operating Expenses",
+  "financeTermOperatingProfit": "Operating Profit",
+  "financeTermAssets": "Assets",
+  "financeTermLiabilities": "Liabilities",
+  "financeTermEquity": "Equity",
+  "financeTermAccountsPayable": "Accounts Payable",
+  "financeTermGeneralLedger": "General Ledger",
+  "financeTermTrialBalance": "Trial Balance",
+  "financeTermProfitLoss": "Profit & Loss",
+  "financeTermBalanceSheet": "Balance Sheet",
+  "financeTermCashFlow": "Cash Flow",
+  "financeFiltersReset": "Reset",
+  "financeReadinessPanelTitle": "Operational Readiness",
+  "financeLoadingDefaultLabel": "Loading data…",
+  "financeEmptyDefaultMessage": "No data to display",
+  "financeExpectedAccountingImpact": "Expected Accounting Impact",
+  "financeExpenseScreenTitle": "Expenses",
+  "financeExpenseScreenSubtitle": "Record and track the approval of operating expenses",
+  "financeExpenseAddAction": "Add Expense",
+  "financeExpenseLoadingLabel": "Loading expenses…",
+  "financeExpenseLoadErrorMessage": "Couldn't load expenses. The error is not treated as zero.",
+  "financeExpenseFilterStatusLabel": "Status",
+  "financeExpenseFilterCategoryLabel": "Category",
+  "financeExpenseSearchHint": "Search by description or reference…",
+  "financeExpenseDateRangePickerHelp": "Select a financial period",
+  "financeExpenseFilterRefreshError": "Couldn't refresh expenses for these filters. Showing the last loaded data.",
+  "financeExpenseEmptyPeriod": "No expenses recorded for the selected period",
+  "financeExpenseEmptyFiltered": "No expenses match the selected filters",
+  "financeExpenseEmptyResetAction": "Reset Filters",
+  "financeExpenseKpiTotalAmount": "Total Expenses",
+  "financeExpenseKpiRejectedAmount": "Rejected",
+  "financeExpenseKpiAverageAmount": "Average Expense",
+  "financeExpenseColumnDate": "Date",
+  "financeExpenseColumnReference": "Reference",
+  "financeExpenseColumnDescription": "Description",
+  "financeExpenseColumnBranch": "Branch",
+  "financeExpenseColumnAmount": "Amount",
+  "financeExpenseBranchGeneralFallback": "General",
+  "financeExpenseBranchGeneralOption": "General (All Branches)",
+  "financeExpenseAllBranchesLabel": "All Branches",
+  "financeExpenseSubmittedBy": "Submitted by {name}",
+  "@financeExpenseSubmittedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "financeExpenseReversedNote": "This expense has been reversed. Use the buttons below to view the original entry and the reversal entry.",
+  "financeExpenseSubmissionDateLabel": "Submission Date",
+  "financeExpenseLedgerAccountLabel": "Ledger Account",
+  "financeExpensePreTaxAmountLabel": "Amount Before Tax",
+  "financeExpenseTaxLabel": "Tax",
+  "financeExpenseNotesLabel": "Notes",
+  "financeExpenseNotesOptionalLabel": "Notes (Optional)",
+  "financeExpensePaymentMethodLabel": "Payment Method",
+  "financeExpensePaymentAccountLabel": "Payment Account",
+  "financeExpenseApprovedAtLabel": "Approved At",
+  "financeExpensePaidAtLabel": "Paid At",
+  "financeExpenseActionSubmit": "Submit for Approval",
+  "financeExpenseActionApprove": "Approve",
+  "financeExpenseActionReject": "Reject",
+  "financeExpenseActionPay": "Record Payment",
+  "financeExpenseActionReverse": "Reverse Expense",
+  "financeExpenseViewJournalAction": "View Journal Entry",
+  "financeExpenseViewReversalJournalAction": "View Reversal Entry",
+  "financeExpenseRejectDialogTitle": "Reject Expense",
+  "financeExpenseRejectReasonLabel": "Rejection Reason",
+  "financeExpensePaymentValidationError": "Choose a payment method and an active cash or bank account.",
+  "financeExpensePaymentDialogTitle": "Pay {reference}",
+  "@financeExpensePaymentDialogTitle": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeExpensePaymentPostAction": "Post Payment",
+  "financeExpensePaymentLoadingOptions": "Loading payment options…",
+  "financeExpenseNoPaymentOptionsMessage": "No active payment method or cash/bank account. Add one from Finance settings first.",
+  "financeExpensePaymentAmountLine": "Amount: {amount}",
+  "@financeExpensePaymentAmountLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "financeExpenseCashBankAccountLabel": "Cash/Bank Account",
+  "financeExpenseFormValidationError": "Enter a valid amount, category, and description.",
+  "financeExpenseEditDialogTitle": "Edit Expense",
+  "financeExpenseFieldBranchOptional": "Branch (Optional)",
+  "financeExpenseTotalLabel": "Total",
+  "financeExpenseCategoryScreenTitle": "Expense Categories",
+  "financeExpenseCategoryScreenSubtitle": "Every category is linked to an active expense account in the chart of accounts.",
+  "financeExpenseCategoryAddAction": "Add Category",
+  "financeExpenseCategoryEmptyMessage": "No expense categories configured.",
+  "financeExpenseCategoryCodeLabel": "Code",
+  "financeExpenseCategoryNameLabel": "Name",
+  "financeExpenseCategoryAccountLabel": "Expense Account",
+  "financeExpenseCategoryColumnStatus": "Status",
+  "financeExpenseCategoryColumnAction": "Action",
+  "financeExpenseCategorySortOrderLabel": "Sort Order (Optional)",
+  "financeExpenseCategoryValidationError": "Enter a valid code and name.",
+  "financeExpenseCategoryEditDialogTitle": "Edit Category",
+  "financeExpenseCategoryDeactivateDialogTitle": "Deactivate Category",
+  "financeExpenseCategoryActivateDialogTitle": "Activate Category",
+  "financeExpenseCategoryDeactivateConfirm": "Deactivate category \"{name}\"? It will no longer appear when creating a new expense.",
+  "@financeExpenseCategoryDeactivateConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "financeExpenseCategoryActivateConfirm": "Activate category \"{name}\"?",
+  "@financeExpenseCategoryActivateConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "financeExpenseCategoryDeactivateAction": "Deactivate",
+  "financeExpenseCategoryActivateAction": "Activate",
+  "financePeriodToday": "Today",
+  "financePeriodThisWeek": "This Week",
+  "financePeriodThisMonth": "This Month",
+  "financePeriodCustom": "Custom",
+  "financeGlobalContextTitle": "Overall Context",
+  "financeGlobalContextBranchAll": "Branch: All Branches",
+  "financeGlobalContextBranchNamed": "Branch: {name}",
+  "@financeGlobalContextBranchNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierListSubtitle": "The supplier balance is derived exclusively from posted invoices and payments",
+  "financeSupplierAddAction": "Add Supplier",
+  "financeSupplierListLoading": "Loading suppliers…",
+  "financeSupplierListLoadError": "Could not load suppliers. The error is not being disregarded.",
+  "financeSupplierStatusLabel": "Status",
+  "financeSupplierSearchHint": "Supplier name or code…",
+  "financeSupplierFilterRefreshError": "Could not refresh suppliers for these filters. Showing the last loaded data.",
+  "financeSupplierEmptyFiltered": "No suppliers match the selected filters",
+  "financeSupplierEmptyNone": "No suppliers registered yet",
+  "financeSupplierResetFiltersAction": "Reset Filters",
+  "financeSupplierKpiTotalOutstanding": "Total Payables",
+  "financeSupplierKpiOverdueLabel": "Overdue Payments",
+  "financeSupplierKpiActiveCount": "Active Suppliers",
+  "financeSupplierKpiAvgPaymentTerms": "Average Payment Terms",
+  "financeSupplierDaysUnit": "{days} days",
+  "@financeSupplierDaysUnit": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financeSupplierColumnSupplier": "Supplier",
+  "financeSupplierOutstandingBalanceLabel": "Outstanding Balance",
+  "financeSupplierOverdueLabel": "Overdue",
+  "financeSupplierColumnOpenInvoices": "Open Invoices",
+  "financeSupplierColumnLastInvoice": "Last Invoice",
+  "financeSupplierEditAction": "Edit Supplier",
+  "financeSupplierNameRequired": "Enter the supplier name.",
+  "financeSupplierFieldName": "Name",
+  "financeSupplierFieldPhone": "Phone",
+  "financeSupplierFieldEmail": "Email",
+  "financeSupplierFieldAddress": "Address",
+  "financeSupplierFieldContactPerson": "Contact Person",
+  "financeSupplierFieldTaxNumber": "Tax Number",
+  "financeSupplierFieldPaymentTermsDays": "Payment Terms (Days)",
+  "financeSupplierFieldNotes": "Notes",
+  "financeSupplierInactiveBadge": "Inactive",
+  "financeSupplierProfileSubtitle": "Supplier profile and financial activity",
+  "financeSupplierBackToList": "Back to Suppliers",
+  "financeSupplierProfileLoading": "Loading supplier profile…",
+  "financeSupplierProfileLoadError": "Could not load the supplier profile. {error}",
+  "@financeSupplierProfileLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierNotFound": "Could not find the requested supplier.",
+  "financeSupplierPaymentTermsWithDays": "Payment terms {days} days",
+  "@financeSupplierPaymentTermsWithDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financeSupplierStatementAction": "Supplier Statement",
+  "financeSupplierNewInvoiceAction": "New Invoice",
+  "financeSupplierNewPaymentAction": "New Payment",
+  "financeSupplierKpiTotalInvoiced": "Total Invoiced",
+  "financeSupplierKpiTotalPaid": "Total Paid",
+  "financeSupplierTabInvoices": "Invoices",
+  "financeSupplierTabPayments": "Payments",
+  "financeSupplierTabStatement": "Statement",
+  "financeSupplierNoInvoices": "No invoices for this supplier yet",
+  "financeSupplierColumnReference": "Reference",
+  "financeSupplierColumnDate": "Date",
+  "financeSupplierColumnDueDate": "Due",
+  "financeSupplierTotalLabel": "Total",
+  "financeSupplierColumnRemaining": "Remaining",
+  "financeSupplierViewJournalAction": "View Journal Entry",
+  "financeSupplierNoPayments": "No payments for this supplier yet",
+  "financeSupplierColumnAmount": "Amount",
+  "financeSupplierColumnPaymentMethod": "Payment Method",
+  "financeSupplierNoStatementLines": "No statement activity yet",
+  "financeSupplierKpiTotalPayments": "Total Payments",
+  "financeSupplierColumnType": "Type",
+  "financeSupplierTypeInvoice": "Invoice",
+  "financeSupplierTypePayment": "Payment",
+  "financeSupplierReverseInvoiceTitle": "Reverse Invoice",
+  "financeSupplierReverseInvoiceMessage": "A reversing entry will be created for invoice {reference}. This action cannot be undone.",
+  "@financeSupplierReverseInvoiceMessage": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierPostInvoiceError": "Could not post the invoice: {error}",
+  "@financeSupplierPostInvoiceError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierReverseInvoiceError": "Could not reverse the invoice: {error}",
+  "@financeSupplierReverseInvoiceError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierReversePaymentTitle": "Reverse Payment",
+  "financeSupplierReversePaymentMessage": "A reversing entry will be created and the balances of invoices linked to payment {reference} will be restored. This action cannot be undone.",
+  "@financeSupplierReversePaymentMessage": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierReversePaymentError": "Could not reverse the payment: {error}",
+  "@financeSupplierReversePaymentError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierConfirmAction": "Confirm",
+  "financeSupplierInvoiceNumberSubtotalRequired": "Enter an invoice number and a valid subtotal.",
+  "financeSupplierExpenseCategoryRequired": "Select an expense category.",
+  "financeSupplierDebitAccountRequired": "Select the debit account.",
+  "financeSupplierInvoiceDialogTitleWithRef": "Invoice {reference}",
+  "@financeSupplierInvoiceDialogTitleWithRef": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierInvoiceLockedMessage": "The invoice is posted and cannot be edited. Use the reverse action if needed.",
+  "financeSupplierNewInvoiceDialogTitle": "New Supplier Invoice",
+  "financeSupplierEditInvoiceDialogTitle": "Edit invoice {reference}",
+  "@financeSupplierEditInvoiceDialogTitle": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierSaveAsDraftAction": "Save as Draft",
+  "financeSupplierLoadingOptions": "Loading options…",
+  "financeSupplierFieldBranchOptional": "Branch (Optional)",
+  "financeSupplierGeneralOption": "General",
+  "financeSupplierFieldSupplierInvoiceNumber": "Supplier Invoice Number",
+  "financeSupplierFieldInvoiceDate": "Invoice Date",
+  "financeSupplierFieldDueDate": "Due Date",
+  "financeSupplierFieldInvoiceType": "Invoice Type",
+  "financeSupplierInvoiceTypeExpense": "Expense",
+  "financeSupplierInvoiceTypeInventory": "Inventory (accounting liability only, does not create stock quantity)",
+  "financeSupplierInvoiceTypeOther": "Other",
+  "financeSupplierFieldExpenseCategory": "Expense Category",
+  "financeSupplierFieldDebitAccount": "Debit Account",
+  "financeSupplierFieldSubtotal": "Subtotal",
+  "financeSupplierFieldTax": "Tax",
+  "financeSupplierFieldDescription": "Description",
+  "financeSupplierInvoiceDetailTitle": "Supplier Invoice",
+  "financeSupplierPostAction": "Post",
+  "financeSupplierReverseAction": "Reverse",
+  "financeSupplierFieldBranch": "Branch",
+  "financeSupplierPaymentDetailTitle": "Supplier Payment",
+  "financeSupplierFieldPaymentDate": "Payment Date",
+  "financeSupplierFieldCashBankAccount": "Cash/Bank Account",
+  "financeSupplierFieldExternalReference": "External Reference",
+  "financeSupplierPaymentAllocationTitle": "Payment Allocation to Invoices",
+  "financeSupplierColumnInvoice": "Invoice",
+  "financeSupplierPaymentMethodLocationRequired": "Select a payment method and an active cash or bank account.",
+  "financeSupplierPaymentAmountRequired": "Enter a valid payment amount greater than zero.",
+  "financeSupplierAllocationRequired": "Allocate an amount to at least one invoice.",
+  "financeSupplierAllocationExceedsRemaining": "The allocation for {reference} exceeds its remaining balance.",
+  "@financeSupplierAllocationExceedsRemaining": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierAllocationMustMatchPayment": "The total allocations must exactly equal the payment amount. Unallocated remaining: {remaining}",
+  "@financeSupplierAllocationMustMatchPayment": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierNewPaymentDialogTitle": "New Supplier Payment",
+  "financeSupplierPostPaymentAction": "Post Payment",
+  "financeSupplierLoadingPaymentOptions": "Loading payment options…",
+  "financeSupplierNoPaymentMethodOrAccount": "No active payment method or cash/bank account. Add one from Finance Settings first.",
+  "financeSupplierFieldCashBankSource": "Cash/Bank Account (Source)",
+  "financeSupplierFieldPaymentAmount": "Payment Amount",
+  "financeSupplierFieldExternalReferenceOptional": "External Reference (Optional)",
+  "financeSupplierFieldNotesOptional": "Notes (Optional)",
+  "financeSupplierAllocationOpenInvoicesTitle": "Payment Allocation to Open Invoices",
+  "financeSupplierInvoiceRemainingLabel": "{reference} — remaining {remaining}",
+  "@financeSupplierInvoiceRemainingLabel": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSupplierFieldAllocation": "Allocation",
+  "financeSupplierAllocatedAmountLabel": "Allocated Amount",
+  "financeSupplierUnallocatedRemainingLabel": "Unallocated Remaining",
+  "financeSupplierOverdueBadge": "Overdue",
+  "financeWarehouseTitle": "Warehouse Setup",
+  "financeWarehouseSubtitle": "Manage operational warehouses and their branch assignments.",
+  "financeWarehouseAdd": "Add Warehouse",
+  "financeWarehouseEmpty": "No warehouses have been added yet.",
+  "financeWarehouseAllBranches": "All Branches",
+  "financeWarehouseAllStatuses": "All Statuses",
+  "financeWarehouseName": "Warehouse",
+  "financeWarehouseCode": "Code",
+  "financeWarehouseType": "Type",
+  "financeWarehouseBranch": "Branch",
+  "financeWarehouseEdit": "Edit Warehouse",
+  "financeWarehouseCentral": "Central",
+  "financeWarehouseBranchType": "Branch",
+  "financeTransactionSale": "Sale",
+  "financeTransactionRefund": "Refund",
+  "financeTransactionExpense": "Expense",
+  "financeTransactionCashTransfer": "Cash Transfer",
+  "financeTransactionSupplierInvoice": "Supplier Invoice",
+  "financeTransactionSupplierPayment": "Supplier Payment",
+  "financeTransactionInventoryWaste": "Inventory Waste",
+  "financeTransactionStockCountVariance": "Stock Count Variance",
+  "financeTransactionInventoryMovement": "Inventory Movement",
+  "financeTransactionManualJournal": "Manual Journal",
+  "financeTransactionReversalJournal": "Reversal Journal",
+  "financeTransactionJournalEntry": "Journal Entry",
+  "financeStatusReady": "Ready",
+  "financeStatusWarning": "Warning",
+  "financeStatusBlocked": "Blocked",
+  "financeStatusActive": "Active",
+  "financeWarehouseUnassignedBranch": "Unassigned",
+  "financeStatusClosed": "Closed",
+  "financeDailyClosingIssueOpenShifts": "There are {count} open shifts that must be closed.",
+  "@financeDailyClosingIssueOpenShifts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssuePendingExpenseApproval": "There are {count} expenses awaiting approval.",
+  "@financeDailyClosingIssuePendingExpenseApproval": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueMissingActualCash": "Actual cash has not been entered yet.",
+  "financeDailyClosingIssueCashDifference": "There is a cash difference of {amount}.",
+  "@financeDailyClosingIssueCashDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "financeDailyClosingIssueDraftJournals": "There are {count} draft journal entries for today.",
+  "@financeDailyClosingIssueDraftJournals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueUnpostedInventoryEvent": "There are {count} inventory movements without accounting posting.",
+  "@financeDailyClosingIssueUnpostedInventoryEvent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeDailyClosingIssueCashReconciliationIncomplete": "Cash reconciliation is incomplete for today.",
+  "financeDailyClosingIssueCardReconciliationIncomplete": "Card reconciliation is incomplete for today.",
+  "financeDailyClosingIssueBankReconciliationIncomplete": "Bank reconciliation is incomplete for today.",
+  "financeDailyClosingIssueUnknown": "A daily-closing requirement needs attention.",
+  "financePaginationRange": "Showing {start}–{end} of {total}",
+  "@financePaginationRange": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "financePaginationPrevious": "Previous",
+  "financePaginationPage": "Page {current} of {last}",
+  "@financePaginationPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "last": {
+        "type": "int"
+      }
+    }
+  },
+  "financePaginationNext": "Next",
+  "financeSourceActionViewSource": "View Source",
+  "financeSourceActionViewJournal": "View Journal Entry",
+  "financeSourceActionRelatedJournal": "Related Journal Entry",
+  "navigationCafeConfiguration": "Cafe Configuration",
+  "cafeConfigurationTitle": "Cafe Configuration",
+  "cafeConfigurationOverview": "Overview",
+  "cafeConfigurationProfile": "Cafe Profile",
+  "cafeConfigurationBranches": "Branches",
+  "cafeConfigurationPrinting": "Printing",
+  "cafeConfigurationPrintingSubtitle": "Set receipt printer defaults for each branch.",
+  "cafeConfigurationReceiptPrinting": "Receipt printing",
+  "cafeConfigurationReceiptPrintingEnabled": "Receipt Printing Enabled",
+  "cafeConfigurationPrinterName": "Printer Name",
+  "cafeConfigurationPrinterHost": "Printer IP / Host",
+  "cafeConfigurationPrinterPort": "Printer Port",
+  "cafeConfigurationPaperWidth": "Paper Width",
+  "cafeConfigurationAutoPrint": "Auto Print After Payment",
+  "cafeConfigurationPrintingSaved": "Printing defaults saved.",
+  "cafeConfigurationPrintingDiscard": "Discard unsaved printing changes and switch branches?",
+  "cafeConfigurationPrinterInvalid": "Enter a valid printer host and port (1–65535).",
+  "cafeConfigurationPrintingBranchDefaultsNotice": "These are branch defaults: they apply to every device at this branch unless overridden on Settings → Printer Setup on that device.",
+  "cafeConfigurationSavePrinterConfig": "Save Printer Configuration",
+  "cafeConfigurationSaveReceiptDesign": "Save Receipt Design",
+  "cafeConfigurationPrinterConfigSaved": "Printer configuration saved.",
+  "cafeConfigurationReceiptDesignSaved": "Receipt design saved.",
+  "cafeConfigurationReceiptDesign": "Receipt Design",
+  "cafeConfigurationReceiptHeaderSection": "Header",
+  "cafeConfigurationReceiptHeaderLogo": "Cafe logo",
+  "cafeConfigurationReceiptHeaderCafeName": "Cafe name",
+  "cafeConfigurationReceiptHeaderBranchName": "Branch name",
+  "cafeConfigurationReceiptHeaderAddress": "Address",
+  "cafeConfigurationReceiptHeaderPhone": "Phone",
+  "cafeConfigurationReceiptOrderInfoSection": "Order Information",
+  "cafeConfigurationReceiptOrderNumber": "Order number",
+  "cafeConfigurationReceiptDateTime": "Date & time",
+  "cafeConfigurationReceiptCashier": "Cashier",
+  "cafeConfigurationReceiptCustomer": "Customer",
+  "cafeConfigurationReceiptOrderType": "Order type",
+  "cafeConfigurationReceiptItemsSection": "Items",
+  "cafeConfigurationReceiptProductName": "Product name",
+  "cafeConfigurationReceiptQuantity": "Quantity",
+  "cafeConfigurationReceiptUnitPrice": "Unit price",
+  "cafeConfigurationReceiptModifiers": "Modifiers",
+  "cafeConfigurationReceiptNotes": "Item notes",
+  "cafeConfigurationReceiptTotalsSection": "Totals",
+  "cafeConfigurationReceiptSubtotal": "Subtotal",
+  "cafeConfigurationReceiptDiscount": "Discount",
+  "cafeConfigurationReceiptTax": "Tax",
+  "cafeConfigurationReceiptTotal": "Total",
+  "cafeConfigurationReceiptPaymentSection": "Payment",
+  "cafeConfigurationReceiptPaymentMethod": "Payment method",
+  "cafeConfigurationReceiptPaidAmount": "Paid amount",
+  "cafeConfigurationReceiptChange": "Change",
+  "cafeConfigurationReceiptFooterSection": "Footer",
+  "cafeConfigurationReceiptFooterEnabled": "Show footer",
+  "cafeConfigurationReceiptFooterText": "Footer text",
+  "cafeConfigurationReceiptPreview": "Preview Receipt",
+  "cafeConfigurationReceiptPreviewTitle": "Receipt Preview",
+  "cafeConfigurationReceiptMoveUp": "Move up",
+  "cafeConfigurationReceiptMoveDown": "Move down",
+  "cafeConfigurationReceiptLockedField": "Always shown",
+  "cafeConfigurationTeamAccess": "Team & Access",
+  "cafeConfigurationTax": "Tax",
+  "cafeConfigurationOverviewSubtitle": "A concise summary of your cafe’s operational configuration.",
+  "cafeConfigurationProfileSubtitle": "Manage the core business information used across Cafe System.",
+  "cafeConfigurationBranchesSubtitle": "Create and manage the physical locations where your cafe operates.",
+  "cafeConfigurationCreateBranchSubtitle": "Add a new location where your cafe operates.",
+  "cafeConfigurationEditBranchSubtitle": "Update the details for this cafe location.",
+  "cafeConfigurationConfigured": "Configured",
+  "cafeConfigurationTotal": "total",
+  "cafeConfigurationNotAvailable": "Not available",
+  "cafeConfigurationAvailablePhase2": "Available in Phase 2",
+  "cafeConfigurationCouldNotLoad": "Could not load configuration. Check your connection and try again.",
+  "cafeConfigurationBusinessInformation": "Business information",
+  "cafeConfigurationCafeName": "Cafe Name",
+  "cafeConfigurationEmail": "Email",
+  "cafeConfigurationPhone": "Phone",
+  "cafeConfigurationTimezone": "Timezone",
+  "cafeConfigurationReadOnly": "Read-only",
+  "cafeConfigurationCurrency": "Currency",
+  "cafeConfigurationStatus": "Status",
+  "cafeConfigurationReset": "Reset",
+  "cafeConfigurationSaveChanges": "Save Changes",
+  "cafeConfigurationProfileSaved": "Cafe profile saved.",
+  "cafeConfigurationSaveFailed": "Could not save your changes. Your edits were kept.",
+  "cafeConfigurationAddBranch": "Add Branch",
+  "cafeConfigurationCreateBranch": "Create Branch",
+  "cafeConfigurationEditBranch": "Edit Branch",
+  "cafeConfigurationBranchName": "Branch Name",
+  "cafeConfigurationAddress": "Address",
+  "cafeConfigurationActions": "Actions",
+  "cafeConfigurationNoBranches": "No branches yet",
+  "cafeConfigurationNoBranchesHelp": "Create your first cafe location to get started.",
+  "cafeConfigurationBranchCreated": "Branch created.",
+  "cafeConfigurationBranchSaved": "Branch saved.",
+  "cafeConfigurationTaxSummary": "Cafe-wide exclusive tax",
+  "teamAccessSubtitle": "Manage Managers and Employees with access to your cafe.",
+  "teamAddMember": "Add Team Member",
+  "teamSearch": "Search team",
+  "teamRole": "Role",
+  "teamName": "Name",
+  "teamLogin": "Login",
+  "teamDeactivated": "Deactivated",
+  "teamArchived": "Archived",
+  "teamProtected": "Protected",
+  "teamAllBranches": "All Branches",
+  "teamOwner": "Owner",
+  "teamManager": "Manager",
+  "teamEmployee": "Employee",
+  "teamFactoryManager": "Factory Manager",
+  "teamNoMembers": "No Managers or Employees yet.",
+  "teamNoResults": "No team members match these filters.",
+  "teamEditMember": "Edit Team Member",
+  "teamUsername": "Username",
+  "teamBranchAccess": "Branch Access",
+  "teamActiveBranchesOnly": "Only active branches can be assigned.",
+  "teamTemporaryPassword": "Temporary Password",
+  "teamConfirmPassword": "Confirm Temporary Password",
+  "teamTemporaryPasswordMinimum": "Use at least {count} characters.",
+  "@teamTemporaryPasswordMinimum": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "teamRoleChangePassword": "Changing the role requires a new temporary password and login reset.",
+  "teamCreate": "Create",
+  "teamMemberCreated": "Team member created",
+  "teamPasswordVisibleOnce": "This temporary password can only be viewed now.",
+  "teamCopy": "Copy",
+  "teamResetPassword": "Reset Password",
+  "teamResetPasswordExplanation": "Active sessions will be revoked. The user must change their password after next login.",
+  "teamPasswordMismatch": "Passwords do not match.",
+  "teamDeactivate": "Deactivate",
+  "teamActivate": "Activate",
+  "teamArchive": "Archive",
+  "teamDeactivateExplanation": "This user can no longer sign in. Historical activity remains.",
+  "teamActivateExplanation": "This user can sign in again.",
+  "teamArchiveExplanation": "Historical records are preserved. Archived users cannot currently be restored.",
+  "teamConfirm": "Confirm",
+  "teamMutationFailed": "Could not complete the request. Your changes were kept.",
+  "teamLoadFailed": "Could not load this section. Check your connection and try again.",
+  "taxSubtitle": "Set the single tax rate used across your cafe.",
+  "taxRate": "Tax rate",
+  "taxHelp": "Enter a percentage from 0 through 100.",
+  "taxExplanation": "This cafe-wide tax is exclusive and applied after discounts. Changes apply to new orders; existing orders preserve their captured tax rate.",
+  "taxInvalid": "Enter a valid percentage from 0 through 100.",
+  "taxSaved": "Tax rate saved.",
+  "taxConfirm": "Update tax rate?",
+  "taxCurrent": "Current",
+  "taxNew": "New",
+  "taxNewOrdersOnly": "This applies to new orders.",
+  "customerManagementTitle": "Customer Management",
+  "customerManagementCustomers": "Customers",
+  "customerManagementGroups": "Customer Groups",
+  "customerManagementCreateCustomer": "New Customer",
+  "customerManagementCreateGroup": "New Group",
+  "customerManagementSearch": "Search",
+  "customerManagementActive": "Active",
+  "customerManagementInactive": "Inactive",
+  "customerManagementArchived": "Archived",
+  "customerManagementAll": "All",
+  "customerManagementNoPhone": "No phone",
+  "customerManagementNotAvailable": "Not available",
+  "customerManagementValueSeparator": " · ",
+  "customerManagementLoading": "Loading customer information…",
+  "customerManagementEmptyCustomers": "No customers yet.",
+  "customerManagementEmptyGroups": "No customer groups yet.",
+  "customerManagementNoResults": "No matching results.",
+  "customerManagementRetry": "Retry",
+  "customerManagementClearFilters": "Clear filters",
+  "customerManagementAccessDenied": "You do not have access to Customer Management.",
+  "customerManagementNotFound": "The requested record was not found.",
+  "customerManagementCustomerNumber": "Customer number",
+  "customerManagementName": "Name",
+  "customerManagementPhone": "Phone",
+  "customerManagementGroupsLabel": "Groups",
+  "customerManagementStatus": "Status",
+  "customerManagementEmail": "Email",
+  "customerManagementBirthDate": "Birth date",
+  "customerManagementNotes": "Notes",
+  "customerManagementPrimary": "Primary",
+  "customerManagementMembers": "Members",
+  "customerManagementMemberCount": "Members: {count}",
+  "@customerManagementMemberCount": {"placeholders": {"count": {"type": "int"}}},
+  "customerManagementPreviousPage": "Previous page",
+  "customerManagementNextPage": "Next page",
+  "customerManagementPage": "Page {page} of {total}",
+  "@customerManagementPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "customerManagementView": "View",
+  "customerManagementEdit": "Edit",
+  "customerManagementSave": "Save",
+  "customerManagementCancel": "Cancel",
+  "customerManagementActivate": "Activate",
+  "customerManagementDeactivate": "Deactivate",
+  "customerManagementArchive": "Archive",
+  "customerManagementRestore": "Restore",
+  "customerManagementConfirm": "Confirm",
+  "customerManagementDiscardChanges": "Discard unsaved changes?",
+  "customerManagementChangesKept": "Your changes were kept.",
+  "customerManagementRequestFailed": "The request could not be completed.",
+  "customerManagementValidationFailed": "Review the highlighted fields.",
+  "customerManagementAddMembers": "Add members",
+  "customerManagementRemoveMember": "Remove member",
+  "customerManagementRemoveMemberConfirm": "Remove {customer} from {group}?",
+  "@customerManagementRemoveMemberConfirm": {"placeholders": {"customer": {}, "group": {}}},
+  "customerManagementCreateTitle": "New Customer",
+  "customerManagementEditTitle": "Edit Customer",
+  "customerManagementCustomerName": "Customer name",
+  "customerManagementAddPhone": "Add phone",
+  "customerManagementRemovePhone": "Remove phone",
+  "customerManagementPhoneType": "Phone type",
+  "customerManagementPhoneMobile": "Mobile",
+  "customerManagementPhoneHome": "Home",
+  "customerManagementPhoneWork": "Work",
+  "customerManagementPhoneOther": "Other",
+  "customerManagementSelectGroups": "Groups",
+  "customerManagementActiveGroups": "Active groups",
+  "customerManagementArchivedGroupRetained": "Archived group retained",
+  "customerManagementDateHint": "YYYY-MM-DD",
+  "customerManagementStay": "Keep editing",
+  "customerManagementLeave": "Leave",
+  "customerManagementRequiredName": "Enter a customer name.",
+  "customerManagementRequiredPhone": "Enter a phone number.",
+  "customerManagementPrimaryRequired": "Select one primary phone.",
+  "customerManagementNoActiveGroups": "No active groups available.",
+  "customerManagementDeactivateConfirm": "Deactivate {name}?",
+  "@customerManagementDeactivateConfirm": {"placeholders": {"name": {}}},
+  "customerManagementDeactivateConsequence": "This customer will no longer be available for new operational use. Historical records remain preserved.",
+  "customerManagementArchiveConfirm": "Archive {name}?",
+  "@customerManagementArchiveConfirm": {"placeholders": {"name": {}}},
+  "customerManagementArchiveConsequence": "This customer will be archived without deleting historical records. It can be restored later.",
+  "customerManagementRestoreConfirm": "Restore {name}?",
+  "@customerManagementRestoreConfirm": {"placeholders": {"name": {}}},
+  "customerManagementRestoreConsequence": "This customer will be restored as Inactive. Activate it separately before new operational use.",
+  "customerManagementMutationFailed": "Your customer was not changed. You can retry safely.",
+  "cmvpCustomersDescription": "Manage customer records, phones, groups, and lifecycle state.",
+  "cmvpGroupsDescription": "Organize customer groups and their bounded memberships.",
+  "cmvpCustomerDetailDescription": "Review the authoritative customer information and memberships.",
+  "cmvpCustomerFormDescription": "Enter the customer information managed by the server.",
+  "cmvpGroupDetailDescription": "Review the group identity, lifecycle, and current members.",
+  "cmvpGroupFormDescription": "Create or rename a customer group.",
+  "cmvpBreadcrumbCustomers": "Customers",
+  "cmvpBreadcrumbGroups": "Customer Groups",
+  "cmvpBreadcrumbDetails": "Details",
+  "cmvpBreadcrumbEdit": "Edit",
+  "cmvpBreadcrumbCreate": "New",
+  "cmvpCustomersCount": "{count, plural, =0{No customers} =1{1 customer} other{{count} customers}}",
+  "@cmvpCustomersCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpGroupsCount": "{count, plural, =0{No groups} =1{1 group} other{{count} groups}}",
+  "@cmvpGroupsCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpMembersCount": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
+  "@cmvpMembersCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpMoreActions": "More actions",
+  "cmvpOpenActions": "Open row actions",
+  "cmvpSelectRow": "Select row",
+  "cmvpRemoveGroup": "Remove group",
+  "cmvpInformationSection": "Customer information",
+  "cmvpPhoneSection": "Phone numbers",
+  "cmvpGroupsSection": "Customer groups",
+  "cmvpNotesSection": "Notes",
+  "cmvpLifecycleSection": "Lifecycle",
+  "cmvpGeneratedNumberHint": "The customer number is generated by the server.",
+  "cmvpCreatedAt": "Created",
+  "cmvpAbsenceValue": "Not available",
+  "cmvpManageGroups": "Manage groups",
+  "cmvpGroupName": "Group name",
+  "cmvpMemberSearch": "Search members",
+  "cmvpNoMembers": "No members in this group.",
+  "cmvpNoCandidates": "No eligible customers found.",
+  "cmvpCandidateSearch": "Search eligible customers",
+  "cmvpSelectedCount": "{count, plural, =0{Add members} =1{Add 1 member} other{Add {count} members}}",
+  "@cmvpSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "cmvpAddMembersDialogTitle": "Add members",
+  "cmvpConfirmRemoveMember": "Remove member",
+  "cmvpLoadingCustomers": "Loading customers",
+  "cmvpLoadingGroups": "Loading customer groups",
+  "cmvpLoadingRecord": "Loading record",
+  "cmvpForbiddenTitle": "Access unavailable",
+  "cmvpNotFoundTitle": "Record not found",
+  "cmvpRetryableTitle": "Could not load this view",
+  "cmvpNoResultsTitle": "No matching results",
+  "cmvpEmptyTitle": "Nothing here yet",
+  "cmvpStateLoadingSemantics": "Customer Management content is loading",
+  "cmvpRetryableMessage": "Check your connection and try again.",
+  "cmvpNoResultsMessage": "Try changing the search or clearing the filters.",
+  "cmvpEmptyCustomersMessage": "Add the first customer to begin.",
+  "cmvpEmptyGroupsMessage": "Create the first group to begin.",
+  "cmvpForbiddenMessage": "You do not have permission to view this content.",
+  "cmvpNotFoundMessage": "The requested record is no longer available.",
+  "cmvpSubmitting": "Saving",
+  "cmvpAddingMembers": "Adding members",
+  "cmvpRemovingMember": "Removing member",
+  "cmvpDiscardChangesMessage": "Your unsaved changes will be lost.",
+  "cmvpDialogCancel": "Cancel",
+  "cmvpDialogConfirm": "Confirm",
+  "cmvpMemberRemoveConsequence": "This member will be removed from the group.",
+  "cmvpGroupLifecycleMessage": "The group will remain available in historical records."
+  ,"cmvpOrders": "Orders"
+  ,"cmvpOrderHistory": "Customer orders"
+  ,"cmvpFromDate": "From date"
+  ,"cmvpToDate": "To date"
+  ,"cmvpBranch": "Branch"
+  ,"cmvpAllBranches": "All branches"
+  ,"cmvpOrderStatus": "Order status"
+  ,"cmvpPaymentStatus": "Payment status"
+  ,"cmvpOrderNumber": "Order number"
+  ,"cmvpOrderDateTime": "Date and time"
+  ,"cmvpOrderTotal": "Total"
+  ,"cmvpOrderStatusCompleted": "Completed"
+  ,"cmvpOrderStatusHeld": "Held"
+  ,"cmvpOrderStatusCancelled": "Cancelled"
+  ,"cmvpOrderStatusDraft": "Draft"
+  ,"cmvpPaymentStatusPaid": "Paid"
+  ,"cmvpPaymentStatusUnpaid": "Unpaid"
+  ,"cmvpPaymentStatusPartiallyRefunded": "Partially refunded"
+  ,"cmvpPaymentStatusRefunded": "Refunded"
+  ,"cmvpNoOrders": "No orders found."
+  ,"cmvpOrdersShowing": "Showing {start}–{end} of {total}"
+  ,"@cmvpOrdersShowing": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}
+  ,"cmvpOverview": "Overview"
+  ,"cmvpTotalOrders": "Total orders"
+  ,"cmvpTotalSpending": "Total spending"
+  ,"cmvpAverageOrderValue": "Average order value"
+  ,"cmvpLastVisit": "Last visit"
+  ,"cmvpRecentOrders": "Recent orders"
+  ,"cmvpViewAllOrders": "View all orders",
+  "expensesReportTitle": "Expenses",
+  "expensesReportSubtitle": "Analyze operating expenses by category, branch, and time period.",
+  "expensesReportAllCategories": "All categories",
+  "expensesReportAllStatuses": "All statuses",
+  "expensesReportExportTooltip": "Export will be enabled after this report is connected to a data source.",
+  "expensesReportTotal": "Total expenses",
+  "expensesReportPosted": "Posted expenses",
+  "expensesReportPending": "Pending expenses",
+  "expensesReportAverageDaily": "Average daily expense",
+  "expensesReportRatio": "Expense-to-total ratio",
+  "expensesReportLargestCategory": "Largest expense category",
+  "expensesReportTrend": "Expenses trend",
+  "expensesReportByCategory": "Expenses by category",
+  "expensesReportLargest": "Largest expenses",
+  "expensesReportBranchComparison": "Branch expense comparison",
+  "expensesReportPeriodComparison": "Period comparison",
+  "expensesReportTable": "Expense table",
+  "expensesReportDate": "Date",
+  "expensesReportExpense": "Expense",
+  "expensesReportCategory": "Category",
+  "expensesReportBranch": "Branch",
+  "expensesReportPayee": "Payee",
+  "expensesReportPaymentMethod": "Payment method",
+  "expensesReportAmount": "Amount",
+  "expensesReportStatus": "Status",
+  "expensesReportNetSales": "Total",
+  "expensesReportExpenseSales": "Expense / sales",
+  "expensesReportCompanyWide": "Company-wide",
+  "expensesReportUnavailable": "Unavailable",
+  "expensesReportNoExpenses": "There are no expenses in the selected period.",
+  "expensesReportNoCategories": "There is no expense data by category.",
+  "expensesReportNoBranches": "There is not enough data to compare branches.",
+  "expensesReportNoLargest": "There are no expenses to display.",
+  "expensesReportError": "Unable to load the Expenses report.",
+  "expensesReportCurrentPeriod": "Current period",
+  "expensesReportPreviousPeriod": "Previous period",
+  "expensesReportDifference": "Difference",
+  "expensesReportDraft": "Draft",
+  "expensesReportPendingApproval": "Pending approval",
+  "expensesReportApproved": "Approved",
+  "expensesReportPaid": "Paid",
+  "expensesReportRejected": "Rejected",
+  "expensesReportReversed": "Reversed",
+  "expensesReportComparisonUnavailable": "Comparison unavailable",
+  "expensesReportPercentOfTotal": "of total",
+  "cashierHomeTitle": "Home",
+  "cashierDashboardTitle": "Cashier Operations",
+  "cashierDashboardSubtitle": "Everything needed to run this shift at the till.",
+  "cashierBranchLabel": "Branch",
+  "cashierNameLabel": "Cashier",
+  "cashierShiftLabel": "Shift",
+  "cashierShiftOpenedAt": "Opened",
+  "cashierShiftDuration": "Duration",
+  "cashierShiftStatus": "Status",
+  "cashierShiftStatusOpen": "Open",
+  "cashierNoOpenShift": "No open shift",
+  "cashierNoOpenShiftHint": "Shift figures appear once a shift is open at this branch.",
+  "cashierScopeCurrentShift": "Current shift",
+  "cashierScopeBranch": "Branch",
+  "cashierSectionCashAndShift": "Cash and shift",
+  "cashierSectionSalesAndOrders": "Sales and orders",
+  "cashierSectionFinance": "Finance",
+  "cashierSectionInventory": "Inventory",
+  "cashierSectionQuickAccess": "Quick access",
+  "cashierSectionAlerts": "Operational alerts",
+  "cashierExpectedDrawer": "Expected drawer cash",
+  "cashierExpectedDrawerHint": "Expected, not counted. The physical count happens at shift close.",
+  "cashierOpeningFloat": "Opening float",
+  "cashierCashSales": "Cash sales",
+  "cashierReceiptVouchers": "Cash receipt vouchers",
+  "cashierPaymentVouchers": "Cash payment vouchers",
+  "cashierCashRefunds": "Cash refunds",
+  "cashierShiftSales": "Shift sales",
+  "cashierOrderCount": "Orders",
+  "cashierAverageOrder": "Average order",
+  "cashierCardSales": "Card sales",
+  "cashierOtherMethods": "Other methods",
+  "cashierDiscounts": "Discounts",
+  "cashierRefunds": "Refunds",
+  "cashierOrdersActive": "Active",
+  "cashierOrdersHeld": "Held",
+  "cashierOrdersCompleted": "Completed",
+  "cashierPosWarehouse": "POS warehouse",
+  "cashierItemCount": "Items",
+  "cashierLowStock": "Low stock",
+  "cashierZeroStock": "Zero stock",
+  "cashierNegativeStock": "Negative stock",
+  "cashierShiftCountStatus": "Shift count",
+  "cashierShiftCountComplete": "Complete",
+  "cashierShiftCountPending": "Not complete",
+  "cashierShiftCountNotRequired": "Not required",
+  "cashierQuickPos": "Point of sale",
+  "cashierQuickOrders": "Orders",
+  "cashierQuickDiscounts": "Discounts",
+  "cashierQuickReceiptVoucher": "Receipt voucher",
+  "cashierQuickPaymentVoucher": "Payment voucher",
+  "cashierQuickPurchases": "Purchases",
+  "cashierQuickSales": "Sales",
+  "cashierQuickInventory": "POS stock",
+  "cashierQuickLowStock": "Low items",
+  "cashierQuickNegativeStock": "Negative items",
+  "cashierCloseShift": "Close shift",
+  "cashierCloseShiftUnavailable": "The shift close flow is not available in this client yet.",
+  "cashierOperationsCount": "{count} operations",
+  "@cashierOperationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierPendingTemplates": "{count} pending",
+  "@cashierPendingTemplates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertNoBranch": "No operational branch is assigned to this account.",
+  "cashierAlertNoShift": "No shift is open right now.",
+  "cashierAlertWarehouseMissing": "No POS warehouse is configured for this branch.",
+  "cashierAlertWarehouseAmbiguous": "More than one POS warehouse is configured for this branch.",
+  "cashierAlertBlockingOrders": "{count} orders must be settled before closing the shift.",
+  "@cashierAlertBlockingOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertNegativeStock": "{count} items have negative stock.",
+  "@cashierAlertNegativeStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertLowStock": "{count} items are low on stock.",
+  "@cashierAlertLowStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertShiftCount": "The shift count is not complete.",
+  "cashierAlertsNone": "No operational alerts.",
+  "cashierRetry": "Retry",
+  "cashierLoadError": "Unable to load the operations dashboard.",
+  "cashierInventoryTitle": "POS stock",
+  "cashierInventorySubtitle": "Operational quantities for the warehouse this till sells from.",
+  "cashierInventorySearchHint": "Search by name or code",
+  "cashierInventoryFilterAll": "All",
+  "cashierInventoryStateNormal": "Normal",
+  "cashierInventoryStateLow": "Low",
+  "cashierInventoryStateZero": "Zero",
+  "cashierInventoryStateNegative": "Negative",
+  "cashierInventoryColumnItem": "Item",
+  "cashierInventoryColumnQuantity": "Quantity",
+  "cashierInventoryColumnState": "State",
+  "cashierInventoryColumnLastMovement": "Last movement",
+  "cashierInventoryEmpty": "There are no items in this warehouse.",
+  "cashierInventoryUnavailable": "No POS warehouse is configured for this branch.",
+  "cashierInventoryError": "Unable to load POS stock.",
+  "discountV2PackageBundle": "Package / Bundle",
+  "discountV2PackageRequirements": "Package Requirements",
+  "discountV2AllPackageItems": "All package items must be present in the order for this discount to apply.",
+  "discountV2RequiredQuantity": "Required Quantity",
+  "discountV2AddProduct": "Add Product",
+  "discountV2SelectedCustomers": "Selected Customers",
+  "discountV2SelectCustomers": "Select Customers",
+  "discountV2Channels": "Channels",
+  "discountV2AllChannels": "All Channels",
+  "discountV2SelectedChannels": "Selected Channels",
+  "discountV2BranchChannelHelp": "Branch and channel restrictions are applied together.",
+  "discountV2DailyLimit": "Per Customer Daily Limit",
+  "discountV2DailyLimitDetails": "Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.",
+  "discountV2Regenerate": "Regenerate",
+  "discountV2CodeGenerationFailed": "Unable to generate a code.",
+  "discountV2Retry": "Retry",
+  "discountV2Search": "Search",
+  "posCustomerPoints": "{points} pts",
+  "@posCustomerPoints": {"placeholders": {"points": {"type": "String"}}},
+  "posWalkInCustomer": "Walk-in customer",
+  "posUseWalkInCustomer": "Use walk-in customer",
+  "posSelectCustomer": "Select Customer",
+  "posSearchCustomers": "Search customers...",
+  "posNoCustomers": "No customers found.",
+  "posNoCustomerMatches": "No matching customers found.",
+  "posCreateNewCustomer": "Create New",
+  "posCloseCustomerSelector": "Close customer selector",
+  "posCustomerCreateTitle": "Create customer",
+  "posCustomerGroupsLoading": "Loading active groups...",
+  "posCustomerGroupsEmpty": "No active groups available.",
+  "posCustomerGroupsForbidden": "You cannot load customer groups.",
+  "posCustomerGroupsRetry": "Customer groups could not be loaded.",
+  "posCustomerCreateForbidden": "You cannot create a customer from the POS.",
+  "posCustomerCreateFailed": "The customer could not be created. You can retry safely.",
+  "posCustomerAttachmentFailed": "The customer was created, but could not be attached to this order. Retry safely.",
+  "posCustomerSearchForbidden": "You cannot search customers.",
+  "posCustomerSearchFailed": "Customer search is temporarily unavailable.",
+  "discountManual": "Manual",
+  "discountCode": "Code",
+  "discountCoupon": "Coupon",
+  "discountCodeValue": "Code: {code}",
+  "@discountCodeValue": {"placeholders": {"code": {"type": "String"}}},
+  "discountPercentage": "Percentage",
+  "discountFixedAmount": "Fixed Amount",
+  "discountActive": "Active",
+  "discountInactive": "Inactive",
+  "discountScheduled": "Scheduled",
+  "discountExpired": "Expired",
+  "discountEntireOrder": "Entire Order",
+  "discountSelectedProducts": "Selected Products",
+  "discountSelectedCategories": "Selected Categories",
+  "discountNoConditions": "No Conditions",
+  "discountAlwaysValid": "Always Valid",
+  "discountAmountOff": "{amount} off",
+  "@discountAmountOff": {"placeholders": {"amount": {"type": "String"}}},
+  "discountPercentOff": "{value}% off",
+  "@discountPercentOff": {"placeholders": {"value": {"type": "String"}}},
+  "discountBundleValue": "Buy {quantity} Get {quantity}",
+  "@discountBundleValue": {"placeholders": {"quantity": {"type": "int"}}},
+  "discountUntil": "Until {date}",
+  "@discountUntil": {"placeholders": {"date": {"type": "String"}}},
+  "discountFrom": "From {date}",
+  "@discountFrom": {"placeholders": {"date": {"type": "String"}}},
+  "discountDateRange": "{start} - {end}",
+  "@discountDateRange": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "discountsTitle": "Discounts & Coupons",
+  "discountsSubtitle": "Manage promotional offers and pricing rules",
+  "discountsCreate": "Create Discount",
+  "discountsSearchHint": "Search discounts...",
+  "discountsAllStatuses": "All Statuses",
+  "discountsAdvancedFilters": "Advanced filters",
+  "discountsAdvancedFiltersSoon": "Advanced filters will be available soon.",
+  "discountsEmpty": "No discounts match your search or status filter.",
+  "discountsTableName": "Discount Name",
+  "discountsTableType": "Type",
+  "discountsTableValue": "Value",
+  "discountsTableConditions": "Conditions",
+  "discountsTablePeriod": "Valid Period",
+  "discountsTableStatus": "Status",
+  "discountsTableActions": "Actions",
+  "discountsViewTooltip": "View discount",
+  "discountsEditTooltip": "Edit discount",
+  "discountsDeactivateTooltip": "Deactivate discount",
+  "discountsActivateTooltip": "Activate discount",
+  "discountsDeleteTooltip": "Delete discount",
+  "discountsPagination": "Showing {start} to {end} of {total} entries",
+  "@discountsPagination": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}},
+  "discountsActiveMetric": "ACTIVE DISCOUNTS",
+  "discountsUsageMetric": "TOTAL USAGE (THIS MONTH)",
+  "discountsSavedMetric": "ESTIMATED VALUE SAVED",
+  "discountsDeleteTitle": "Delete discount?",
+  "discountsDeleteBody": "\"{name}\" will no longer be available.",
+  "@discountsDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "discountsDeleted": "Discount deleted.",
+  "discountsDeleteFailed": "Unable to delete discount.",
+  "discountsStatusUpdated": "Discount {status}.",
+  "@discountsStatusUpdated": {"placeholders": {"status": {"type": "String"}}},
+  "discountsStatusUpdateFailed": "Unable to update discount status.",
+  "discountsUsedSaved": "Used {count} times - {amount} saved",
+  "@discountsUsedSaved": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "discountFormBasic": "Basic Information",
+  "discountFormName": "Discount Name",
+  "discountFormApplicationMode": "Application Mode",
+  "discountFormCouponOrCode": "Coupon / Code",
+  "discountFormDescription": "Description",
+  "discountFormDescriptionHint": "Internal description for discount policy...",
+  "discountFormScopeValue": "Scope & Value",
+  "discountFormAppliesTo": "Applies To",
+  "discountFormValueType": "Value Type",
+  "discountFormValue": "Value",
+  "discountFormMinSpendOptional": "Minimum Spend (optional)",
+  "discountFormMaxDiscountOptional": "Maximum Discount (optional)",
+  "discountFormQuickPercentages": "Quick percentage values",
+  "discountFormQuickFixed": "Quick fixed values",
+  "discountFormEligibility": "Eligibility Conditions",
+  "discountFormAllCustomers": "All Customers",
+  "discountFormSelectedCustomerGroups": "Selected Customer Groups",
+  "discountFormAllPaymentMethods": "All Payment Methods",
+  "discountFormSelectedPaymentMethods": "Selected Payment Methods",
+  "discountFormAllBranches": "All Branches",
+  "discountFormSelectedBranches": "Selected Branches",
+  "discountFormCustomerGroups": "Customer Groups",
+  "discountFormSelectCustomerGroups": "Select Customer Groups",
+  "discountFormSelectPaymentMethods": "Select Payment Methods",
+  "discountFormSelectBranches": "Select Branches",
+  "discountFormSchedule": "Schedule",
+  "discountFormActiveWeekdays": "Active Weekdays (optional)",
+  "discountFormStartDate": "Start Date",
+  "discountFormEndDate": "End Date",
+  "discountFormStartTime": "Start Time",
+  "discountFormEndTime": "End Time",
+  "discountFormOvernightHelp": "An end time earlier than the start time is an overnight window.",
+  "discountFormUsageLimits": "Usage Limits",
+  "discountFormGlobalUsageOptional": "Global Usage Limit (optional)",
+  "discountFormLifetimeUsageOptional": "Per Customer Lifetime Limit (optional)",
+  "discountFormUnlimited": "Unlimited",
+  "discountFormProduct": "Product",
+  "discountFormLoading": "Loading...",
+  "discountFormNoOptions": "No active options are available.",
+  "discountFormDone": "Done",
+  "discountFormLoadTitle": "Unable to load discount",
+  "discountFormRetryOptions": "Retry loading selection options",
+  "discountFormDiscard": "Discard Changes",
+  "discountFormSaveDraft": "Save as Draft",
+  "discountFormActivate": "Activate Discount",
+  "discountFormSummary": "Summary",
+  "discountFormReady": "Policy is ready for review before activation.",
+  "discountFormNotReady": "Complete the required fields before activating this discount.",
+  "discountFormDiscount": "Discount",
+  "discountFormScope": "Scope",
+  "discountFormBranches": "Branches",
+  "discountFormScheduleLabel": "Schedule",
+  "discountFormCustomers": "Customers",
+  "discountFormPackage": "Package",
+  "discountFormUsage": "Usage",
+  "discountFormAnyDay": "Any day",
+  "discountFormSelectedCount": "{count} selected",
+  "@discountFormSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormDaysSelected": "{count} days selected",
+  "@discountFormDaysSelected": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormSelectedCustomers": "{count} selected customers",
+  "@discountFormSelectedCustomers": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormPerDay": "{count} per day",
+  "@discountFormPerDay": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormLifetime": "{count} lifetime",
+  "@discountFormLifetime": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormUsageBoth": "{lifetime} lifetime / {daily} per day",
+  "@discountFormUsageBoth": {"placeholders": {"lifetime": {"type": "int"}, "daily": {"type": "int"}}},
+  "discountFormSavedActivated": "Discount saved and activated.",
+  "discountFormSaved": "Discount saved.",
+  "discountFormSaveFailed": "Unable to save discount.",
+  "discountValidationName": "Discount name is required.",
+  "discountValidationNonNegativeValue": "Enter a value of zero or greater.",
+  "discountValidationPercentage": "A percentage discount cannot exceed 100.",
+  "discountValidationCode": "A code is required for coupon discounts.",
+  "discountValidationProducts": "Select one or more products.",
+  "discountValidationCategories": "Select one or more categories.",
+  "discountValidationBundle": "Add at least one package product.",
+  "discountValidationBundleProduct": "Select a product for every package requirement.",
+  "discountValidationBundleUnique": "A package product can only be added once.",
+  "discountValidationBundleQuantity": "Package quantities must be greater than zero.",
+  "discountValidationGroups": "Select one or more customer groups.",
+  "discountValidationCustomers": "Select one or more customers.",
+  "discountValidationBranches": "Select one or more branches.",
+  "discountValidationMoney": "Enter valid monetary amounts.",
+  "discountValidationNegativeMoney": "Monetary amounts cannot be negative.",
+  "discountValidationUsage": "Usage limits must be positive whole numbers.",
+  "discountValidationDailyUsage": "Daily usage limits must be positive whole numbers.",
+  "discountValidationDate": "Dates must use YYYY-MM-DD.",
+  "discountValidationEndDate": "End date cannot be earlier than start date.",
+  "discountValidationTimesTogether": "Start time and end time must be provided together.",
+  "discountValidationTime": "Times must use HH:mm.",
+  "discountFormCreate": "Create Discount",
+  "discountFormEdit": "Edit Discount",
+  "discountFormCreatePolicy": "Create Discount Policy",
+  "discountFormEditPolicy": "Edit Discount Policy",
+  "discountFormHeadingSubtitle": "Configure policy scope, eligibility, and schedule.",
+  "discountCustomerEligibility": "Customer Eligibility",
+  "discountPaymentMethods": "Payment Methods",
+  "discountWeekdayMonday": "Mon",
+  "discountWeekdayTuesday": "Tue",
+  "discountWeekdayWednesday": "Wed",
+  "discountWeekdayThursday": "Thu",
+  "discountWeekdayFriday": "Fri",
+  "discountWeekdaySaturday": "Sat",
+  "discountWeekdaySunday": "Sun",
+  "discountPosPreview": "POS Preview",
+  "discountSubtotal": "Subtotal",
+  "discountTotal": "Total",
+  "discountTax": "Tax ({percent}%)",
+  "@discountTax": {"placeholders": {"percent": {"type": "String"}}},
+  "discountRequestFailed": "Unable to complete the discount request. Please try again.",
+  "discountServerFieldInvalid": "Review the {field} field.",
+  "@discountServerFieldInvalid": {
+    "placeholders": {
+      "field": {"type": "String"}
+    }
+  },
+  "discountCurrency": "Currency",
+  "discountChannelPos": "POS",
+  "discountChannelWaiterApp": "Waiter app",
+  "discountChannelKiosk": "Kiosk",
+  "discountChannelQrOrdering": "QR ordering",
+  "discountChannelDelivery": "Delivery",
+  "discountChannelOnlineOrdering": "Online ordering",
+  "discountFormSelectedCountPlural": "{count, plural, =0{None selected} =1{1 selected} other{{count} selected}}",
+  "@discountFormSelectedCountPlural": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormDaysSelectedPlural": "{count, plural, =0{Any day} =1{1 day selected} other{{count} days selected}}",
+  "@discountFormDaysSelectedPlural": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormSelectedCustomersPlural": "{count, plural, =0{No customers selected} =1{1 selected customer} other{{count} selected customers}}",
+  "@discountFormSelectedCustomersPlural": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormPerDayPlural": "{count, plural, =1{1 per day} other{{count} per day}}",
+  "@discountFormPerDayPlural": {"placeholders": {"count": {"type": "int"}}},
+  "discountFormLifetimePlural": "{count, plural, =1{1 lifetime} other{{count} lifetime}}",
+  "@discountFormLifetimePlural": {"placeholders": {"count": {"type": "int"}}},
+  "posApplyDiscount": "Apply Discount", "posCouponCode": "Coupon code", "posEnterCouponCode": "Enter coupon code", "posCouponCodeRequired": "Enter a coupon code.", "posCouponDiscount": "Coupon discount", "posAvailableDiscounts": "Available Discounts", "posSearchDiscounts": "Search discounts", "posNoDiscountsAvailable": "No discounts are available for this order.", "posNoDiscountsMatch": "No discounts match your search.", "posApply": "Apply", "posClose": "Close", "posCancel": "Cancel",
+  "posPayment": "Payment", "posOrderNumber": "Order {number}", "@posOrderNumber": {"placeholders": {"number": {"type": "String"}}}, "posSelectPaymentMethod": "Select Method", "posPaymentMethodCash": "Cash", "posPaymentMethodCard": "Card", "posPaymentMethodWallet": "Wallet", "posPaymentMethodSplit": "Split", "posAmountReceived": "AMOUNT RECEIVED", "posChangeDue": "Change Due", "posEnterAmountReceived": "Enter amount received.", "posAmountBelowTotal": "Amount received is less than total due.", "posSplitUnavailable": "Split payment will be supported later.", "posExternalTerminalPending": "External payment terminal integration will be added later.", "posConfirmPayment": "Confirm Payment", "posPaymentFailed": "Payment could not be completed. Please try again.", "posNoPaymentMethods": "No active payment method is linked to a financial account.", "posPaymentUncertain": "Payment status is uncertain. Check the payment status before trying again.", "posReceiptUnavailable": "The receipt could not be loaded. You can retry safely.", "posRetryReceipt": "Retry Receipt", "posCheckPaymentStatus": "Check Payment Status",
+  "posOrderTypeDineIn": "Dine-in", "posOrderTypeTakeaway": "Takeaway", "posOrderTypeDelivery": "Delivery", "posCurrentOrder": "Current order", "posSubtotal": "Subtotal", "posDiscount": "Discount", "posTax": "Tax ({percent}%)", "@posTax": {"placeholders": {"percent": {"type": "String"}}}, "posTotal": "Total", "posRemoveDiscount": "Remove", "posAddDiscount": "Add discount", "posHoldOrder": "Hold order", "posCancelOrder": "Cancel order", "posPrint": "Print", "posPayAmount": "Pay {amount}", "@posPayAmount": {"placeholders": {"amount": {"type": "String"}}}, "posCompleteOrder": "Complete order", "posRemoveItem": "Remove item", "posExactAmount": "Exact", "posTotalDue": "Total due", "posItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}", "@posItemCount": {"placeholders": {"count": {"type": "int"}}}, "posViewDetails": "View details", "posCheckout": "Checkout",
+  "posProductOptionsUnavailable": "Product options unavailable", "posRetry": "Retry", "posProductCustomization": "Customize {product}", "@posProductCustomization": {"placeholders": {"product": {"type": "String"}}}, "posVariant": "Variant", "posSpecialInstructions": "Special Instructions", "posSpecialInstructionsHint": "E.g., extra hot, in a to-go cup...", "posTemperature": "Temperature", "posSize": "Size", "posMilkBase": "Milk Base", "posAddOns": "Add-ons", "posSweetness": "Sweetness", "posQuantity": "Quantity", "posAddToOrder": "Add to Order", "posAdding": "Adding...", "posRequiredSelection": "Select the required options.",
+  "posReceipt": "Receipt", "posReceiptPreview": "Receipt preview", "posCloseReceiptPreview": "Close receipt preview", "posSendViaWhatsApp": "Send via WhatsApp", "posPrintReceipt": "Print receipt", "posWhatsAppPending": "WhatsApp sending will be added later.", "posPaymentCompleted": "Payment completed", "posReceiptOrder": "Order:", "posReceiptCashier": "Cashier:", "posReceiptCustomer": "Customer:", "posReceiptDate": "Date:", "posReceiptTime": "Time:", "posReceiptPaidVia": "Paid via:", "posReceiptAuthorization": "Authorization:", "posReceiptApproved": "Approved", "posReceiptChange": "Change", "posReceiptNote": "Note: {note}", "@posReceiptNote": {"placeholders": {"note": {"type": "String"}}}, "posReceiptThankYou": "Thank you for visiting!",
+  "posOperationFailed": "The POS operation could not be completed. Please try again.", "posHoldSucceeded": "Order held successfully.", "posHoldRetryable": "The order could not be held. Your cart is still available to retry.", "posHoldUncertain": "The hold status could not be confirmed. Your cart is still available; check Orders before retrying.", "posMenuVersionStale": "The menu changed. Refresh the POS menu and review the order.", "posOpenShiftRequired": "Open a shift before continuing.", "posOrderUnavailableForBranch": "This order is not available in the selected branch.", "posHeldOrderRequired": "Only an unpaid held order can be resumed.",
+  "posCustomizeItem": "Customize item", "posRequired": "Required", "posHot": "Hot", "posIced": "Iced", "posSmallSize": "Small (8oz)", "posMediumSize": "Medium (12oz)", "posLargeSize": "Large (16oz)", "posWholeMilk": "Whole milk", "posOatMilk": "Oat milk", "posAlmondMilk": "Almond milk", "posDefault": "Default", "posExtraEspresso": "Extra espresso shot", "posCaramelSyrup": "Caramel syrup", "posVanillaSyrup": "Vanilla syrup", "posWhippedCream": "Whipped cream", "posProductDescriptionFallback": "A classic espresso-based beverage.", "posBasePrice": "{variant} base - {price}", "@posBasePrice": {"placeholders": {"variant": {"type": "String"}, "price": {"type": "String"}}}, "posSearchProducts": "Search products...", "posNoItemsAvailable": "No items available.", "posNoCartItems": "No items added yet", "posCloseCustomizationDialog": "Close customization dialog"
+  ,"customerImportAction": "Import CSV",
+  "customerImportTitle": "Import customers from CSV",
+  "customerImportDescription": "Upload a CSV preview, review warnings, then confirm the server-authoritative import.",
+  "customerImportSelectFile": "Select CSV file",
+  "customerImportChooseAnother": "Choose another file",
+  "customerImportDetected": "Detected {encoding} encoding and {delimiter} delimiter",
+  "@customerImportDetected": {"placeholders": {"encoding": {"type": "String"}, "delimiter": {"type": "String"}}},
+  "customerImportTotal": "Total",
+  "customerImportReady": "Ready",
+  "customerImportWarnings": "Warnings",
+  "customerImportRejected": "Rejected",
+  "customerImportDuplicateCandidates": "Duplicate candidates",
+  "customerImportCreateMissingGroups": "Create missing groups",
+  "customerImportIssues": "Representative row issues",
+  "customerImportUnnamedRow": "Unnamed row",
+  "customerImportSummary": "Import summary",
+  "customerImportCountsSummary": "Created {created}, skipped {skipped}, failed {failed}; groups {groups}, memberships {memberships}.",
+  "@customerImportCountsSummary": {"placeholders": {"created": {"type": "int"}, "skipped": {"type": "int"}, "failed": {"type": "int"}, "groups": {"type": "int"}, "memberships": {"type": "int"}}},
+  "customerImportConfirmTitle": "Confirm customer import",
+  "customerImportConfirmMessage": "The server will create customers and memberships according to this preview. Existing customers are not updated.",
+  "customerImportConfirmAction": "Confirm import",
+  "customerImportStart": "Start import",
+  "customerImportCompletedWithErrors": "Completed with errors",
+  "customerImportDownloadErrors": "Download error report",
+  "customerImportValidationFailed": "The CSV file could not be validated. Check its encoding, columns, and size.",
+  "customerImportAlreadyCompleted": "This CSV import was already completed. Choose a new preview before committing.",
+  "customerImportGenericFailure": "The customer import could not be completed. Please try again safely.",
+  "posPrinting": "Printing...",
+  "posRetryPrint": "Retry Print",
+  "posPrinterSetup": "Printer Setup",
+  "posPrintOrderRequired": "No saved backend order is available to print.",
+  "posPrintItemsRequired": "This order has no items to print.",
+  "posPreBillUnavailable": "A pre-bill is only available before payment.",
+  "posPrintPrinterNotConfigured": "Receipt printer is not configured.",
+  "posPrintInvalidConfiguration": "Receipt printer settings are invalid.",
+  "posPrintConfigurationUnavailable": "Printer settings could not be loaded.",
+  "posPrintReceiptUnavailable": "The authoritative order receipt could not be loaded.",
+  "posPrintRenderingFailed": "The receipt could not be rendered.",
+  "posPrintUnreachable": "Could not connect to the receipt printer.",
+  "posPrintTimeout": "The printer timed out.",
+  "posPrintUnsupported": "Receipt printing is unavailable on this device.",
+  "posPrintFailed": "Printing failed. Check the printer and try again.",
+  "printerSetupTitle": "Printer Setup",
+  "printerSetupThisDevice": "This Device",
+  "printerSetupDescription": "Configure the network thermal printer used by this Windows PC or Android tablet.",
+  "printerSetupNoActiveBranch": "No active branch selected",
+  "printerSetupCouldNotLoadBranch": "Could not load the active branch.",
+  "printerSetupCouldNotLoad": "Printer setup could not be loaded.",
+  "printerSetupUseBranchDefaults": "Use Branch Defaults",
+  "printerSetupUsingBranchDefaults": "Using the shared default printer for the active branch.",
+  "printerSetupUsingLocalOverride": "Using this device-only printer override.",
+  "printerSetupSaveDeviceSettings": "Save Device Settings",
+  "printerTestPrint": "Test Print",
+  "printerTesting": "Testing…",
+  "printerRetryTestPrint": "Retry Test Print",
+  "printerTestPrintSuccessful": "Print successful",
+  "ordersTitle": "Order Management",
+  "ordersSubtitle": "View and manage all active, held, and recent orders.",
+  "ordersNoMatchFilter": "No orders match this filter yet.",
+  "ordersPrintLater": "Printing will be added later.",
+  "ordersCopyLater": "Copy order will be added later.",
+  "ordersCannotResume": "This order cannot be resumed.",
+  "ordersResumeFailed": "Could not resume this order. Please try again.",
+  "ordersCancelledDone": "Order cancelled.",
+  "ordersCancelFailed": "Could not cancel this order.",
+  "ordersCheckStatus": "Check status",
+  "ordersCancellationConfirmed": "Order cancellation confirmed.",
+  "ordersStillActiveRetryCancel": "Order is still active. Retry cancellation explicitly.",
+  "ordersPaymentRecordFailed": "Could not record payment. Please try again.",
+  "ordersPaymentConfirmed": "Payment confirmed.",
+  "ordersPaymentConfirmedNoReceipt": "Payment confirmed, but the receipt is unavailable.",
+  "ordersRetryReceipt": "Retry receipt",
+  "ordersRefundRecorded": "Refund recorded.",
+  "ordersRefundRecordFailed": "Could not record refund. Please check the order before retrying.",
+  "ordersPrevious": "Previous",
+  "ordersNext": "Next",
+  "ordersPageOf": "Page {current} of {last}",
+  "@ordersPageOf": {"placeholders": {"current": {"type": "int"}, "last": {"type": "int"}}},
+  "ordersTotalCount": "{total, plural, =1{1 order} other{{total} orders}}",
+  "@ordersTotalCount": {"placeholders": {"total": {"type": "int"}}},
+  "ordersReplaceCartTitle": "Replace current POS cart?",
+  "ordersReplaceCartBody": "Resuming this held order will replace the current POS cart context. Unsaved local changes will be discarded.",
+  "ordersKeepCart": "Keep current cart",
+  "ordersReplaceAndResume": "Replace and resume",
+  "ordersCancelOrderTitle": "Cancel order?",
+  "ordersCancelOrderBody": "Cancel {number}? This cannot be undone.",
+  "@ordersCancelOrderBody": {"placeholders": {"number": {"type": "String"}}},
+  "ordersKeepOrder": "Keep order",
+  "ordersCancelOrder": "Cancel order",
+  "ordersCancelOrderSubmitting": "Cancel order submitting",
+  "ordersStatusPreparing": "PREPARING",
+  "ordersStatusHeld": "HELD",
+  "ordersStatusReady": "READY",
+  "ordersStatusPaid": "PAID",
+  "ordersStatusCompleted": "COMPLETED",
+  "ordersStatusCancelled": "CANCELLED",
+  "ordersStatusRefunded": "REFUNDED",
+  "ordersStatusPartiallyRefunded": "PARTIAL REFUND",
+  "ordersFilterActive": "ACTIVE ORDERS",
+  "ordersFilterHeld": "HELD ORDERS",
+  "ordersFilterDineIn": "DINE-IN",
+  "ordersFilterTakeaway": "TAKEAWAY",
+  "ordersActionResume": "RESUME",
+  "ordersActionPay": "PAY",
+  "ordersActionCancel": "CANCEL",
+  "ordersActionDetails": "DETAILS",
+  "ordersActionSemantics": "{action} order action",
+  "@ordersActionSemantics": {"placeholders": {"action": {"type": "String"}}},
+  "ordersCustomer": "Customer",
+  "ordersWalkInCustomer": "Walk-in Customer",
+  "ordersWalkInInitials": "WC",
+  "ordersWalkIn": "Walk-in",
+  "ordersOrderItems": "Order Items",
+  "ordersNoLineItems": "No line items",
+  "ordersNote": "Note: {note}",
+  "@ordersNote": {"placeholders": {"note": {"type": "String"}}},
+  "ordersItemFallback": "Item",
+  "ordersItemsOne": "{count} Item",
+  "@ordersItemsOne": {"placeholders": {"count": {"type": "String"}}},
+  "ordersItemsMany": "{count} Items",
+  "@ordersItemsMany": {"placeholders": {"count": {"type": "String"}}},
+  "ordersTotals": "Totals",
+  "ordersSubtotal": "Subtotal",
+  "ordersTax": "Tax ({percent}%)",
+  "@ordersTax": {"placeholders": {"percent": {"type": "String"}}},
+  "ordersTip": "Tip (15%)",
+  "ordersRefundedLabel": "Refunded",
+  "ordersTotal": "Total",
+  "ordersCloseDetails": "Close order details",
+  "ordersPrintTooltip": "Print order",
+  "ordersCopyTooltip": "Copy order",
+  "ordersResumeInPos": "Resume in POS",
+  "ordersDisabledSemantics": "{label} disabled",
+  "@ordersDisabledSemantics": {"placeholders": {"label": {"type": "String"}}},
+  "ordersPay": "Pay",
+  "ordersRefund": "Refund",
+  "ordersPaymentTitle": "Payment",
+  "ordersPaymentAuth": "{status} - Auth: {auth}",
+  "@ordersPaymentAuth": {"placeholders": {"status": {"type": "String"}, "auth": {"type": "String"}}},
+  "ordersRefundAmountLine": "Refund {amount}",
+  "@ordersRefundAmountLine": {"placeholders": {"amount": {"type": "String"}}},
+  "ordersNoPaymentYet": "No payment recorded yet.",
+  "ordersMethodWallet": "Wallet",
+  "ordersMethodShamCash": "Sham Cash",
+  "ordersMethodSplit": "Split",
+  "ordersPaymentStatusPending": "Pending",
+  "ordersPaymentStatusCompleted": "Completed",
+  "ordersPaymentStatusFailed": "Failed",
+  "ordersPaymentStatusApproved": "Approved",
+  "ordersPaymentStatusVoided": "Voided",
+  "ordersPaymentStatusRefunded": "Refunded",
+  "ordersTimeline": "Timeline",
+  "ordersBackendEvent": "System event",
+  "ordersEventCreated": "Order created",
+  "ordersEventHeld": "Order held",
+  "ordersEventClosed": "Order closed",
+  "ordersEventRefundCompleted": "Refund completed",
+  "ordersEventPaymentReceived": "Payment received",
+  "ordersEventCompleted": "Order completed",
+  "ordersEventReady": "Order ready",
+  "ordersEventPreparing": "Order preparing",
+  "ordersAm": "AM",
+  "ordersPm": "PM",
+  "ordersJustNow": "Just now",
+  "ordersMinutesAgo": "{n}m ago",
+  "@ordersMinutesAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersHoursAgo": "{n}h ago",
+  "@ordersHoursAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersDaysAgo": "{n}d ago",
+  "@ordersDaysAgo": {"placeholders": {"n": {"type": "String"}}},
+  "ordersRefundReasonCustomerRequest": "Customer Request",
+  "ordersRefundReasonWrongItem": "Wrong Item",
+  "ordersRefundReasonQuality": "Item Quality Issue",
+  "ordersRefundReasonDuplicate": "Duplicate Charge",
+  "ordersRefundReasonOrderCancelled": "Order Cancelled",
+  "ordersRefundReasonManagerApproved": "Manager Approved",
+  "ordersRefundReasonOther": "Other",
+  "ordersRefundTypeFull": "Full Refund",
+  "ordersRefundTypePartial": "Partial Refund",
+  "ordersRefundCustomAmount": "Custom amount",
+  "ordersRefundEnterAmount": "Enter a refund amount.",
+  "ordersRefundAmountPositive": "Refund amount must be greater than zero.",
+  "ordersRefundAmountExceeds": "Refund amount cannot exceed refundable balance.",
+  "ordersRefundFieldAmount": "REFUND AMOUNT",
+  "ordersRefundFieldReason": "REASON FOR REFUND",
+  "ordersRefundFieldNotes": "MANAGER NOTES (OPTIONAL)",
+  "ordersRefundNotesHint": "Add context for end of day reporting...",
+  "ordersRefundDialogTitle": "Refund Order {number}",
+  "@ordersRefundDialogTitle": {"placeholders": {"number": {"type": "String"}}},
+  "ordersRefundCloseDialog": "Close refund dialog",
+  "ordersRefundConfirm": "Confirm Refund",
+  "ordersRefundOrderTotal": "ORDER TOTAL",
+  "ordersRefundPaidVia": "PAID VIA",
+  "ordersRefundWarning": "Safety First: This action will reverse the payment and cannot be undone.\nPlease verify all details before confirming.",
+  "ordersMsgNoActiveBranches": "No active branches are available.",
+  "ordersMsgPageRecoveryInvalid": "Order page recovery returned invalid pagination metadata.",
+  "ordersMsgLoadFailed": "Could not load orders. Check backend connection.",
+  "ordersMsgDetailsLoadFailed": "Could not load order details. Check backend connection.",
+  "ordersMsgResumeInvalidId": "This order cannot be resumed because its backend id is invalid.",
+  "ordersMsgDifferentOrder": "The backend returned a different order. Refresh and try again.",
+  "ordersMsgNotInBranch": "This order is not in the selected branch.",
+  "ordersMsgOnlyHeldResume": "Only an unpaid held order can be resumed.",
+  "ordersMsgResumeInPosFailed": "Could not resume this order in POS. Please try again.",
+  "ordersMsgResumeConnFailed": "Could not resume this order. Check backend connection.",
+  "ordersMsgCancelInvalidId": "This order cannot be cancelled because its backend id is invalid.",
+  "ordersMsgCancelVerifyFailed": "Could not verify this order before cancellation.",
+  "ordersMsgOnlyDraftHeldCancel": "Only an unpaid draft or held order can be cancelled.",
+  "ordersMsgCancelNoChange": "Could not cancel this order. No changes were confirmed.",
+  "ordersMsgOrderIdInvalid": "Order id is not a backend id.",
+  "ordersMsgPaymentPrepareAccess": "Could not prepare payment. Check order access and try again.",
+  "ordersMsgPaymentNotReady": "Payment is not ready. Refresh the order and try again.",
+  "ordersMsgCannotPayState": "This order cannot be paid in its current state.",
+  "ordersMsgPaymentPrepareFailed": "Could not prepare payment. Please try again.",
+  "ordersMsgPaymentNeedsBackend": "Payment requires an authenticated backend connection.",
+  "ordersMsgPaymentRecordFailed": "Could not record payment. Please try again.",
+  "ordersMsgPaymentNotCompleted": "Payment was not completed. You can retry safely with the same operation.",
+  "ordersMsgReceiptLoadFailed": "Payment completed, but the receipt could not be loaded.",
+  "ordersMsgPaymentSummaryMismatch": "Payment summary did not match the selected order.",
+  "ordersMsgNoSupportedMethod": "No supported payment method is available for this order.",
+  "ordersMsgPaymentUncertain": "Payment status could not be confirmed. Check the order before retrying.",
+  "ordersMsgNoRefundable": "This order has no completed payment or refundable balance.",
+  "ordersMsgRefundPrepareFailed": "Could not prepare the refund. Please try again.",
+  "ordersMsgRefundRecordFailed": "Could not record the refund. Please try again.",
+  "ordersMsgRefundNotFound": "Refund was not found on the server. Check the order, then retry with the same operation.",
+  "ordersMsgRefundUncertain": "Refund status could not be confirmed. Check the order before retrying.",
+  "ordersMsgCancelUncertain": "Cancellation status could not be confirmed. Check status before retrying.",
+  "ordersMsgCancelUnresolved": "Cancellation status is unresolved. Check status before retrying.",
+  "ordersMsgStillActive": "Order is still active and unpaid. Check status, then retry cancellation explicitly.",
+  "posSelectOrderType": "Order type",
+  "posOrderTypeRequired": "Choose the order type to continue.",
+  "posSelectDeliveryCompany": "Delivery company",
+  "posDeliveryCompanyRequired": "Choose the delivery company.",
+  "posNoDeliveryCompanies": "No delivery company is set up. Ask the manager to add one under payment methods.",
+  "posDeliveryPaymentHint": "The amount is recorded on the delivery company's account.",
+  "posDeliveryOwn": "Own delivery",
+  "posDeliveryCollection": "Collection",
+  "posDeliveryCashNow": "Cash now",
+  "posDeliveryOnAccount": "On the company's account (later)"
+}

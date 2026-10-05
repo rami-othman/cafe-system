@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\AccountingPostingService;
 use App\Services\FinancialIntegrityService;
 use App\Services\FinancialSetupService;
+use App\Services\PhinixRemapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +79,35 @@ class FinancialIntegrityServiceTest extends TestCase
         app(FinancialSetupService::class)->ensureForTenant($tenant, null, $owner);
 
         return [(int) $tenant, (int) $owner];
+    }
+
+    public function test_phinix_readiness_uses_active_new_accounts_and_payables_checks_the_new_control(): void
+    {
+        [$tenant, $owner] = $this->tenant();
+        foreach (PhinixRemapService::LEGACY_TO_NEW as $oldCode => $newCode) {
+            $old = DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', $oldCode)->first();
+            $newId = DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', $newCode)->value('id');
+            $newId ??= DB::table('financial_accounts')->insertGetId([
+                'tenant_id' => $tenant, 'code' => $newCode, 'name_ar' => $newCode, 'name_en' => $newCode,
+                'account_group' => $old->account_group, 'normal_balance' => $old->normal_balance, 'catalog_source' => 'phinix',
+            ]);
+            foreach (['financial_locations', 'payment_methods', 'sales_account_mappings'] as $table) {
+                DB::table($table)->where('tenant_id', $tenant)->where('financial_account_id', $old->id)->update(['financial_account_id' => $newId]);
+            }
+            DB::table('financial_accounts')->where('id', $old->id)->update(['is_active' => false]);
+        }
+        $clean = app(FinancialIntegrityService::class)->inspect($tenant);
+        $this->assertSame('PASS', $clean['status']);
+        $this->assertNotContains('2000', app(FinancialSetupService::class)->requiredAccountCodes($tenant));
+        $this->assertContains('223', app(FinancialSetupService::class)->requiredAccountCodes($tenant));
+        app(AccountingPostingService::class)->post(Request::create('/integrity'), $tenant, [
+            'sourceType' => 'manual', 'sourceId' => 999, 'sourceEvent' => 'TEST_AP', 'entryDate' => '2026-09-01',
+            'lines' => [['accountCode' => '131', 'debit' => '100.00'], ['accountCode' => '223', 'credit' => '100.00']],
+        ], $owner);
+        $result = app(FinancialIntegrityService::class)->inspect($tenant);
+        $this->assertSame(1, $this->check($result, 'ACCOUNTS_PAYABLE_RECONCILIATION_MISMATCH')['count']);
+        $this->assertSame(['-100.00'], $this->check($result, 'ACCOUNTS_PAYABLE_RECONCILIATION_MISMATCH')['references']);
+
     }
 
     private function check(array $result, string $code): array

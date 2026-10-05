@@ -183,6 +183,11 @@ class FinanceStatusBadge extends StatelessWidget {
         return (label: l10n.financeStatusRejected, tone: FinanceTone.danger);
       case 'reversed':
         return (label: l10n.financeStatusReversed, tone: FinanceTone.neutral);
+      case 'superseded':
+        return (
+          label: l10n.localeName.startsWith('ar') ? 'مستبدل بالدمج' : 'Superseded',
+          tone: FinanceTone.neutral,
+        );
       case 'partially_paid':
       case 'partial':
         return (

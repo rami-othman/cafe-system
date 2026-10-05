@@ -64,7 +64,7 @@ final class CustomerPaymentController extends Controller
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
             'financialLocationId' => ['nullable', 'integer'],
-            'allocations' => ['required', 'array', 'min:1'],
+            'allocations' => ['present', 'array'],
             'allocations.*.invoiceId' => ['required', 'integer'],
             'allocations.*.amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
         ]);
@@ -156,7 +156,7 @@ final class CustomerPaymentController extends Controller
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['required', 'string', 'max:120'],
-            'allocations' => ['required', 'array', 'min:1'],
+            'allocations' => ['present', 'array'],
             'allocations.*.invoiceId' => ['required', 'integer'],
             'allocations.*.amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
         ]);
@@ -217,6 +217,7 @@ final class CustomerPaymentController extends Controller
             'branchName' => $row->branch_name,
             'paymentDate' => $row->payment_date,
             'amount' => Money::decimal(Money::cents($row->amount)),
+            'advanceAmount' => Money::decimal(Money::cents($row->advance_amount ?? '0')),
             'paymentMethodId' => (int) $row->payment_method_id,
             'paymentMethodName' => $row->payment_method_name,
             'financialLocationId' => (int) $row->financial_location_id,

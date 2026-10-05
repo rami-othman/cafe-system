@@ -558,6 +558,9 @@ class PosRepository {
       phone: phone,
       tier: rawTier.isEmpty ? null : rawTier.toUpperCase(),
       points: parsedPoints,
+      walletBalance: json['walletBalance'] == null
+          ? null
+          : readDouble(json['walletBalance']),
     );
   }
 

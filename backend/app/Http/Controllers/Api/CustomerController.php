@@ -44,7 +44,9 @@ class CustomerController extends Controller
             $limit = 50;
         }
 
-        $customers = $query->orderBy('name')->limit($limit)->get()->map(fn ($customer) => $this->operationalPayload($customer));
+        $rows = $query->orderBy('name')->limit($limit)->get();
+        $funds = app(\App\Services\PartyAccountService::class)->walletFundsCents($tenantId, $rows->pluck('id')->map(fn ($id) => (int) $id)->all());
+        $customers = $rows->map(fn ($customer) => $this->operationalPayload($customer) + ['walletBalance' => \App\Support\Money::decimal($funds[(int) $customer->id] ?? 0)]);
 
         return response()->json(['data' => $customers]);
     }

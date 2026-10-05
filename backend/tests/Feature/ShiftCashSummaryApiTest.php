@@ -8,9 +8,9 @@ use App\Services\ShiftCashSummaryService;
 use Tests\TestCase;
 
 /**
- * Phase 4 — ShiftController::close() now uses ShiftCashSummaryService, the
- * single authoritative cash formula: opening + cash sales - cash refunds.
- * Card/other non-cash payments and refunds never affect the drawer figure.
+ * Operational cash summary: opening + cash sales - cash refunds.
+ * Close uses the posted drawer ledger and requires an explicit variance reason.
+ * Card/other non-cash payments and refunds never affect the cash figure.
  */
 class ShiftCashSummaryApiTest extends TestCase
 {
@@ -39,9 +39,15 @@ class ShiftCashSummaryApiTest extends TestCase
         $summary = app(ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->find($shiftId));
         $this->assertSame('550.00', $summary['expectedCash']);
         $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 545, 'cashDifferenceReason' => 'change_error'], $headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
-        $this->assertSame('open', DB::table('shifts')->where('id', $shiftId)->value('status'));
-        $this->assertSame(0, DB::table('cash_transfers')->where('shift_id', $shiftId)->count());
+            ->assertOk()->assertJsonPath('data.status', 'closed');
+        $closed = DB::table('shifts')->find($shiftId);
+        $this->assertSame('550.00', $closed->expected_cash);
+        $this->assertSame('545.00', $closed->closing_cash);
+        $this->assertSame('-5.00', $closed->cash_difference);
+        $this->assertSame('545.00', DB::table('cash_transfers')->where('shift_id', $shiftId)->sole()->amount);
+        $shortageAccount = DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6180')->value('id');
+        $this->assertDatabaseHas('journal_entry_lines', ['journal_entry_id' => $closed->cash_variance_journal_entry_id,
+            'financial_account_id' => $shortageAccount, 'debit' => '5.00', 'credit' => '0.00']);
     }
 
     public function test_card_sales_and_card_refunds_are_excluded_from_the_cash_drawer_figure(): void
@@ -95,10 +101,12 @@ class ShiftCashSummaryApiTest extends TestCase
         // cosmetic: it changes the reconciliation target at close time.
         $summary = app(ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->find($shiftId));
         $this->assertSame('93.00', $summary['expectedCash']);
-        // These legacy shift movements have no posted cash lines; closing
-        // must not transfer against a drawer ledger that cannot reconcile.
+        // These legacy movements have no posted cash lines. The posted ledger
+        // remains 100, so counting 93 needs an explicit shortage reason.
         $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 93], $headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
+            ->assertUnprocessable()->assertJsonValidationErrors('cashDifferenceReason');
+        $this->assertSame('open', DB::table('shifts')->where('id', $shiftId)->value('status'));
+        $this->assertSame(0, DB::table('cash_transfers')->where('shift_id', $shiftId)->count());
     }
 
     public function test_current_snapshot_exposes_the_server_authoritative_shift_shape(): void

@@ -98,6 +98,32 @@ final class PartyAccountService
     }
 
     /**
+     * Wallet funds (same derivation as walletState) for many customers in one query, for list screens.
+     *
+     * @param  list<int>  $customerIds
+     * @return array<int,int> customer id => funds in cents (0 when the customer has no account yet)
+     */
+    public function walletFundsCents(int $tenantId, array $customerIds): array
+    {
+        $funds = array_fill_keys($customerIds, 0);
+        if ($customerIds === []) {
+            return $funds;
+        }
+        $rows = DB::table('customers as c')
+            ->join('journal_entry_lines as l', 'l.financial_account_id', '=', 'c.financial_account_id')
+            ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')
+            ->where('c.tenant_id', $tenantId)->whereIn('c.id', $customerIds)
+            ->where('l.tenant_id', $tenantId)->where('e.status', 'posted')
+            ->groupBy('c.id')
+            ->selectRaw('c.id as customer_id, COALESCE(SUM(l.debit),0) as debit, COALESCE(SUM(l.credit),0) as credit')->get();
+        foreach ($rows as $row) {
+            $funds[(int) $row->customer_id] = \App\Support\Money::cents((string) $row->credit) - \App\Support\Money::cents((string) $row->debit);
+        }
+
+        return $funds;
+    }
+
+    /**
      * Account code of the person on a POS order/refund, or null for anonymous / walk-in / inactive
      * customers. The sale is then also recorded on the person's own account (sale + collection)
      * so every purchase appears in that person's ledger even though it was paid at the till.

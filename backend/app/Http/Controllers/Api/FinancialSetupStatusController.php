@@ -18,7 +18,7 @@ class FinancialSetupStatusController extends Controller
     public function show(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $requiredCodes = collect($this->setup->defaultAccounts())->pluck('code');
+        $requiredCodes = collect($this->setup->requiredAccountCodes($tenantId));
         $accountsReady = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereNull('deleted_at')->whereIn('code', $requiredCodes)->count() === $requiredCodes->count();
         $branches = DB::table('branches')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->get();
         $missingBranchWarehouses = $branches->filter(fn (object $branch) => ! DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('is_active', true)->whereNull('deleted_at')->exists())->map(fn (object $branch) => ['id' => (int) $branch->id, 'name' => $branch->name])->values();

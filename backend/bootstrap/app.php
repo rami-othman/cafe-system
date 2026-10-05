@@ -57,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 | SymfonyRequest::HEADER_X_FORWARDED_PROTO,
         );
         $middleware->alias([
+            'cashier.shift' => \App\Http\Middleware\EnsureCashierOpenShift::class,
             'api.token' => AuthenticateApiToken::class,
             'platform.admin' => AuthenticatePlatformAdmin::class,
             'platform.permission' => EnsurePlatformPermission::class,

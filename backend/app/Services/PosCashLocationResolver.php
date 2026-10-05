@@ -8,6 +8,41 @@ use Illuminate\Validation\ValidationException;
 /** Resolves only cash locations proven by the order's shift or posted sale. */
 final class PosCashLocationResolver
 {
+    /** Cash is held in the shift's drawer, whose account can differ by branch. */
+    public function accountForSale(int $tenantId, object $order): string
+    {
+        $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $order->shift_id)
+            ->where('branch_id', $order->branch_id)->where('status', 'open')->whereNull('deleted_at')
+            ->lockForUpdate()->first();
+        $drawer = $shift?->financial_location_id
+            ? app(ShiftDrawerReadinessService::class)->drawerLocation($tenantId, (int) $order->branch_id, (int) $shift->financial_location_id, true)
+            : null;
+        if (! $drawer || DB::table('financial_locations')->where('tenant_id', $tenantId)
+            ->where('financial_account_id', $drawer->financial_account_id)->where('kind', 'bank')->exists()) {
+            throw ValidationException::withMessages(['shiftId' => 'The order shift has no valid cash drawer.']);
+        }
+
+        return $drawer->account_code;
+    }
+
+    /** Refunds reverse the cash account proven by the original posted sale. */
+    public function accountForRefund(int $tenantId, object $order): ?string
+    {
+        $lines = DB::table('journal_entries as entries')
+            ->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')
+            ->join('financial_locations as locations', 'locations.id', '=', 'lines.financial_location_id')
+            ->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')
+            ->where('entries.tenant_id', $tenantId)->where('entries.branch_id', $order->branch_id)
+            ->where('entries.source_type', 'pos_order')->where('entries.source_id', $order->id)
+            ->where('entries.source_event', 'POS_ORDER_PAID')->where('entries.status', 'posted')
+            ->where('lines.tenant_id', $tenantId)->where('locations.tenant_id', $tenantId)
+            ->where('accounts.tenant_id', $tenantId)->where('locations.kind', 'cash')
+            ->whereColumn('locations.financial_account_id', 'lines.financial_account_id')
+            ->where('lines.debit', '>', 0)->pluck('accounts.code');
+
+        return $lines->count() === 1 ? $lines->first() : null;
+    }
+
     public function forSale(int $tenantId, object $order, string $accountCode): int
     {
         $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $order->shift_id)

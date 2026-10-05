@@ -335,6 +335,7 @@ class PosCartPanel extends StatelessWidget {
           availableMethods: availableMethods,
           requireOrderType: true,
           deliveryCompanies: deliveryCompanies,
+          walletBalance: state.selectedCustomer?.walletBalance,
           onSubmit: cubit.completeLocalPayment,
         );
       },

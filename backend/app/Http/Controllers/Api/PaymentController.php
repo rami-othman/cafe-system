@@ -393,7 +393,8 @@ class PaymentController extends Controller
                 $tender['description'] = "دفع من محفظة العميل — طلب رقم {$order->order_number}";
             }
             if ($method->type === 'cash') {
-                $tender['financialLocationId'] = $this->cashLocations->forSale($tenantId, $order, $method->accountCode);
+                $tender['accountCode'] = $this->cashLocations->accountForSale($tenantId, $order);
+                $tender['financialLocationId'] = $this->cashLocations->forSale($tenantId, $order, $tender['accountCode']);
             } elseif ($method->type === 'sham_cash' && ($method->financialLocationId ?? null) !== null) {
                 $tender['financialLocationId'] = $method->financialLocationId;
             }

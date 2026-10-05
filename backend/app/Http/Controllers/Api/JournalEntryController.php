@@ -130,7 +130,7 @@ class JournalEntryController extends Controller
      */
     private function hiddenCostAccountIds(int $tenantId, object $entry): array
     {
-        if (($entry->source_type ?? 'manual') === 'manual') {
+        if (in_array($entry->source_type ?? 'manual', ['manual', 'legacy_reclassification'], true)) {
             return [];
         }
         $ids = fn (string $key) => array_filter([

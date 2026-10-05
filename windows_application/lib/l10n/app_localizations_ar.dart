@@ -7890,6 +7890,21 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String posCustomerWalletCredit(String amount) {
+    return 'رصيد $amount';
+  }
+
+  @override
+  String posCustomerWalletDebt(String amount) {
+    return 'عليه $amount';
+  }
+
+  @override
+  String posWalletAutoSelectedNote(String amount) {
+    return 'تم اختيار محفظة العميل لأن رصيدها يغطي الطلب (الرصيد $amount).';
+  }
+
+  @override
   String get posWalkInCustomer => 'عميل عابر';
 
   @override

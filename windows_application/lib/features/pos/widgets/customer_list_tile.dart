@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/app_localizations_en.dart';
 import '../models/customer.dart';
+import 'wallet_balance_badge.dart';
 
 class CustomerListTile extends StatelessWidget {
   const CustomerListTile({
@@ -81,13 +82,24 @@ class CustomerListTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      customer.phone,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Flexible(
+                          child: Text(
+                            customer.phone,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        if (customer.walletBalance != null &&
+                            customer.walletBalance != 0) ...<Widget>[
+                          const SizedBox(width: AppSpacing.sm),
+                          WalletBalanceBadge(balance: customer.walletBalance),
+                        ],
+                      ],
                     ),
                   ],
                 ),

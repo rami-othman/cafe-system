@@ -245,16 +245,17 @@ final class FinancialIntegrityService
         $allocated = DB::table('payment_allocations as allocations')->join('supplier_payments as payments', 'payments.id', '=', 'allocations.supplier_payment_id')
             ->where('allocations.tenant_id', $tenant)->where('payments.status', 'posted')->sum('allocations.amount');
         $expected = Money::cents($invoices) - Money::cents($allocated);
-        // Supplier payables live on the control account (2000) and on each supplier's single
+        // Supplier payables live on the control account (legacy 2000 / Phinix 223) and each supplier's single
         // person account. A supplier that is also a customer shares that account, so sales-side
         // postings (invoice, credit note, customer payment/refund) are not part of the payable.
         $supplierAccountIds = DB::table('suppliers as suppliers')
             ->join('customers as customers', 'customers.id', '=', 'suppliers.customer_id')
             ->where('suppliers.tenant_id', $tenant)->whereNotNull('customers.financial_account_id')
             ->pluck('customers.financial_account_id')->map(fn ($id) => (int) $id)->all();
+        $controlCodes = app(PhinixRemapService::class)->isPhinixTenant($tenant) ? ['2000', '223'] : ['2000'];
         $ap = DB::table('journal_entry_lines as lines')->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')
             ->where('lines.tenant_id', $tenant)->where('entries.tenant_id', $tenant)->where('entries.status', 'posted')
-            ->where(fn ($query) => $query->where('accounts.code', '2000')->orWhereIn('accounts.id', $supplierAccountIds))
+            ->where(fn ($query) => $query->whereIn('accounts.code', $controlCodes)->orWhereIn('accounts.id', $supplierAccountIds))
             ->whereNotIn('entries.source_type', ['sales_invoice', 'sales_credit_note', 'customer_payment', 'customer_refund'])
             ->selectRaw('COALESCE(SUM(lines.debit),0) as debit, COALESCE(SUM(lines.credit),0) as credit')->first();
         $actual = Money::cents($ap->credit) - Money::cents($ap->debit);
