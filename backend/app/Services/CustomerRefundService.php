@@ -54,9 +54,13 @@ final class CustomerRefundService
                 }
 
                 $requestedMethod = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->first();
-                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'اختر طريقة دفع نشطة.']);
+                if (! $requestedMethod) {
+                    throw ValidationException::withMessages(['paymentMethodId' => 'اختر طريقة دفع نشطة.']);
+                }
                 $cashSource = $this->cashSources->forPaymentMethod($tenantId, (int) $actorId, (int) $data['branchId'], $requestedMethod, $data['financialLocationId'] ?? null, true);
-                if ($cashSource) $data['financialLocationId'] = (int) $cashSource->location->id;
+                if ($cashSource) {
+                    $data['financialLocationId'] = (int) $cashSource->location->id;
+                }
                 [$method, $location] = $this->resolveSettlement($tenantId, $data);
                 if ($location->branch_id && (int) $location->branch_id !== (int) $data['branchId']) {
                     throw ValidationException::withMessages(['financialLocationId' => 'الموقع المالي لا يتبع فرع المرتجع.']);
@@ -185,7 +189,7 @@ final class CustomerRefundService
     private function nextNumber(int $tenantId): string
     {
         $year = now()->year;
-        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        DB::table('tenants')->where('id', $tenantId)->lock('FOR NO KEY UPDATE')->first();
         $count = DB::table('customer_refunds')->where('tenant_id', $tenantId)->where('refund_number', 'like', "RF-{$year}-%")->count() + 1;
 
         return sprintf('RF-%d-%06d', $year, $count);

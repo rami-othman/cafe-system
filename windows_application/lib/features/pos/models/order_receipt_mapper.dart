@@ -1,4 +1,5 @@
 import 'json_helpers.dart';
+import 'discount_engine.dart';
 import '../../../core/config/tax_config.dart';
 import '../../../core/branding/app_brand.dart';
 import '../../../core/utils/backend_datetime.dart';
@@ -18,10 +19,14 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
   );
 
   return OrderReceipt(
+    discounts: engineList(
+      json['discounts'],
+    ).map(SavedDiscount.fromJson).toList(),
     orderNumber: readString(json['orderNumber']),
     branchName: readString(json['branchName'], fallback: AppBrand.systemNameEn),
     cashierName: readString(json['cashierName'], fallback: 'POS Register'),
-    completedAt: parseBackendDateTime(readString(json['date'])) ?? DateTime.now(),
+    completedAt:
+        parseBackendDateTime(readString(json['date'])) ?? DateTime.now(),
     items: readMapList(
       json['items'],
     ).map(_receiptLineFromJson).toList(growable: false),
@@ -31,6 +36,9 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
     tax: readDouble(json['taxTotal']),
     taxRate: readDouble(json['taxRate'], fallback: TaxConfig.defaultTaxRate),
     total: total,
+    settlementMethod: readString(payment['method']).trim().isEmpty
+        ? null
+        : readString(payment['method']),
     payment: PaymentResult(
       method: paymentMethodFromApi(readString(payment['method'])),
       totalDue: total,

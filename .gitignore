@@ -2,3 +2,30 @@
 old_cafe_data/
 backups/
 windows_application/test/features/customer_management/goldens/failures/
+
+# Temporary HEAD comparison exports (reports and screenshots stay visible).
+/output/discount-plan2-head-worktree/
+/output/discount-plan2-head-flutter.zip
+
+# Discount acceptance runtime artifacts stay on disk for scripts and report links.
+/.playwright-cli/
+/.playwright-mcp/
+/output/discount-plan2-*
+/output/playwright/discount*
+/docs/verification/discount-plan2-*.png
+/docs/verification/discount-plan2-*.json
+/docs/verification/discount-plan2-*.jsonl
+/docs/verification/discount-plan2-*.xml
+/docs/verification/discount-plan2-*.yml
+/docs/verification/discount-plan2-*.yaml
+/docs/verification/discount-plan2-*.log
+/docs/verification/discount-plan2-*.txt
+/docs/verification/discount-plan2-windows/
+/docs/verification/discount-plan2-windows-payment-final/
+/docs/verification/discount_acceptance_expected_2026-10-03.json
+/docs/verification/discount_acceptance_fixture_2026-10-03.json
+/docs/verification/discount_cross_origin_*.png
+/docs/verification/discount_variant_web_login_smoke.png
+/docs/verification/discount_web_*.png
+/docs/verification/windows_ar_*.png
+/docs/verification/windows_en_*.png

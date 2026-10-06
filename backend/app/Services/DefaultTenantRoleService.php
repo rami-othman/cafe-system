@@ -35,6 +35,7 @@ class DefaultTenantRoleService
     public function ensureForTenant(int $tenantId): array
     {
         $now = now();
+        $existingRoles = DB::table('tenant_roles')->where('tenant_id', $tenantId)->pluck('code')->all();
         foreach ([self::OWNER => 'Owner', self::MANAGER => 'Manager', self::EMPLOYEE => 'Employee', self::FACTORY_MANAGER => 'Factory Manager'] as $code => $name) {
             DB::table('tenant_roles')->updateOrInsert(
                 ['tenant_id' => $tenantId, 'code' => $code],
@@ -48,12 +49,30 @@ class DefaultTenantRoleService
         // replace these defaults without changing the authorization boundary.
         if (Schema::hasTable('discount_role_permissions')) {
             foreach ([self::MANAGER, self::EMPLOYEE] as $role) {
+                if (in_array($role, $existingRoles, true)) {
+                    continue;
+                }
                 foreach (DiscountAccess::CATALOG as $permission) {
                     DB::table('discount_role_permissions')->updateOrInsert(
                         ['tenant_id' => $tenantId, 'role' => $role, 'permission' => $permission],
                         ['created_at' => $now, 'updated_at' => $now],
                     );
                 }
+            }
+            // One-time grant only. A missing grant after initialization is an
+            // Owner revocation, never a reason to restore it during provisioning.
+            if (Schema::hasColumn('tenant_roles', 'discount_settings_grant_initialized')) {
+                DB::transaction(function () use ($tenantId, $now): void {
+                    $role = DB::table('tenant_roles')->where('tenant_id', $tenantId)->where('code', self::MANAGER)->lockForUpdate()->first();
+                    if (! $role->discount_settings_grant_initialized) {
+                        DB::table('discount_role_permissions')->insertOrIgnore([
+                            'tenant_id' => $tenantId, 'role' => self::MANAGER,
+                            'permission' => DiscountAccess::SETTINGS_MANAGE,
+                            'created_at' => $now, 'updated_at' => $now,
+                        ]);
+                        DB::table('tenant_roles')->where('id', $role->id)->update(['discount_settings_grant_initialized' => true]);
+                    }
+                });
             }
         }
 

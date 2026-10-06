@@ -17035,6 +17035,546 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No configuration change'**
   String get pricingEffectUnchanged;
+
+  /// No description provided for @discountAllVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'All variants'**
+  String get discountAllVariants;
+
+  /// No description provided for @discountSelectedVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected variants'**
+  String get discountSelectedVariants;
+
+  /// No description provided for @discountUnavailableTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable target. Remove or correct it before saving.'**
+  String get discountUnavailableTarget;
+
+  /// No description provided for @discountVariantSelectionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one available variant for each selected product.'**
+  String get discountVariantSelectionRequired;
+
+  /// No description provided for @discountReferenceForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to load these options.'**
+  String get discountReferenceForbidden;
+
+  /// No description provided for @discountReferenceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load these options. Try again.'**
+  String get discountReferenceFailed;
+
+  /// No description provided for @discountTargetingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Product and variant targeting'**
+  String get discountTargetingSummary;
+
+  /// No description provided for @discountReferencePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get discountReferencePrevious;
+
+  /// No description provided for @discountReferenceNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get discountReferenceNext;
+
+  /// No description provided for @discountIllustrativePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Illustrative example only. Eligibility, discount and tax are calculated by the server.'**
+  String get discountIllustrativePreview;
+
+  /// No description provided for @dsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount Settings'**
+  String get dsTitle;
+
+  /// No description provided for @dsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe-wide rules for selecting and combining discounts. Save applies the reviewed draft.'**
+  String get dsSubtitle;
+
+  /// No description provided for @dsDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved settings yet. These are the server defaults.'**
+  String get dsDefaults;
+
+  /// No description provided for @dsAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic discounts'**
+  String get dsAutomatic;
+
+  /// No description provided for @dsActivationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic activation is currently unavailable for this cafe.'**
+  String get dsActivationUnavailable;
+
+  /// No description provided for @dsStrategy.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection strategy'**
+  String get dsStrategy;
+
+  /// No description provided for @dsHighest.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest actual saving'**
+  String get dsHighest;
+
+  /// No description provided for @dsLowest.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest positive saving'**
+  String get dsLowest;
+
+  /// No description provided for @dsPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority (higher first)'**
+  String get dsPriority;
+
+  /// No description provided for @dsSavingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving is the actual monetary benefit after quantities, eligible targets and caps. For example, a fixed discount capped at 5 saves less than a 10% discount saving 8; face values alone do not decide.'**
+  String get dsSavingHelp;
+
+  /// No description provided for @dsCombination.
+  ///
+  /// In en, this message translates to:
+  /// **'Combination'**
+  String get dsCombination;
+
+  /// No description provided for @dsSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'One discount'**
+  String get dsSingle;
+
+  /// No description provided for @dsDisjoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Different items'**
+  String get dsDisjoint;
+
+  /// No description provided for @dsCombinationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Different-items mode combines eligible item discounts only when their discounted lines do not overlap.'**
+  String get dsCombinationHelp;
+
+  /// No description provided for @dsOrderBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Order discount behavior'**
+  String get dsOrderBehavior;
+
+  /// No description provided for @dsExclusive.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive'**
+  String get dsExclusive;
+
+  /// No description provided for @dsAfterItems.
+  ///
+  /// In en, this message translates to:
+  /// **'After item discounts'**
+  String get dsAfterItems;
+
+  /// No description provided for @dsOrderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive selects either the item group or an order discount. After-items applies an order discount to the remaining balance and requires different-items mode.'**
+  String get dsOrderHelp;
+
+  /// No description provided for @dsCouponBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Code discount behavior'**
+  String get dsCouponBehavior;
+
+  /// No description provided for @dsManualBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual discount behavior'**
+  String get dsManualBehavior;
+
+  /// No description provided for @dsFollowRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow combination rules'**
+  String get dsFollowRules;
+
+  /// No description provided for @dsCap.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum total discount (%)'**
+  String get dsCap;
+
+  /// No description provided for @dsCapHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank for no additional cap. Greater than 0 up to 100, at most four decimal places.'**
+  String get dsCapHelp;
+
+  /// No description provided for @dsAllowSuppression.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Automatic suppression'**
+  String get dsAllowSuppression;
+
+  /// No description provided for @dsSuppressionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppression also requires a separate actor permission and a reason. Settings access does not grant it.'**
+  String get dsSuppressionHelp;
+
+  /// No description provided for @dsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy summary'**
+  String get dsSummary;
+
+  /// No description provided for @dsIntentHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Explicit Manual or Code intent remains selected until you review or remove it. Following rules still respects exclusivity and combination limits.'**
+  String get dsIntentHelp;
+
+  /// No description provided for @dsForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to manage these settings.'**
+  String get dsForbidden;
+
+  /// No description provided for @dsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings could not be loaded. Retry to refresh access and settings.'**
+  String get dsLoadFailed;
+
+  /// No description provided for @dsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save could not be confirmed. Review the current settings before retrying.'**
+  String get dsSaveFailed;
+
+  /// No description provided for @dsConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings changed on the server. Your draft is preserved. Compare the current saved rules before saving again.'**
+  String get dsConflict;
+
+  /// No description provided for @dsReviewConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'I reviewed the current settings'**
+  String get dsReviewConflict;
+
+  /// No description provided for @dsCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current saved version: {version}'**
+  String dsCurrentVersion(int version);
+
+  /// No description provided for @dsSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save settings'**
+  String get dsSave;
+
+  /// No description provided for @dsSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get dsSaving;
+
+  /// No description provided for @dsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset draft to defaults'**
+  String get dsReset;
+
+  /// No description provided for @dsValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the allowed range and combination.'**
+  String get dsValidation;
+
+  /// No description provided for @dsDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved discount settings?'**
+  String get dsDiscard;
+
+  /// No description provided for @dsDiscardAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard draft'**
+  String get dsDiscardAction;
+
+  /// No description provided for @dsManagerPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager Discount permissions'**
+  String get dsManagerPermissions;
+
+  /// No description provided for @dsPermissionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Save replaces the complete Manager Discount permission list.'**
+  String get dsPermissionHelp;
+
+  /// No description provided for @dsManagePolicies.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage policies'**
+  String get dsManagePolicies;
+
+  /// No description provided for @dsApplyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply configured discounts'**
+  String get dsApplyConfigured;
+
+  /// No description provided for @dsApplyManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply ad-hoc discounts'**
+  String get dsApplyManual;
+
+  /// No description provided for @dsView.
+  ///
+  /// In en, this message translates to:
+  /// **'View discounts'**
+  String get dsView;
+
+  /// No description provided for @d2Automatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get d2Automatic;
+
+  /// No description provided for @d2Priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority (integer 0 to 1000)'**
+  String get d2Priority;
+
+  /// No description provided for @d2CreationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic creation is currently unavailable for this cafe.'**
+  String get d2CreationUnavailable;
+
+  /// No description provided for @d2Review.
+  ///
+  /// In en, this message translates to:
+  /// **'Review discount change'**
+  String get d2Review;
+
+  /// No description provided for @d2ConfirmReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm reviewed change'**
+  String get d2ConfirmReview;
+
+  /// No description provided for @d2Before.
+  ///
+  /// In en, this message translates to:
+  /// **'Current totals'**
+  String get d2Before;
+
+  /// No description provided for @d2After.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed totals'**
+  String get d2After;
+
+  /// No description provided for @d2Replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'The following list replaces all applied discounts.'**
+  String get d2Replacements;
+
+  /// No description provided for @d2Provisional.
+  ///
+  /// In en, this message translates to:
+  /// **'Provisional: select a payment method for a final quote.'**
+  String get d2Provisional;
+
+  /// No description provided for @d2Recover.
+  ///
+  /// In en, this message translates to:
+  /// **'Check operation status'**
+  String get d2Recover;
+
+  /// No description provided for @d2Uncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'The result is not confirmed. Keep this order open and check its status.'**
+  String get d2Uncertain;
+
+  /// No description provided for @d2FreshReview.
+  ///
+  /// In en, this message translates to:
+  /// **'The context changed. Preview again and confirm the new result.'**
+  String get d2FreshReview;
+
+  /// No description provided for @d2Suppress.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppress Automatic discount'**
+  String get d2Suppress;
+
+  /// No description provided for @d2Undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo suppression'**
+  String get d2Undo;
+
+  /// No description provided for @d2Reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Required suppression reason'**
+  String get d2Reason;
+
+  /// No description provided for @d2Suppressed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved suppressions'**
+  String get d2Suppressed;
+
+  /// No description provided for @d2Quote.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment quote'**
+  String get d2Quote;
+
+  /// No description provided for @d2QuoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm quoted payment'**
+  String get d2QuoteConfirm;
+
+  /// No description provided for @d2QuoteChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment totals changed. Review the fresh quote and confirm again.'**
+  String get d2QuoteChanged;
+
+  /// No description provided for @d2ChooseTender.
+  ///
+  /// In en, this message translates to:
+  /// **'Select payment method'**
+  String get d2ChooseTender;
+
+  /// No description provided for @d2ZeroBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero balance without tender'**
+  String get d2ZeroBalance;
+
+  /// No description provided for @d2Generic.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation could not be completed. Refresh and try again.'**
+  String get d2Generic;
+
+  /// No description provided for @d2Configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the required financial configuration before payment.'**
+  String get d2Configuration;
+
+  /// No description provided for @d2Stock.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough stock to settle this cart. Review the items and quantities.'**
+  String get d2Stock;
+
+  /// No description provided for @d2Validation.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the payment details and obtain a fresh quote.'**
+  String get d2Validation;
+
+  /// No description provided for @d2UpdateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Update this app before reviewing or paying this order.'**
+  String get d2UpdateRequired;
+
+  /// No description provided for @d2OptionalReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get d2OptionalReason;
+
+  /// No description provided for @d2Forbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not authorized for this discount operation.'**
+  String get d2Forbidden;
+
+  /// No description provided for @d2Eligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount is no longer eligible. Review or remove your explicit selection.'**
+  String get d2Eligibility;
+
+  /// No description provided for @d2Lifecycle.
+  ///
+  /// In en, this message translates to:
+  /// **'The order is not available for this operation. Refresh its state.'**
+  String get d2Lifecycle;
+
+  /// No description provided for @d2Sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for the cart to synchronize before review or payment.'**
+  String get d2Sync;
+
+  /// No description provided for @d2SourceAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get d2SourceAutomatic;
+
+  /// No description provided for @d2SourceCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get d2SourceCode;
+
+  /// No description provided for @d2SourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured Manual'**
+  String get d2SourceManual;
+
+  /// No description provided for @d2SourceAdHoc.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-hoc'**
+  String get d2SourceAdHoc;
 }
 
 class _AppLocalizationsDelegate

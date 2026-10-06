@@ -46,6 +46,105 @@ void main() {
   });
 
   test(
+    'history receipt retries never enter payment or submit a tender',
+    () async {
+      repository.detailById[7] = _paidDetail(id: 7, key: 'saved-payment');
+      await cubit.openOrderDetails('7');
+      repository.receiptErrorsRemaining = 1;
+      expect(await cubit.loadHistoryReceipt('7'), isNull);
+      expect(await cubit.loadHistoryReceipt('7'), isNotNull);
+      expect(repository.receiptRequests, 2);
+      expect(repository.payCalls, isEmpty);
+      expect(repository.summaryRequests, 0);
+      expect(cubit.state.paymentStatus, OrdersPaymentStatus.idle);
+    },
+  );
+
+  test('history receipt arriving after details close is discarded', () async {
+    repository.detailById[7] = _paidDetail(id: 7, key: 'saved-payment');
+    await cubit.openOrderDetails('7');
+    final pending = Completer<OrderReceipt>();
+    repository.receiptFuture = pending.future;
+    final result = cubit.loadHistoryReceipt('7');
+    cubit.closeOrderDetails();
+    await cubit.openOrderDetails('7');
+    pending.complete(_receipt());
+    expect(await result, isNull);
+    expect(repository.payCalls, isEmpty);
+  });
+
+  test(
+    'history receipt from branch A is discarded after switching to B',
+    () async {
+      await cubit.loadOrders(branchId: 1);
+      repository.detailById[7] = _paidDetail(id: 7, key: 'saved-payment');
+      await cubit.openOrderDetails('7');
+      final pending = Completer<OrderReceipt>();
+      repository.receiptFuture = pending.future;
+      final result = cubit.loadHistoryReceipt('7');
+
+      await cubit.applyBranchContext(2);
+      expect(cubit.state.selectedBranchId, 2);
+      pending.complete(_receipt());
+
+      expect(await result, isNull);
+      expect(cubit.state.selectedOrderDetail, isNull);
+      expect(cubit.state.isDetailsLoading, isFalse);
+      expect(cubit.state.detailsErrorMessage, isNull);
+      expect(repository.payCalls, isEmpty);
+    },
+  );
+
+  for (final bool viaBranchContext in <bool>[true, false]) {
+    test('pending details are invalidated by branch change '
+        '(applyBranchContext: $viaBranchContext)', () async {
+      await cubit.loadOrders(branchId: 1);
+      final pending = cubit.openOrderDetails('7');
+      expect(cubit.state.isDetailsLoading, isTrue);
+
+      if (viaBranchContext) {
+        await cubit.applyBranchContext(2);
+      } else {
+        await cubit.loadOrders(branchId: 2);
+      }
+      expect(cubit.state.selectedBranchId, 2);
+      expect(cubit.state.isDetailsLoading, isFalse);
+      repository.pendingDetails.single.complete(
+        _paidDetail(id: 7, key: 'saved'),
+      );
+      await pending;
+
+      expect(cubit.state.selectedOrderDetail, isNull);
+      expect(cubit.state.detailsErrorMessage, isNull);
+    });
+  }
+
+  test(
+    'history receipt remains stale after returning to A and reopening',
+    () async {
+      await cubit.loadOrders(branchId: 1);
+      repository.detailById[7] = _paidDetail(id: 7, key: 'saved-payment');
+      await cubit.openOrderDetails('7');
+      final pending = Completer<OrderReceipt>();
+      repository.receiptFuture = pending.future;
+      final result = cubit.loadHistoryReceipt('7');
+
+      await cubit.applyBranchContext(2);
+      await cubit.applyBranchContext(1);
+      await cubit.openOrderDetails('7');
+      pending.complete(_receipt());
+
+      expect(await result, isNull);
+      repository.receiptFuture = null;
+      repository.receiptErrorsRemaining = 1;
+      expect(await cubit.loadHistoryReceipt('7'), isNull);
+      expect(await cubit.loadHistoryReceipt('7'), isNotNull);
+      expect(repository.payCalls, isEmpty);
+      expect(repository.summaryRequests, 0);
+    },
+  );
+
+  test(
     'paid, terminal, zero-balance, and inaccessible orders cannot pay',
     () async {
       repository.summary = _summary(
@@ -336,6 +435,7 @@ void main() {
   );
 
   test('failed authoritative verification blocks another submission', () async {
+    await cubit.loadOrders(branchId: 1);
     repository.payOutcomes.add(
       const ApiException(
         message: 'Connection interrupted.',
@@ -353,6 +453,14 @@ void main() {
 
     expect(await cubit.submitPayment(_cash()), OrdersPaymentStatus.uncertain);
     expect(cubit.state.uncertainPaymentMessage, isNotNull);
+    final uncertainState = cubit.state;
+    await cubit.applyBranchContext(2);
+    expect(cubit.state.paymentStatus, OrdersPaymentStatus.uncertain);
+    expect(
+      cubit.state.uncertainPaymentMessage,
+      uncertainState.uncertainPaymentMessage,
+    );
+    expect(cubit.state.paymentOrderId, uncertainState.paymentOrderId);
     expect(await cubit.submitPayment(_cash()), OrdersPaymentStatus.uncertain);
     expect(repository.payCalls, hasLength(1));
   });
@@ -570,12 +678,20 @@ class _PaymentOrdersRepository extends OrdersRepository {
   final List<int> orderRequests = <int>[];
   int receiptErrorsRemaining = 0;
   int receiptRequests = 0;
+  Future<OrderReceipt>? receiptFuture;
 
   @override
   Future<List<Branch>> getBranches() async => const <Branch>[
     Branch(
       id: 1,
       name: 'Downtown',
+      currency: 'SYP',
+      timezone: 'Asia/Damascus',
+      isActive: true,
+    ),
+    Branch(
+      id: 2,
+      name: 'Branch B',
       currency: 'SYP',
       timezone: 'Asia/Damascus',
       isActive: true,
@@ -671,6 +787,7 @@ class _PaymentOrdersRepository extends OrdersRepository {
   @override
   Future<OrderReceipt> getReceipt(int orderId) async {
     receiptRequests++;
+    if (receiptFuture != null) return receiptFuture!;
     if (receiptErrorsRemaining > 0) {
       receiptErrorsRemaining--;
       throw const ApiException(

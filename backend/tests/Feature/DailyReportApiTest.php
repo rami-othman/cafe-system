@@ -68,10 +68,13 @@ class DailyReportApiTest extends TestCase
             ], $headers)->assertCreated();
             $orderId = $order->json('data.id');
 
-            $this->putJson("/api/v1/orders/{$orderId}/discount", [
-                'type' => 'percentage',
-                'value' => '10',
-                'reason' => 'Student Discount',
+            $discountId = $this->postJson('/api/v1/discounts', [
+                'name' => 'Student Discount', 'applicationMode' => 'manual',
+                'type' => 'percentage', 'scope' => 'order', 'value' => 10,
+                'isActive' => true, 'appliesToAllBranches' => true,
+            ], $headers)->assertCreated()->json('data.id');
+            $this->postJson("/api/v1/orders/{$orderId}/discounts/apply", [
+                'discountId' => $discountId,
             ], $headers)->assertOk();
 
             $total = $this->getJson("/api/v1/orders/{$orderId}", $headers)->json('data.totals.total');

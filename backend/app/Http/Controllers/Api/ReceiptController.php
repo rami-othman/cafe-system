@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CafeConfiguration\ReceiptTemplateResource;
 use App\Services\BranchAccessService;
+use App\Services\DiscountEngineProtocol;
 use App\Support\ReceiptTemplateResolver;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +41,8 @@ class ReceiptController extends Controller
                 'items' => $this->items($tenantId, $orderRow->id),
                 'subtotal' => (float) $orderRow->subtotal,
                 'discountTotal' => (float) $orderRow->discount_total,
+                'discounts' => app(DiscountEngineProtocol::class)->state($tenantId, $orderRow)['discounts'],
+                'discountContractVersion' => 2,
                 'taxTotal' => (float) $orderRow->tax_total,
                 'taxRate' => (float) $orderRow->tax_rate,
                 'total' => (float) $orderRow->total,

@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
-use App\Services\BranchAccessService;
 use App\Services\AccountingPostingService;
+use App\Services\BranchAccessService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
-use App\Services\PosNumberGenerator;
 use App\Services\PosCashLocationResolver;
-use App\Support\TenantContext;
+use App\Services\PosNumberGenerator;
+use App\Services\ShiftLockService;
 use App\Support\BranchLocalDate;
 use App\Support\Money;
 use App\Support\RefundTaxAllocation;
 use App\Support\SalePaymentMethodResolver;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,7 @@ class RefundController extends Controller
                 : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $payment->method);
             if (($resolvedMethod?->type === 'cash' || ($resolvedMethod === null && $payment->method === 'cash'))
                 && $payment->shift_id !== null) {
+                app(ShiftLockService::class)->lockLocation($tenantId, (int) $payment->shift_id);
                 $saleShift = DB::table('shifts')->where('tenant_id', $tenantId)
                     ->where('id', $payment->shift_id)->lockForUpdate()->first();
                 if ($saleShift && $saleShift->status !== 'open') {

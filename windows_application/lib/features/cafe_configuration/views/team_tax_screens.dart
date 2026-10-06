@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/service_locator.dart';
+import '../controllers/discount_permissions_cubit.dart';
+import '../widgets/discount_manager_permissions.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -51,6 +55,13 @@ class TeamAccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
+              if (context.watch<AuthSessionCubit>().state.session?.user.role ==
+                  'owner')
+                BlocProvider(
+                  create: (_) =>
+                      serviceLocator<DiscountPermissionsCubit>()..load(),
+                  child: const DiscountManagerPermissions(),
+                ),
               _TeamFilters(copy: c, state: state),
               const SizedBox(height: AppSpacing.lg),
               if (loading)

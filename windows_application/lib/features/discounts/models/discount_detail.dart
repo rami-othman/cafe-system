@@ -1,3 +1,5 @@
+import 'discount_product_selection.dart';
+import 'discount_form_references.dart';
 import '../../pos/models/json_helpers.dart';
 import 'discount_upsert_request.dart';
 
@@ -13,6 +15,7 @@ class DiscountDetail {
     required this.scope,
     required this.value,
     this.fixedAmountBasis = 'per_order',
+    this.priority = 0,
     required this.isActive,
     required this.appliesToAllBranches,
     required this.customerEligibilityMode,
@@ -25,6 +28,8 @@ class DiscountDetail {
     this.code,
     this.description,
     this.conditions,
+    this.startsAt,
+    this.endsAt,
     this.startDate,
     this.endDate,
     this.activeDays = const <String>[],
@@ -36,6 +41,7 @@ class DiscountDetail {
     this.usageLimitPerCustomer,
     this.perCustomerDailyUsageLimit,
     this.status,
+    this.productVariantSelections = const [],
     this.productTargets = const <DiscountTargetDetail>[],
     this.categoryTargets = const <DiscountTargetDetail>[],
     this.customerGroups = const <DiscountTargetDetail>[],
@@ -55,7 +61,10 @@ class DiscountDetail {
   final String scope;
   final double value;
   final String fixedAmountBasis;
+  final int priority;
   final String? conditions;
+  final String? startsAt;
+  final String? endsAt;
   final String? startDate;
   final String? endDate;
   final List<String> activeDays;
@@ -76,6 +85,29 @@ class DiscountDetail {
   final List<int> paymentMethodIds;
   final bool isActive;
   final String? status;
+  final List<DiscountProductSelection> productVariantSelections;
+  List<DiscountProductSelection> get effectiveProductSelections =>
+      targetProductIds
+          .map(
+            (id) =>
+                productVariantSelections
+                    .where((s) => s.productId == id)
+                    .firstOrNull ??
+                DiscountProductSelection(
+                  productId: id,
+                  product: productTargets
+                      .where((p) => p.id == id)
+                      .map(
+                        (p) => DiscountFormReference(
+                          id: p.id,
+                          name: p.name ?? '#${p.id}',
+                          isActive: p.isActive,
+                        ),
+                      )
+                      .firstOrNull,
+                ),
+          )
+          .toList();
   final List<DiscountTargetDetail> productTargets;
   final List<DiscountTargetDetail> categoryTargets;
   final List<DiscountTargetDetail> customerGroups;
@@ -94,11 +126,14 @@ class DiscountDetail {
     type: readString(json['type']),
     scope: readString(json['scope']),
     value: readDouble(json['value']),
+    priority: readInt(json['priority']) ?? 0,
     fixedAmountBasis: readString(
       json['fixedAmountBasis'],
       fallback: 'per_order',
     ),
     conditions: _nullable(json['conditions']),
+    startsAt: _nullable(json['startsAt']),
+    endsAt: _nullable(json['endsAt']),
     startDate: _nullable(json['startDate']),
     endDate: _nullable(json['endDate']),
     activeDays: _strings(json['activeDays']),
@@ -129,6 +164,12 @@ class DiscountDetail {
     paymentMethodIds: _ids(json['paymentMethodIds']),
     isActive: readBool(json['isActive']),
     status: _nullable(json['status']),
+    productVariantSelections: (json['productVariantSelections'] as List? ?? [])
+        .map(
+          (s) =>
+              DiscountProductSelection.fromJson(Map<String, dynamic>.from(s)),
+        )
+        .toList(),
     productTargets: _targets(json['productTargets']),
     categoryTargets: _targets(json['categoryTargets']),
     customerGroups: _targets(json['customerGroups']),
@@ -148,7 +189,10 @@ class DiscountDetail {
     scope: scope,
     value: value,
     fixedAmountBasis: fixedAmountBasis,
+    priority: priority,
     conditions: conditions,
+    startsAt: startsAt,
+    endsAt: endsAt,
     startDate: startDate,
     endDate: endDate,
     activeDays: activeDays,
@@ -163,6 +207,7 @@ class DiscountDetail {
     customerGroupIds: customerGroupIds,
     customerIds: customerIds,
     paymentMethodIds: paymentMethodIds,
+    productVariantSelections: effectiveProductSelections,
     targetProductIds: targetProductIds,
     targetCategoryIds: targetCategoryIds,
     bundleRequirements: bundleRequirements,

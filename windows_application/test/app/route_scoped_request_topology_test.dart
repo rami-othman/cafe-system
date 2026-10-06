@@ -149,7 +149,7 @@ class _SpyOrdersRepository extends OrdersRepository {
   }
 }
 
-class _SpyDiscountsRepository implements DiscountsRepository {
+class _SpyDiscountsRepository extends DiscountsRepository {
   @override
   Future<DiscountFormReferences> getFormReferences() async =>
       const DiscountFormReferences();

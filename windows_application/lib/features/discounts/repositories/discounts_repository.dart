@@ -1,3 +1,5 @@
+import '../../../core/network/api_exception.dart';
+import '../models/discount_product_selection.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../../../core/utils/backend_datetime.dart';
 import '../../pos/models/json_helpers.dart';
@@ -9,6 +11,16 @@ import '../models/discount_dashboard_metrics.dart';
 import '../models/discount_upsert_request.dart';
 
 abstract class DiscountsRepository {
+  Future<DiscountReferencePage> getProducts({
+    String search = '',
+    int page = 1,
+  }) async =>
+      DiscountReferencePage(items: (await getFormReferences()).products);
+  Future<DiscountReferencePage> getVariants(
+    int productId, {
+    String search = '',
+    int page = 1,
+  }) async => const DiscountReferencePage();
   Future<List<DiscountListItem>> getDiscounts();
   Future<DiscountDashboardMetrics> getDashboardMetrics();
   Future<List<Branch>> getBranches();
@@ -38,6 +50,38 @@ class DiscountsApiRepository implements DiscountsRepository {
   final DioApiClient _apiClient;
 
   @override
+  Future<DiscountReferencePage> getProducts({
+    String search = '',
+    int page = 1,
+  }) => _referencePage('discounts/references/products', search, page);
+  @override
+  Future<DiscountReferencePage> getVariants(
+    int productId, {
+    String search = '',
+    int page = 1,
+  }) => _referencePage(
+    'discounts/references/products/$productId/variants',
+    search,
+    page,
+  );
+  Future<DiscountReferencePage> _referencePage(
+    String path,
+    String search,
+    int page,
+  ) async => DiscountReferencePage.fromJson(
+    Map<String, dynamic>.from(
+      await _apiClient.getEnvelope(
+        path,
+        queryParameters: {
+          'page': page,
+          'perPage': 20,
+          if (search.trim().isNotEmpty) 'search': search.trim(),
+        },
+      ),
+    ),
+  );
+
+  @override
   Future<List<DiscountListItem>> getDiscounts() async {
     final dynamic response = await _apiClient.get('discounts');
     return readMapList(response).map(_fromJson).toList(growable: false);
@@ -59,39 +103,42 @@ class DiscountsApiRepository implements DiscountsRepository {
 
   @override
   Future<DiscountFormReferences> getFormReferences() async {
-    final List<dynamic> responses = await Future.wait<dynamic>(
-      <Future<dynamic>>[
-        _apiClient.get(
-          'admin/catalog/products',
-          queryParameters: const <String, dynamic>{
-            'status': 'active',
-            'perPage': 100,
-          },
-        ),
-        _apiClient.get(
-          'admin/catalog/categories',
-          queryParameters: const <String, dynamic>{'perPage': 100},
-        ),
-        _apiClient.get(
-          'customer-groups',
-          queryParameters: const <String, dynamic>{'perPage': 100},
-        ),
-        _apiClient.get(
-          'customers',
-          queryParameters: const <String, dynamic>{'perPage': 100},
-        ),
-        _apiClient.get(
-          'finance/payment-methods',
-          queryParameters: const <String, dynamic>{'perPage': 100},
-        ),
-      ],
-    );
+    final failures = <String, String>{};
+    Future<dynamic> load(String section, String path) async {
+      try {
+        if (section == 'products') {
+          final envelope = await _apiClient.getEnvelope(
+            path,
+            queryParameters: const {'page': 1, 'perPage': 100},
+          );
+          return (envelope as Map)['data'];
+        }
+        return await _apiClient.get(
+          path,
+          queryParameters: const {'perPage': 100},
+        );
+      } catch (error) {
+        failures[section] = error is ApiException && error.statusCode == 403
+            ? 'forbidden'
+            : 'failed';
+        return <dynamic>[];
+      }
+    }
+
+    final responses = await Future.wait<dynamic>([
+      load('products', 'discounts/references/products'),
+      load('categories', 'admin/catalog/categories'),
+      load('customerGroups', 'customer-groups'),
+      load('customers', 'customers'),
+      load('paymentMethods', 'finance/payment-methods'),
+    ]);
     List<DiscountFormReference> references(dynamic value) => readMapList(value)
         .map(DiscountFormReference.fromJson)
-        .where((DiscountFormReference item) => item.id > 0 && item.isActive)
+        .where((DiscountFormReference item) => item.id > 0 && item.isAvailable)
         .toList(growable: false);
 
     return DiscountFormReferences(
+      failures: failures,
       products: references(responses[0]),
       categories: references(responses[1]),
       customerGroups: references(responses[2]),

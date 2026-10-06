@@ -14,13 +14,16 @@ enum CafeConfigurationDestination {
   branches('/cafe-configuration/branches', Icons.account_tree_outlined),
   printing('/cafe-configuration/printing', Icons.print_outlined),
   team('/cafe-configuration/team', Icons.group_outlined),
-  tax('/cafe-configuration/tax', Icons.percent_outlined);
+  tax('/cafe-configuration/tax', Icons.percent_outlined),
+  discounts('/cafe-configuration/discount-settings', Icons.discount_outlined);
 
   const CafeConfigurationDestination(this.path, this.icon);
   final String path;
   final IconData icon;
   static CafeConfigurationDestination forPath(String path) =>
-      path.contains('/branches')
+      path.contains('/discount-settings')
+      ? discounts
+      : path.contains('/branches')
       ? branches
       : path.contains('/printing')
       ? printing
@@ -39,8 +42,8 @@ class CafeConfigurationNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _CafeConfigurationCopy copy = _CafeConfigurationCopy(context);
-    // Manager only has backend access to Printing (see
-    // _cafeConfigurationAccessRedirect); the other tabs would 403 if shown.
+    // Manager settings access is checked by the settings endpoint. The other
+    // administration tabs remain Owner-only.
     final String? role = context
         .watch<AuthSessionCubit>()
         .state
@@ -50,6 +53,7 @@ class CafeConfigurationNavigation extends StatelessWidget {
     final List<CafeConfigurationDestination> visible = role == 'manager'
         ? const <CafeConfigurationDestination>[
             CafeConfigurationDestination.printing,
+            CafeConfigurationDestination.discounts,
           ]
         : CafeConfigurationDestination.values;
     return Semantics(
@@ -160,6 +164,7 @@ class _CafeConfigurationCopy {
       context.maybeL10n?.cafeConfigurationPrinting ?? 'Printing',
     CafeConfigurationDestination.team =>
       context.maybeL10n?.cafeConfigurationTeamAccess ?? 'Team & Access',
+    CafeConfigurationDestination.discounts => context.l10n.dsTitle,
     CafeConfigurationDestination.tax =>
       context.maybeL10n?.cafeConfigurationTax ?? 'Tax',
   };

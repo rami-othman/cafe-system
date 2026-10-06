@@ -39,6 +39,8 @@ final class ShiftCloseService
     /** Locks a tenant's shift row (live rows only) inside the caller's transaction. */
     public function lock(int $tenantId, int $shiftId): ?object
     {
+        app(ShiftLockService::class)->lockLocation($tenantId, $shiftId);
+
         return DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)
             ->whereNull('deleted_at')->lockForUpdate()->first();
     }

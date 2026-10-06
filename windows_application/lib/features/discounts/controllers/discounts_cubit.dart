@@ -1,3 +1,5 @@
+import 'discount_targets_cubit.dart';
+import '../../pos/models/discount_engine.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -11,12 +13,31 @@ import 'discounts_state.dart';
 
 class DiscountsCubit extends Cubit<DiscountsState> {
   static const String requestFailed = 'discount_request_failed';
-  DiscountsCubit({required this._repository}) : super(const DiscountsState());
+  DiscountsCubit({required this._repository, this.capabilityLoader})
+    : super(const DiscountsState());
+  final Future<DiscountCapabilities> Function()? capabilityLoader;
+  int _capabilityGeneration = 0;
+  Future<void> loadCapabilities() async {
+    if (isClosed) return;
+    final generation = ++_capabilityGeneration;
+    emit(state.copyWith(capabilities: const DiscountCapabilities()));
+    try {
+      final caps = await capabilityLoader?.call();
+      if (!isClosed && generation == _capabilityGeneration && caps != null) {
+        emit(state.copyWith(capabilities: caps));
+      }
+    } catch (_) {
+      /* Fail closed; supported Manual/Code management remains available. */
+    }
+  }
 
   static const int pageSize = 4;
   final DiscountsRepository _repository;
+  DiscountTargetsCubit createTargetsController() =>
+      DiscountTargetsCubit(_repository);
 
   Future<void> loadDiscounts() async {
+    if (isClosed) return;
     emit(
       state.copyWith(
         isLoading: true,
@@ -32,6 +53,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
           _repository.getDashboardMetrics(),
         ],
       );
+      if (isClosed) return;
       final List<DiscountListItem> discounts =
           results[0] as List<DiscountListItem>;
       final DiscountDashboardMetrics metrics =
@@ -47,6 +69,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           isLoading: false,
@@ -58,9 +81,11 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   }
 
   Future<void> loadBranches() async {
+    if (isClosed) return;
     emit(state.copyWith(isLoadingBranches: true, clearBranchError: true));
     try {
       final branches = await _repository.getBranches();
+      if (isClosed) return;
       emit(
         state.copyWith(
           branches: branches
@@ -71,6 +96,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           isLoadingBranches: false,
@@ -81,6 +107,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   }
 
   Future<void> loadFormReferences() async {
+    if (isClosed) return;
     emit(
       state.copyWith(
         isLoadingFormReferences: true,
@@ -90,14 +117,19 @@ class DiscountsCubit extends Cubit<DiscountsState> {
     try {
       final DiscountFormReferences references = await _repository
           .getFormReferences();
+      if (isClosed) return;
       emit(
         state.copyWith(
           formReferences: references,
           isLoadingFormReferences: false,
-          clearFormReferencesError: true,
+          clearFormReferencesError: references.failures.isEmpty,
+          formReferencesErrorMessage: references.failures.isEmpty
+              ? null
+              : requestFailed,
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           isLoadingFormReferences: false,
@@ -126,6 +158,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   }
 
   Future<bool> deleteDiscount(String discountId) async {
+    if (isClosed || state.isSaving) return false;
     emit(
       state.copyWith(
         isSaving: true,
@@ -135,6 +168,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
     );
     try {
       await _repository.deleteDiscount(discountId);
+      if (isClosed) return true;
       emit(
         state.copyWith(
           discounts: state.discounts
@@ -148,6 +182,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
       );
       return true;
     } catch (error) {
+      if (isClosed) return false;
       emit(
         state.copyWith(
           isSaving: false,
@@ -160,6 +195,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   }
 
   Future<bool> _save(Future<DiscountListItem> Function() action) async {
+    if (isClosed || state.isSaving) return false;
     emit(
       state.copyWith(
         isSaving: true,
@@ -169,6 +205,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
     );
     try {
       final DiscountListItem saved = await action();
+      if (isClosed) return true;
       final List<DiscountListItem> updated = <DiscountListItem>[
         ...state.discounts,
       ];
@@ -190,6 +227,7 @@ class DiscountsCubit extends Cubit<DiscountsState> {
       );
       return true;
     } catch (error) {
+      if (isClosed) return false;
       emit(
         state.copyWith(
           isSaving: false,

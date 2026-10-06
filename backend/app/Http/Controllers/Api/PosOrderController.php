@@ -7,6 +7,8 @@ use App\Exceptions\OrderLifecycleException;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\DiscountEngineProtocol;
+use App\Services\DiscountResolutionService;
 use App\Services\Menu\PublishedMenuOrderResolver;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosInventoryWarehouseResolver;
@@ -90,6 +92,7 @@ class PosOrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        app(DiscountEngineProtocol::class)->compatible($request, $tenantId);
         // The no-version branch is retained solely for backward-compatible
         // integrations and historical workflows. Production POS must send a
         // publishedMenuVersionId and is resolved only from that snapshot.
@@ -139,7 +142,7 @@ class PosOrderController extends Controller
         }
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
-            $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse) {
+            $result = DB::transaction(function () use ($request, $tenantId, $data, $actorId, $warehouse) {
                 $key = $data['idempotencyKey'] ?? null;
                 $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
                 if ($key && ($existing = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key)->lockForUpdate()->first())) {
@@ -157,6 +160,8 @@ class PosOrderController extends Controller
                 if (($data['shiftId'] ?? null) !== null) {
                     $this->shiftLocks->sharedOpenShift($tenantId, (int) $data['shiftId'], (int) $data['branchId']);
                 }
+                app(DiscountResolutionService::class)->lock($tenantId);
+                app(DiscountEngineProtocol::class)->compatible($request, $tenantId);
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;
@@ -421,6 +426,9 @@ class PosOrderController extends Controller
                     'status' => 'draft', 'updated_at' => now(),
                 ]);
             }
+            if (app(DiscountResolutionService::class)->active($tenantId, $order)) {
+                $this->pricing->recalculateOrder($tenantId, $order);
+            }
         });
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
@@ -428,42 +436,16 @@ class PosOrderController extends Controller
 
     public function discount(Request $request, int $order): JsonResponse
     {
-        $data = $request->validate([
-            'type' => ['required', 'in:percentage,fixed'],
-            'value' => ['required', 'numeric', 'gt:0'],
-            'reason' => ['nullable', 'string'],
-        ]);
-
-        $tenantId = TenantContext::id($request);
-        if ($data['type'] === 'percentage' && (float) $data['value'] > 100) {
-            throw ValidationException::withMessages(['value' => 'A percentage discount cannot exceed 100.']);
-        }
-        DB::transaction(function () use ($tenantId, $order, $data): void {
-            $row = $this->lockedOrder($tenantId, $order);
-            $this->lifecycle->assertDiscountable($row);
-            $amount = $data['type'] === 'percentage' ? round((float) $row->subtotal * ((float) $data['value'] / 100), 2) : min((float) $data['value'], (float) $row->subtotal);
-            DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
-            DB::table('order_discounts')->insert([
-                'tenant_id' => $tenantId,
-                'order_id' => $order,
-                'discount_name' => $data['reason'] ?? 'POS Discount',
-                'discount_type' => $data['type'],
-                'discount_value' => $data['value'],
-                'discount_amount' => $amount,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $this->pricing->recalculateOrder($tenantId, $order);
-        });
-
-        return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
+        throw new OrderLifecycleException('DISCOUNT_AD_HOC_DISABLED', 'Choose an existing eligible discount policy.');
     }
 
     public function removeDiscount(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
         DB::transaction(function () use ($tenantId, $order): void {
             $this->lifecycle->assertDiscountable($this->lockedOrder($tenantId, $order));
+            app(DiscountEngineProtocol::class)->legacyMutation(request(), $tenantId, $order);
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
         });
@@ -570,9 +552,12 @@ class PosOrderController extends Controller
 
     private function lockedOrder(int $tenantId, int $orderId): object
     {
+        app(DiscountEngineProtocol::class)->compatible(request(), $tenantId, $orderId);
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->lockForUpdate()->first();
         abort_if(! $order, 404, 'Order not found.');
         app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
+        app(DiscountResolutionService::class)->lock($tenantId);
+        app(DiscountEngineProtocol::class)->compatible(request(), $tenantId, $orderId);
 
         return $order;
     }
@@ -656,7 +641,10 @@ class PosOrderController extends Controller
             'table' => $table ? ['id' => $table->id, 'name' => $table->name, 'code' => $table->code] : null,
             'customer' => $customer ? ['id' => $customer->id, 'name' => $customer->name, 'phone' => $customer->phone] : null,
             'items' => $withItems ? $this->items($tenantId, $order->id) : [],
-            'discount' => $this->discountRow($tenantId, $order->id),
+            'discount' => DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->count() > 1 ? null : $this->discountRow($tenantId, $order->id),
+            'discounts' => app(DiscountEngineProtocol::class)->state($tenantId, $order)['discounts'],
+            'requiresDiscountBreakdown' => DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->count() > 1,
+            'discountContractVersion' => 2,
             'payments' => $withItems ? $this->payments($tenantId, $order->id) : [],
             'refunds' => $withItems ? $this->refunds($tenantId, $order->id) : [],
             'timeline' => $withItems ? $this->timeline($tenantId, $order) : [],
@@ -1006,18 +994,37 @@ class PosOrderController extends Controller
             return true;
         }
         foreach ($items as $item) {
-            foreach ($payload['menus'] ?? [] as $menu) foreach ($menu['sections'] ?? [] as $section) foreach ($section['products'] ?? [] as $product) {
-                if ((int) ($product['productId'] ?? 0) !== (int) $item['productId'] || (int) ($product['placementId'] ?? 0) !== (int) ($item['placementId'] ?? 0)) continue;
-                foreach ($product['variants'] ?? [] as $variant) if ((int) ($variant['id'] ?? 0) === (int) ($item['variantId'] ?? 0)) {
-                    if (($variant['baseRecipe'] ?? null) === null || ! is_array($variant['baseRecipe'])) return true;
-                    if ($variant['baseRecipe'] !== []) return true;
-                    $selected = array_map('intval', $item['modifierOptionIds'] ?? []);
-                    foreach ($variant['modifierRecipeAdjustments'] ?? [] as $adjustment) if (in_array((int) ($adjustment['optionId'] ?? 0), $selected, true) && ($adjustment['components'] ?? []) !== []) return true;
-                    continue 5;
+            foreach ($payload['menus'] ?? [] as $menu) {
+                foreach ($menu['sections'] ?? [] as $section) {
+                    foreach ($section['products'] ?? [] as $product) {
+                        if ((int) ($product['productId'] ?? 0) !== (int) $item['productId'] || (int) ($product['placementId'] ?? 0) !== (int) ($item['placementId'] ?? 0)) {
+                            continue;
+                        }
+                        foreach ($product['variants'] ?? [] as $variant) {
+                            if ((int) ($variant['id'] ?? 0) === (int) ($item['variantId'] ?? 0)) {
+                                if (($variant['baseRecipe'] ?? null) === null || ! is_array($variant['baseRecipe'])) {
+                                    return true;
+                                }
+                                if ($variant['baseRecipe'] !== []) {
+                                    return true;
+                                }
+                                $selected = array_map('intval', $item['modifierOptionIds'] ?? []);
+                                foreach ($variant['modifierRecipeAdjustments'] ?? [] as $adjustment) {
+                                    if (in_array((int) ($adjustment['optionId'] ?? 0), $selected, true) && ($adjustment['components'] ?? []) !== []) {
+                                        return true;
+                                    }
+                                }
+
+                                continue 5;
+                            }
+                        }
+                    }
                 }
             }
+
             return true;
         }
+
         return false;
     }
 

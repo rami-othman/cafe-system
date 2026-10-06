@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../models/discount_workspace.dart';
 
 import '../../../core/config/tax_config.dart';
 import '../models/applied_discount.dart';
@@ -12,6 +13,7 @@ import '../models/pos_product.dart';
 
 class PosState extends Equatable {
   const PosState({
+    this.discounts = const DiscountWorkspace(),
     this.branches = const <Branch>[],
     this.products = const <PosProduct>[],
     this.categories = const <String>[],
@@ -65,6 +67,7 @@ class PosState extends Equatable {
 
   /// The POS-owned selling context.  The shell branch tabs must use this
   /// collection and [branchId], never an independently selected branch.
+  final DiscountWorkspace discounts;
   final List<Branch> branches;
   final List<PosProduct> products;
   final List<String> categories;
@@ -187,7 +190,13 @@ class PosState extends Equatable {
   bool get hasCartItems => cartItems.isNotEmpty;
 
   bool get canHoldCurrentOrder {
-    if (!hasCartItems || isCartMutationInProgress || isPaymentSubmitting) {
+    if (!hasCartItems ||
+        isCartMutationInProgress ||
+        isPaymentSubmitting ||
+        discounts.busy ||
+        discounts.createUncertain ||
+        discounts.operationUncertain ||
+        uncertainPaymentOrderId != null) {
       return false;
     }
     if (currentOrderId == null) return true;
@@ -200,6 +209,7 @@ class PosState extends Equatable {
   }
 
   PosState copyWith({
+    DiscountWorkspace? discounts,
     List<Branch>? branches,
     List<PosProduct>? products,
     List<String>? categories,
@@ -270,6 +280,11 @@ class PosState extends Equatable {
     bool clearUncertainHoldMessage = false,
   }) {
     return PosState(
+      discounts:
+          discounts ??
+          (clearCurrentOrderId
+              ? DiscountWorkspace(capabilities: this.discounts.capabilities)
+              : this.discounts),
       branches: branches ?? this.branches,
       products: products ?? this.products,
       categories: categories ?? this.categories,
@@ -376,6 +391,7 @@ class PosState extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    discounts,
     branches,
     products,
     categories,

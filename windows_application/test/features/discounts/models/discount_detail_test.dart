@@ -51,8 +51,8 @@ void main() {
       expect(request['startDate'], '2026-10-01');
       expect(request['endDate'], '2026-10-31');
       expect(request['activeDays'], <String>['Mon', 'Fri']);
-      expect(request['startTime'], '22:00:00');
-      expect(request['endTime'], '02:00:00');
+      expect(request['startTime'], '22:00');
+      expect(request['endTime'], '02:00');
       expect(request['targetCategoryIds'], <int>[31, 32]);
       expect(request['customerGroupIds'], <int>[41, 42]);
       expect(request['branchIds'], <int>[51, 52]);

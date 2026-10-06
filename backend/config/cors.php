@@ -23,7 +23,7 @@ return [
     'allowed_methods' => ['*'],
     'allowed_origins' => $allowedOrigins,
     'allowed_origins_patterns' => [],
-    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', 'Origin', 'X-Requested-With'],
+    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', 'Origin', 'X-Requested-With', 'X-App-Locale', 'X-Discount-Contract'],
     'exposed_headers' => [],
     'max_age' => 0,
     'supports_credentials' => true,

@@ -9491,4 +9491,298 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pricingEffectUnchanged => 'لا تغيير في الإعداد';
+
+  @override
+  String get discountAllVariants => 'جميع الأنواع';
+
+  @override
+  String get discountSelectedVariants => 'أنواع محددة';
+
+  @override
+  String get discountUnavailableTarget =>
+      'هدف غير متاح. أزله أو صححه قبل الحفظ.';
+
+  @override
+  String get discountVariantSelectionRequired =>
+      'اختر نوعاً متاحاً واحداً على الأقل لكل منتج ذي أنواع محددة.';
+
+  @override
+  String get discountReferenceForbidden =>
+      'ليس لديك صلاحية تحميل هذه الخيارات.';
+
+  @override
+  String get discountReferenceFailed => 'تعذر تحميل هذه الخيارات. حاول مجدداً.';
+
+  @override
+  String get discountTargetingSummary => 'استهداف المنتجات والأنواع';
+
+  @override
+  String get discountReferencePrevious => 'الصفحة السابقة';
+
+  @override
+  String get discountReferenceNext => 'الصفحة التالية';
+
+  @override
+  String get discountIllustrativePreview =>
+      'مثال توضيحي فقط. الخادم يحدد الأهلية ومبلغ الخصم والضريبة.';
+
+  @override
+  String get dsTitle => 'إعدادات الخصومات';
+
+  @override
+  String get dsSubtitle =>
+      'عدّل مسودة القواعد ثم احفظها صراحةً. يتولى الخادم التقييم وحساب الإجماليات.';
+
+  @override
+  String get dsDefaults =>
+      'لم تُحفظ إعدادات مخصصة بعد. هذه هي القيم الافتراضية الآمنة.';
+
+  @override
+  String get dsAutomatic => 'الخصومات التلقائية';
+
+  @override
+  String get dsActivationUnavailable =>
+      'تفعيل الخصومات التلقائية غير متاح حاليًا لهذا المقهى.';
+
+  @override
+  String get dsStrategy => 'طريقة الاختيار';
+
+  @override
+  String get dsHighest => 'أعلى توفير فعلي';
+
+  @override
+  String get dsLowest => 'أقل توفير موجب';
+
+  @override
+  String get dsPriority => 'الأولوية (الأكبر أولًا)';
+
+  @override
+  String get dsSavingHelp =>
+      'التوفير هو المنفعة المالية الفعلية بعد الكميات والأصناف المؤهلة والحدود. مثلًا، خصم ثابت سقفه 5 يوفر أقل من خصم 10% يوفر 8؛ لا تكفي مقارنة القيم الاسمية.';
+
+  @override
+  String get dsCombination => 'الجمع';
+
+  @override
+  String get dsSingle => 'خصم واحد';
+
+  @override
+  String get dsDisjoint => 'أصناف غير متداخلة';
+
+  @override
+  String get dsCombinationHelp =>
+      'يجمع هذا الوضع خصومات الأصناف المؤهلة عندما لا تشترك في أي سطر من سطور الطلب.';
+
+  @override
+  String get dsOrderBehavior => 'سلوك خصم الطلب';
+
+  @override
+  String get dsExclusive => 'حصري';
+
+  @override
+  String get dsAfterItems => 'بعد خصومات الأصناف';
+
+  @override
+  String get dsOrderHelp =>
+      'الحصري يختار مجموعة خصومات الأصناف أو خصم الطلب. بعد الأصناف يطبق خصم الطلب على الرصيد المتبقي ويتطلب وضع الأصناف غير المتداخلة.';
+
+  @override
+  String get dsCouponBehavior => 'سلوك خصم الكود';
+
+  @override
+  String get dsManualBehavior => 'سلوك الخصم اليدوي';
+
+  @override
+  String get dsFollowRules => 'اتباع قواعد الجمع';
+
+  @override
+  String get dsCap => 'الحد الأقصى لإجمالي الخصم (%)';
+
+  @override
+  String get dsCapHelp =>
+      'اتركه فارغًا دون حد إضافي. أكبر من 0 وحتى 100، بأربع منازل عشرية كحد أقصى.';
+
+  @override
+  String get dsAllowSuppression => 'السماح باستبعاد الخصم التلقائي';
+
+  @override
+  String get dsSuppressionHelp =>
+      'يتطلب الاستبعاد أيضًا صلاحية مستقلة للمستخدم وسببًا. صلاحية الإعدادات لا تمنح صلاحية الاستبعاد.';
+
+  @override
+  String get dsSummary => 'ملخص السياسة';
+
+  @override
+  String get dsIntentHelp =>
+      'يبقى اختيارك الصريح لخصم يدوي أو كود حتى مراجعته أو إزالته. اتباع القواعد يحترم الحصرية وحدود الجمع.';
+
+  @override
+  String get dsForbidden => 'ليس لديك صلاحية لإدارة هذه الإعدادات.';
+
+  @override
+  String get dsLoadFailed =>
+      'تعذر تحميل الإعدادات. أعد المحاولة لتحديث الصلاحيات والإعدادات.';
+
+  @override
+  String get dsSaveFailed =>
+      'تعذر تأكيد الحفظ. راجع الإعدادات الحالية قبل إعادة المحاولة.';
+
+  @override
+  String get dsConflict =>
+      'تغيرت الإعدادات على الخادم. مسودتك محفوظة. قارنها بالإعدادات الحالية قبل الحفظ مجددًا.';
+
+  @override
+  String get dsReviewConflict => 'راجعت الإعدادات الحالية';
+
+  @override
+  String dsCurrentVersion(int version) {
+    return 'الإصدار المحفوظ الحالي: $version';
+  }
+
+  @override
+  String get dsSave => 'حفظ الإعدادات';
+
+  @override
+  String get dsSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get dsReset => 'إعادة المسودة للقيم الافتراضية';
+
+  @override
+  String get dsValidation => 'راجع النطاق المسموح وقواعد الجمع.';
+
+  @override
+  String get dsDiscard => 'تجاهل مسودة إعدادات الخصومات غير المحفوظة؟';
+
+  @override
+  String get dsDiscardAction => 'تجاهل المسودة';
+
+  @override
+  String get dsManagerPermissions => 'صلاحيات خصومات المدير';
+
+  @override
+  String get dsPermissionHelp =>
+      'يستبدل الحفظ قائمة صلاحيات خصومات المدير كاملة.';
+
+  @override
+  String get dsManagePolicies => 'إدارة السياسات';
+
+  @override
+  String get dsApplyConfigured => 'تطبيق الخصومات المعرّفة';
+
+  @override
+  String get dsApplyManual => 'تطبيق الخصومات الحرة';
+
+  @override
+  String get dsView => 'عرض الخصومات';
+
+  @override
+  String get d2Automatic => 'تلقائي';
+
+  @override
+  String get d2Priority => 'الأولوية (عدد صحيح من 0 إلى 1000)';
+
+  @override
+  String get d2CreationUnavailable =>
+      'إنشاء خصم تلقائي غير متاح حاليًا لهذا المقهى.';
+
+  @override
+  String get d2Review => 'مراجعة تغيير الخصم';
+
+  @override
+  String get d2ConfirmReview => 'تأكيد التغيير بعد المراجعة';
+
+  @override
+  String get d2Before => 'الإجماليات الحالية';
+
+  @override
+  String get d2After => 'الإجماليات المقترحة';
+
+  @override
+  String get d2Replacements => 'تستبدل القائمة التالية جميع الخصومات المطبقة.';
+
+  @override
+  String get d2Provisional => 'مبدئي: اختر وسيلة دفع للحصول على عرض نهائي.';
+
+  @override
+  String get d2Recover => 'التحقق من حالة العملية';
+
+  @override
+  String get d2Uncertain =>
+      'لم تتأكد النتيجة. أبقِ الطلب مفتوحًا وتحقق من حالته.';
+
+  @override
+  String get d2FreshReview => 'تغير السياق. أعد المعاينة وأكد النتيجة الجديدة.';
+
+  @override
+  String get d2Suppress => 'استبعاد الخصم التلقائي';
+
+  @override
+  String get d2Undo => 'التراجع عن الاستبعاد';
+
+  @override
+  String get d2Reason => 'سبب الاستبعاد المطلوب';
+
+  @override
+  String get d2Suppressed => 'الاستبعادات المحفوظة';
+
+  @override
+  String get d2Quote => 'عرض الدفع';
+
+  @override
+  String get d2QuoteConfirm => 'تأكيد الدفع المعروض';
+
+  @override
+  String get d2QuoteChanged =>
+      'تغيرت إجماليات الدفع. راجع العرض الجديد وأكد مجددًا.';
+
+  @override
+  String get d2ChooseTender => 'اختيار وسيلة الدفع';
+
+  @override
+  String get d2ZeroBalance => 'رصيد صفري دون وسيلة دفع';
+
+  @override
+  String get d2Generic => 'تعذر إكمال العملية. حدّث البيانات وحاول مجددًا.';
+
+  @override
+  String get d2Configuration => 'أكمل الإعدادات المالية المطلوبة قبل الدفع.';
+
+  @override
+  String get d2Stock =>
+      'المخزون غير كافٍ لإتمام هذه السلة. راجع الأصناف والكميات.';
+
+  @override
+  String get d2Validation => 'راجع تفاصيل الدفع واحصل على عرض جديد.';
+
+  @override
+  String get d2UpdateRequired => 'حدّث التطبيق قبل مراجعة هذا الطلب أو دفعه.';
+
+  @override
+  String get d2OptionalReason => 'السبب (اختياري)';
+
+  @override
+  String get d2Forbidden => 'ليست لديك صلاحية لتنفيذ عملية الخصم هذه.';
+
+  @override
+  String get d2Eligibility =>
+      'لم يعد هذا الخصم مؤهلًا. راجع اختيارك الصريح أو أزله.';
+
+  @override
+  String get d2Lifecycle => 'الطلب غير متاح لهذه العملية. حدّث حالته.';
+
+  @override
+  String get d2Sync => 'انتظر مزامنة السلة قبل المراجعة أو الدفع.';
+
+  @override
+  String get d2SourceAutomatic => 'تلقائي';
+
+  @override
+  String get d2SourceCode => 'كود';
+
+  @override
+  String get d2SourceManual => 'يدوي معرّف';
+
+  @override
+  String get d2SourceAdHoc => 'حر';
 }

@@ -70,6 +70,11 @@ class DiscountPosPreviewCard extends StatelessWidget {
             padding: AppSpacing.allLg,
             child: Column(
               children: <Widget>[
+                Text(
+                  l10n.discountIllustrativePreview,
+                  style: AppTextStyles.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.md),
                 _ReceiptRow(label: l10n.discountSubtotal, value: subtotal),
                 const SizedBox(height: AppSpacing.md),
                 _ReceiptRow(

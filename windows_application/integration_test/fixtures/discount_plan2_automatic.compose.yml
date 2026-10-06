@@ -1,0 +1,7 @@
+# Override only the EXISTING acceptance service/project and volumes.
+# The Backend allowlist still checks APP_ENV and the actual PostgreSQL database.
+services:
+  accept-backend:
+    environment:
+      DB_DATABASE: cafe_system_618_testing
+      DISCOUNT_ENGINE_ISOLATED_AUTOMATIC: 'true'

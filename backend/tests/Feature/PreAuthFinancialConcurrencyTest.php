@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\FinancialSetupService;
 use App\Services\PosNumberGenerator;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
@@ -74,13 +75,25 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         ]);
         $firstOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId);
         $secondOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId);
+        // This race must reach policy usage validation through real cash-payment
+        // requirements, including a Finance-mapped drawer on both test shifts.
+        $actorId = (int) DB::table('users')->where('tenant_id', $tenantId)->where('role', 'owner')->value('id');
+        app(FinancialSetupService::class)->ensureForTenant($tenantId, $branchId, $actorId);
+        $drawerId = (int) DB::table('branches')->where('id', $branchId)->value('pos_cash_financial_location_id');
+        $this->assertGreaterThan(0, $drawerId);
+        $shiftIds = DB::table('orders')->whereIn('id', [$firstOrder, $secondOrder])->pluck('shift_id');
+        // One drawer has one open shift; both competing orders use that shift.
+        $sharedShiftId = (int) $shiftIds->first();
+        DB::table('shifts')->where('tenant_id', $tenantId)->whereIn('id', $shiftIds)->where('id', '!=', $sharedShiftId)->update(['status' => 'closed', 'closed_at' => now()]);
+        DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $sharedShiftId)->update(['financial_location_id' => $drawerId]);
+        DB::table('orders')->where('tenant_id', $tenantId)->whereIn('id', [$firstOrder, $secondOrder])->update(['shift_id' => $sharedShiftId]);
 
         $results = $this->runConcurrently('payment', [
             $this->paymentPayload($tenantId, $firstOrder, 'final-discount-a'),
             $this->paymentPayload($tenantId, $secondOrder, 'final-discount-b'),
         ]);
 
-        $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']));
+        $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']), json_encode($results));
         $loser = collect($results)->first(fn (array $result): bool => ! $result['ok']);
         $this->assertSame('DISCOUNT_USAGE_LIMIT_REACHED', $loser['code']);
         $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discountId)->count());
@@ -288,11 +301,22 @@ class PreAuthFinancialConcurrencyTest extends TestCase
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->value('id');
-        $shiftId = DB::table('shifts')->insertGetId([
-            'tenant_id' => $tenantId, 'branch_id' => $branchId, 'user_id' => $actorId,
-            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
-            'created_at' => $now, 'updated_at' => $now,
-        ]);
+        // Every payment race must reach settlement through a valid mapped
+        // drawer, not fail earlier at the production cash-location guard.
+        app(FinancialSetupService::class)->ensureForTenant($tenantId, $branchId, $actorId);
+        $drawerId = (int) DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('pos_cash_financial_location_id');
+        $this->assertGreaterThan(0, $drawerId);
+        $shiftId = DB::table('shifts')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
+            ->where('user_id', $actorId)->where('financial_location_id', $drawerId)->where('status', 'open')->value('id');
+        if (! $shiftId) {
+            DB::table('shifts')->where('tenant_id', $tenantId)->where('financial_location_id', $drawerId)->where('status', 'open')
+                ->update(['status' => 'closed', 'closed_at' => $now]);
+            $shiftId = DB::table('shifts')->insertGetId([
+                'tenant_id' => $tenantId, 'branch_id' => $branchId, 'user_id' => $actorId,
+                'financial_location_id' => $drawerId, 'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
 
         return DB::table('orders')->insertGetId([
             'tenant_id' => $tenantId, 'branch_id' => $branchId, 'shift_id' => $shiftId,

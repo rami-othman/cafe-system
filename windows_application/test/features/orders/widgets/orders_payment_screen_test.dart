@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/app/localization/localization_extensions.dart';
 import 'package:windows_application/features/orders/controllers/orders_cubit.dart';
 import 'package:windows_application/features/orders/controllers/orders_state.dart';
 import 'package:windows_application/features/orders/models/order_detail.dart';
@@ -20,9 +21,127 @@ import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/models/payment_method.dart';
 import 'package:windows_application/features/pos/models/payment_result.dart';
 import 'package:windows_application/features/pos/models/payment_summary.dart';
+import 'package:windows_application/features/pos/models/order_receipt.dart';
+import 'package:windows_application/features/pos/widgets/receipt_preview_dialog.dart';
 import 'package:windows_application/features/pos/widgets/payment_summary_panel.dart';
 
 void main() {
+  for (final String transition in <String>[
+    'A to B',
+    'A to B to A',
+    'close/reopen',
+  ]) {
+    for (final bool fails in <bool>[false, true]) {
+      testWidgets('stale history receipt is silent after $transition '
+          '(fails: $fails)', (WidgetTester tester) async {
+        final repository = _ScreenPaymentRepository();
+        final cubit = OrdersCubit(repository: repository);
+        addTearDown(cubit.close);
+        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: BlocProvider<OrdersCubit>.value(
+                value: cubit,
+                child: const OrdersScreen(),
+              ),
+            ),
+          ),
+        );
+        await cubit.loadOrders(branchId: 1);
+        await cubit.openOrderDetails('7');
+        await tester.pumpAndSettle();
+        final pending = Completer<OrderReceipt>();
+        repository.receiptFuture = pending.future;
+        await tester.tap(find.byTooltip('Print order'));
+        await tester.pump();
+        expect(repository.receiptRequests, 1);
+
+        if (transition == 'close/reopen') {
+          cubit.closeOrderDetails();
+          await cubit.openOrderDetails('7');
+        } else {
+          await cubit.applyBranchContext(2);
+          if (transition == 'A to B to A') {
+            await cubit.applyBranchContext(1);
+            await cubit.openOrderDetails('7');
+          }
+        }
+        if (fails) {
+          pending.completeError(StateError('private backend error'));
+        } else {
+          pending.complete(_historyReceipt());
+        }
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ReceiptPreviewDialog), findsNothing);
+        expect(find.byType(SnackBar), findsNothing);
+        expect(tester.takeException(), isNull);
+        expect(repository.payRequests, 0);
+        expect(repository.summaryRequests, 0);
+      });
+    }
+  }
+
+  testWidgets(
+    'current history receipt failure shows safe message and retries',
+    (WidgetTester tester) async {
+      final repository = _ScreenPaymentRepository();
+      final cubit = OrdersCubit(repository: repository);
+      addTearDown(cubit.close);
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BlocProvider<OrdersCubit>.value(
+              value: cubit,
+              child: const OrdersScreen(),
+            ),
+          ),
+        ),
+      );
+      await cubit.loadOrders();
+      await cubit.openOrderDetails('7');
+      await tester.pumpAndSettle();
+      for (int attempt = 1; attempt <= 2; attempt++) {
+        final pending = Completer<OrderReceipt>();
+        repository.receiptFuture = pending.future;
+        await tester.tap(find.byTooltip('Print order'));
+        await tester.pump();
+        pending.completeError(StateError('private backend error'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(repository.receiptRequests, attempt);
+        expect(
+          find.text(
+            tester
+                .element(find.byType(OrdersScreen))
+                .l10n
+                .posReceiptUnavailable,
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('private backend error'), findsNothing);
+        ScaffoldMessenger.of(
+          tester.element(find.byType(OrdersScreen)),
+        ).removeCurrentSnackBar();
+        await tester.pumpAndSettle();
+      }
+      expect(repository.payRequests, 0);
+      expect(repository.summaryRequests, 0);
+    },
+  );
+
   test('maps payment statuses without collapsing uncertainty', () {
     expect(
       paymentCompletionStatusFor(OrdersPaymentStatus.confirmed),
@@ -248,6 +367,14 @@ class _ScreenPaymentRepository extends OrdersRepository {
   int summaryRequests = 0;
   int payRequests = 0;
   Future<PaymentSummary>? summaryFuture;
+  Future<OrderReceipt>? receiptFuture;
+  int receiptRequests = 0;
+
+  @override
+  Future<OrderReceipt> getReceipt(int orderId) {
+    receiptRequests++;
+    return receiptFuture ?? Future<OrderReceipt>.value(_historyReceipt());
+  }
 
   PaymentSummary get authoritativeSummary =>
       summary ??
@@ -271,6 +398,13 @@ class _ScreenPaymentRepository extends OrdersRepository {
     Branch(
       id: 1,
       name: 'Downtown',
+      currency: 'SYP',
+      timezone: 'Asia/Damascus',
+      isActive: true,
+    ),
+    Branch(
+      id: 2,
+      name: 'Branch B',
       currency: 'SYP',
       timezone: 'Asia/Damascus',
       isActive: true,
@@ -360,3 +494,22 @@ class _ScreenPaymentRepository extends OrdersRepository {
     timeline: const <OrderTimelineEvent>[],
   );
 }
+
+OrderReceipt _historyReceipt() => OrderReceipt(
+  orderNumber: '#AUTH-7',
+  branchName: 'Downtown',
+  cashierName: 'Cashier',
+  completedAt: DateTime(2026, 10, 6),
+  items: const [],
+  subtotal: 99,
+  discountTotal: 0,
+  discountLabel: null,
+  tax: 0,
+  total: 99,
+  payment: const PaymentResult(
+    method: PaymentMethod.cash,
+    totalDue: 99,
+    amountReceived: 99,
+    changeDue: 0,
+  ),
+);

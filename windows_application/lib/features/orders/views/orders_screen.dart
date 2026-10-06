@@ -17,10 +17,17 @@ import '../models/order_detail.dart';
 import '../models/order_summary.dart';
 import '../models/refund_result.dart';
 import '../../pos/controllers/pos_cubit.dart';
+import '../../pos/controllers/pos_print_cubit.dart';
+import '../../pos/controllers/pos_print_state.dart';
+import '../../pos/widgets/receipt_preview_dialog.dart';
+import '../../pos/widgets/pos_print_failure_dialog.dart';
 import '../../pos/models/payment_method.dart';
 import '../../pos/models/payment_result.dart';
 import '../../pos/models/payment_summary.dart';
 import '../../pos/widgets/payment_dialog.dart';
+import '../../pos/widgets/quoted_payment_dialog.dart';
+import '../../pos/widgets/discount_engine_widgets.dart';
+import '../../../app/localization/localization_extensions.dart';
 import '../widgets/order_filter_tabs.dart';
 import '../widgets/order_details_panel.dart';
 import '../widgets/order_summary_card.dart';
@@ -159,10 +166,7 @@ class OrdersScreen extends StatelessWidget {
                       child: OrderDetailsPanel(
                         detail: state.selectedOrderDetail!,
                         onClose: cubit.closeOrderDetails,
-                        onPrint: () => _showSnackBar(
-                          context,
-                          'Printing will be added later.',
-                        ),
+                        onPrint: () => _showHistoryReceipt(context, cubit),
                         onCopy: () => _showSnackBar(
                           context,
                           'Copy order will be added later.',
@@ -218,6 +222,61 @@ class OrdersScreen extends StatelessWidget {
         state.isPaymentBlocked ||
         state.isRefundSubmitting ||
         state.uncertainRefundMessage != null;
+  }
+
+  Future<void> _showHistoryReceipt(
+    BuildContext context,
+    OrdersCubit cubit,
+  ) async {
+    final detail = cubit.state.selectedOrderDetail;
+    if (detail == null) return;
+    final detailsContextVersion = cubit.detailsContextVersion;
+    final receipt = await cubit.loadHistoryReceipt(detail.id);
+    if (!context.mounted ||
+        cubit.isClosed ||
+        cubit.detailsContextVersion != detailsContextVersion ||
+        cubit.state.selectedOrderDetail?.id != detail.id) {
+      return;
+    }
+    if (receipt == null) {
+      _showSnackBar(context, context.l10n.posReceiptUnavailable);
+      return;
+    }
+    final printCubit = context.read<PosPrintCubit>();
+    final locale = Localizations.localeOf(context);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => BlocBuilder<PosPrintCubit, PosPrintState>(
+        bloc: printCubit,
+        builder: (_, printState) => ReceiptPreviewDialog(
+          receipt: receipt,
+          isPrinting: printState.isPrinting,
+          onPrintReceipt: () async {
+            final branchId = detail.branchId;
+            if (branchId == null) {
+              _showSnackBar(
+                dialogContext,
+                dialogContext.l10n.posOperationFailed,
+              );
+              return;
+            }
+            Future<PosPrintOutcome> printSaved() => printCubit.printReceipt(
+              orderId: int.parse(detail.id),
+              branchId: branchId,
+              locale: locale,
+            );
+            final outcome = await printSaved();
+            if (!dialogContext.mounted) return;
+            await showPosPrintFailure(
+              context: dialogContext,
+              outcome: outcome,
+              retry: printSaved,
+              onOpenPrinterSetup: () => Navigator.of(dialogContext).pop(),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _resumeOrder(
@@ -361,7 +420,43 @@ class OrdersScreen extends StatelessWidget {
     if (summary == null) {
       final String? message = cubit.state.paymentErrorMessage;
       if (message != null) {
-        _showSnackBar(context, message);
+        _showSnackBar(
+          context,
+          message.startsWith('d2:')
+              ? localizedDiscountError(context.l10n, message.substring(3))
+              : message,
+        );
+      }
+      return;
+    }
+
+    if (summary.discountCapabilities?.supportsPaymentQuote == true) {
+      final payment = await cubit.prepareQuotedPayment(summary.orderId);
+      if (!context.mounted) return;
+      if (payment == null) {
+        _showSnackBar(context, context.l10n.d2Generic);
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => BlocProvider.value(
+          value: payment,
+          child: const QuotedPaymentDialog(),
+        ),
+      );
+      if (context.mounted) {
+        if (payment.state.currentOrderId == null) {
+          await cubit.refreshOrders();
+        } else if (payment.state.discounts.errorCode != null) {
+          _showSnackBar(
+            context,
+            localizedDiscountError(
+              context.l10n,
+              payment.state.discounts.errorCode,
+            ),
+          );
+        }
       }
       return;
     }

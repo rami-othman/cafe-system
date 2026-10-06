@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'backend_order_item.dart';
 import 'backend_order_totals.dart';
 import 'json_helpers.dart';
+import 'discount_engine.dart';
 
 class BackendOrder extends Equatable {
   const BackendOrder({
@@ -32,10 +33,18 @@ class BackendOrder extends Equatable {
     this.canResume,
     this.resumeBlockerCode,
     this.resumeBlockedReason,
+    this.discounts = const [],
+    this.payments = const [],
   });
 
   factory BackendOrder.fromJson(Map<String, dynamic> json) {
     return BackendOrder(
+      discounts: engineList(
+        json['discounts'],
+      ).map(SavedDiscount.fromJson).toList(),
+      payments: engineList(
+        json['payments'],
+      ).map(OrderPaymentIdentity.fromJson).toList(),
       id: readInt(json['id']) ?? 0,
       orderNumber: readString(json['orderNumber']),
       branchId: readInt(json['branchId']) ?? 0,
@@ -99,6 +108,8 @@ class BackendOrder extends Equatable {
     );
   }
 
+  final List<SavedDiscount> discounts;
+  final List<OrderPaymentIdentity> payments;
   final int id;
   final String orderNumber;
   final int branchId;
@@ -128,6 +139,8 @@ class BackendOrder extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    discounts,
+    payments,
     id,
     orderNumber,
     branchId,
@@ -155,4 +168,23 @@ class BackendOrder extends Equatable {
     resumeBlockerCode,
     resumeBlockedReason,
   ];
+}
+
+class OrderPaymentIdentity extends Equatable {
+  const OrderPaymentIdentity({
+    required this.id,
+    required this.status,
+    required this.idempotencyKey,
+  });
+  final int id;
+  final String status;
+  final String? idempotencyKey;
+  factory OrderPaymentIdentity.fromJson(Map<String, dynamic> j) =>
+      OrderPaymentIdentity(
+        id: j['id'] as int,
+        status: j['status'] as String,
+        idempotencyKey: j['idempotencyKey'] as String?,
+      );
+  @override
+  List<Object?> get props => [id, status, idempotencyKey];
 }

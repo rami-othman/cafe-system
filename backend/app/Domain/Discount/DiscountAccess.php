@@ -17,12 +17,23 @@ final class DiscountAccess
 
     public const APPLY_MANUAL = 'discounts.apply_manual';
 
+    public const SETTINGS_MANAGE = 'discounts.settings.manage';
+
+    public const SUPPRESS_AUTOMATIC = 'discounts.automatic.suppress';
+
     public const CATALOG = [self::VIEW, self::MANAGE, self::APPLY_CONFIGURED, self::APPLY_MANUAL];
+
+    public const ALL_PERMISSIONS = [...self::CATALOG, self::SETTINGS_MANAGE, self::SUPPRESS_AUTOMATIC];
 
     public function allows(Request $request, string $permission): bool
     {
         $actor = $request->attributes->get('auth_user');
-        if (! $actor instanceof User || ! in_array($permission, self::CATALOG, true)) {
+        if (! $actor instanceof User || ! in_array($permission, self::ALL_PERMISSIONS, true)) {
+            return false;
+        }
+        if (in_array($permission, [self::SETTINGS_MANAGE, self::SUPPRESS_AUTOMATIC], true) && (! in_array($actor->effectiveRoleCode(), ['owner', 'manager'], true)
+            || (int) $actor->tenant_id !== (int) $request->attributes->get('tenant_id')
+            || ($actor->tenantRole && (int) $actor->tenantRole->tenant_id !== (int) $actor->tenant_id))) {
             return false;
         }
         if ($actor->isOwner()) {

@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\DiscountSettingsController;
 use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
 use App\Http\Controllers\Api\CafeConfiguration\ReceiptTemplateController as CafeConfigurationReceiptTemplateController;
 use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Api\CustomerRefundController;
 use App\Http\Controllers\Api\DailyClosingController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
+use App\Http\Controllers\Api\DiscountReferenceController;
 use App\Http\Controllers\Api\DiscountRolePermissionController;
 use App\Http\Controllers\Api\EmployeeManagementController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
@@ -118,6 +120,11 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('product-images/{tenant}/{filename}', [ProductCatalogController::class, 'showProductImage'])
         ->whereNumber('tenant');
+
+    Route::middleware(['api.token', 'password.changed'])->group(function (): void {
+        Route::get('cafe-configuration/discount-settings', [DiscountSettingsController::class, 'show']);
+        Route::put('cafe-configuration/discount-settings', [DiscountSettingsController::class, 'update']);
+    });
 
     // Administrative branch configuration is intentionally outside the
     // operational branch.access middleware: Owners may view inactive branches
@@ -436,6 +443,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('discounts', [DiscountController::class, 'index'])->middleware('discount.permission:discounts.view');
             Route::get('discounts/metrics', [DiscountController::class, 'metrics'])->middleware('discount.permission:discounts.view');
             Route::post('discounts', [DiscountController::class, 'store'])->middleware('discount.permission:discounts.manage');
+            Route::get('discounts/references/products', [DiscountReferenceController::class, 'products'])->middleware('discount.permission:discounts.manage');
+            Route::get('discounts/references/products/{product}/variants', [DiscountReferenceController::class, 'variants'])->middleware('discount.permission:discounts.manage');
             Route::get('discounts/{discount}', [DiscountController::class, 'show'])->middleware('discount.permission:discounts.view');
             Route::put('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
             Route::patch('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
@@ -457,6 +466,12 @@ Route::prefix('v1')->group(function (): void {
             Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');
             Route::delete('orders/{order}/discounts', [DiscountController::class, 'remove'])->middleware('discount.permission:discounts.apply_configured');
             Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
+            Route::get('discount-capabilities', [\App\Http\Controllers\Api\DiscountEngineController::class, 'capabilities']);
+            Route::get('orders/{order}/discount-state', [\App\Http\Controllers\Api\DiscountEngineController::class, 'state']);
+            Route::get('orders/{order}/discount-operations/{identity}', [\App\Http\Controllers\Api\DiscountEngineController::class, 'operation']);
+            Route::post('orders/{order}/discounts/preview', [\App\Http\Controllers\Api\DiscountEngineController::class, 'preview']);
+            Route::post('orders/{order}/discounts/operations', [\App\Http\Controllers\Api\DiscountEngineController::class, 'apply']);
+            Route::post('orders/{order}/payment-quote', [\App\Http\Controllers\Api\DiscountEngineController::class, 'quote']);
             Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
             Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
             Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);

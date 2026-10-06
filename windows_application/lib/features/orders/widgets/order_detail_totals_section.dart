@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../app/localization/localization_extensions.dart';
+import '../../pos/widgets/discount_engine_widgets.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -19,6 +21,12 @@ class OrderDetailTotalsSection extends StatelessWidget {
       child: Column(
         children: <Widget>[
           _TotalRow(label: 'Subtotal', amount: detail.subtotal),
+          DiscountBreakdown(discounts: detail.discounts),
+          if (detail.discountTotal != 0)
+            _TotalRow(
+              label: context.l10n.posDiscount,
+              amount: -detail.discountTotal,
+            ),
           const SizedBox(height: AppSpacing.sm),
           _TotalRow(
             label: TaxFormatter.taxLabel(detail.taxRate),

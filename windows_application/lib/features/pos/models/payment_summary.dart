@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'json_helpers.dart';
+import 'discount_engine.dart';
 
 class PaymentSummary extends Equatable {
   const PaymentSummary({
@@ -18,10 +19,24 @@ class PaymentSummary extends Equatable {
     this.canPay = true,
     this.blockerCode,
     this.blockedReason,
+    this.paymentMethods = const [],
+    this.discounts = const [],
+    this.discountCapabilities,
   });
 
   factory PaymentSummary.fromJson(Map<String, dynamic> json) {
     return PaymentSummary(
+      paymentMethods: engineList(
+        json['paymentMethods'],
+      ).map(OperationalPaymentMethod.fromJson).toList(),
+      discounts: engineList(
+        json['discounts'],
+      ).map(SavedDiscount.fromJson).toList(),
+      discountCapabilities: json['discountCapabilities'] == null
+          ? null
+          : DiscountCapabilities.fromJson(
+              engineMap(json['discountCapabilities']),
+            ),
       orderId: readInt(json['orderId']) ?? 0,
       orderNumber: readString(json['orderNumber']),
       totalDue: readDouble(json['totalDue']),
@@ -50,6 +65,9 @@ class PaymentSummary extends Equatable {
     );
   }
 
+  final List<OperationalPaymentMethod> paymentMethods;
+  final List<SavedDiscount> discounts;
+  final DiscountCapabilities? discountCapabilities;
   final int orderId;
   final String orderNumber;
   final double totalDue;
@@ -69,6 +87,9 @@ class PaymentSummary extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    paymentMethods,
+    discounts,
+    discountCapabilities,
     orderId,
     orderNumber,
     totalDue,

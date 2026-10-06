@@ -23,6 +23,9 @@ import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/payment_summary.dart';
 import 'cart_customer_selector.dart';
+import '../models/discount_engine.dart';
+import 'discount_engine_widgets.dart';
+import 'quoted_payment_dialog.dart';
 import 'cart_item_tile.dart';
 import 'discount_dialog.dart';
 import 'order_totals_panel.dart';
@@ -74,15 +77,22 @@ class PosCartPanel extends StatelessWidget {
                   },
                   itemBuilder: (BuildContext context, int index) {
                     if (index == state.cartItems.length) {
-                      return _AddDiscountButton(
-                        isEnabled:
-                            state.hasCartItems &&
-                            !state.isCartMutationInProgress,
-                        onPressed:
-                            state.hasCartItems &&
-                                !state.isCartMutationInProgress
-                            ? () => _showDiscountDialog(context, state, cubit)
-                            : null,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _DiscountCartState(state: state, cubit: cubit),
+                          _AddDiscountButton(
+                            isEnabled:
+                                state.hasCartItems &&
+                                !state.isCartMutationInProgress,
+                            onPressed:
+                                state.hasCartItems &&
+                                    !state.isCartMutationInProgress
+                                ? () =>
+                                      _showDiscountDialog(context, state, cubit)
+                                : null,
+                          ),
+                        ],
                       );
                     }
 
@@ -101,6 +111,9 @@ class PosCartPanel extends StatelessWidget {
               BlocBuilder<PosPrintCubit, PosPrintState>(
                 builder: (BuildContext context, PosPrintState printState) =>
                     _CartFooter(
+                      exactTotals:
+                          state.discounts.quote?.resolution.totals ??
+                          state.discounts.saved?.totals,
                       subtotal: state.subtotal,
                       discountTotal: state.discountTotal,
                       tax: state.tax,
@@ -110,11 +123,31 @@ class PosCartPanel extends StatelessWidget {
                       hasCartItems: state.hasCartItems,
                       canHoldCurrentOrder: state.canHoldCurrentOrder,
                       appliedDiscount: state.appliedDiscount,
-                      onRemoveDiscount: cubit.removeDiscount,
+                      onRemoveDiscount: () =>
+                          state
+                                  .discounts
+                                  .capabilities
+                                  ?.supportsDiscountReview ==
+                              true
+                          ? showDiscountReview(
+                              context,
+                              cubit,
+                              DiscountReviewRequest.remove(),
+                            )
+                          : cubit.removeDiscount(),
                       onClearCart: cubit.clearCart,
                       onHold: cubit.holdCurrentOrder,
                       onPay:
                           state.isPaymentSubmitting ||
+                              state.isCartMutationInProgress ||
+                              state.discounts.busy ||
+                              state.discounts.createUncertain ||
+                              state.discounts.operationUncertain ||
+                              (state.isBackendMode &&
+                                  (state.discounts.capabilities == null ||
+                                      !state.isBackendReachable ||
+                                      (state.currentOrderId != null &&
+                                          !state.discounts.totalsResolved))) ||
                               state.uncertainPaymentOrderId != null
                           ? null
                           : () => unawaited(
@@ -203,7 +236,20 @@ class PosCartPanel extends StatelessWidget {
       return;
     }
 
-    await cubit.applyDiscount(discount);
+    if (state.isBackendMode) {
+      if (discount.code == null && discount.backendId == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.d2Eligibility)));
+        return;
+      }
+      final request = discount.code != null
+          ? DiscountReviewRequest.code(discount.code!)
+          : DiscountReviewRequest.manual(discount.backendId!);
+      await showDiscountReview(context, cubit, request);
+    } else {
+      await cubit.applyDiscount(discount);
+    }
   }
 
   Future<void> _showCustomerDialog(
@@ -243,6 +289,18 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
+    if (state.isBackendMode) {
+      if (!await cubit.prepareDiscountOrder() || !context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: const QuotedPaymentDialog(),
+        ),
+      );
+      return;
+    }
     if (!state.hasCartItems || state.total < 0) {
       return;
     }
@@ -327,6 +385,113 @@ PaymentMethod? _paymentMethodForApiValue(String value) {
     if (method.apiValue == value) return method;
   }
   return null;
+}
+
+class _DiscountCartState extends StatelessWidget {
+  const _DiscountCartState({required this.state, required this.cubit});
+  final PosState state;
+  final PosCubit cubit;
+  @override
+  Widget build(BuildContext c) {
+    final w = state.discounts, l = c.l10n;
+    final enabled =
+        !w.busy &&
+        !state.isCartMutationInProgress &&
+        !state.isPaymentSubmitting &&
+        state.uncertainPaymentOrderId == null &&
+        !w.operationUncertain &&
+        !w.createUncertain;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (w.errorCode != null) Text(localizedDiscountError(l, w.errorCode)),
+        if (w.createUncertain)
+          TextButton(
+            onPressed: w.busy ? null : cubit.recoverCartCreation,
+            child: Text(l.d2Recover),
+          ),
+        if (w.operationUncertain)
+          TextButton(
+            onPressed: w.busy ? null : cubit.recoverDiscountChange,
+            child: Text(l.d2Recover),
+          ),
+        if (state.isBackendMode && w.capabilities == null && !w.busy)
+          TextButton(
+            onPressed: cubit.refreshDiscountCapabilities,
+            child: Text(l.commonRetry),
+          ),
+        if (w.saved != null) ...[
+          DiscountBreakdown(discounts: w.saved!.discounts),
+          if (w.saved!.explicitIntent != null)
+            Text(
+              '${l.dsIntentHelp}\n${discountSource(l, w.saved!.explicitIntent!.source)}',
+            ),
+          if (w.saved!.explicitIntent != null)
+            TextButton(
+              onPressed: enabled
+                  ? () => showDiscountReview(
+                      c,
+                      cubit,
+                      DiscountReviewRequest.remove(),
+                    )
+                  : null,
+              child: Text(l.commonDelete),
+            ),
+          if (w.capabilities?.canSuppressAutomatic == true) ...[
+            for (final d in w.saved!.discounts.where(
+              (d) => d.source == 'automatic' && d.discountId != null,
+            ))
+              TextButton(
+                onPressed: enabled
+                    ? () async {
+                        final reason = await requestSuppressionReason(c);
+                        if (reason != null && c.mounted) {
+                          await showDiscountReview(
+                            c,
+                            cubit,
+                            DiscountReviewRequest.suppress(
+                              d.discountId!,
+                              reason,
+                            ),
+                          );
+                        }
+                      }
+                    : null,
+                child: Text('${l.d2Suppress}: ${d.name}'),
+              ),
+          ],
+          if (w.saved!.suppressions.isNotEmpty) Text(l.d2Suppressed),
+          for (final suppression in w.saved!.suppressions)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('#${suppression.discountId}'),
+              subtitle: Text(suppression.reason),
+              trailing: w.capabilities?.canSuppressAutomatic == true
+                  ? TextButton(
+                      onPressed: enabled
+                          ? () => showDiscountReview(
+                              c,
+                              cubit,
+                              DiscountReviewRequest.undo(
+                                suppression.discountId,
+                              ),
+                            )
+                          : null,
+                      child: Text(l.d2Undo),
+                    )
+                  : null,
+            ),
+        ],
+        if (state.currentOrderId != null &&
+            w.capabilities?.supportsDiscountReview == true &&
+            !w.totalsResolved)
+          TextButton(
+            onPressed: enabled ? cubit.refreshSavedDiscountState : null,
+            child: Text(l.commonRetry),
+          ),
+      ],
+    );
+  }
 }
 
 class _OrderControls extends StatelessWidget {
@@ -447,6 +612,7 @@ class _AddDiscountButton extends StatelessWidget {
 
 class _CartFooter extends StatelessWidget {
   const _CartFooter({
+    this.exactTotals,
     required this.subtotal,
     required this.discountTotal,
     required this.tax,
@@ -467,6 +633,7 @@ class _CartFooter extends StatelessWidget {
     required this.isBackendReachable,
   });
 
+  final DiscountTotals? exactTotals;
   final double subtotal;
   final double discountTotal;
   final double tax;
@@ -497,15 +664,18 @@ class _CartFooter extends StatelessWidget {
         padding: AppSpacing.allLg,
         child: Column(
           children: <Widget>[
-            OrderTotalsPanel(
-              subtotal: subtotal,
-              discountTotal: discountTotal,
-              tax: tax,
-              taxRate: taxRate,
-              total: total,
-              appliedDiscount: appliedDiscount,
-              onRemoveDiscount: isSyncingOrder ? null : onRemoveDiscount,
-            ),
+            if (exactTotals != null)
+              ExactDiscountTotals(totals: exactTotals!)
+            else
+              OrderTotalsPanel(
+                subtotal: subtotal,
+                discountTotal: discountTotal,
+                tax: tax,
+                taxRate: taxRate,
+                total: total,
+                appliedDiscount: appliedDiscount,
+                onRemoveDiscount: isSyncingOrder ? null : onRemoveDiscount,
+              ),
             const SizedBox(height: AppSpacing.lg),
             PosActionButtons(
               total: total,

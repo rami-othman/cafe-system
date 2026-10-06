@@ -16,6 +16,7 @@ final class DomainErrorMessages
 {
     private const MESSAGES = [
         // OrderLifecycleException
+        'DISCOUNT_AD_HOC_DISABLED' => 'الخصم الحر غير متاح. اختر سياسة خصم محفوظة ومؤهلة.',
         'CASH_REFUND_SHIFT_CLOSED' => 'استرداد النقدية بعد إغلاق وردية عملية البيع يتطلب إجراء صرف معتمد.',
         'DISCOUNT_APPLICATION_MODE_UNSUPPORTED' => 'طريقة تطبيق الخصم غير مدعومة.',
         'DISCOUNT_BOGO_UNSUPPORTED' => 'عرض "اشترِ واحصل" غير مدعوم لهذا الخصم.',

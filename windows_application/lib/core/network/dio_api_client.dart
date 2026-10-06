@@ -29,13 +29,21 @@ class DioApiClient {
       InterceptorsWrapper(
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
+          if (RegExp(
+            r'(^|/)(orders|discounts/available)(/|$)',
+          ).hasMatch(options.path)) {
+            options.headers['X-Discount-Contract'] = '2';
+          }
           // A dedicated header, not Accept-Language: the backend must be able
           // to tell "the app deliberately selected this language" apart from
           // an ambient Accept-Language a generic HTTP client (or a test tool)
           // might send on its own without the app ever choosing it.
           options.headers['X-App-Locale'] = CurrentLocale.languageCode;
           if (scopeBranchId != null) {
-            options.queryParameters.putIfAbsent('scopeBranchId', () => scopeBranchId);
+            options.queryParameters.putIfAbsent(
+              'scopeBranchId',
+              () => scopeBranchId,
+            );
           }
           if (options.data is FormData) {
             options.headers.remove(Headers.contentTypeHeader);

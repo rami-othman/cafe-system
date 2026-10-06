@@ -10,6 +10,7 @@ final class PosCashLocationResolver
 {
     public function forSale(int $tenantId, object $order, string $accountCode): int
     {
+        app(ShiftLockService::class)->lockLocation($tenantId, (int) $order->shift_id);
         $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $order->shift_id)
             ->where('branch_id', $order->branch_id)->where('status', 'open')->whereNull('deleted_at')
             ->lockForUpdate()->first();
@@ -69,8 +70,12 @@ final class PosCashLocationResolver
             ->where('locations.type', 'cash_drawer')
             ->where('accounts.code', $accountCode)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
             ->select('locations.id');
-        if ($active) $query->where('locations.is_active', true);
-        if ($lock) $query->lockForUpdate();
+        if ($active) {
+            $query->where('locations.is_active', true);
+        }
+        if ($lock) {
+            $query->lockForUpdate();
+        }
 
         return $query->first();
     }

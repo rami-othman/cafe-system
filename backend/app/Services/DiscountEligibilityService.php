@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\OrderLifecycleException;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -35,35 +37,36 @@ class DiscountEligibilityService
 
         // Existing semantics define the minimum against the pre-discount
         // whole-order subtotal, not the targeted-item subtotal.
-        if ((float) $order->subtotal < (float) $discount->minimum_order_amount) {
+        if (BigDecimal::of((string) $order->subtotal)->isLessThan((string) $discount->minimum_order_amount)) {
             throw new OrderLifecycleException('DISCOUNT_MINIMUM_NOT_MET', 'The minimum order amount has not been reached.');
         }
 
         $this->assertUsageAvailable($tenantId, $discount, $order, $branch);
 
         $eligibleSubtotal = $this->eligibleSubtotal($tenantId, $order, $discount);
-        if (in_array($discount->scope, ['product', 'category', 'bundle'], true) && $eligibleSubtotal <= 0) {
+        if (in_array($discount->scope, ['product', 'category', 'bundle'], true) && $eligibleSubtotal->isLessThanOrEqualTo(0)) {
             throw new OrderLifecycleException('DISCOUNT_ITEMS_NOT_ELIGIBLE', 'No order items are eligible for this discount.');
         }
 
         $amount = match ($discount->type) {
-            'percentage' => $eligibleSubtotal * ((float) $discount->value / 100),
+            'percentage' => $eligibleSubtotal->multipliedBy((string) $discount->value)->exactlyDividedBy(100),
             'fixed' => $discount->scope === 'product' && $discount->fixed_amount_basis === 'per_unit'
                 ? $this->perUnitFixedAmount($tenantId, $order, $discount)
-                : min((float) $discount->value, $eligibleSubtotal),
-            default => 0,
+                : BigDecimal::min((string) $discount->value, $eligibleSubtotal),
+            default => BigDecimal::zero(),
         };
         if ($discount->maximum_discount_amount !== null) {
-            $amount = min($amount, (float) $discount->maximum_discount_amount);
+            $amount = BigDecimal::min($amount, (string) $discount->maximum_discount_amount);
         }
 
-        return ['eligibleSubtotal' => round($eligibleSubtotal, 2), 'amount' => round(max(0, min($amount, $eligibleSubtotal)), 2)];
+        return ['eligibleSubtotal' => (string) $eligibleSubtotal->toScale(2, RoundingMode::HALF_UP),
+            'amount' => (string) BigDecimal::max(0, BigDecimal::min($amount, $eligibleSubtotal))->toScale(2, RoundingMode::HALF_UP)];
     }
 
     /** Refresh a draft discount after cart/customer mutations, or reject it at payment. */
     public function refreshAppliedDiscounts(int $tenantId, object $order, ?int $paymentMethodId = null, ?string $legacyPaymentMethod = null, bool $rejectInvalid = false): void
     {
-        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->get();
+        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('discount_id')->get();
         foreach ($rows as $row) {
             // POS manager/manual discounts have no configurable policy to revalidate.
             if ($row->discount_id === null) {
@@ -98,10 +101,10 @@ class DiscountEligibilityService
      */
     public function consumeUsage(int $tenantId, object $order, int $paymentId): void
     {
-        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNotNull('discount_id')->get();
+        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNotNull('discount_id')->orderBy('discount_id')->get();
         foreach ($rows as $row) {
-            if (DB::table('discount_usages')->where('order_id', $order->id)->exists()) {
-                return;
+            if (DB::table('discount_usages')->where('tenant_id', $tenantId)->where('order_id', $order->id)->where('discount_id', $row->discount_id)->exists()) {
+                continue;
             }
             $discount = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $row->discount_id)->whereNull('deleted_at')->lockForUpdate()->first();
             if (! $discount) {
@@ -291,43 +294,48 @@ class DiscountEligibilityService
         throw new OrderLifecycleException('DISCOUNT_PAYMENT_METHOD_NOT_ALLOWED', 'This discount is not available with the selected payment method.');
     }
 
-    private function eligibleSubtotal(int $tenantId, object $order, object $discount): float
+    /** One matcher for percentage, fixed/per_order and fixed/per_unit. */
+    public function eligibleItems(int $tenantId, object $order, object $discount): Builder
     {
-        if ($discount->scope === 'order') {
-            return (float) $order->subtotal;
+        $items = DB::table('order_items')->where('order_items.tenant_id', $tenantId)
+            ->where('order_items.order_id', $order->id)->whereNull('order_items.deleted_at');
+        if ($discount->scope === 'product') {
+            $items->whereIn('order_items.product_id', $this->targetIds($tenantId, $discount->id, 'product'))
+                ->where(function (Builder $query) use ($tenantId, $discount): void {
+                    $selection = fn (Builder $sub) => $sub->selectRaw('1')->from('discount_product_target_variants as selection')
+                        ->where('selection.tenant_id', $tenantId)->where('selection.discount_id', $discount->id)
+                        ->whereColumn('selection.product_id', 'order_items.product_id');
+                    $query->whereNotExists($selection)->orWhereExists(function (Builder $sub) use ($selection): void {
+                        $selection($sub)->whereColumn('selection.product_variant_id', 'order_items.product_variant_id');
+                    });
+                });
+        } elseif ($discount->scope === 'category') {
+            $items->leftJoin('products', function ($join) use ($tenantId): void {
+                $join->on('products.id', '=', 'order_items.product_id')->where('products.tenant_id', $tenantId);
+            })->whereIn($order->published_menu_version_id === null ? 'products.category_id' : 'order_items.category_id',
+                $this->targetIds($tenantId, $discount->id, 'category'));
         }
-        if ($discount->scope === 'bundle') {
-            return $this->bundleSubtotal($tenantId, $order, $discount);
-        }
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
-        $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
-        $items = DB::table('order_items')->leftJoin('products', 'products.id', '=', 'order_items.product_id')
-            ->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $order->id)->whereNull('order_items.deleted_at');
-        $items->where(function (Builder $query) use ($productIds, $categoryIds, $order): void {
-            if ($productIds) {
-                $query->whereIn('order_items.product_id', $productIds);
-            }
-            if ($categoryIds) {
-                // Versioned orders persist the category selected from their published
-                // menu payload. Legacy orders intentionally retain live fallback.
-                $categoryColumn = $order->published_menu_version_id === null ? 'products.category_id' : 'order_items.category_id';
-                $productIds ? $query->orWhereIn($categoryColumn, $categoryIds) : $query->whereIn($categoryColumn, $categoryIds);
-            }
-        });
 
-        return (float) $items->sum('order_items.total');
+        return $items;
     }
 
-    private function perUnitFixedAmount(int $tenantId, object $order, object $discount): float
+    private function eligibleSubtotal(int $tenantId, object $order, object $discount): BigDecimal
     {
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
-        $items = DB::table('order_items')
-            ->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
-            ->whereIn('product_id', $productIds)->get(['quantity', 'total']);
+        if ($discount->scope === 'order') {
+            return BigDecimal::of((string) $order->subtotal);
+        }
+        if ($discount->scope === 'bundle') {
+            return BigDecimal::of((string) $this->bundleSubtotal($tenantId, $order, $discount));
+        }
 
-        $amount = 0.0;
-        foreach ($items as $item) {
-            $amount += min((float) $discount->value * (float) $item->quantity, (float) $item->total);
+        return BigDecimal::of((string) $this->eligibleItems($tenantId, $order, $discount)->sum('order_items.total'));
+    }
+
+    private function perUnitFixedAmount(int $tenantId, object $order, object $discount): BigDecimal
+    {
+        $amount = BigDecimal::zero();
+        foreach ($this->eligibleItems($tenantId, $order, $discount)->get(['order_items.quantity', 'order_items.total']) as $item) {
+            $amount = $amount->plus(BigDecimal::min(BigDecimal::of((string) $discount->value)->multipliedBy((string) $item->quantity), (string) $item->total));
         }
 
         return $amount;

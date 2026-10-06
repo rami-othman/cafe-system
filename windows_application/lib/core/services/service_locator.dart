@@ -13,6 +13,9 @@ import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../../features/pos/repositories/pos_menu_sync_cache.dart';
 import '../../features/pos/repositories/pos_menu_sync_repository.dart';
 import '../../features/pos/repositories/pos_repository.dart';
+import '../../features/cafe_configuration/controllers/discount_settings_cubit.dart';
+import '../../features/cafe_configuration/controllers/discount_permissions_cubit.dart';
+import '../../features/cafe_configuration/repositories/discount_settings_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/shift/controllers/shift_closing_cubit.dart';
@@ -234,7 +237,10 @@ void setupServiceLocator({bool useBackend = true}) {
 
   if (!serviceLocator.isRegistered<OrdersCubit>()) {
     serviceLocator.registerFactory<OrdersCubit>(
-      () => OrdersCubit(repository: serviceLocator<OrdersRepository>()),
+      () => OrdersCubit(
+        repository: serviceLocator<OrdersRepository>(),
+        operationalRepository: serviceLocator<PosRepository>(),
+      ),
     );
   }
 
@@ -246,7 +252,11 @@ void setupServiceLocator({bool useBackend = true}) {
 
   if (!serviceLocator.isRegistered<DiscountsCubit>()) {
     serviceLocator.registerFactory<DiscountsCubit>(
-      () => DiscountsCubit(repository: serviceLocator<DiscountsRepository>()),
+      () => DiscountsCubit(
+        repository: serviceLocator<DiscountsRepository>(),
+        capabilityLoader:
+            serviceLocator<PosRepository>().getDiscountCapabilities,
+      ),
     );
   }
 
@@ -472,6 +482,19 @@ void setupServiceLocator({bool useBackend = true}) {
     );
   }
 
+  if (!serviceLocator.isRegistered<DiscountSettingsRepository>()) {
+    serviceLocator.registerLazySingleton<DiscountSettingsRepository>(
+      () => ApiDiscountSettingsRepository(serviceLocator<DioApiClient>()),
+    );
+    serviceLocator.registerFactory<DiscountPermissionsCubit>(
+      () => DiscountPermissionsCubit(
+        serviceLocator<DiscountSettingsRepository>(),
+      ),
+    );
+    serviceLocator.registerFactory<DiscountSettingsCubit>(
+      () => DiscountSettingsCubit(serviceLocator<DiscountSettingsRepository>()),
+    );
+  }
   if (!serviceLocator.isRegistered<CafeConfigurationRepository>()) {
     serviceLocator.registerLazySingleton<CafeConfigurationRepository>(
       () => ApiCafeConfigurationRepository(serviceLocator<DioApiClient>()),

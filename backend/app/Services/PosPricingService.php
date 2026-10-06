@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Support\SalePaymentMethodResolver;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -47,40 +50,51 @@ class PosPricingService
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
         abort_if(! $order, 404, 'Order not found.');
-        $subtotal = (float) DB::table('order_items')
+        if ($order->payment_status !== 'unpaid') {
+            return $order;
+        }
+        $engine = app(DiscountResolutionService::class);
+        if ($engine->active($tenantId, $orderId) && in_array($order->status, ['draft', 'held'], true)) {
+            $method = $paymentMethodId === null ? null : SalePaymentMethodResolver::resolveExplicit($tenantId, $paymentMethodId);
+            $result = $engine->resolve($tenantId, $order, $engine->intent($tenantId, $orderId), $method, $rejectInvalidDiscount);
+            $engine->persist($tenantId, $order, $result);
+
+            return DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->first();
+        }
+        $subtotal = BigDecimal::of((string) DB::table('order_items')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->whereNull('deleted_at')
-            ->sum('total');
+            ->sum('total'));
         // Eligibility uses the current cart, even though the persisted order
         // total is only written after the discount result is known.
-        $order->subtotal = $subtotal;
+        $order->subtotal = (string) $subtotal;
         // Draft cart mutations recalculate a managed discount or remove it if
         // current authoritative Order state no longer satisfies the policy.
         if (in_array($order->status, ['draft', 'held'], true) && $order->payment_status === 'unpaid') {
             $this->discounts->refreshAppliedDiscounts($tenantId, $order, $paymentMethodId, $legacyPaymentMethod, $rejectInvalidDiscount);
         }
 
-        $discountTotal = (float) DB::table('order_discounts')
+        $discountTotal = BigDecimal::of((string) DB::table('order_discounts')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
-            ->sum('discount_amount');
+            ->sum('discount_amount'));
         // Guard legacy rows as well as current validation: order totals may
         // never become negative because of malformed historical discounts.
-        $discountTotal = min($subtotal, max(0, $discountTotal));
+        $discountTotal = BigDecimal::min($subtotal, BigDecimal::max(0, $discountTotal));
 
-        $taxable = max(0, $subtotal - $discountTotal);
-        $taxTotal = round($taxable * (float) $order->tax_rate, 2);
-        $total = round($taxable + $taxTotal, 2);
+        $taxable = BigDecimal::max(0, $subtotal->minus($discountTotal));
+        $taxTotal = $taxable->multipliedBy((string) $order->tax_rate)->toScale(2, RoundingMode::HALF_UP);
+        $total = $taxable->plus($taxTotal)->toScale(2, RoundingMode::HALF_UP);
 
         DB::table('orders')
             ->where('tenant_id', $tenantId)
             ->where('id', $orderId)
             ->update([
-                'subtotal' => $subtotal,
-                'discount_total' => $discountTotal,
-                'tax_total' => $taxTotal,
-                'total' => $total,
+                'subtotal' => (string) $subtotal,
+                'discount_total' => (string) $discountTotal,
+                'tax_total' => (string) $taxTotal,
+                'total' => (string) $total,
                 'updated_at' => now(),
             ]);
 

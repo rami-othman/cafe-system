@@ -5,8 +5,11 @@ import '../../../l10n/app_localizations.dart';
 import '../models/discount_list_item.dart';
 
 extension DiscountPresentation on DiscountListItem {
-  String secondaryLabel(AppLocalizations l10n) =>
-      code == null ? l10n.discountManual : l10n.discountCodeValue(code!);
+  String secondaryLabel(AppLocalizations l10n) => applicationMode == 'automatic'
+      ? l10n.d2Automatic
+      : code == null
+      ? l10n.discountManual
+      : l10n.discountCodeValue(code!);
 
   String typeLabel(AppLocalizations l10n) => switch (type) {
     'fixed' => l10n.discountFixedAmount,

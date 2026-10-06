@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../models/available_discount.dart';
+import '../models/discount_engine.dart';
 import '../models/backend_order.dart';
 import '../models/backend_product_detail.dart';
 import '../models/branch.dart';
@@ -30,6 +31,80 @@ class PosRepository {
   bool get usesBackend => apiClient != null;
 
   bool get _usesBackend => usesBackend;
+
+  Future<DiscountCapabilities> getDiscountCapabilities() async =>
+      apiClient == null
+      ? const DiscountCapabilities()
+      : DiscountCapabilities.fromJson(
+          engineMap(await apiClient!.get('discount-capabilities')),
+        );
+  Future<SavedDiscountState> getDiscountState(int orderId) async =>
+      SavedDiscountState.fromJson(
+        engineMap(await apiClient!.get('orders/$orderId/discount-state')),
+      );
+  Future<DiscountReview> previewDiscount(
+    int orderId,
+    DiscountReviewRequest request, {
+    int? paymentMethodId,
+  }) async => DiscountReview.fromJson(
+    engineMap(
+      await apiClient!.post(
+        'orders/$orderId/discounts/preview',
+        data: request.toJson(paymentMethodId: paymentMethodId),
+      ),
+    ),
+  );
+  Future<SavedDiscountState> submitDiscountOperation(
+    int orderId,
+    String identity,
+    String reviewId,
+  ) async => SavedDiscountState.fromJson(
+    engineMap(
+      await apiClient!.post(
+        'orders/$orderId/discounts/operations',
+        data: {'operationId': identity, 'reviewId': reviewId},
+      ),
+    ),
+  );
+  Future<DiscountOperationResult> recoverDiscountOperation(
+    int orderId,
+    String identity,
+  ) async => DiscountOperationResult.fromJson(
+    engineMap(
+      await apiClient!.get('orders/$orderId/discount-operations/$identity'),
+    ),
+  );
+  Future<PaymentQuote> quotePayment(int orderId, int? paymentMethodId) async =>
+      PaymentQuote.fromJson(
+        engineMap(
+          await apiClient!.post(
+            'orders/$orderId/payment-quote',
+            data: {'paymentMethodId': paymentMethodId},
+          ),
+        ),
+      );
+  Future<PaymentResult> payQuotedOrder({
+    required int orderId,
+    required PaymentQuote quote,
+    required String amount,
+    required String idempotencyKey,
+  }) async => paymentResultFromJson(
+    engineMap(
+      await apiClient!.post(
+        'orders/$orderId/pay',
+        data: {
+          'amount': amount,
+          'idempotencyKey': idempotencyKey,
+          'quoteId': quote.quoteId,
+          if (quote.paymentMethodId != null) ...{
+            'paymentMethodId': quote.paymentMethodId,
+            'method': quote.method,
+          },
+        },
+      ),
+    ),
+    totalDue: double.parse(quote.resolution.totals.total),
+  );
 
   Future<List<Branch>> getBranches() async {
     if (!_usesBackend) {

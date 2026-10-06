@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../models/applied_discount.dart';
+import '../models/discount_engine.dart';
+import '../models/discount_workspace.dart';
 import '../models/available_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_order_item.dart';
@@ -51,6 +53,8 @@ class PosCubit extends Cubit<PosState> {
 
   final PosRepository repository;
   final String Function(String operation) _operationKeyGenerator;
+  CreateOrderRequest? _pendingCreate;
+  int _discountGeneration = 0;
   Future<void> _cartMutationQueue = Future<void>.value();
   int _queuedCartMutations = 0;
   int? _paymentIdempotencyOrderId;
@@ -75,7 +79,454 @@ class PosCubit extends Cubit<PosState> {
   static const String holdRetryableMessage = 'pos.holdRetryable';
   static const String holdUncertainMessage = 'pos.holdUncertain';
 
+  void _discountState(DiscountWorkspace next) {
+    if (!isClosed) emit(state.copyWith(discounts: next));
+  }
+
+  Future<void> refreshDiscountCapabilities() async {
+    if (isClosed || !repository.usesBackend) return;
+    final generation = ++_discountGeneration;
+    final previous = state.discounts;
+    _discountState(
+      DiscountWorkspace(
+        saved: previous.saved,
+        operationId: previous.operationId,
+        operationReviewId: previous.operationReviewId,
+        operationUncertain: previous.operationUncertain,
+        createUncertain: previous.createUncertain,
+      ),
+    );
+    try {
+      final caps = await repository.getDiscountCapabilities();
+      if (isClosed || generation != _discountGeneration) return;
+      _discountState(state.discounts.copyWith(capabilities: caps));
+    } catch (e) {
+      if (!isClosed && generation == _discountGeneration) {
+        _discountState(state.discounts.copyWith(errorCode: _discountError(e)));
+      }
+    }
+  }
+
+  Future<void> refreshSavedDiscountState() async {
+    final orderId = state.currentOrderId;
+    if (isClosed ||
+        orderId == null ||
+        state.discounts.capabilities?.supportsDiscountReview != true) {
+      return;
+    }
+    final generation = ++_discountGeneration;
+    try {
+      final saved = await repository.getDiscountState(orderId);
+      if (isClosed ||
+          generation != _discountGeneration ||
+          state.currentOrderId != orderId) {
+        return;
+      }
+      _discountState(
+        state.discounts.copyWith(
+          saved: saved,
+          totalsResolved: true,
+          clearError: true,
+        ),
+      );
+    } catch (e) {
+      if (!isClosed && generation == _discountGeneration) {
+        _discountState(
+          state.discounts.copyWith(
+            totalsResolved: false,
+            errorCode: _discountError(e),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _createCurrentCartOnce() async {
+    if (state.currentOrderId != null) return;
+    // Retain the exact immutable request until success. Recovery is an explicit
+    // replay of this existing create contract, never a different cart/key.
+    final request = _pendingCreate ??= _createPublishedOrderRequest(
+      idempotencyKey: _operationKey('cart-create'),
+    );
+    try {
+      final order = await repository.createOrder(request);
+      if (isClosed) return;
+      _pendingCreate = null;
+      _discountState(state.discounts.copyWith(createUncertain: false));
+      _emitBackendOrder(order);
+    } catch (e) {
+      if (!isClosed) {
+        final uncertain = _isPotentiallyUncertainPaymentFailure(e);
+        if (!uncertain) _pendingCreate = null;
+        _discountState(
+          state.discounts.copyWith(
+            createUncertain: uncertain,
+            totalsResolved: false,
+            errorCode: uncertain ? 'D2_UNCERTAIN' : _discountError(e),
+          ),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> recoverCartCreation() async {
+    if (isClosed || _pendingCreate == null || state.discounts.busy) return;
+    _discountState(state.discounts.copyWith(busy: true));
+    try {
+      await _createCurrentCartOnce();
+      await refreshSavedDiscountState();
+    } catch (_) {
+      /* Keep the identity and cart until the replay is confirmed. */
+    } finally {
+      if (!isClosed) _discountState(state.discounts.copyWith(busy: false));
+    }
+  }
+
+  Future<bool> prepareDiscountOrder() async {
+    if (isClosed ||
+        !state.hasCartItems ||
+        state.isCartMutationInProgress ||
+        state.discounts.busy ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentOrderId != null ||
+        state.discounts.operationUncertain ||
+        state.discounts.createUncertain ||
+        !state.isBackendReachable) {
+      return false;
+    }
+    await refreshDiscountCapabilities();
+    if (isClosed ||
+        state.discounts.capabilities?.supportsDiscountReview != true) {
+      return false;
+    }
+    if (state.currentOrderId == null &&
+        !await _ensureBackendOrderForCurrentCart()) {
+      return false;
+    }
+    await refreshSavedDiscountState();
+    return !isClosed && state.discounts.totalsResolved;
+  }
+
+  /// Payment opened from Orders gets its own context; it never replaces POS.
+  Future<bool> openOrderForPayment(int orderId) async {
+    if (isClosed ||
+        state.isPaymentSubmitting ||
+        state.isCartMutationInProgress) {
+      return false;
+    }
+    if (state.uncertainPaymentOrderId != null) {
+      return state.uncertainPaymentOrderId == orderId;
+    }
+    if (state.currentOrderId != null && state.currentOrderId != orderId) {
+      return false;
+    }
+    if (state.currentOrderId == null && state.hasCartItems) return false;
+    try {
+      final order = await repository.getOrder(orderId);
+      if (isClosed || order.id != orderId) return false;
+      _emitBackendOrder(order);
+      await refreshDiscountCapabilities();
+      await refreshSavedDiscountState();
+      return !isClosed &&
+          state.discounts.capabilities?.supportsPaymentQuote == true;
+    } catch (error) {
+      _discountState(
+        state.discounts.copyWith(
+          errorCode: _discountError(error),
+          totalsResolved: false,
+        ),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> previewDiscountChange(DiscountReviewRequest request) async {
+    if (isClosed ||
+        state.discounts.busy ||
+        !await prepareDiscountOrder() ||
+        state.discounts.busy) {
+      return false;
+    }
+    final orderId = state.currentOrderId!;
+    final generation = ++_discountGeneration;
+    _discountState(
+      state.discounts.copyWith(
+        busy: true,
+        clearReview: true,
+        clearQuote: true,
+        clearError: true,
+      ),
+    );
+    try {
+      final review = await repository.previewDiscount(orderId, request);
+      if (isClosed ||
+          generation != _discountGeneration ||
+          state.currentOrderId != orderId) {
+        return false;
+      }
+      _discountState(state.discounts.copyWith(review: review, busy: false));
+      return true;
+    } catch (e) {
+      if (!isClosed && generation == _discountGeneration) {
+        _discountState(
+          state.discounts.copyWith(busy: false, errorCode: _discountError(e)),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<bool> confirmDiscountReview(String reviewId) async {
+    if (isClosed ||
+        state.discounts.busy ||
+        state.discounts.operationUncertain ||
+        state.isCartMutationInProgress ||
+        state.discounts.review?.reviewId != reviewId ||
+        state.currentOrderId == null) {
+      return false;
+    }
+    final orderId = state.currentOrderId!;
+    final identity = _operationKey('discount-operation');
+    _discountState(
+      state.discounts.copyWith(
+        busy: true,
+        operationId: identity,
+        operationReviewId: reviewId,
+        clearQuote: true,
+      ),
+    );
+    try {
+      final saved = await repository.submitDiscountOperation(
+        orderId,
+        identity,
+        reviewId,
+      );
+      if (isClosed || state.currentOrderId != orderId) return false;
+      final order = await repository.getOrder(orderId);
+      if (isClosed || state.currentOrderId != orderId) return false;
+      _emitBackendOrder(order);
+      _discountState(
+        state.discounts.copyWith(
+          saved: saved,
+          busy: false,
+          totalsResolved: true,
+          clearReview: true,
+          clearOperation: true,
+        ),
+      );
+      return true;
+    } catch (e) {
+      if (isClosed) return false;
+      final uncertain = _isPotentiallyUncertainPaymentFailure(e);
+      _discountState(
+        state.discounts.copyWith(
+          busy: false,
+          operationUncertain: uncertain,
+          clearReview: true,
+          clearOperation: !uncertain,
+          errorCode: uncertain ? 'D2_UNCERTAIN' : _discountError(e),
+        ),
+      );
+      if (uncertain) return recoverDiscountChange();
+      return false;
+    }
+  }
+
+  Future<bool> recoverDiscountChange() async {
+    final w = state.discounts;
+    final orderId = state.currentOrderId;
+    if (isClosed ||
+        w.busy ||
+        w.operationId == null ||
+        !w.operationUncertain ||
+        orderId == null) {
+      return false;
+    }
+    _discountState(w.copyWith(busy: true));
+    try {
+      final result = await repository.recoverDiscountOperation(
+        orderId,
+        w.operationId!,
+      );
+      final saved = await repository.getDiscountState(orderId);
+      if (isClosed || state.currentOrderId != orderId) return false;
+      if (result.completed && result.result != null) {
+        _emitBackendOrder(await repository.getOrder(orderId));
+        if (!isClosed) {
+          _discountState(
+            state.discounts.copyWith(
+              saved: saved,
+              busy: false,
+              totalsResolved: true,
+              clearOperation: true,
+              clearReview: true,
+              clearQuote: true,
+              clearError: true,
+            ),
+          );
+          return true;
+        }
+      } else {
+        _discountState(
+          state.discounts.copyWith(
+            saved: saved,
+            busy: false,
+            errorCode: 'D2_UNCERTAIN',
+          ),
+        );
+      }
+    } catch (_) {
+      if (!isClosed) {
+        _discountState(
+          state.discounts.copyWith(busy: false, errorCode: 'D2_UNCERTAIN'),
+        );
+      }
+    }
+    return false;
+  }
+
+  Future<bool> obtainPaymentQuote(int? tenderId) async {
+    if (isClosed ||
+        state.discounts.busy ||
+        !await prepareDiscountOrder() ||
+        state.discounts.busy) {
+      return false;
+    }
+    final orderId = state.currentOrderId!;
+    final generation = ++_discountGeneration;
+    _discountState(
+      state.discounts.copyWith(
+        busy: true,
+        clearQuote: true,
+        clearReview: true,
+        clearError: true,
+      ),
+    );
+    try {
+      final summary = await repository.getPaymentSummary(orderId: orderId);
+      if (!summary.canPay) {
+        throw ApiException(
+          message: 'Order unavailable',
+          code: summary.blockerCode,
+        );
+      }
+      if (tenderId != null &&
+          !summary.paymentMethods.any((m) => m.id == tenderId)) {
+        throw const ApiException(
+          message: 'Select tender',
+          code: 'PAYMENT_METHOD_INVALID',
+        );
+      }
+      if (isClosed || generation != _discountGeneration) return false;
+      _discountState(
+        state.discounts.copyWith(
+          paymentMethods: List.unmodifiable(summary.paymentMethods),
+        ),
+      );
+      final quote = await repository.quotePayment(orderId, tenderId);
+      if (isClosed ||
+          generation != _discountGeneration ||
+          state.currentOrderId != orderId) {
+        return false;
+      }
+      _discountState(
+        state.discounts.copyWith(
+          quote: quote,
+          paymentMethods: List.unmodifiable(summary.paymentMethods),
+          busy: false,
+        ),
+      );
+      return true;
+    } catch (e) {
+      if (!isClosed && generation == _discountGeneration) {
+        _discountState(
+          state.discounts.copyWith(busy: false, errorCode: _discountError(e)),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<PaymentCompletionStatus> confirmQuotedPayment(
+    String quoteId,
+    String amount,
+  ) async {
+    final quote = state.discounts.quote;
+    final orderId = state.currentOrderId;
+    if (isClosed ||
+        quote == null ||
+        quote.quoteId != quoteId ||
+        orderId == null ||
+        state.isPaymentSubmitting ||
+        state.isCartMutationInProgress ||
+        state.discounts.busy ||
+        quote.resolution.provisional ||
+        (quote.paymentMethodId == null &&
+            quote.resolution.totals.total != '0.00') ||
+        state.discounts.operationUncertain ||
+        state.uncertainPaymentOrderId != null ||
+        !state.discounts.totalsResolved ||
+        !state.isBackendReachable) {
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (DateTime.now().isAfter(quote.expiresAt)) {
+      await obtainPaymentQuote(quote.paymentMethodId);
+      _discountState(
+        state.discounts.copyWith(errorCode: 'ORDER_TOTAL_CHANGED'),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (!RegExp(r'^\d+(\.\d{1,2})?$').hasMatch(amount)) {
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (_paymentIdempotencyOrderId != orderId) {
+      _paymentIdempotencyOrderId = orderId;
+      _paymentIdempotencyKey = null;
+    }
+    final identity = _paymentIdempotencyKey ??= _operationKey('payment');
+    emit(
+      state.copyWith(isPaymentSubmitting: true, clearPaymentErrorMessage: true),
+    );
+    try {
+      final result = await repository.payQuotedOrder(
+        orderId: orderId,
+        quote: quote,
+        amount: amount,
+        idempotencyKey: identity,
+      );
+      if (isClosed) return PaymentCompletionStatus.uncertain;
+      await _confirmBackendPayment(orderId: orderId, payment: result);
+      return PaymentCompletionStatus.completed;
+    } catch (e) {
+      if (isClosed) return PaymentCompletionStatus.uncertain;
+      if (_isPotentiallyUncertainPaymentFailure(e)) {
+        return _verifyUncertainPayment(
+          orderId: orderId,
+          requestedPayment: null,
+        );
+      }
+      emit(state.copyWith(isPaymentSubmitting: false));
+      final code = _discountError(e);
+      _discountState(
+        state.discounts.copyWith(clearQuote: true, errorCode: code),
+      );
+      if (code == 'PAYMENT_QUOTE_REQUIRED' || code == 'ORDER_TOTAL_CHANGED') {
+        await obtainPaymentQuote(quote.paymentMethodId);
+        _discountState(state.discounts.copyWith(errorCode: code));
+      }
+      return PaymentCompletionStatus.retryableFailure;
+    }
+  }
+
+  String _discountError(Object e) => e is ApiException
+      ? (e.statusCode == 403 || e.statusCode == 401)
+            ? 'D2_FORBIDDEN'
+            : e.code ?? 'D2_GENERIC'
+      : 'D2_GENERIC';
+
   Future<void> loadInitialData() async {
+    if (isClosed) return;
     emit(
       state.copyWith(
         isLoading: true,
@@ -99,9 +550,11 @@ class PosCubit extends Cubit<PosState> {
               (Branch item) => item.id == state.branchId,
               orElse: () => branches.first,
             );
+      if (isClosed) return;
       emit(state.copyWith(branches: branches, customers: customers));
       await _activateBranch(branch, reloadCustomers: false);
     } catch (error) {
+      if (isClosed) return;
       final String message = _messageFor(error);
       emit(
         state.copyWith(
@@ -174,6 +627,7 @@ class PosCubit extends Cubit<PosState> {
           ? await repository.getCustomers()
           : null;
       await repository.getPosState(branchId: branch.id);
+      await refreshDiscountCapabilities();
       if (isClosed || request != _branchLoadGeneration) return;
       emit(
         state.copyWith(
@@ -194,6 +648,7 @@ class PosCubit extends Cubit<PosState> {
       );
     } catch (error) {
       if (isClosed || request != _branchLoadGeneration) return;
+      if (isClosed) return;
       final String message = _messageFor(error);
       emit(
         state.copyWith(
@@ -329,7 +784,44 @@ class PosCubit extends Cubit<PosState> {
       return false;
     }
 
+    if (isClosed ||
+        state.discounts.createUncertain ||
+        state.discounts.operationUncertain ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentOrderId != null) {
+      return false;
+    }
     if (customization.isPublishedRuntime) {
+      if (state.discounts.capabilities?.requiresPaymentQuote == true ||
+          state.discounts.capabilities?.automaticEnabled == true) {
+        return _enqueueCartMutation(
+          fallbackMessage: 'd2Sync',
+          action: () async {
+            if (_pendingCreate != null) {
+              throw const ApiException(
+                message: 'd2Uncertain',
+                code: 'D2_UNCERTAIN',
+              );
+            }
+            if (state.currentOrderId != null) {
+              await _addPublishedProductToBackendOrder(customization);
+            } else {
+              // Validate the known prerequisite before staging local items.
+              // Otherwise a definite missing-shift failure leaves an item in
+              // the cart and another click adds it again without creating an order.
+              if (state.shiftId == null) {
+                throw const ApiException(
+                  message: 'No open shift found.',
+                  code: 'NO_OPEN_SHIFT',
+                );
+              }
+              if (await _addPublishedProductToLocalCart(customization)) {
+                await _createCurrentCartOnce();
+              }
+            }
+          },
+        );
+      }
       if (state.currentOrderId != null) {
         return _enqueueCartMutation(
           fallbackMessage: 'Could not add item. Please try again.',
@@ -391,7 +883,10 @@ class PosCubit extends Cubit<PosState> {
         () => repository.updateOrderItem(
           orderId: state.currentOrderId!,
           itemId: item.backendItemId!,
-          request: UpdateOrderItemRequest(quantity: item.quantity + 1),
+          request: UpdateOrderItemRequest(
+            quantity:
+                (_cartItemById(cartItemId)?.quantity ?? item.quantity) + 1,
+          ),
         ),
       );
       return;
@@ -417,22 +912,22 @@ class PosCubit extends Cubit<PosState> {
     }
 
     if (state.currentOrderId != null && item.backendItemId != null) {
-      if (item.quantity <= 1) {
-        await _syncOrder(
-          () => repository.removeOrderItem(
-            orderId: state.currentOrderId!,
-            itemId: item.backendItemId!,
-          ),
-        );
-      } else {
-        await _syncOrder(
-          () => repository.updateOrderItem(
-            orderId: state.currentOrderId!,
-            itemId: item.backendItemId!,
-            request: UpdateOrderItemRequest(quantity: item.quantity - 1),
-          ),
-        );
-      }
+      await _syncOrder(() {
+        final current = _cartItemById(cartItemId);
+        if (current == null || current.backendItemId == null) {
+          return repository.getOrder(state.currentOrderId!);
+        }
+        return current.quantity <= 1
+            ? repository.removeOrderItem(
+                orderId: state.currentOrderId!,
+                itemId: current.backendItemId!,
+              )
+            : repository.updateOrderItem(
+                orderId: state.currentOrderId!,
+                itemId: current.backendItemId!,
+                request: UpdateOrderItemRequest(quantity: current.quantity - 1),
+              );
+      });
       return;
     }
 
@@ -622,6 +1117,20 @@ class PosCubit extends Cubit<PosState> {
   }
 
   Future<void> applyDiscount(AppliedDiscount discount) async {
+    if (repository.usesBackend &&
+        discount.backendId == null &&
+        discount.code == null) {
+      _discountState(
+        state.discounts.copyWith(errorCode: 'DISCOUNT_AD_HOC_DISABLED'),
+      );
+      return;
+    }
+    if (state.discounts.capabilities?.supportsDiscountReview == true) {
+      _discountState(
+        state.discounts.copyWith(errorCode: 'DISCOUNT_REVIEW_REQUIRED'),
+      );
+      return;
+    }
     if (!state.hasCartItems) {
       return;
     }
@@ -664,6 +1173,12 @@ class PosCubit extends Cubit<PosState> {
   }
 
   Future<void> removeDiscount() async {
+    if (state.discounts.capabilities?.supportsDiscountReview == true) {
+      _discountState(
+        state.discounts.copyWith(errorCode: 'DISCOUNT_REVIEW_REQUIRED'),
+      );
+      return;
+    }
     if (state.currentOrderId != null) {
       await _syncOrder(() => repository.removeDiscount(state.currentOrderId!));
       return;
@@ -673,6 +1188,14 @@ class PosCubit extends Cubit<PosState> {
   }
 
   Future<void> clearCart() async {
+    if (isClosed ||
+        state.discounts.createUncertain ||
+        state.discounts.operationUncertain ||
+        state.discounts.busy ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentOrderId != null) {
+      return;
+    }
     if (state.currentOrderId != null) {
       await _enqueueCartMutation(
         fallbackMessage: 'Could not cancel order. Please try again.',
@@ -1031,6 +1554,9 @@ class PosCubit extends Cubit<PosState> {
       }
 
       _emitBackendOrder(resumed);
+      await refreshDiscountCapabilities();
+      await refreshSavedDiscountState();
+      if (isClosed) return false;
       emit(
         state.copyWith(
           isCartMutationInProgress: false,
@@ -1125,6 +1651,9 @@ class PosCubit extends Cubit<PosState> {
   }
 
   void _clearCurrentOrderState() {
+    if (isClosed) return;
+    ++_discountGeneration;
+    _pendingCreate = null;
     emit(
       state.copyWith(
         cartItems: const <CartItem>[],
@@ -1187,6 +1716,12 @@ class PosCubit extends Cubit<PosState> {
     PaymentResult requestedPayment, {
     bool paymentSubmissionAlreadyStarted = false,
   }) async {
+    if (state.discounts.capabilities?.supportsPaymentQuote == true) {
+      _discountState(
+        state.discounts.copyWith(errorCode: 'PAYMENT_QUOTE_REQUIRED'),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
     if ((!paymentSubmissionAlreadyStarted && state.isPaymentSubmitting) ||
         state.uncertainPaymentOrderId != null) {
       return PaymentCompletionStatus.uncertain;
@@ -1584,9 +2119,7 @@ class PosCubit extends Cubit<PosState> {
     return _enqueueCartMutation(
       fallbackMessage: 'Could not prepare order for discount lookup.',
       action: () async {
-        _emitBackendOrder(
-          await repository.createOrder(_createPublishedOrderRequest()),
-        );
+        if (state.currentOrderId == null) await _createCurrentCartOnce();
       },
     );
   }
@@ -1651,6 +2184,14 @@ class PosCubit extends Cubit<PosState> {
     required Future<void> Function() action,
     bool exposeApiMessage = true,
   }) {
+    if (isClosed ||
+        state.discounts.busy ||
+        state.discounts.createUncertain ||
+        state.discounts.operationUncertain ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentOrderId != null) {
+      return Future<bool>.value(false);
+    }
     if (repository.usesBackend && !state.isBackendReachable) {
       emit(state.copyWith(cartMutationError: connectionRequiredMessage));
       return Future<bool>.value(false);
@@ -1659,6 +2200,11 @@ class PosCubit extends Cubit<PosState> {
     if (!isClosed && !state.isCartMutationInProgress) {
       emit(
         state.copyWith(
+          discounts: state.discounts.copyWith(
+            clearReview: true,
+            clearQuote: true,
+            totalsResolved: false,
+          ),
           isCartMutationInProgress: true,
           isSyncingOrder: true,
           clearCartMutationError: true,
@@ -1674,6 +2220,11 @@ class PosCubit extends Cubit<PosState> {
       }
       try {
         await action();
+        if (!isClosed &&
+            state.discounts.capabilities?.supportsDiscountReview == true &&
+            state.currentOrderId != null) {
+          await refreshSavedDiscountState();
+        }
         succeeded = true;
       } catch (error) {
         if (!isClosed) {
@@ -1703,6 +2254,8 @@ class PosCubit extends Cubit<PosState> {
   }
 
   void _emitBackendOrder(BackendOrder order) {
+    if (isClosed) return;
+    ++_discountGeneration;
     final List<CartItem> cartItems = order.items
         .map(
           (BackendOrderItem item) => _cartItemFromBackend(
@@ -1714,6 +2267,11 @@ class PosCubit extends Cubit<PosState> {
 
     emit(
       state.copyWith(
+        discounts: state.discounts.copyWith(
+          clearReview: true,
+          clearQuote: true,
+          totalsResolved: false,
+        ),
         cartItems: cartItems,
         currentOrderId: order.id,
         branchId: order.branchId,
@@ -1908,7 +2466,14 @@ class PosCubit extends Cubit<PosState> {
       if (isClosed) {
         return PaymentCompletionStatus.uncertain;
       }
-      if (_isConfirmedPaid(order)) {
+      final contract2 =
+          state.discounts.capabilities?.supportsPaymentQuote == true;
+      final matchingPayment = order.payments.any(
+        (p) =>
+            p.idempotencyKey == _paymentIdempotencyKey &&
+            p.status == 'completed',
+      );
+      if (_isConfirmedPaid(order) && (!contract2 || matchingPayment)) {
         final PaymentResult payment =
             requestedPayment ??
             PaymentResult(
@@ -1922,6 +2487,16 @@ class PosCubit extends Cubit<PosState> {
         return PaymentCompletionStatus.completed;
       }
 
+      if (contract2) {
+        emit(
+          state.copyWith(
+            isPaymentSubmitting: false,
+            uncertainPaymentOrderId: orderId,
+            uncertainPaymentMessage: 'D2_UNCERTAIN',
+          ),
+        );
+        return PaymentCompletionStatus.uncertain;
+      }
       emit(
         state.copyWith(
           isPaymentSubmitting: false,
@@ -1946,7 +2521,9 @@ class PosCubit extends Cubit<PosState> {
   }
 
   bool _isPotentiallyUncertainPaymentFailure(Object error) {
-    return error is! ApiException || error.statusCode == null;
+    return error is! ApiException ||
+        error.statusCode == null ||
+        error.statusCode! >= 500;
   }
 
   String _operationKey(String operation) => _operationKeyGenerator(operation);

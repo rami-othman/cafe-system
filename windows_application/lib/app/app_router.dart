@@ -10,6 +10,8 @@ import 'customer_management_route_locations.dart';
 import 'shift_route_locations.dart';
 
 import '../core/services/service_locator.dart';
+import '../features/cafe_configuration/controllers/discount_settings_cubit.dart';
+import '../features/cafe_configuration/views/discount_settings_screen.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
 import '../features/discounts/models/discount_list_item.dart';
@@ -428,6 +430,12 @@ final GoRouter appRouter = GoRouter(
         // which could leave a BlocBuilder below querying its provider before
         // the new chain finished mounting (ProviderNotFoundException).
         return MultiBlocProvider(
+          key: ValueKey((
+            serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+            serviceLocator<AuthSessionCubit>().state.session?.tenant.id,
+            serviceLocator<AuthSessionCubit>().state.session?.user.id,
+            serviceLocator<AuthSessionCubit>().state.session?.user.role,
+          )),
           providers: <BlocProvider<dynamic>>[
             BlocProvider<PosCubit>(
               create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
@@ -995,6 +1003,9 @@ final GoRouter appRouter = GoRouter(
             final id = parsePositiveRouteId(state.pathParameters['menuId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<MenuDetailCubit>(
                   create: (_) => serviceLocator<MenuDetailCubit>(),
@@ -1241,6 +1252,9 @@ final GoRouter appRouter = GoRouter(
             final id = parsePositiveRouteId(state.pathParameters['productId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<ProductDetailCubit>(
                   create: (_) => serviceLocator<ProductDetailCubit>(),
@@ -1442,6 +1456,9 @@ final GoRouter appRouter = GoRouter(
             final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: [
                 BlocProvider<PurchasingCubit>(
                   create: (_) => serviceLocator<PurchasingCubit>(),
@@ -1651,6 +1668,9 @@ final GoRouter appRouter = GoRouter(
               state.pathParameters['recipeId'],
             );
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<ManufacturingProductionCubit>(
                   create: (_) => serviceLocator<ManufacturingProductionCubit>(),
@@ -1957,6 +1977,9 @@ final GoRouter appRouter = GoRouter(
             );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<SalesCubit>(
                   create: (_) => serviceLocator<SalesCubit>(),
@@ -1977,6 +2000,9 @@ final GoRouter appRouter = GoRouter(
             );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<SalesCubit>(
                   create: (_) => serviceLocator<SalesCubit>(),
@@ -2013,6 +2039,9 @@ final GoRouter appRouter = GoRouter(
                 state.uri.queryParameters['customerName'] ?? '';
             if (invoiceId == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<SalesCubit>(
                   create: (_) => serviceLocator<SalesCubit>(),
@@ -2036,6 +2065,9 @@ final GoRouter appRouter = GoRouter(
             );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<SalesCubit>(
                   create: (_) => serviceLocator<SalesCubit>(),
@@ -2055,6 +2087,9 @@ final GoRouter appRouter = GoRouter(
               state.uri.queryParameters['supplierId'],
             );
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<PurchasingCubit>(
                   create: (_) => serviceLocator<PurchasingCubit>(),
@@ -2077,6 +2112,9 @@ final GoRouter appRouter = GoRouter(
             );
             if (purchaseId == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
+              key: ValueKey(
+                serviceLocator<AuthSessionCubit>().state.session?.accessToken,
+              ),
               providers: <BlocProvider<dynamic>>[
                 BlocProvider<PurchasingCubit>(
                   create: (_) => serviceLocator<PurchasingCubit>(),
@@ -2415,6 +2453,14 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => BlocProvider<TeamCubit>(
             create: (_) => serviceLocator<TeamCubit>()..load(),
             child: const TeamAccessScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationDiscountSettings,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<DiscountSettingsCubit>()..load(),
+            child: const DiscountSettingsScreen(),
           ),
         ),
         GoRoute(
@@ -2780,6 +2826,8 @@ abstract final class AppRoutes {
       '/cafe-configuration/printing';
   static const String cafeConfigurationTeam = '/cafe-configuration/team';
   static const String cafeConfigurationTax = '/cafe-configuration/tax';
+  static const String cafeConfigurationDiscountSettings =
+      '/cafe-configuration/discount-settings';
   static const String cafeConfigurationBranchCreate =
       '/cafe-configuration/branches/new';
   static const String cafeConfigurationBranchEdit =
@@ -3125,7 +3173,8 @@ String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState state) {
   final role = serviceLocator<AuthSessionCubit>().state.session?.user.role;
   if (role == 'owner') return null;
   if (role == 'manager' &&
-      state.uri.path.startsWith(AppRoutes.cafeConfigurationPrinting)) {
+      (state.uri.path.startsWith(AppRoutes.cafeConfigurationPrinting) ||
+          state.uri.path == AppRoutes.cafeConfigurationDiscountSettings)) {
     return null;
   }
 

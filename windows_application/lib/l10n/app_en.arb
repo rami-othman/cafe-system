@@ -3174,11 +3174,26 @@
   "customerManagementPrimary": "Primary",
   "customerManagementMembers": "Members",
   "customerManagementMemberCount": "Members: {count}",
-  "@customerManagementMemberCount": {"placeholders": {"count": {"type": "int"}}},
+  "@customerManagementMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "customerManagementPreviousPage": "Previous page",
   "customerManagementNextPage": "Next page",
   "customerManagementPage": "Page {page} of {total}",
-  "@customerManagementPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "@customerManagementPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "customerManagementView": "View",
   "customerManagementEdit": "Edit",
   "customerManagementSave": "Save",
@@ -3195,7 +3210,12 @@
   "customerManagementAddMembers": "Add members",
   "customerManagementRemoveMember": "Remove member",
   "customerManagementRemoveMemberConfirm": "Remove {customer} from {group}?",
-  "@customerManagementRemoveMemberConfirm": {"placeholders": {"customer": {}, "group": {}}},
+  "@customerManagementRemoveMemberConfirm": {
+    "placeholders": {
+      "customer": {},
+      "group": {}
+    }
+  },
   "customerManagementCreateTitle": "New Customer",
   "customerManagementEditTitle": "Edit Customer",
   "customerManagementCustomerName": "Customer name",
@@ -3217,13 +3237,25 @@
   "customerManagementPrimaryRequired": "Select one primary phone.",
   "customerManagementNoActiveGroups": "No active groups available.",
   "customerManagementDeactivateConfirm": "Deactivate {name}?",
-  "@customerManagementDeactivateConfirm": {"placeholders": {"name": {}}},
+  "@customerManagementDeactivateConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "customerManagementDeactivateConsequence": "This customer will no longer be available for new operational use. Historical records remain preserved.",
   "customerManagementArchiveConfirm": "Archive {name}?",
-  "@customerManagementArchiveConfirm": {"placeholders": {"name": {}}},
+  "@customerManagementArchiveConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "customerManagementArchiveConsequence": "This customer will be archived without deleting historical records. It can be restored later.",
   "customerManagementRestoreConfirm": "Restore {name}?",
-  "@customerManagementRestoreConfirm": {"placeholders": {"name": {}}},
+  "@customerManagementRestoreConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "customerManagementRestoreConsequence": "This customer will be restored as Inactive. Activate it separately before new operational use.",
   "customerManagementMutationFailed": "Your customer was not changed. You can retry safely.",
   "cmvpCustomersDescription": "Manage customer records, phones, groups, and lifecycle state.",
@@ -3238,11 +3270,29 @@
   "cmvpBreadcrumbEdit": "Edit",
   "cmvpBreadcrumbCreate": "New",
   "cmvpCustomersCount": "{count, plural, =0{No customers} =1{1 customer} other{{count} customers}}",
-  "@cmvpCustomersCount": {"placeholders": {"count": {"type": "int"}}},
+  "@cmvpCustomersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cmvpGroupsCount": "{count, plural, =0{No groups} =1{1 group} other{{count} groups}}",
-  "@cmvpGroupsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@cmvpGroupsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cmvpMembersCount": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
-  "@cmvpMembersCount": {"placeholders": {"count": {"type": "int"}}},
+  "@cmvpMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cmvpMoreActions": "More actions",
   "cmvpOpenActions": "Open row actions",
   "cmvpSelectRow": "Select row",
@@ -3262,7 +3312,13 @@
   "cmvpNoCandidates": "No eligible customers found.",
   "cmvpCandidateSearch": "Search eligible customers",
   "cmvpSelectedCount": "{count, plural, =0{Add members} =1{Add 1 member} other{Add {count} members}}",
-  "@cmvpSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "@cmvpSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cmvpAddMembersDialogTitle": "Add members",
   "cmvpConfirmRemoveMember": "Remove member",
   "cmvpLoadingCustomers": "Loading customers",
@@ -3287,36 +3343,48 @@
   "cmvpDialogCancel": "Cancel",
   "cmvpDialogConfirm": "Confirm",
   "cmvpMemberRemoveConsequence": "This member will be removed from the group.",
-  "cmvpGroupLifecycleMessage": "The group will remain available in historical records."
-  ,"cmvpOrders": "Orders"
-  ,"cmvpOrderHistory": "Customer orders"
-  ,"cmvpFromDate": "From date"
-  ,"cmvpToDate": "To date"
-  ,"cmvpBranch": "Branch"
-  ,"cmvpAllBranches": "All branches"
-  ,"cmvpOrderStatus": "Order status"
-  ,"cmvpPaymentStatus": "Payment status"
-  ,"cmvpOrderNumber": "Order number"
-  ,"cmvpOrderDateTime": "Date and time"
-  ,"cmvpOrderTotal": "Total"
-  ,"cmvpOrderStatusCompleted": "Completed"
-  ,"cmvpOrderStatusHeld": "Held"
-  ,"cmvpOrderStatusCancelled": "Cancelled"
-  ,"cmvpOrderStatusDraft": "Draft"
-  ,"cmvpPaymentStatusPaid": "Paid"
-  ,"cmvpPaymentStatusUnpaid": "Unpaid"
-  ,"cmvpPaymentStatusPartiallyRefunded": "Partially refunded"
-  ,"cmvpPaymentStatusRefunded": "Refunded"
-  ,"cmvpNoOrders": "No orders found."
-  ,"cmvpOrdersShowing": "Showing {start}–{end} of {total}"
-  ,"@cmvpOrdersShowing": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}
-  ,"cmvpOverview": "Overview"
-  ,"cmvpTotalOrders": "Total orders"
-  ,"cmvpTotalSpending": "Total spending"
-  ,"cmvpAverageOrderValue": "Average order value"
-  ,"cmvpLastVisit": "Last visit"
-  ,"cmvpRecentOrders": "Recent orders"
-  ,"cmvpViewAllOrders": "View all orders",
+  "cmvpGroupLifecycleMessage": "The group will remain available in historical records.",
+  "cmvpOrders": "Orders",
+  "cmvpOrderHistory": "Customer orders",
+  "cmvpFromDate": "From date",
+  "cmvpToDate": "To date",
+  "cmvpBranch": "Branch",
+  "cmvpAllBranches": "All branches",
+  "cmvpOrderStatus": "Order status",
+  "cmvpPaymentStatus": "Payment status",
+  "cmvpOrderNumber": "Order number",
+  "cmvpOrderDateTime": "Date and time",
+  "cmvpOrderTotal": "Total",
+  "cmvpOrderStatusCompleted": "Completed",
+  "cmvpOrderStatusHeld": "Held",
+  "cmvpOrderStatusCancelled": "Cancelled",
+  "cmvpOrderStatusDraft": "Draft",
+  "cmvpPaymentStatusPaid": "Paid",
+  "cmvpPaymentStatusUnpaid": "Unpaid",
+  "cmvpPaymentStatusPartiallyRefunded": "Partially refunded",
+  "cmvpPaymentStatusRefunded": "Refunded",
+  "cmvpNoOrders": "No orders found.",
+  "cmvpOrdersShowing": "Showing {start}–{end} of {total}",
+  "@cmvpOrdersShowing": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "cmvpOverview": "Overview",
+  "cmvpTotalOrders": "Total orders",
+  "cmvpTotalSpending": "Total spending",
+  "cmvpAverageOrderValue": "Average order value",
+  "cmvpLastVisit": "Last visit",
+  "cmvpRecentOrders": "Recent orders",
+  "cmvpViewAllOrders": "View all orders",
   "expensesReportTitle": "Expenses",
   "expensesReportSubtitle": "Analyze operating expenses by category, branch, and time period.",
   "expensesReportAllCategories": "All categories",
@@ -3501,7 +3569,13 @@
   "discountV2Retry": "Retry",
   "discountV2Search": "Search",
   "posCustomerPoints": "{points} pts",
-  "@posCustomerPoints": {"placeholders": {"points": {"type": "String"}}},
+  "@posCustomerPoints": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
   "posWalkInCustomer": "Walk-in customer",
   "posUseWalkInCustomer": "Use walk-in customer",
   "posSelectCustomer": "Select Customer",
@@ -3524,7 +3598,13 @@
   "discountCode": "Code",
   "discountCoupon": "Coupon",
   "discountCodeValue": "Code: {code}",
-  "@discountCodeValue": {"placeholders": {"code": {"type": "String"}}},
+  "@discountCodeValue": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "discountPercentage": "Percentage",
   "discountFixedAmount": "Fixed Amount",
   "discountActive": "Active",
@@ -3537,17 +3617,56 @@
   "discountNoConditions": "No Conditions",
   "discountAlwaysValid": "Always Valid",
   "discountAmountOff": "{amount} off",
-  "@discountAmountOff": {"placeholders": {"amount": {"type": "String"}}},
+  "@discountAmountOff": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "discountPercentOff": "{value}% off",
-  "@discountPercentOff": {"placeholders": {"value": {"type": "String"}}},
+  "@discountPercentOff": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "discountBundleValue": "Buy {quantity} Get {quantity}",
-  "@discountBundleValue": {"placeholders": {"quantity": {"type": "int"}}},
+  "@discountBundleValue": {
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
   "discountUntil": "Until {date}",
-  "@discountUntil": {"placeholders": {"date": {"type": "String"}}},
+  "@discountUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "discountFrom": "From {date}",
-  "@discountFrom": {"placeholders": {"date": {"type": "String"}}},
+  "@discountFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "discountDateRange": "{start} - {end}",
-  "@discountDateRange": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "@discountDateRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "discountsTitle": "Discounts & Coupons",
   "discountsSubtitle": "Manage promotional offers and pricing rules",
   "discountsCreate": "Create Discount",
@@ -3569,21 +3688,54 @@
   "discountsActivateTooltip": "Activate discount",
   "discountsDeleteTooltip": "Delete discount",
   "discountsPagination": "Showing {start} to {end} of {total} entries",
-  "@discountsPagination": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}},
+  "@discountsPagination": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "discountsActiveMetric": "ACTIVE DISCOUNTS",
   "discountsUsageMetric": "TOTAL USAGE (THIS MONTH)",
   "discountsSavedMetric": "ESTIMATED VALUE SAVED",
   "discountsActualSavedMetric": "ACTUAL DISCOUNT VALUE (THIS MONTH)",
   "discountsDeleteTitle": "Delete discount?",
   "discountsDeleteBody": "\"{name}\" will no longer be available.",
-  "@discountsDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@discountsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "discountsDeleted": "Discount deleted.",
   "discountsDeleteFailed": "Unable to delete discount.",
   "discountsStatusUpdated": "Discount {status}.",
-  "@discountsStatusUpdated": {"placeholders": {"status": {"type": "String"}}},
+  "@discountsStatusUpdated": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "discountsStatusUpdateFailed": "Unable to update discount status.",
   "discountsUsedSaved": "Used {count} times - {amount} saved",
-  "@discountsUsedSaved": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "@discountsUsedSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "discountFormBasic": "Basic Information",
   "discountFormName": "Discount Name",
   "discountFormApplicationMode": "Application Mode",
@@ -3644,17 +3796,56 @@
   "discountFormUsage": "Usage",
   "discountFormAnyDay": "Any day",
   "discountFormSelectedCount": "{count} selected",
-  "@discountFormSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormDaysSelected": "{count} days selected",
-  "@discountFormDaysSelected": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormDaysSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormSelectedCustomers": "{count} selected customers",
-  "@discountFormSelectedCustomers": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormSelectedCustomers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormPerDay": "{count} per day",
-  "@discountFormPerDay": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormPerDay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormLifetime": "{count} lifetime",
-  "@discountFormLifetime": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormLifetime": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormUsageBoth": "{lifetime} lifetime / {daily} per day",
-  "@discountFormUsageBoth": {"placeholders": {"lifetime": {"type": "int"}, "daily": {"type": "int"}}},
+  "@discountFormUsageBoth": {
+    "placeholders": {
+      "lifetime": {
+        "type": "int"
+      },
+      "daily": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormSavedActivated": "Discount saved and activated.",
   "discountFormSaved": "Discount saved.",
   "discountFormSaveFailed": "Unable to save discount.",
@@ -3697,12 +3888,20 @@
   "discountSubtotal": "Subtotal",
   "discountTotal": "Total",
   "discountTax": "Tax ({percent}%)",
-  "@discountTax": {"placeholders": {"percent": {"type": "String"}}},
+  "@discountTax": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "discountRequestFailed": "Unable to complete the discount request. Please try again.",
   "discountServerFieldInvalid": "Review the {field} field.",
   "@discountServerFieldInvalid": {
     "placeholders": {
-      "field": {"type": "String"}
+      "field": {
+        "type": "String"
+      }
     }
   },
   "discountCurrency": "Currency",
@@ -3713,29 +3912,228 @@
   "discountChannelDelivery": "Delivery",
   "discountChannelOnlineOrdering": "Online ordering",
   "discountFormSelectedCountPlural": "{count, plural, =0{None selected} =1{1 selected} other{{count} selected}}",
-  "@discountFormSelectedCountPlural": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormSelectedCountPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormDaysSelectedPlural": "{count, plural, =0{Any day} =1{1 day selected} other{{count} days selected}}",
-  "@discountFormDaysSelectedPlural": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormDaysSelectedPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormSelectedCustomersPlural": "{count, plural, =0{No customers selected} =1{1 selected customer} other{{count} selected customers}}",
-  "@discountFormSelectedCustomersPlural": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormSelectedCustomersPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormPerDayPlural": "{count, plural, =1{1 per day} other{{count} per day}}",
-  "@discountFormPerDayPlural": {"placeholders": {"count": {"type": "int"}}},
+  "@discountFormPerDayPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "discountFormLifetimePlural": "{count, plural, =1{1 lifetime} other{{count} lifetime}}",
-  "@discountFormLifetimePlural": {"placeholders": {"count": {"type": "int"}}},
-  "posApplyDiscount": "Apply Discount", "posCouponCode": "Coupon code", "posEnterCouponCode": "Enter coupon code", "posCouponCodeRequired": "Enter a coupon code.", "posCouponDiscount": "Coupon discount", "posAvailableDiscounts": "Available Discounts", "posSearchDiscounts": "Search discounts", "posNoDiscountsAvailable": "No discounts are available for this order.", "posNoDiscountsMatch": "No discounts match your search.", "posApply": "Apply", "posClose": "Close", "posCancel": "Cancel",
-  "posPayment": "Payment", "posOrderNumber": "Order {number}", "@posOrderNumber": {"placeholders": {"number": {"type": "String"}}}, "posSelectPaymentMethod": "Select Method", "posPaymentMethodCash": "Cash", "posPaymentMethodCard": "Card", "posPaymentMethodWallet": "Wallet", "posPaymentMethodSplit": "Split", "posAmountReceived": "AMOUNT RECEIVED", "posChangeDue": "Change Due", "posEnterAmountReceived": "Enter amount received.", "posAmountBelowTotal": "Amount received is less than total due.", "posSplitUnavailable": "Split payment will be supported later.", "posExternalTerminalPending": "External payment terminal integration will be added later.", "posConfirmPayment": "Confirm Payment", "posPaymentFailed": "Payment could not be completed. Please try again.", "posNoPaymentMethods": "No active payment method is linked to a financial account.", "posPaymentUncertain": "Payment status is uncertain. Check the payment status before trying again.", "posReceiptUnavailable": "The receipt could not be loaded. You can retry safely.", "posRetryReceipt": "Retry Receipt", "posCheckPaymentStatus": "Check Payment Status",
-  "posOrderTypeDineIn": "Dine-in", "posOrderTypeTakeaway": "Takeaway", "posOrderTypeDelivery": "Delivery", "posCurrentOrder": "Current order", "posSubtotal": "Subtotal", "posDiscount": "Discount", "posTax": "Tax ({percent}%)", "@posTax": {"placeholders": {"percent": {"type": "String"}}}, "posTotal": "Total", "posRemoveDiscount": "Remove", "posAddDiscount": "Add discount", "posHoldOrder": "Hold order", "posCancelOrder": "Cancel order", "posPrint": "Print", "posPayAmount": "Pay {amount}", "@posPayAmount": {"placeholders": {"amount": {"type": "String"}}}, "posCompleteOrder": "Complete order", "posRemoveItem": "Remove item", "posExactAmount": "Exact", "posTotalDue": "Total due", "posItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}", "@posItemCount": {"placeholders": {"count": {"type": "int"}}}, "posViewDetails": "View details", "posCheckout": "Checkout",
-  "posProductOptionsUnavailable": "Product options unavailable", "posRetry": "Retry", "posProductCustomization": "Customize {product}", "@posProductCustomization": {"placeholders": {"product": {"type": "String"}}}, "posVariant": "Variant", "posSpecialInstructions": "Special Instructions", "posSpecialInstructionsHint": "E.g., extra hot, in a to-go cup...", "posTemperature": "Temperature", "posSize": "Size", "posMilkBase": "Milk Base", "posAddOns": "Add-ons", "posSweetness": "Sweetness", "posQuantity": "Quantity", "posAddToOrder": "Add to Order", "posAdding": "Adding...", "posRequiredSelection": "Select the required options.",
-  "posReceipt": "Receipt", "posReceiptPreview": "Receipt preview", "posCloseReceiptPreview": "Close receipt preview", "posSendViaWhatsApp": "Send via WhatsApp", "posPrintReceipt": "Print receipt", "posWhatsAppPending": "WhatsApp sending will be added later.", "posPaymentCompleted": "Payment completed", "posReceiptOrder": "Order:", "posReceiptCashier": "Cashier:", "posReceiptCustomer": "Customer:", "posReceiptDate": "Date:", "posReceiptTime": "Time:", "posReceiptPaidVia": "Paid via:", "posReceiptAuthorization": "Authorization:", "posReceiptApproved": "Approved", "posReceiptChange": "Change", "posReceiptNote": "Note: {note}", "@posReceiptNote": {"placeholders": {"note": {"type": "String"}}}, "posReceiptThankYou": "Thank you for visiting!",
-  "posOperationFailed": "The POS operation could not be completed. Please try again.", "posHoldSucceeded": "Order held successfully.", "posHoldRetryable": "The order could not be held. Your cart is still available to retry.", "posHoldUncertain": "The hold status could not be confirmed. Your cart is still available; check Orders before retrying.", "posMenuVersionStale": "The menu changed. Refresh the POS menu and review the order.", "posOpenShiftRequired": "Open a shift before continuing.", "posOrderUnavailableForBranch": "This order is not available in the selected branch.", "posHeldOrderRequired": "Only an unpaid held order can be resumed.",
-  "posCustomizeItem": "Customize item", "posRequired": "Required", "posHot": "Hot", "posIced": "Iced", "posSmallSize": "Small (8oz)", "posMediumSize": "Medium (12oz)", "posLargeSize": "Large (16oz)", "posWholeMilk": "Whole milk", "posOatMilk": "Oat milk", "posAlmondMilk": "Almond milk", "posDefault": "Default", "posExtraEspresso": "Extra espresso shot", "posCaramelSyrup": "Caramel syrup", "posVanillaSyrup": "Vanilla syrup", "posWhippedCream": "Whipped cream", "posProductDescriptionFallback": "A classic espresso-based beverage.", "posBasePrice": "{variant} base - {price}", "@posBasePrice": {"placeholders": {"variant": {"type": "String"}, "price": {"type": "String"}}}, "posSearchProducts": "Search products...", "posNoItemsAvailable": "No items available.", "posNoCartItems": "No items added yet", "posCloseCustomizationDialog": "Close customization dialog"
-  ,"customerImportAction": "Import CSV",
+  "@discountFormLifetimePlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "posApplyDiscount": "Apply Discount",
+  "posCouponCode": "Coupon code",
+  "posEnterCouponCode": "Enter coupon code",
+  "posCouponCodeRequired": "Enter a coupon code.",
+  "posCouponDiscount": "Coupon discount",
+  "posAvailableDiscounts": "Available Discounts",
+  "posSearchDiscounts": "Search discounts",
+  "posNoDiscountsAvailable": "No discounts are available for this order.",
+  "posNoDiscountsMatch": "No discounts match your search.",
+  "posApply": "Apply",
+  "posClose": "Close",
+  "posCancel": "Cancel",
+  "posPayment": "Payment",
+  "posOrderNumber": "Order {number}",
+  "@posOrderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "posSelectPaymentMethod": "Select Method",
+  "posPaymentMethodCash": "Cash",
+  "posPaymentMethodCard": "Card",
+  "posPaymentMethodWallet": "Wallet",
+  "posPaymentMethodSplit": "Split",
+  "posAmountReceived": "AMOUNT RECEIVED",
+  "posChangeDue": "Change Due",
+  "posEnterAmountReceived": "Enter amount received.",
+  "posAmountBelowTotal": "Amount received is less than total due.",
+  "posSplitUnavailable": "Split payment will be supported later.",
+  "posExternalTerminalPending": "External payment terminal integration will be added later.",
+  "posConfirmPayment": "Confirm Payment",
+  "posPaymentFailed": "Payment could not be completed. Please try again.",
+  "posNoPaymentMethods": "No active payment method is linked to a financial account.",
+  "posPaymentUncertain": "Payment status is uncertain. Check the payment status before trying again.",
+  "posReceiptUnavailable": "The receipt could not be loaded. You can retry safely.",
+  "posRetryReceipt": "Retry Receipt",
+  "posCheckPaymentStatus": "Check Payment Status",
+  "posOrderTypeDineIn": "Dine-in",
+  "posOrderTypeTakeaway": "Takeaway",
+  "posOrderTypeDelivery": "Delivery",
+  "posCurrentOrder": "Current order",
+  "posSubtotal": "Subtotal",
+  "posDiscount": "Discount",
+  "posTax": "Tax ({percent}%)",
+  "@posTax": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "posTotal": "Total",
+  "posRemoveDiscount": "Remove",
+  "posAddDiscount": "Add discount",
+  "posHoldOrder": "Hold order",
+  "posCancelOrder": "Cancel order",
+  "posPrint": "Print",
+  "posPayAmount": "Pay {amount}",
+  "@posPayAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "posCompleteOrder": "Complete order",
+  "posRemoveItem": "Remove item",
+  "posExactAmount": "Exact",
+  "posTotalDue": "Total due",
+  "posItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
+  "@posItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "posViewDetails": "View details",
+  "posCheckout": "Checkout",
+  "posProductOptionsUnavailable": "Product options unavailable",
+  "posRetry": "Retry",
+  "posProductCustomization": "Customize {product}",
+  "@posProductCustomization": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "posVariant": "Variant",
+  "posSpecialInstructions": "Special Instructions",
+  "posSpecialInstructionsHint": "E.g., extra hot, in a to-go cup...",
+  "posTemperature": "Temperature",
+  "posSize": "Size",
+  "posMilkBase": "Milk Base",
+  "posAddOns": "Add-ons",
+  "posSweetness": "Sweetness",
+  "posQuantity": "Quantity",
+  "posAddToOrder": "Add to Order",
+  "posAdding": "Adding...",
+  "posRequiredSelection": "Select the required options.",
+  "posReceipt": "Receipt",
+  "posReceiptPreview": "Receipt preview",
+  "posCloseReceiptPreview": "Close receipt preview",
+  "posSendViaWhatsApp": "Send via WhatsApp",
+  "posPrintReceipt": "Print receipt",
+  "posWhatsAppPending": "WhatsApp sending will be added later.",
+  "posPaymentCompleted": "Payment completed",
+  "posReceiptOrder": "Order:",
+  "posReceiptCashier": "Cashier:",
+  "posReceiptCustomer": "Customer:",
+  "posReceiptDate": "Date:",
+  "posReceiptTime": "Time:",
+  "posReceiptPaidVia": "Paid via:",
+  "posReceiptAuthorization": "Authorization:",
+  "posReceiptApproved": "Approved",
+  "posReceiptChange": "Change",
+  "posReceiptNote": "Note: {note}",
+  "@posReceiptNote": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "posReceiptThankYou": "Thank you for visiting!",
+  "posOperationFailed": "The POS operation could not be completed. Please try again.",
+  "posHoldSucceeded": "Order held successfully.",
+  "posHoldRetryable": "The order could not be held. Your cart is still available to retry.",
+  "posHoldUncertain": "The hold status could not be confirmed. Your cart is still available; check Orders before retrying.",
+  "posMenuVersionStale": "The menu changed. Refresh the POS menu and review the order.",
+  "posOpenShiftRequired": "Open a shift before continuing.",
+  "posOrderUnavailableForBranch": "This order is not available in the selected branch.",
+  "posHeldOrderRequired": "Only an unpaid held order can be resumed.",
+  "posCustomizeItem": "Customize item",
+  "posRequired": "Required",
+  "posHot": "Hot",
+  "posIced": "Iced",
+  "posSmallSize": "Small (8oz)",
+  "posMediumSize": "Medium (12oz)",
+  "posLargeSize": "Large (16oz)",
+  "posWholeMilk": "Whole milk",
+  "posOatMilk": "Oat milk",
+  "posAlmondMilk": "Almond milk",
+  "posDefault": "Default",
+  "posExtraEspresso": "Extra espresso shot",
+  "posCaramelSyrup": "Caramel syrup",
+  "posVanillaSyrup": "Vanilla syrup",
+  "posWhippedCream": "Whipped cream",
+  "posProductDescriptionFallback": "A classic espresso-based beverage.",
+  "posBasePrice": "{variant} base - {price}",
+  "@posBasePrice": {
+    "placeholders": {
+      "variant": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "posSearchProducts": "Search products...",
+  "posNoItemsAvailable": "No items available.",
+  "posNoCartItems": "No items added yet",
+  "posCloseCustomizationDialog": "Close customization dialog",
+  "customerImportAction": "Import CSV",
   "customerImportTitle": "Import customers from CSV",
   "customerImportDescription": "Upload a CSV preview, review warnings, then confirm the server-authoritative import.",
   "customerImportSelectFile": "Select CSV file",
   "customerImportChooseAnother": "Choose another file",
   "customerImportDetected": "Detected {encoding} encoding and {delimiter} delimiter",
-  "@customerImportDetected": {"placeholders": {"encoding": {"type": "String"}, "delimiter": {"type": "String"}}},
+  "@customerImportDetected": {
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "delimiter": {
+        "type": "String"
+      }
+    }
+  },
   "customerImportTotal": "Total",
   "customerImportReady": "Ready",
   "customerImportWarnings": "Warnings",
@@ -3746,7 +4144,25 @@
   "customerImportUnnamedRow": "Unnamed row",
   "customerImportSummary": "Import summary",
   "customerImportCountsSummary": "Created {created}, skipped {skipped}, failed {failed}; groups {groups}, memberships {memberships}.",
-  "@customerImportCountsSummary": {"placeholders": {"created": {"type": "int"}, "skipped": {"type": "int"}, "failed": {"type": "int"}, "groups": {"type": "int"}, "memberships": {"type": "int"}}},
+  "@customerImportCountsSummary": {
+    "placeholders": {
+      "created": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "groups": {
+        "type": "int"
+      },
+      "memberships": {
+        "type": "int"
+      }
+    }
+  },
   "customerImportConfirmTitle": "Confirm customer import",
   "customerImportConfirmMessage": "The server will create customers and memberships according to this preview. Existing customers are not updated.",
   "customerImportConfirmAction": "Confirm import",
@@ -3786,11 +4202,241 @@
   "printerRetryTestPrint": "Retry Test Print",
   "printerTestPrintSuccessful": "Print successful",
   "menuManagementPricing": "Pricing",
-  "pricingTitle": "Menu Pricing", "pricingSubtitle": "Save configuration here, then use Review & Publish to update selling prices.", "pricingMenu": "Menu", "pricingBranch": "Branch", "pricingChannel": "Sales channel", "pricingCategory": "Category", "pricingAllCategories": "All categories", "pricingSearch": "Search products or variants", "pricingContextsFailed": "Pricing contexts could not be loaded.", "pricingContextsEmpty": "Choose an active menu and branch to manage pricing.", "pricingRetry": "Retry",
-  "pricingDiscardTitle": "Discard pricing work?", "pricingDiscardMessage": "Changing context will discard pending drafts and the reviewed adjustment.", "pricingKeepEditing": "Keep editing", "pricingDiscard": "Discard", "pricingApplyRecoveryRequired": "Check the uncertain Apply result before changing pricing context.", "pricingForbidden": "You no longer have permission to manage pricing.",
-  "pricingBulkScope": "This adjustment applies to all eligible prices in this menu, not only the currently filtered results. {eligible} eligible; {excluded} excluded.", "@pricingBulkScope": {"placeholders": {"eligible": {"type": "int"}, "excluded": {"type": "int"}}}, "pricingBulkWarning": "This adjustment applies to all eligible prices in this menu, not only the currently filtered results.", "pricingInheritanceWarning": "This adjustment will create menu-specific prices for inherited items. Future changes to their shared inherited prices will no longer affect them until they are reset to inherited pricing.",
-  "pricingProductVariant": "Product / variant", "pricingConfigured": "Configured", "pricingInherited": "Inherited", "pricingPublished": "Published", "pricingActions": "Actions", "pricingHiddenPlacement": "Hidden placement", "pricingNotPublished": "Not published", "pricingOpenPriceReadonly": "Open price — read-only", "pricingChangeDraft": "Change draft", "pricingSetPrice": "Set price", "pricingResetInherited": "Reset to inherited", "pricingAlreadyInherited": "Already inherited", "pricingUndo": "Undo pending change", "pricingSetFor": "Set price: {name}", "@pricingSetFor": {"placeholders": {"name": {}}}, "pricingPositivePrice": "Positive price", "pricingPositivePriceError": "Enter a positive amount with at most two decimal places.", "pricingCancel": "Cancel", "pricingSaveDraft": "Save draft",
-  "pricingReviewChanges": "Review Price Changes ({count})", "@pricingReviewChanges": {"placeholders": {"count": {"type": "int"}}}, "pricingAdjustAll": "Adjust All Prices", "pricingOpenReview": "Open reviewed results", "pricingPrevious": "Previous", "pricingNext": "Next", "pricingPendingManualTitle": "Pending manual changes", "pricingPendingManualMessage": "Review and apply, or explicitly discard manual drafts before starting a bulk operation.", "pricingOperation": "Operation", "pricingAmount": "Amount", "pricingAmountError": "Enter a valid positive amount. Percentage decreases must be below 100.", "pricingPercentageMustBeBelow100": "Percentage decreases must be below 100.", "pricingRoundingMode": "Rounding mode", "pricingRoundingStep": "Rounding step", "pricingCustomStep": "Custom Step", "pricingPreview": "Preview", "pricingPercentIncrease": "Percentage increase", "pricingFixedIncrease": "Fixed increase", "pricingPercentDecrease": "Percentage decrease", "pricingFixedDecrease": "Fixed decrease", "pricingNoRounding": "No rounding", "pricingRoundUp": "Round up", "pricingRoundDown": "Round down",
-  "pricingReviewTitle": "Review price adjustment", "pricingManualReview": "Review the exact server-returned results before applying.", "pricingReviewedResults": "I have reviewed these results.", "pricingOppositeAcknowledgement": "I acknowledge that {count} prices will move in the opposite direction because of the selected rounding rule.", "@pricingOppositeAcknowledgement": {"placeholders": {"count": {"type": "int"}}}, "pricingClose": "Close", "pricingApply": "Apply reviewed results", "pricingOriginal": "Original", "pricingRaw": "Raw calculation", "pricingRounding": "Rounding", "pricingFinal": "Final", "pricingDifference": "Difference", "pricingConfiguration": "Configuration effect", "pricingOpposite": "Opposite direction", "pricingInheritedCount": "Inherited", "pricingExistingOverrideCount": "Existing overrides", "pricingCreatedCount": "Overrides created", "pricingUpdatedCount": "Overrides updated", "pricingRemovedCount": "Overrides removed", "pricingIncreaseCount": "Final increases", "pricingDecreaseCount": "Final decreases", "pricingUnchangedCount": "Unchanged", "pricingExcludedCount": "Exclusions",
-  "pricingApplyUncertain": "The Apply result is uncertain. Recover the stored adjustment before retrying or changing context.", "pricingRecover": "Recover adjustment", "pricingSavedHandoff": "Prices saved. Review and publish to update selling prices.", "pricingOverviewRefreshFailed": "Prices were saved, but the refreshed overview could not be loaded. Retry the overview separately.", "pricingReviewPublish": "Review & Publish", "pricingPreviewStale": "Pricing changed. Create and review a fresh preview.", "pricingPreviewExpired": "The reviewed preview expired. Create a new preview.", "pricingAcknowledgementRequired": "Acknowledge opposite-direction results before applying.", "pricingFailed": "Pricing could not be completed. Please try again.", "pricingChannelPos": "POS", "pricingChannelWaiter": "Waiter app", "pricingChannelKiosk": "Kiosk", "pricingChannelQr": "QR ordering", "pricingChannelDelivery": "Delivery", "pricingChannelOnline": "Online ordering", "pricingSourceMenu": "Menu price", "pricingSourceBranchChannel": "Branch and channel", "pricingSourceBranch": "Branch", "pricingSourceChannel": "Channel", "pricingSourceBase": "Base price", "pricingActionSet": "Set", "pricingActionReset": "Reset to inherited", "pricingMovementIncrease": "Increase", "pricingMovementDecrease": "Decrease", "pricingMovementUnchanged": "Unchanged", "pricingEffectCreate": "Create menu override", "pricingEffectUpdate": "Update menu override", "pricingEffectRemove": "Remove menu override", "pricingEffectUnchanged": "No configuration change"
+  "pricingTitle": "Menu Pricing",
+  "pricingSubtitle": "Save configuration here, then use Review & Publish to update selling prices.",
+  "pricingMenu": "Menu",
+  "pricingBranch": "Branch",
+  "pricingChannel": "Sales channel",
+  "pricingCategory": "Category",
+  "pricingAllCategories": "All categories",
+  "pricingSearch": "Search products or variants",
+  "pricingContextsFailed": "Pricing contexts could not be loaded.",
+  "pricingContextsEmpty": "Choose an active menu and branch to manage pricing.",
+  "pricingRetry": "Retry",
+  "pricingDiscardTitle": "Discard pricing work?",
+  "pricingDiscardMessage": "Changing context will discard pending drafts and the reviewed adjustment.",
+  "pricingKeepEditing": "Keep editing",
+  "pricingDiscard": "Discard",
+  "pricingApplyRecoveryRequired": "Check the uncertain Apply result before changing pricing context.",
+  "pricingForbidden": "You no longer have permission to manage pricing.",
+  "pricingBulkScope": "This adjustment applies to all eligible prices in this menu, not only the currently filtered results. {eligible} eligible; {excluded} excluded.",
+  "@pricingBulkScope": {
+    "placeholders": {
+      "eligible": {
+        "type": "int"
+      },
+      "excluded": {
+        "type": "int"
+      }
+    }
+  },
+  "pricingBulkWarning": "This adjustment applies to all eligible prices in this menu, not only the currently filtered results.",
+  "pricingInheritanceWarning": "This adjustment will create menu-specific prices for inherited items. Future changes to their shared inherited prices will no longer affect them until they are reset to inherited pricing.",
+  "pricingProductVariant": "Product / variant",
+  "pricingConfigured": "Configured",
+  "pricingInherited": "Inherited",
+  "pricingPublished": "Published",
+  "pricingActions": "Actions",
+  "pricingHiddenPlacement": "Hidden placement",
+  "pricingNotPublished": "Not published",
+  "pricingOpenPriceReadonly": "Open price — read-only",
+  "pricingChangeDraft": "Change draft",
+  "pricingSetPrice": "Set price",
+  "pricingResetInherited": "Reset to inherited",
+  "pricingAlreadyInherited": "Already inherited",
+  "pricingUndo": "Undo pending change",
+  "pricingSetFor": "Set price: {name}",
+  "@pricingSetFor": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pricingPositivePrice": "Positive price",
+  "pricingPositivePriceError": "Enter a positive amount with at most two decimal places.",
+  "pricingCancel": "Cancel",
+  "pricingSaveDraft": "Save draft",
+  "pricingReviewChanges": "Review Price Changes ({count})",
+  "@pricingReviewChanges": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pricingAdjustAll": "Adjust All Prices",
+  "pricingOpenReview": "Open reviewed results",
+  "pricingPrevious": "Previous",
+  "pricingNext": "Next",
+  "pricingPendingManualTitle": "Pending manual changes",
+  "pricingPendingManualMessage": "Review and apply, or explicitly discard manual drafts before starting a bulk operation.",
+  "pricingOperation": "Operation",
+  "pricingAmount": "Amount",
+  "pricingAmountError": "Enter a valid positive amount. Percentage decreases must be below 100.",
+  "pricingPercentageMustBeBelow100": "Percentage decreases must be below 100.",
+  "pricingRoundingMode": "Rounding mode",
+  "pricingRoundingStep": "Rounding step",
+  "pricingCustomStep": "Custom Step",
+  "pricingPreview": "Preview",
+  "pricingPercentIncrease": "Percentage increase",
+  "pricingFixedIncrease": "Fixed increase",
+  "pricingPercentDecrease": "Percentage decrease",
+  "pricingFixedDecrease": "Fixed decrease",
+  "pricingNoRounding": "No rounding",
+  "pricingRoundUp": "Round up",
+  "pricingRoundDown": "Round down",
+  "pricingReviewTitle": "Review price adjustment",
+  "pricingManualReview": "Review the exact server-returned results before applying.",
+  "pricingReviewedResults": "I have reviewed these results.",
+  "pricingOppositeAcknowledgement": "I acknowledge that {count} prices will move in the opposite direction because of the selected rounding rule.",
+  "@pricingOppositeAcknowledgement": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pricingClose": "Close",
+  "pricingApply": "Apply reviewed results",
+  "pricingOriginal": "Original",
+  "pricingRaw": "Raw calculation",
+  "pricingRounding": "Rounding",
+  "pricingFinal": "Final",
+  "pricingDifference": "Difference",
+  "pricingConfiguration": "Configuration effect",
+  "pricingOpposite": "Opposite direction",
+  "pricingInheritedCount": "Inherited",
+  "pricingExistingOverrideCount": "Existing overrides",
+  "pricingCreatedCount": "Overrides created",
+  "pricingUpdatedCount": "Overrides updated",
+  "pricingRemovedCount": "Overrides removed",
+  "pricingIncreaseCount": "Final increases",
+  "pricingDecreaseCount": "Final decreases",
+  "pricingUnchangedCount": "Unchanged",
+  "pricingExcludedCount": "Exclusions",
+  "pricingApplyUncertain": "The Apply result is uncertain. Recover the stored adjustment before retrying or changing context.",
+  "pricingRecover": "Recover adjustment",
+  "pricingSavedHandoff": "Prices saved. Review and publish to update selling prices.",
+  "pricingOverviewRefreshFailed": "Prices were saved, but the refreshed overview could not be loaded. Retry the overview separately.",
+  "pricingReviewPublish": "Review & Publish",
+  "pricingPreviewStale": "Pricing changed. Create and review a fresh preview.",
+  "pricingPreviewExpired": "The reviewed preview expired. Create a new preview.",
+  "pricingAcknowledgementRequired": "Acknowledge opposite-direction results before applying.",
+  "pricingFailed": "Pricing could not be completed. Please try again.",
+  "pricingChannelPos": "POS",
+  "pricingChannelWaiter": "Waiter app",
+  "pricingChannelKiosk": "Kiosk",
+  "pricingChannelQr": "QR ordering",
+  "pricingChannelDelivery": "Delivery",
+  "pricingChannelOnline": "Online ordering",
+  "pricingSourceMenu": "Menu price",
+  "pricingSourceBranchChannel": "Branch and channel",
+  "pricingSourceBranch": "Branch",
+  "pricingSourceChannel": "Channel",
+  "pricingSourceBase": "Base price",
+  "pricingActionSet": "Set",
+  "pricingActionReset": "Reset to inherited",
+  "pricingMovementIncrease": "Increase",
+  "pricingMovementDecrease": "Decrease",
+  "pricingMovementUnchanged": "Unchanged",
+  "pricingEffectCreate": "Create menu override",
+  "pricingEffectUpdate": "Update menu override",
+  "pricingEffectRemove": "Remove menu override",
+  "pricingEffectUnchanged": "No configuration change",
+  "discountAllVariants": "All variants",
+  "discountSelectedVariants": "Selected variants",
+  "discountUnavailableTarget": "Unavailable target. Remove or correct it before saving.",
+  "discountVariantSelectionRequired": "Select at least one available variant for each selected product.",
+  "discountReferenceForbidden": "You do not have permission to load these options.",
+  "discountReferenceFailed": "Could not load these options. Try again.",
+  "discountTargetingSummary": "Product and variant targeting",
+  "discountReferencePrevious": "Previous page",
+  "discountReferenceNext": "Next page",
+  "discountIllustrativePreview": "Illustrative example only. Eligibility, discount and tax are calculated by the server.",
+  "dsTitle": "Discount Settings",
+  "dsSubtitle": "Cafe-wide rules for selecting and combining discounts. Save applies the reviewed draft.",
+  "dsDefaults": "No saved settings yet. These are the server defaults.",
+  "dsAutomatic": "Automatic discounts",
+  "dsActivationUnavailable": "Automatic activation is currently unavailable for this cafe.",
+  "dsStrategy": "Selection strategy",
+  "dsHighest": "Highest actual saving",
+  "dsLowest": "Lowest positive saving",
+  "dsPriority": "Priority (higher first)",
+  "dsSavingHelp": "Saving is the actual monetary benefit after quantities, eligible targets and caps. For example, a fixed discount capped at 5 saves less than a 10% discount saving 8; face values alone do not decide.",
+  "dsCombination": "Combination",
+  "dsSingle": "One discount",
+  "dsDisjoint": "Different items",
+  "dsCombinationHelp": "Different-items mode combines eligible item discounts only when their discounted lines do not overlap.",
+  "dsOrderBehavior": "Order discount behavior",
+  "dsExclusive": "Exclusive",
+  "dsAfterItems": "After item discounts",
+  "dsOrderHelp": "Exclusive selects either the item group or an order discount. After-items applies an order discount to the remaining balance and requires different-items mode.",
+  "dsCouponBehavior": "Code discount behavior",
+  "dsManualBehavior": "Manual discount behavior",
+  "dsFollowRules": "Follow combination rules",
+  "dsCap": "Maximum total discount (%)",
+  "dsCapHelp": "Leave blank for no additional cap. Greater than 0 up to 100, at most four decimal places.",
+  "dsAllowSuppression": "Allow Automatic suppression",
+  "dsSuppressionHelp": "Suppression also requires a separate actor permission and a reason. Settings access does not grant it.",
+  "dsSummary": "Policy summary",
+  "dsIntentHelp": "Explicit Manual or Code intent remains selected until you review or remove it. Following rules still respects exclusivity and combination limits.",
+  "dsForbidden": "You do not have permission to manage these settings.",
+  "dsLoadFailed": "Settings could not be loaded. Retry to refresh access and settings.",
+  "dsSaveFailed": "Save could not be confirmed. Review the current settings before retrying.",
+  "dsConflict": "Settings changed on the server. Your draft is preserved. Compare the current saved rules before saving again.",
+  "dsReviewConflict": "I reviewed the current settings",
+  "dsCurrentVersion": "Current saved version: {version}",
+  "dsSave": "Save settings",
+  "dsSaving": "Saving…",
+  "dsReset": "Reset draft to defaults",
+  "dsValidation": "Review the allowed range and combination.",
+  "dsDiscard": "Discard unsaved discount settings?",
+  "dsDiscardAction": "Discard draft",
+  "dsManagerPermissions": "Manager Discount permissions",
+  "dsPermissionHelp": "Save replaces the complete Manager Discount permission list.",
+  "dsManagePolicies": "Manage policies",
+  "dsApplyConfigured": "Apply configured discounts",
+  "dsApplyManual": "Apply ad-hoc discounts",
+  "dsView": "View discounts",
+  "d2Automatic": "Automatic",
+  "d2Priority": "Priority (integer 0 to 1000)",
+  "d2CreationUnavailable": "Automatic creation is currently unavailable for this cafe.",
+  "d2Review": "Review discount change",
+  "d2ConfirmReview": "Confirm reviewed change",
+  "d2Before": "Current totals",
+  "d2After": "Proposed totals",
+  "d2Replacements": "The following list replaces all applied discounts.",
+  "d2Provisional": "Provisional: select a payment method for a final quote.",
+  "d2Recover": "Check operation status",
+  "d2Uncertain": "The result is not confirmed. Keep this order open and check its status.",
+  "d2FreshReview": "The context changed. Preview again and confirm the new result.",
+  "d2Suppress": "Suppress Automatic discount",
+  "d2Undo": "Undo suppression",
+  "d2Reason": "Required suppression reason",
+  "d2Suppressed": "Saved suppressions",
+  "d2Quote": "Payment quote",
+  "d2QuoteConfirm": "Confirm quoted payment",
+  "d2QuoteChanged": "Payment totals changed. Review the fresh quote and confirm again.",
+  "d2ChooseTender": "Select payment method",
+  "d2ZeroBalance": "Zero balance without tender",
+  "d2Generic": "The operation could not be completed. Refresh and try again.",
+  "d2Configuration": "Complete the required financial configuration before payment.",
+  "d2Stock": "There is not enough stock to settle this cart. Review the items and quantities.",
+  "d2Validation": "Review the payment details and obtain a fresh quote.",
+  "d2UpdateRequired": "Update this app before reviewing or paying this order.",
+  "d2OptionalReason": "Reason (optional)",
+  "d2Forbidden": "You are not authorized for this discount operation.",
+  "d2Eligibility": "This discount is no longer eligible. Review or remove your explicit selection.",
+  "d2Lifecycle": "The order is not available for this operation. Refresh its state.",
+  "d2Sync": "Wait for the cart to synchronize before review or payment.",
+  "d2SourceAutomatic": "Automatic",
+  "d2SourceCode": "Code",
+  "d2SourceManual": "Configured Manual",
+  "d2SourceAdHoc": "Ad-hoc",
+  "@dsCurrentVersion": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  }
 }

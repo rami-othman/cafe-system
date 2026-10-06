@@ -27,7 +27,7 @@ final class DiscountRolePermissionController extends Controller
         $actor = $this->access->assertOwner($request);
         $data = $request->validate([
             'permissions' => ['required', 'array'],
-            'permissions.*' => ['string', Rule::in(DiscountAccess::CATALOG)],
+            'permissions.*' => ['string', Rule::in($role === 'manager' ? DiscountAccess::ALL_PERMISSIONS : DiscountAccess::CATALOG)],
         ]);
         abort_unless(in_array($role, ['manager', 'employee'], true), 422, 'Only manager and employee Discount permissions can be configured.');
 

@@ -93,6 +93,23 @@ class SnapshotAwarePosOrderApiTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_variant_policy_uses_pinned_modifier_inclusive_selling_totals_after_catalog_edits(): void
+    {
+        $scope = $this->scope();
+        $order = $this->postOrder($scope, $scope['version'])->assertCreated()->json('data.id');
+        $policy = ['name' => 'Pinned variant', 'applicationMode' => 'manual', 'type' => 'percentage', 'scope' => 'product', 'value' => 50, 'isActive' => true, 'appliesToAllBranches' => true, 'targetProductIds' => [$scope['product']], 'productVariantSelections' => [['productId' => $scope['product'], 'variantMode' => 'selected', 'variantIds' => [$scope['variant']]]]];
+        $id = $this->postJson('/api/v1/discounts', $policy, $this->headers($scope))->assertCreated()->json('data.id');
+        DB::table('product_variants')->where('id', $scope['variant'])->update(['base_price' => 900, 'is_default' => false, 'deleted_at' => now()]);
+        DB::table('products')->where('id', $scope['product'])->update(['price' => 800]);
+        DB::table('modifier_options')->where('id', $scope['option'])->update(['price_delta' => 700]);
+        DB::table('published_menu_versions')->where('id', $scope['version'])->update(['status' => 'superseded']);
+        $this->version($scope, '500.00', 2);
+        $this->postJson("/api/v1/orders/$order/discounts/apply", ['discountId' => $id], $this->headers($scope))->assertOk()->assertJsonPath('data.discount.amount', 6.5)->assertJsonPath('data.totals.subtotal', 13);
+        $this->getJson("/api/v1/orders/$order/receipt", $this->headers($scope))->assertOk()->assertJsonPath('data.subtotal', 13)->assertJsonPath('data.discountTotal', 6.5)->assertJsonPath('data.taxTotal', 0.52)->assertJsonPath('data.total', 7.02);
+        $this->assertDatabaseHas('orders', ['id' => $order, 'published_menu_version_id' => $scope['version']]);
+        $this->assertDatabaseHas('order_items', ['order_id' => $order, 'product_variant_id' => $scope['variant'], 'unit_price' => '6.50', 'total' => '13.00']);
+    }
+
     private function postOrder(array $scope, int $version, array $extra = [], ?array $line = null)
     {
         return $this->postJson('/api/v1/orders', [

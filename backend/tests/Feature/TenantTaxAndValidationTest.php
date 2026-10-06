@@ -33,8 +33,13 @@ class TenantTaxAndValidationTest extends TestCase
             ->assertJsonPath('data.totals.taxRate', 0.075)
             ->assertJsonPath('data.totals.taxTotal', 1.5);
 
-        $this->putJson("/api/v1/orders/{$order->json('data.id')}/discount", [
-            'type' => 'fixed', 'value' => 5,
+        $discountId = $this->postJson('/api/v1/discounts', [
+            'name' => 'Tax fixture', 'applicationMode' => 'manual',
+            'type' => 'fixed', 'scope' => 'order', 'value' => 5,
+            'isActive' => true, 'appliesToAllBranches' => true,
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/orders/{$order->json('data.id')}/discounts/apply", [
+            'discountId' => $discountId,
         ], $headers)->assertOk()
             ->assertJsonPath('data.totals.taxTotal', 1.13);
 

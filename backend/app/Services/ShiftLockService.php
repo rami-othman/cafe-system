@@ -17,15 +17,14 @@ use Illuminate\Validation\ValidationException;
  *  - sharedOpenShift(): `SELECT ... FOR SHARE`. Any number of operational
  *    writers may hold this concurrently on the same shift, but it blocks (and
  *    is blocked by) reconciliation's exclusive `FOR UPDATE` lock on the same
- *    row for the writer's whole transaction. This is what payment attachment
- *    and order creation use — they never mutate the shift row itself.
+ *    row for the writer's whole transaction. Order creation uses this strength.
  *  - exclusiveOpenShift(): `SELECT ... FOR UPDATE`, for writers that also
  *    mutate the shift row (cash movements, refunds already use lockForUpdate
  *    directly via ShiftCloseService/PosCashLocationResolver callers).
  *
  * Lock order: callers MUST lock their own domain rows (order, payment,
- * finance_document, ...) BEFORE calling here — the shift lock is always taken
- * last, immediately before the write that depends on it. Reconciliation only
+ * finance_document, ...) BEFORE calling here. Physical drawer precedes shift;
+ * payments take exclusive shift locks up front, with no upgrade. Reconciliation only
  * ever locks `financial_locations` then `shifts` (never orders/payments), so
  * this ordering has no lock-order cycle with reconciliation. See
  * ShiftOverlapReconciliationService for the reconciliation side of this
@@ -45,6 +44,7 @@ final class ShiftLockService
 
     private function lockedOpenShift(int $tenantId, int $shiftId, ?int $branchId, ?int $userId, bool $exclusive): object
     {
+        $this->lockLocation($tenantId, $shiftId);
         $query = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)->whereNull('deleted_at');
         if ($branchId !== null) {
             $query->where('branch_id', $branchId);
@@ -62,5 +62,14 @@ final class ShiftLockService
         }
 
         return $shift;
+    }
+
+    /** Reconciliation and operational writers take the drawer before shift. */
+    public function lockLocation(int $tenantId, int $shiftId): void
+    {
+        $locationId = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)->value('financial_location_id');
+        if ($locationId !== null) {
+            DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $locationId)->lockForUpdate()->first();
+        }
     }
 }

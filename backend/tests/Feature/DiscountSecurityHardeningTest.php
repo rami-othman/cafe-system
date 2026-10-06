@@ -31,7 +31,7 @@ class DiscountSecurityHardeningTest extends TestCase
                 $this->assertTrue($access->allows($request, $permission));
             }
         }
-        $this->assertSame(4, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'manager')->count());
+        $this->assertSame(5, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'manager')->count());
         $this->assertSame(4, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'employee')->count());
     }
 
@@ -42,7 +42,9 @@ class DiscountSecurityHardeningTest extends TestCase
 
         $this->getJson('/api/v1/discounts', $employeeHeaders)->assertOk();
         $this->postJson('/api/v1/discounts', $this->managementPayload(), $employeeHeaders)->assertCreated();
-        $this->putJson("/api/v1/orders/{$scope['orderA']}/discount", ['type' => 'percentage', 'value' => 10], $employeeHeaders)->assertOk();
+        $this->putJson("/api/v1/orders/{$scope['orderA']}/discount", ['type' => 'percentage', 'value' => 10], $employeeHeaders)
+            ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_AD_HOC_DISABLED');
+        $this->assertSame(0, DB::table('order_discounts')->where('order_id', $scope['orderA'])->count());
 
         $this->putJson('/api/v1/discounts/role-permissions/employee', [
             'permissions' => [DiscountAccess::VIEW, DiscountAccess::APPLY_CONFIGURED],
@@ -73,9 +75,10 @@ class DiscountSecurityHardeningTest extends TestCase
         $this->postJson("/api/v1/orders/{$scope['orderA']}/discounts/apply", ['code' => 'sEcReT10'], $headers)
             ->assertOk()->assertJsonMissing(['code' => 'SECRET10']);
         $this->assertManagedDiscount($scope, $scope['codeDiscount']);
-        $this->putJson("/api/v1/orders/{$scope['orderA']}/discount", ['type' => 'fixed', 'value' => 30], $headers)->assertOk();
+        $this->putJson("/api/v1/orders/{$scope['orderA']}/discount", ['type' => 'fixed', 'value' => 30], $headers)
+            ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_AD_HOC_DISABLED');
         $this->assertSame(1, DB::table('order_discounts')->where('order_id', $scope['orderA'])->count());
-        $this->assertNull(DB::table('order_discounts')->where('order_id', $scope['orderA'])->value('discount_id'));
+        $this->assertManagedDiscount($scope, $scope['codeDiscount']);
         $this->postJson("/api/v1/orders/{$scope['orderA']}/discounts/apply", ['discountId' => $scope['manualDiscount']], $headers)->assertOk();
         $this->assertManagedDiscount($scope, $scope['manualDiscount']);
 

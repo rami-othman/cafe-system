@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../pos/models/discount_engine.dart';
 
 import '../../../core/config/tax_config.dart';
 import 'order_payment_summary.dart';
@@ -36,8 +37,12 @@ class OrderDetail extends Equatable {
     this.serverCanResume,
     this.resumeBlockerCode,
     this.resumeBlockedReason,
+    this.discounts = const [],
+    this.discountTotal = 0,
   });
 
+  final List<SavedDiscount> discounts;
+  final double discountTotal;
   final String id;
   final String displayNumber;
   final OrderStatus status;
@@ -155,6 +160,8 @@ class OrderDetail extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    discounts,
+    discountTotal,
     id,
     displayNumber,
     status,

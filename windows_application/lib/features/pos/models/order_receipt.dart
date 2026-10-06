@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/config/tax_config.dart';
 import 'payment_result.dart';
+import 'discount_engine.dart';
 import 'receipt_line_item.dart';
 
 class OrderReceipt extends Equatable {
@@ -19,8 +20,11 @@ class OrderReceipt extends Equatable {
     required this.payment,
     this.taxRate = TaxConfig.defaultTaxRate,
     this.customerName,
+    this.discounts = const [],
+    this.settlementMethod,
   });
 
+  final List<SavedDiscount> discounts;
   final String orderNumber;
   final String branchName;
   final String cashierName;
@@ -34,6 +38,7 @@ class OrderReceipt extends Equatable {
   final double total;
   final PaymentResult payment;
   final String? customerName;
+  final String? settlementMethod;
 
   int get itemCount {
     return items.fold<int>(
@@ -44,6 +49,7 @@ class OrderReceipt extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    discounts,
     orderNumber,
     branchName,
     cashierName,
@@ -57,5 +63,6 @@ class OrderReceipt extends Equatable {
     total,
     payment,
     customerName,
+    settlementMethod,
   ];
 }

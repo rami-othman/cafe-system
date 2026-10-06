@@ -1,10 +1,12 @@
 import '../../pos/models/json_helpers.dart';
+import '../../pos/models/discount_engine.dart';
 import 'receipt_template.dart';
 
 /// Values are copied from GET orders/{id}/receipt. No totals are calculated here.
 class ReceiptData {
   const ReceiptData({
     this.orderId,
+    this.discounts = const [],
     required this.orderNumber,
     required this.date,
     required this.items,
@@ -28,6 +30,9 @@ class ReceiptData {
   factory ReceiptData.fromJson(Map<String, dynamic> json) {
     final paymentJson = json['payment'];
     return ReceiptData(
+      discounts: engineList(
+        json['discounts'],
+      ).map(SavedDiscount.fromJson).toList(),
       orderId: readInt(json['orderId']),
       orderNumber: readString(json['orderNumber']),
       date: readString(json['date']),
@@ -52,6 +57,7 @@ class ReceiptData {
     );
   }
 
+  final List<SavedDiscount> discounts;
   final int? orderId;
   final String orderNumber;
   final String date;
@@ -73,6 +79,7 @@ class ReceiptData {
   final ReceiptTemplate template;
 
   ReceiptData copyWith({ReceiptTemplate? template}) => ReceiptData(
+    discounts: discounts,
     orderId: orderId,
     orderNumber: orderNumber,
     date: date,

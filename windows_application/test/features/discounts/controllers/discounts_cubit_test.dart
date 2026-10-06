@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
@@ -10,6 +11,68 @@ import 'package:windows_application/features/discounts/repositories/discounts_re
 import 'package:windows_application/features/pos/models/branch.dart';
 
 void main() {
+  for (final operation in [
+    'list',
+    'branches',
+    'references',
+    'save',
+    'delete',
+  ]) {
+    for (final failure in [false, true]) {
+      test(
+        '$operation ignores ${failure ? 'failed' : 'successful'} completion after close',
+        () async {
+          final repository = _PendingRepository(operation);
+          final cubit = DiscountsCubit(repository: repository);
+          final Future<dynamic> pending = switch (operation) {
+            'list' => cubit.loadDiscounts(),
+            'branches' => cubit.loadBranches(),
+            'references' => cubit.loadFormReferences(),
+            'save' => cubit.createDiscount(_request),
+            _ => cubit.deleteDiscount('1'),
+          };
+          final assertion = expectLater(pending, completes);
+          final disposingState = cubit.state;
+          if (operation == 'save' || operation == 'delete') {
+            expect(await cubit.createDiscount(_request), isFalse);
+            expect(repository.calls, 1);
+          }
+          await cubit.close();
+          if (failure) {
+            repository.pending.completeError(StateError('private failure'));
+          } else {
+            repository.pending.complete();
+          }
+          await assertion;
+          if (operation == 'save' || operation == 'delete') {
+            expect(await pending, !failure);
+          }
+          expect(cubit.state, same(disposingState));
+          expect(repository.calls, 1, reason: 'disposal must not retry');
+        },
+      );
+      test('$operation reports genuine failure while active', () async {
+        final repository = _PendingRepository(operation);
+        final cubit = DiscountsCubit(repository: repository);
+        final Future<dynamic> pending = switch (operation) {
+          'list' => cubit.loadDiscounts(),
+          'branches' => cubit.loadBranches(),
+          'references' => cubit.loadFormReferences(),
+          'save' => cubit.createDiscount(_request),
+          _ => cubit.deleteDiscount('1'),
+        };
+        repository.pending.completeError(StateError('private failure'));
+        await pending;
+        expect(switch (operation) {
+          'branches' => cubit.state.branchErrorMessage,
+          'references' => cubit.state.formReferencesErrorMessage,
+          _ => cubit.state.errorMessage,
+        }, DiscountsCubit.requestFailed);
+        await cubit.close();
+      });
+    }
+  }
+
   test(
     'loads, creates, changes status, and deletes through the repository',
     () async {
@@ -61,7 +124,7 @@ const DiscountUpsertRequest _request = DiscountUpsertRequest(
   appliesToAllBranches: true,
 );
 
-class _Repository implements DiscountsRepository {
+class _Repository extends DiscountsRepository {
   @override
   Future<DiscountFormReferences> getFormReferences() async =>
       const DiscountFormReferences();
@@ -138,3 +201,28 @@ DiscountListItem _item(String id, String name, bool active) => DiscountListItem(
   estimatedSavedValue: 0,
   isActive: active,
 );
+
+class _PendingRepository extends _Repository {
+  _PendingRepository(this.operation);
+  final String operation;
+  final pending = Completer<void>();
+  int calls = 0;
+  Future<T> wait<T>(T result) async {
+    calls++;
+    await pending.future;
+    return result;
+  }
+
+  @override
+  Future<List<DiscountListItem>> getDiscounts() => wait([]);
+  @override
+  Future<List<Branch>> getBranches() => wait([]);
+  @override
+  Future<DiscountFormReferences> getFormReferences() =>
+      wait(const DiscountFormReferences());
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
+      wait(_item('2', 'Saved', true));
+  @override
+  Future<void> deleteDiscount(String id) => wait(null);
+}

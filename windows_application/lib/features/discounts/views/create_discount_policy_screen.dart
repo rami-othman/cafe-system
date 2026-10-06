@@ -16,6 +16,7 @@ import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../menu_management/operational_availability/operational_availability_formatters.dart'
     show operationalSalesChannels;
+import '../controllers/discount_targets_cubit.dart';
 import '../controllers/discounts_cubit.dart';
 import '../controllers/discounts_state.dart';
 import '../models/discount_detail.dart';
@@ -27,6 +28,7 @@ import '../widgets/discount_chip_selector.dart';
 import '../widgets/discount_form_section_card.dart';
 import '../widgets/discount_localization.dart';
 import '../widgets/discount_pos_preview_card.dart';
+import '../widgets/discount_product_targets.dart';
 import '../widgets/discount_summary_panel.dart';
 
 /// One V1 form for create and edit. An edit row carries only an ID; the
@@ -43,6 +45,9 @@ class CreateDiscountPolicyScreen extends StatefulWidget {
 
 class _CreateDiscountPolicyScreenState
     extends State<CreateDiscountPolicyScreen> {
+  final TextEditingController _priorityController = TextEditingController(
+    text: '0',
+  );
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -59,8 +64,11 @@ class _CreateDiscountPolicyScreenState
   final TextEditingController _perCustomerDailyLimitController =
       TextEditingController();
 
+  late final DiscountTargetsCubit _targets;
+  StreamSubscription<DiscountTargetsState>? _targetsSubscription;
   bool _active = false;
   String _applicationMode = 'manual';
+  String? _originalApplicationMode;
   String _scope = 'order';
   String _valueType = 'percentage';
   String _fixedAmountBasis = 'per_order';
@@ -81,6 +89,8 @@ class _CreateDiscountPolicyScreenState
   bool _isLoadingDetail = false;
   String? _detailError;
   String? _conditions;
+  String? _startsAt;
+  String? _endsAt;
   bool _showValidationErrors = false;
   bool _isGeneratingCode = false;
   String? _couponGenerationError;
@@ -91,12 +101,17 @@ class _CreateDiscountPolicyScreenState
   @override
   void initState() {
     super.initState();
+    _targets = context.read<DiscountsCubit>().createTargetsController();
+    _targetsSubscription = _targets.stream.listen((state) {
+      if (mounted) setState(() => _replace(_productIds, state.selections.keys));
+    });
     for (final TextEditingController controller in _formControllers) {
       controller.addListener(_onFormChanged);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final DiscountsCubit cubit = context.read<DiscountsCubit>();
+      cubit.loadCapabilities();
       cubit.loadBranches();
       cubit.loadFormReferences();
       if (_isEdit) _loadDetail();
@@ -110,10 +125,13 @@ class _CreateDiscountPolicyScreenState
       controller.dispose();
     }
     _clearBundleRequirements();
+    _targetsSubscription?.cancel();
+    _targets.close();
     super.dispose();
   }
 
   List<TextEditingController> get _formControllers => <TextEditingController>[
+    _priorityController,
     _nameController,
     _codeController,
     _descriptionController,
@@ -155,10 +173,14 @@ class _CreateDiscountPolicyScreenState
   }
 
   void _hydrate(DiscountDetail detail) {
+    _targets.hydrate(detail.effectiveProductSelections);
+    _priorityController.text = detail.priority.toString();
     _nameController.text = detail.name;
     _codeController.text = detail.code ?? '';
     _descriptionController.text = detail.description ?? '';
     _conditions = detail.conditions;
+    _startsAt = detail.startsAt;
+    _endsAt = detail.endsAt;
     _valueController.text = _decimal(detail.value);
     _minSpendController.text = _nullableDecimal(detail.minimumOrderAmount);
     _maxDiscountController.text = _nullableDecimal(
@@ -175,7 +197,8 @@ class _CreateDiscountPolicyScreenState
         detail.perCustomerDailyUsageLimit?.toString() ?? '';
     setState(() {
       _active = detail.isActive;
-      _applicationMode = detail.applicationMode == 'code' ? 'code' : 'manual';
+      _applicationMode = detail.applicationMode;
+      _originalApplicationMode = detail.applicationMode;
       _scope = switch (detail.scope) {
         'product' => 'product',
         'category' => 'category',
@@ -363,11 +386,36 @@ class _CreateDiscountPolicyScreenState
               options: <_SelectOption>[
                 _SelectOption('manual', l10n.discountManual),
                 _SelectOption('code', l10n.discountFormCouponOrCode),
+                if (context
+                        .watch<DiscountsCubit>()
+                        .state
+                        .capabilities
+                        .automaticPolicyCreationAvailable ||
+                    _applicationMode == 'automatic')
+                  _SelectOption('automatic', l10n.d2Automatic),
               ],
               enabled: !locked,
               onChanged: _changeApplicationMode,
             ),
           ),
+          _LabeledField(
+            label: l10n.d2Priority,
+            child: AppTextField(
+              key: const Key('discount-priority-field'),
+              controller: _priorityController,
+              enabled: !locked,
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          if (!context
+              .watch<DiscountsCubit>()
+              .state
+              .capabilities
+              .automaticPolicyCreationAvailable)
+            _LabeledField(
+              label: l10n.d2Automatic,
+              child: Text(l10n.d2CreationUnavailable),
+            ),
           if (_applicationMode == 'code')
             _LabeledField(
               label: l10n.discountCode,
@@ -453,7 +501,10 @@ class _CreateDiscountPolicyScreenState
                   enabled: !locked,
                   onChanged: (value) => setState(() {
                     _scope = value;
-                    if (value != 'product') _productIds.clear();
+                    if (value != 'product') {
+                      _productIds.clear();
+                      _targets.clear();
+                    }
                     if (value != 'category') _categoryIds.clear();
                     if (value != 'bundle') _clearBundleRequirements();
                   }),
@@ -545,14 +596,10 @@ class _CreateDiscountPolicyScreenState
           ),
           const SizedBox(height: AppSpacing.lg),
           if (_scope == 'product')
-            _referenceSelector(
-              key: const Key('discount-products-selector'),
-              label: l10n.discountSelectedProducts,
-              items: state.formReferences.products,
-              selectedIds: _productIds,
-              loading: state.isLoadingFormReferences,
+            DiscountProductTargets(
+              controller: _targets,
               enabled: !locked,
-              onChanged: (ids) => setState(() => _replace(_productIds, ids)),
+              onChanged: () => setState(() {}),
             ),
           if (_scope == 'category')
             _referenceSelector(
@@ -937,16 +984,44 @@ class _CreateDiscountPolicyScreenState
     required bool enabled,
     bool searchable = false,
     required ValueChanged<Set<int>> onChanged,
-  }) => _ReferenceSelector(
-    key: key,
-    label: label,
-    items: items,
-    selectedIds: selectedIds,
-    loading: loading,
-    enabled: enabled,
-    searchable: searchable,
-    onChanged: onChanged,
-  );
+  }) {
+    final state = context.read<DiscountsCubit>().state;
+    final section = switch (key) {
+      const ValueKey('discount-categories-selector') => 'categories',
+      const ValueKey('discount-customer-groups-selector') => 'customerGroups',
+      const ValueKey('discount-customers-selector') => 'customers',
+      const ValueKey('discount-payment-methods-selector') => 'paymentMethods',
+      _ => null,
+    };
+    final failure = state.formReferences.failures[section];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ReferenceSelector(
+          key: key,
+          label: label,
+          items: items,
+          selectedIds: selectedIds,
+          loading: loading,
+          enabled: enabled,
+          searchable: searchable,
+          onChanged: onChanged,
+        ),
+        if (failure != null) ...[
+          Text(
+            failure == 'forbidden'
+                ? AppLocalizations.of(context).discountReferenceForbidden
+                : AppLocalizations.of(context).discountReferenceFailed,
+          ),
+          TextButton(
+            onPressed: () =>
+                context.read<DiscountsCubit>().loadFormReferences(),
+            child: Text(AppLocalizations.of(context).commonRetry),
+          ),
+        ],
+      ],
+    );
+  }
 
   Widget _branchSelector(DiscountsState state, bool locked) {
     final List<DiscountFormReference> branches = state.branches
@@ -1184,18 +1259,23 @@ class _CreateDiscountPolicyScreenState
         TaxConfig.defaultTaxRate;
     return Column(
       children: <Widget>[
-        DiscountPosPreviewCard(
-          discountValue: value,
-          isPercentage: _isPercentage,
-          taxRate: taxRate,
-        ),
+        if (_applicationMode == 'automatic')
+          Text(AppLocalizations.of(context).dsSubtitle)
+        else
+          DiscountPosPreviewCard(
+            discountValue: value,
+            isPercentage: _isPercentage,
+            taxRate: taxRate,
+          ),
         const SizedBox(height: AppSpacing.lg),
         DiscountSummaryPanel(
           value: _isPercentage
               ? AppLocalizations.of(context).discountPercentOff(_decimal(value))
               : '${AppLocalizations.of(context).discountAmountOff(CurrencyFormatter.format(value, locale: AppLocalizations.of(context).localeName, currencyCode: _currency(state)))}${_scope == 'product' && _fixedAmountBasis == 'per_unit' ? ' · ${AppLocalizations.of(context).discountFixedPerUnit}' : ''}',
           isReady: isReady,
-          scope: _scopeLabel(_scope),
+          scope: _scope == 'product'
+              ? '${_scopeLabel(_scope)}: ${_targets.state.selections.values.map((s) => '${s.product?.label(AppLocalizations.of(context).localeName.startsWith('ar')) ?? '#${s.productId}'} · ${s.variantMode == 'all' ? AppLocalizations.of(context).discountAllVariants : '${AppLocalizations.of(context).discountSelectedVariants} (${s.variantIds.length})'}').join('; ')}'
+              : _scopeLabel(_scope),
           branches: _appliesToAllBranches
               ? AppLocalizations.of(context).discountFormAllBranches
               : AppLocalizations.of(
@@ -1238,6 +1318,7 @@ class _CreateDiscountPolicyScreenState
     setState(() {
       _active = false;
       _applicationMode = 'manual';
+      _priorityController.text = '0';
       _scope = 'order';
       _valueType = 'percentage';
       _fixedAmountBasis = 'per_order';
@@ -1246,6 +1327,7 @@ class _CreateDiscountPolicyScreenState
       _allPaymentMethods = true;
       _allChannels = true;
       _productIds.clear();
+      _targets.clear();
       _categoryIds.clear();
       _customerGroupIds.clear();
       _customerIds.clear();
@@ -1272,6 +1354,7 @@ class _CreateDiscountPolicyScreenState
       code: _applicationMode == 'code' ? _nullableText(_codeController) : null,
       description: _nullableText(_descriptionController),
       applicationMode: _applicationMode,
+      priority: int.tryParse(_priorityController.text.trim()),
       type: _valueType,
       scope: _scope,
       value: _decimalValue(_valueController.text)!,
@@ -1279,6 +1362,8 @@ class _CreateDiscountPolicyScreenState
           ? _fixedAmountBasis
           : 'per_order',
       conditions: _conditions,
+      startsAt: _startsAt,
+      endsAt: _endsAt,
       minimumOrderAmount: _decimalValue(_minSpendController.text),
       maximumDiscountAmount: _decimalValue(_maxDiscountController.text),
       startDate: _nullableText(_startDateController),
@@ -1303,6 +1388,7 @@ class _CreateDiscountPolicyScreenState
       paymentMethodIds: _allPaymentMethods
           ? const <int>[]
           : _paymentMethodIds.toList(growable: false),
+      productVariantSelections: _targets.state.selections.values.toList(),
       targetProductIds: _scope == 'product'
           ? _productIds.toList(growable: false)
           : const <int>[],
@@ -1378,6 +1464,7 @@ class _CreateDiscountPolicyScreenState
       'value' => l10n.discountFormValue,
       'minimumOrderAmount' => l10n.discountFormMinSpendOptional,
       'maximumDiscountAmount' => l10n.discountFormMaxDiscountOptional,
+      'productVariantSelections' => l10n.discountSelectedVariants,
       'targetProductIds' => l10n.discountSelectedProducts,
       'targetCategoryIds' => l10n.discountSelectedCategories,
       'bundleRequirements' => l10n.discountV2PackageRequirements,
@@ -1434,8 +1521,33 @@ class _CreateDiscountPolicyScreenState
         _FormValidationIssue('value', l10n.discountValidationPercentage),
       );
     }
+    final priority = int.tryParse(_priorityController.text.trim());
+    if (priority == null || priority < 0 || priority > 1000) {
+      issues.add(_FormValidationIssue('priority', l10n.d2Priority));
+    }
+    if (_applicationMode == 'automatic' &&
+        !context
+            .read<DiscountsCubit>()
+            .state
+            .capabilities
+            .automaticPolicyCreationAvailable &&
+        _originalApplicationMode != 'automatic') {
+      issues.add(
+        _FormValidationIssue('applicationMode', l10n.d2CreationUnavailable),
+      );
+    }
     if (_applicationMode == 'code' && _nullableText(_codeController) == null) {
       issues.add(_FormValidationIssue('code', l10n.discountValidationCode));
+    }
+    if (_scope == 'product' && !_targets.state.isValid) {
+      issues.add(
+        _FormValidationIssue(
+          'scope',
+          _targets.state.selections.values.any((s) => s.hasUnavailable)
+              ? l10n.discountUnavailableTarget
+              : l10n.discountVariantSelectionRequired,
+        ),
+      );
     }
     if (_scope == 'product' && _productIds.isEmpty) {
       issues.add(

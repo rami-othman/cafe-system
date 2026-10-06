@@ -288,6 +288,18 @@ class ReceiptRenderer {
         if (cfg.showSubtotal) {
           row(rtl ? 'المجموع الفرعي' : 'Subtotal', amount(receipt.subtotal));
         }
+        if (cfg.showDiscount) {
+          for (final discount in receipt.discounts) {
+            final source = switch (discount.source) {
+              'automatic' => rtl ? 'تلقائي' : 'Automatic',
+              'code' => rtl ? 'رمز' : 'Code',
+              'configured_manual' => rtl ? 'يدوي معرّف' : 'Configured Manual',
+              'ad_hoc' => rtl ? 'حر' : 'Ad-hoc',
+              _ => rtl ? 'خصم' : 'Discount',
+            };
+            row('${discount.name} ($source)', '-${discount.amount}');
+          }
+        }
         if (cfg.showDiscount && receipt.discountTotal != 0) {
           row(rtl ? 'الخصم' : 'Discount', amount(receipt.discountTotal));
         }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'discount_engine_widgets.dart';
 
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/branding/brand_header.dart';
@@ -119,9 +120,15 @@ class ReceiptPreviewPaper extends StatelessWidget {
               ),
               amount: receipt.tax,
             ),
+            DiscountBreakdown(discounts: receipt.discounts),
             if (receipt.discountTotal > 0)
               _AmountRow(
-                label: receipt.discountLabel ?? context.l10n.posDiscount,
+                label:
+                    receipt.discountLabel == null ||
+                        receipt.discountLabel!.trim().toLowerCase() ==
+                            'discount'
+                    ? context.l10n.posDiscount
+                    : receipt.discountLabel!,
                 amount: -receipt.discountTotal,
               ),
             const SizedBox(height: AppSpacing.xs),
@@ -133,7 +140,9 @@ class ReceiptPreviewPaper extends StatelessWidget {
             const _ReceiptDivider(),
             _ReceiptInfoRow(
               label: context.l10n.posReceiptPaidVia,
-              value: receipt.payment.method.localizedLabel(context.l10n),
+              value: receipt.settlementMethod == 'zero_balance'
+                  ? context.l10n.d2ZeroBalance
+                  : receipt.payment.method.localizedLabel(context.l10n),
             ),
             if (receipt.payment.method == PaymentMethod.card ||
                 receipt.payment.method == PaymentMethod.wallet)

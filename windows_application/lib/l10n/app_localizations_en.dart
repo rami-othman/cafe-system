@@ -9516,4 +9516,310 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pricingEffectUnchanged => 'No configuration change';
+
+  @override
+  String get discountAllVariants => 'All variants';
+
+  @override
+  String get discountSelectedVariants => 'Selected variants';
+
+  @override
+  String get discountUnavailableTarget =>
+      'Unavailable target. Remove or correct it before saving.';
+
+  @override
+  String get discountVariantSelectionRequired =>
+      'Select at least one available variant for each selected product.';
+
+  @override
+  String get discountReferenceForbidden =>
+      'You do not have permission to load these options.';
+
+  @override
+  String get discountReferenceFailed =>
+      'Could not load these options. Try again.';
+
+  @override
+  String get discountTargetingSummary => 'Product and variant targeting';
+
+  @override
+  String get discountReferencePrevious => 'Previous page';
+
+  @override
+  String get discountReferenceNext => 'Next page';
+
+  @override
+  String get discountIllustrativePreview =>
+      'Illustrative example only. Eligibility, discount and tax are calculated by the server.';
+
+  @override
+  String get dsTitle => 'Discount Settings';
+
+  @override
+  String get dsSubtitle =>
+      'Cafe-wide rules for selecting and combining discounts. Save applies the reviewed draft.';
+
+  @override
+  String get dsDefaults =>
+      'No saved settings yet. These are the server defaults.';
+
+  @override
+  String get dsAutomatic => 'Automatic discounts';
+
+  @override
+  String get dsActivationUnavailable =>
+      'Automatic activation is currently unavailable for this cafe.';
+
+  @override
+  String get dsStrategy => 'Selection strategy';
+
+  @override
+  String get dsHighest => 'Highest actual saving';
+
+  @override
+  String get dsLowest => 'Lowest positive saving';
+
+  @override
+  String get dsPriority => 'Priority (higher first)';
+
+  @override
+  String get dsSavingHelp =>
+      'Saving is the actual monetary benefit after quantities, eligible targets and caps. For example, a fixed discount capped at 5 saves less than a 10% discount saving 8; face values alone do not decide.';
+
+  @override
+  String get dsCombination => 'Combination';
+
+  @override
+  String get dsSingle => 'One discount';
+
+  @override
+  String get dsDisjoint => 'Different items';
+
+  @override
+  String get dsCombinationHelp =>
+      'Different-items mode combines eligible item discounts only when their discounted lines do not overlap.';
+
+  @override
+  String get dsOrderBehavior => 'Order discount behavior';
+
+  @override
+  String get dsExclusive => 'Exclusive';
+
+  @override
+  String get dsAfterItems => 'After item discounts';
+
+  @override
+  String get dsOrderHelp =>
+      'Exclusive selects either the item group or an order discount. After-items applies an order discount to the remaining balance and requires different-items mode.';
+
+  @override
+  String get dsCouponBehavior => 'Code discount behavior';
+
+  @override
+  String get dsManualBehavior => 'Manual discount behavior';
+
+  @override
+  String get dsFollowRules => 'Follow combination rules';
+
+  @override
+  String get dsCap => 'Maximum total discount (%)';
+
+  @override
+  String get dsCapHelp =>
+      'Leave blank for no additional cap. Greater than 0 up to 100, at most four decimal places.';
+
+  @override
+  String get dsAllowSuppression => 'Allow Automatic suppression';
+
+  @override
+  String get dsSuppressionHelp =>
+      'Suppression also requires a separate actor permission and a reason. Settings access does not grant it.';
+
+  @override
+  String get dsSummary => 'Policy summary';
+
+  @override
+  String get dsIntentHelp =>
+      'Explicit Manual or Code intent remains selected until you review or remove it. Following rules still respects exclusivity and combination limits.';
+
+  @override
+  String get dsForbidden =>
+      'You do not have permission to manage these settings.';
+
+  @override
+  String get dsLoadFailed =>
+      'Settings could not be loaded. Retry to refresh access and settings.';
+
+  @override
+  String get dsSaveFailed =>
+      'Save could not be confirmed. Review the current settings before retrying.';
+
+  @override
+  String get dsConflict =>
+      'Settings changed on the server. Your draft is preserved. Compare the current saved rules before saving again.';
+
+  @override
+  String get dsReviewConflict => 'I reviewed the current settings';
+
+  @override
+  String dsCurrentVersion(int version) {
+    return 'Current saved version: $version';
+  }
+
+  @override
+  String get dsSave => 'Save settings';
+
+  @override
+  String get dsSaving => 'Saving…';
+
+  @override
+  String get dsReset => 'Reset draft to defaults';
+
+  @override
+  String get dsValidation => 'Review the allowed range and combination.';
+
+  @override
+  String get dsDiscard => 'Discard unsaved discount settings?';
+
+  @override
+  String get dsDiscardAction => 'Discard draft';
+
+  @override
+  String get dsManagerPermissions => 'Manager Discount permissions';
+
+  @override
+  String get dsPermissionHelp =>
+      'Save replaces the complete Manager Discount permission list.';
+
+  @override
+  String get dsManagePolicies => 'Manage policies';
+
+  @override
+  String get dsApplyConfigured => 'Apply configured discounts';
+
+  @override
+  String get dsApplyManual => 'Apply ad-hoc discounts';
+
+  @override
+  String get dsView => 'View discounts';
+
+  @override
+  String get d2Automatic => 'Automatic';
+
+  @override
+  String get d2Priority => 'Priority (integer 0 to 1000)';
+
+  @override
+  String get d2CreationUnavailable =>
+      'Automatic creation is currently unavailable for this cafe.';
+
+  @override
+  String get d2Review => 'Review discount change';
+
+  @override
+  String get d2ConfirmReview => 'Confirm reviewed change';
+
+  @override
+  String get d2Before => 'Current totals';
+
+  @override
+  String get d2After => 'Proposed totals';
+
+  @override
+  String get d2Replacements =>
+      'The following list replaces all applied discounts.';
+
+  @override
+  String get d2Provisional =>
+      'Provisional: select a payment method for a final quote.';
+
+  @override
+  String get d2Recover => 'Check operation status';
+
+  @override
+  String get d2Uncertain =>
+      'The result is not confirmed. Keep this order open and check its status.';
+
+  @override
+  String get d2FreshReview =>
+      'The context changed. Preview again and confirm the new result.';
+
+  @override
+  String get d2Suppress => 'Suppress Automatic discount';
+
+  @override
+  String get d2Undo => 'Undo suppression';
+
+  @override
+  String get d2Reason => 'Required suppression reason';
+
+  @override
+  String get d2Suppressed => 'Saved suppressions';
+
+  @override
+  String get d2Quote => 'Payment quote';
+
+  @override
+  String get d2QuoteConfirm => 'Confirm quoted payment';
+
+  @override
+  String get d2QuoteChanged =>
+      'Payment totals changed. Review the fresh quote and confirm again.';
+
+  @override
+  String get d2ChooseTender => 'Select payment method';
+
+  @override
+  String get d2ZeroBalance => 'Zero balance without tender';
+
+  @override
+  String get d2Generic =>
+      'The operation could not be completed. Refresh and try again.';
+
+  @override
+  String get d2Configuration =>
+      'Complete the required financial configuration before payment.';
+
+  @override
+  String get d2Stock =>
+      'There is not enough stock to settle this cart. Review the items and quantities.';
+
+  @override
+  String get d2Validation =>
+      'Review the payment details and obtain a fresh quote.';
+
+  @override
+  String get d2UpdateRequired =>
+      'Update this app before reviewing or paying this order.';
+
+  @override
+  String get d2OptionalReason => 'Reason (optional)';
+
+  @override
+  String get d2Forbidden =>
+      'You are not authorized for this discount operation.';
+
+  @override
+  String get d2Eligibility =>
+      'This discount is no longer eligible. Review or remove your explicit selection.';
+
+  @override
+  String get d2Lifecycle =>
+      'The order is not available for this operation. Refresh its state.';
+
+  @override
+  String get d2Sync =>
+      'Wait for the cart to synchronize before review or payment.';
+
+  @override
+  String get d2SourceAutomatic => 'Automatic';
+
+  @override
+  String get d2SourceCode => 'Code';
+
+  @override
+  String get d2SourceManual => 'Configured Manual';
+
+  @override
+  String get d2SourceAdHoc => 'Ad-hoc';
 }

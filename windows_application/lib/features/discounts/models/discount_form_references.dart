@@ -10,11 +10,19 @@ class DiscountFormReference {
     required this.name,
     required this.isActive,
     this.subtitle,
+    this.archivedAt,
+    this.nameAr,
+    this.nameEn,
   });
 
   final int id;
   final String name;
   final bool isActive;
+  final String? archivedAt;
+  final String? nameAr;
+  final String? nameEn;
+  bool get isAvailable => isActive && archivedAt == null;
+  String label(bool arabic) => (arabic ? nameAr : nameEn) ?? name;
 
   /// Secondary identifying information, such as a customer's phone number.
   final String? subtitle;
@@ -25,6 +33,9 @@ class DiscountFormReference {
         name: readString(json['name']),
         isActive: readBool(json['isActive'], fallback: true),
         subtitle: _nullable(json['subtitle']),
+        archivedAt: _nullable(json['archivedAt']),
+        nameAr: _nullable(json['nameAr']),
+        nameEn: _nullable(json['nameEn']),
       );
 
   static String? _nullable(dynamic value) {
@@ -35,6 +46,7 @@ class DiscountFormReference {
 
 class DiscountFormReferences {
   const DiscountFormReferences({
+    this.failures = const <String, String>{},
     this.products = const <DiscountFormReference>[],
     this.categories = const <DiscountFormReference>[],
     this.customerGroups = const <DiscountFormReference>[],
@@ -42,6 +54,7 @@ class DiscountFormReferences {
     this.paymentMethods = const <DiscountFormReference>[],
   });
 
+  final Map<String, String> failures;
   final List<DiscountFormReference> products;
   final List<DiscountFormReference> categories;
   final List<DiscountFormReference> customerGroups;

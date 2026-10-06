@@ -1,3 +1,4 @@
+import '../../pos/models/discount_engine.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -260,7 +261,8 @@ class OrdersRepository {
       amount: readDouble(json['amount'], fallback: request.amount),
       reason: readString(json['reason'], fallback: request.reason),
       managerNotes: request.managerNotes,
-      refundedAt: parseBackendDateTime(readString(json['refundedAt'])) ??
+      refundedAt:
+          parseBackendDateTime(readString(json['refundedAt'])) ??
           DateTime.now(),
     );
   }
@@ -345,6 +347,10 @@ class OrdersRepository {
     );
 
     return OrderDetail(
+      discounts: engineList(
+        json['discounts'],
+      ).map(SavedDiscount.fromJson).toList(),
+      discountTotal: _totalFromJson(json, 'discountTotal'),
       id: backendId.toString(),
       displayNumber:
           '#${readString(json['orderNumber'], fallback: backendId.toString())}',

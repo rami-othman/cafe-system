@@ -244,7 +244,9 @@ class JournalEntryService
         // PostgreSQL rejects FOR UPDATE on aggregate queries.  Locking the
         // tenant row serializes per-tenant numbering while retaining the
         // existing deterministic daily sequence across all supported DBs.
-        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        // Serialize numbering without conflicting with FK key-share locks
+        // held by unrelated orders/settings/audits for this tenant.
+        DB::table('tenants')->where('id', $tenantId)->lock('FOR NO KEY UPDATE')->first();
         $count = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('entry_date', $date)->count() + 1;
 
         return $prefix.str_pad((string) $count, 4, '0', STR_PAD_LEFT);

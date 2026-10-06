@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\DataScope;
+use App\Support\FactoryCurrency;
 use App\Support\FinancialActor;
 use App\Support\IdempotencyFingerprint;
 use App\Support\Money;
@@ -28,15 +30,18 @@ final class FinanceDocumentService
         $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
         if ($key && ($existing = $this->byKey($tenantId, $key))) {
             $this->assertFingerprint($existing, $fingerprint);
+
             return $existing;
         }
-        $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'voucher');
+        $data = FactoryCurrency::normalize($tenantId, $data, 'voucher');
         $mode = $this->cashSources->mode($tenantId, (int) $actorId);
         $selected = isset($data['financialLocationId'])
             ? DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $data['financialLocationId'])->first()
             : null;
         if ($mode === 'shift' || $selected?->kind === 'cash') {
-            if (empty($data['branchId'])) throw ValidationException::withMessages(['branchId' => 'A branch is required for a cash voucher.']);
+            if (empty($data['branchId'])) {
+                throw ValidationException::withMessages(['branchId' => 'A branch is required for a cash voucher.']);
+            }
             $source = $this->cashSources->resolve($tenantId, (int) $actorId, (int) $data['branchId'], $data['financialLocationId'] ?? null);
             $data['financialLocationId'] = (int) $source->location->id;
             $data['shiftId'] = $source->shift?->id;
@@ -50,10 +55,10 @@ final class FinanceDocumentService
                 return $existing;
             }
             $now = now();
-            $id = (int) DB::table('finance_documents')->insertGetId(\App\Support\FactoryCurrency::columns($data) + [
+            $id = (int) DB::table('finance_documents')->insertGetId(FactoryCurrency::columns($data) + [
                 'tenant_id' => $tenantId,
                 'branch_id' => $data['branchId'] ?? null,
-                'document_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId, $data['documentType'], $data['documentDate'])),
+                'document_number' => DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId, $data['documentType'], $data['documentDate'])),
                 'document_type' => $data['documentType'],
                 'status' => 'draft',
                 'document_date' => $data['documentDate'],
@@ -182,11 +187,14 @@ final class FinanceDocumentService
             }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
             if ($document->shift_id) {
+                app(ShiftLockService::class)->lockLocation($tenantId, (int) $document->shift_id);
                 $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
                     ->where('branch_id', $document->branch_id)->where('user_id', $actorId)
                     ->where('financial_location_id', $document->financial_location_id)
                     ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
-                if (! $shift) throw ValidationException::withMessages(['shift' => 'Open the original drawer shift before posting this voucher.']);
+                if (! $shift) {
+                    throw ValidationException::withMessages(['shift' => 'Open the original drawer shift before posting this voucher.']);
+                }
             } elseif ($document->financial_location_id && DB::table('shifts')
                 ->where('tenant_id', $tenantId)->where('financial_location_id', $document->financial_location_id)
                 ->where('status', 'open')->whereNull('deleted_at')->exists()) {
@@ -209,7 +217,9 @@ final class FinanceDocumentService
                 ])->all(),
             ], $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'posted', 'journal_entry_id' => $journalId, 'posted_by' => $actorId, 'posted_at' => now(), 'updated_at' => now()]);
-            if ($document->shift_id) $this->recordShiftMovement($tenantId, $document, $actorId, false);
+            if ($document->shift_id) {
+                $this->recordShiftMovement($tenantId, $document, $actorId, false);
+            }
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.posted', 'finance_document', $id, [], ['number' => $result->document_number, 'journalEntryId' => $journalId], $result->branch_id, $actorId);
 
@@ -230,16 +240,21 @@ final class FinanceDocumentService
             }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
             if ($document->shift_id) {
+                app(ShiftLockService::class)->lockLocation($tenantId, (int) $document->shift_id);
                 $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
                     ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
-                if (! $shift) throw ValidationException::withMessages(['shift' => 'A voucher assigned to a closed shift requires an approved correction procedure.']);
+                if (! $shift) {
+                    throw ValidationException::withMessages(['shift' => 'A voucher assigned to a closed shift requires an approved correction procedure.']);
+                }
             }
             $reversal = $this->entries->reverse($request, $tenantId, (int) $document->journal_entry_id, $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update([
                 'status' => 'reversed', 'reversal_journal_entry_id' => $reversal,
                 'reversed_at' => now(), 'reversed_by' => $actorId, 'reversal_reason' => $reason, 'updated_at' => now(),
             ]);
-            if ($document->shift_id) $this->recordShiftMovement($tenantId, $document, $actorId, true);
+            if ($document->shift_id) {
+                $this->recordShiftMovement($tenantId, $document, $actorId, true);
+            }
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.reversed', 'finance_document', $id, [], ['number' => $result->document_number, 'reversalJournalEntryId' => $reversal, 'reason' => $reason], $result->branch_id, $actorId);
 
@@ -295,7 +310,9 @@ final class FinanceDocumentService
 
     private function validatePayload(int $tenantId, array $data, ?int $actorId): void
     {
-        if (empty($data['financialLocationId'])) throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
+        if (empty($data['financialLocationId'])) {
+            throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
+        }
         $amount = Money::cents($data['amount'], 'amount');
         if ($amount <= 0) {
             throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
@@ -331,7 +348,7 @@ final class FinanceDocumentService
     private function nextNumber(int $tenantId, string $type, string $date): string
     {
         $prefix = $type === 'receipt' ? 'RV' : 'PV';
-        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        DB::table('tenants')->where('id', $tenantId)->lock('FOR NO KEY UPDATE')->first();
         $count = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('document_type', $type)->whereYear('document_date', substr($date, 0, 4))->count() + 1;
 
         return $prefix.'-'.substr($date, 0, 4).'-'.str_pad((string) $count, 6, '0', STR_PAD_LEFT);

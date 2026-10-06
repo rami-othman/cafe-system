@@ -255,7 +255,7 @@ DiscountListItem _searchItem(
   estimatedSavedValue: 0,
 );
 
-class _Repository implements DiscountsRepository {
+class _Repository extends DiscountsRepository {
   @override
   Future<DiscountFormReferences> getFormReferences() async =>
       const DiscountFormReferences();

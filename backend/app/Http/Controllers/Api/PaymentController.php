@@ -7,10 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Services\AccountingPostingService;
 use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
+use App\Services\DiscountEngineProtocol;
+use App\Services\DiscountResolutionService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
-use App\Services\PosPricingService;
 use App\Services\PosCashLocationResolver;
+use App\Services\PosPricingService;
 use App\Services\SaleConsumptionService;
 use App\Services\ShiftLockService;
 use App\Support\BranchLocalDate;
@@ -103,6 +105,10 @@ class PaymentController extends Controller
             'amountReceived' => $received,
             'changeDue' => round(max(0, $received - $total), 2),
             'methods' => $methods, 'quickAmounts' => $this->quickAmounts($total),
+            'paymentMethods' => DB::table('payment_methods as pm')->join('financial_accounts as a', 'a.id', '=', 'pm.financial_account_id')->where('pm.tenant_id', $tenantId)->where('a.tenant_id', $tenantId)->where('pm.is_active', true)->where('a.is_active', true)->whereNull('a.deleted_at')->whereIn('pm.type', ['cash', 'card'])->orderBy('pm.sort_order')->orderBy('pm.id')->get(['pm.id', 'pm.name', 'pm.type'])->map(fn ($m) => ['id' => (int) $m->id, 'name' => $m->name, 'type' => $m->type])->all(),
+            'discounts' => app(DiscountEngineProtocol::class)->state($tenantId, $row)['discounts'],
+            'discountContractVersion' => 2,
+            'discountCapabilities' => app(DiscountEngineProtocol::class)->capabilities($tenantId, $request),
         ]]);
     }
 
@@ -117,6 +123,7 @@ class PaymentController extends Controller
             'amount' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string'], 'note' => ['nullable', 'string'],
             'idempotencyKey' => ['required', 'string', 'max:120'],
+            'quoteId' => ['nullable', 'uuid'],
         ]);
         $tenantId = TenantContext::id($request);
         $hash = $this->payloadHash($data);
@@ -126,6 +133,9 @@ class PaymentController extends Controller
         $closureEndedAt = null;
         $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId, &$closureEndedAt): array {
             $row = $this->performance->measure('order locking', fn () => $this->lockedOrder($request, $tenantId, $order));
+            // The key is tenant-wide, including concurrent requests targeting
+            // different orders. Serialize it before the completed replay read.
+            DB::select('select pg_advisory_xact_lock(hashtextextended(?, 20405))', [$tenantId.':payment:'.$data['idempotencyKey']]);
             $existing = DB::table('payments')->where('tenant_id', $tenantId)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {
@@ -137,37 +147,52 @@ class PaymentController extends Controller
             }
 
             $this->lifecycle->assertPayable($row);
+            $protocol = app(DiscountEngineProtocol::class);
+            $protocol->compatible($request, $tenantId, (int) $row->id);
             $this->performance->measure('shift validation', fn () => $this->assertActorHasOpenShift($tenantId, $row, $actorId));
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
+            app(DiscountResolutionService::class)->lock($tenantId);
+            // Never retain warehouse FK KEY SHARE while waiting for the
+            // engine gate: an already-bound payment needs warehouse UPDATE.
             $row = $this->consumption->bindLegacyOrderWarehouse($tenantId, $row);
-            // Apply-time deliberately defers tender validation. Payment is the
-            // authoritative second stage, including revalidation after a
-            // manager changes a policy or its schedule expires.
-            if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
-                $row = $this->pricing->recalculateOrder($tenantId, $row->id, true);
-            }
-            $zeroBalance = Money::cents($row->total) === 0;
-            $resolvedMethod = null;
-            if (! $zeroBalance) {
-                // A configured payment method is authoritative for both
-                // Discount eligibility and Finance posting. The legacy method
-                // remains a compatibility selector only when no ID is sent.
-                if (($data['method'] ?? null) === null) {
-                    throw ValidationException::withMessages(['method' => 'A payment method is required when an amount is due.']);
-                }
-                $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
-                    ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
-                    : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
-                if ($resolvedMethod === null) {
-                    throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
-                }
-                if ($resolvedMethod->type !== $data['method']) {
-                    throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
-                }
+            $protocol->compatible($request, $tenantId, (int) $row->id);
+            $quoteRequired = $request->header('X-Discount-Contract') === '2' || app(DiscountResolutionService::class)->active($tenantId, (int) $row->id);
+            if ($quoteRequired) {
+                $confirmed = $protocol->confirmQuote($tenantId, $row, $data);
+                app(DiscountResolutionService::class)->persist($tenantId, $row, $confirmed['resolution']);
+                $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $row->id)->first();
+                $resolvedMethod = $confirmed['method'];
+                $zeroBalance = Money::cents($row->total) === 0;
+            } else {
+                // Apply-time deliberately defers tender validation. Payment is the
+                // authoritative second stage, including revalidation after a
+                // manager changes a policy or its schedule expires.
                 if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
-                    $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
+                    $row = $this->pricing->recalculateOrder($tenantId, $row->id, true);
+                }
+                $zeroBalance = Money::cents($row->total) === 0;
+                $resolvedMethod = null;
+                if (! $zeroBalance) {
+                    // A configured payment method is authoritative for both
+                    // Discount eligibility and Finance posting. The legacy method
+                    // remains a compatibility selector only when no ID is sent.
+                    if (($data['method'] ?? null) === null) {
+                        throw ValidationException::withMessages(['method' => 'A payment method is required when an amount is due.']);
+                    }
+                    $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
+                        ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
+                        : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+                    if ($resolvedMethod === null) {
+                        throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
+                    }
+                    if ($resolvedMethod->type !== $data['method']) {
+                        throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
+                    }
+                    if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
+                        $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
+                    }
                 }
             }
             if ((float) $data['amount'] < (float) $row->total) {
@@ -195,7 +220,7 @@ class PaymentController extends Controller
             $this->performance->stop('payment persistence', $persistenceStarted);
 
             $consumption = $this->consumption->consumeForOrder($request, $tenantId, $row, $paymentId, $actorId);
-            $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
+            $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $zeroBalance ? null : $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
 
             $answer = ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
             $closureEndedAt = microtime(true);
@@ -250,7 +275,9 @@ class PaymentController extends Controller
             ]);
         }
         try {
-            $this->shiftLocks->sharedOpenShift($tenantId, (int) $order->shift_id, (int) $order->branch_id, $actorId);
+            // Exclusive from the start: cash posting must never upgrade a
+            // shared shift while another payment waits on a policy/settings.
+            $this->shiftLocks->exclusiveOpenShift($tenantId, (int) $order->shift_id, (int) $order->branch_id, $actorId);
         } catch (ValidationException) {
             throw ValidationException::withMessages([
                 'shiftId' => 'No open shift found. Open a shift before paying.',
@@ -260,11 +287,17 @@ class PaymentController extends Controller
 
     private function payloadHash(array $data): string
     {
-        return hash('sha256', json_encode([
+        $payload = [
             'method' => $data['method'] ?? null, 'amount' => (string) $data['amount'],
             'paymentMethodId' => $data['paymentMethodId'] ?? null,
             'reference' => $data['reference'] ?? null, 'note' => $data['note'] ?? null,
-        ], JSON_THROW_ON_ERROR));
+        ];
+        // Preserve hashes of completed legacy payments byte-for-byte.
+        if (($data['quoteId'] ?? null) !== null) {
+            $payload['quoteId'] = $data['quoteId'];
+        }
+
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
     private function postSale(Request $request, int $tenantId, object $order, ?object $method, int $cogsCents, int $actorId): void

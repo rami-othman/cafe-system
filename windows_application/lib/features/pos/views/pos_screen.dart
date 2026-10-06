@@ -45,7 +45,13 @@ class _PosScreenState extends State<PosScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncMenuWhenReady());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final cubit = context.read<PosCubit>();
+      _syncMenuWhenReady();
+      await cubit.refreshDiscountCapabilities();
+      if (mounted) await cubit.refreshSavedDiscountState();
+    });
   }
 
   void _syncMenuWhenReady() {

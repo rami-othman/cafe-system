@@ -18,9 +18,90 @@ import 'package:windows_application/features/discounts/models/discount_form_refe
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
+import 'package:windows_application/features/pos/models/discount_engine.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
 void main() {
+  testWidgets(
+    'isolated Automatic conversion preserves full detail and clears Code explicitly',
+    (tester) async {
+      final r = _DiscountsRepository(detail: _detail);
+      await _pumpScreen(
+        tester,
+        const Size(1280, 1200),
+        repository: r,
+        initialDiscount: _editRow,
+        capabilities: const DiscountCapabilities(
+          contractVersion: 2,
+          engineReady: false,
+          automaticPolicyCreationAvailable: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('discount-application-mode-field')),
+      );
+      await tester.tap(
+        find.byKey(const Key('discount-application-mode-field')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Automatic').last);
+      await tester.pumpAndSettle();
+      final priority = find.descendant(
+        of: find.byKey(const Key('discount-priority-field')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(priority, '777');
+      await tester.pump();
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      final expected = _detail.toUpsertRequest().toJson()
+        ..['applicationMode'] = 'automatic'
+        ..['code'] = null
+        ..['priority'] = 777;
+      expect(r.lastUpdateRequest!.toJson(), expected);
+      expect(tester.takeException(), null);
+    },
+  );
+  testWidgets(
+    'public Automatic is unavailable and priority must be an integer in range',
+    (tester) async {
+      final r = _DiscountsRepository();
+      await _pumpScreen(tester, const Size(1280, 1200), repository: r);
+      await tester.pumpAndSettle();
+      final mode = tester.widget<DropdownButton<String>>(
+        find.descendant(
+          of: find.byKey(const Key('discount-application-mode-field')),
+          matching: find.byType(DropdownButton<String>),
+        ),
+      );
+      expect(mode.items!.map((i) => i.value), isNot(contains('automatic')));
+      _fillRequiredFields(tester, name: 'Priority rule', value: '10');
+      final field = find.descendant(
+        of: find.byKey(const Key('discount-priority-field')),
+        matching: find.byType(TextField),
+      );
+      for (final value in ['1001', '-1', '2.5']) {
+        await tester.enterText(field, value);
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Save as Draft'));
+        await tester.tap(find.text('Save as Draft'));
+        await tester.pumpAndSettle();
+        expect(r.createCalls, 0);
+      }
+      await tester.enterText(field, '1000');
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Save as Draft'));
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      expect(r.lastCreateRequest!.priority, 1000);
+      expect(r.createCalls, 1);
+    },
+  );
   setUp(() async {
     await serviceLocator.reset();
     setupServiceLocator(useBackend: false);
@@ -29,6 +110,81 @@ void main() {
   tearDown(() {
     appRouter.go(AppRoutes.pos);
   });
+
+  testWidgets(
+    'variant edit hydrates full detail and submits preserved fields',
+    (tester) async {
+      final detail = DiscountDetail.fromJson({
+        'id': 81,
+        'name': 'Variant policy',
+        'applicationMode': 'code',
+        'code': 'KEEP',
+        'description': 'Keep description',
+        'conditions': 'Keep conditions',
+        'type': 'fixed',
+        'scope': 'product',
+        'value': 0,
+        'fixedAmountBasis': 'per_unit',
+        'isActive': true,
+        'appliesToAllBranches': false,
+        'branchIds': [41],
+        'targetProductIds': [11],
+        'customerEligibilityMode': 'selected_groups',
+        'customerGroupIds': [41],
+        'paymentMethodIds': [61],
+        'channelKeys': ['pos'],
+        'usageLimit': 10,
+        'usageLimitPerCustomer': 2,
+        'perCustomerDailyUsageLimit': 1,
+        'startsAt': '2026-10-01T00:00:00Z',
+        'endsAt': null,
+        'startDate': '2026-10-01',
+        'endDate': '2026-10-31',
+        'startTime': '22:00:00',
+        'endTime': '02:00:00',
+        'activeDays': ['Mon'],
+        'minimumOrderAmount': 0,
+        'maximumDiscountAmount': null,
+        'productVariantSelections': [
+          {
+            'productId': 11,
+            'variantMode': 'selected',
+            'variantIds': [101],
+            'product': {
+              'id': 11,
+              'name': 'Saved coffee',
+              'isActive': true,
+              'archivedAt': null,
+            },
+            'variants': [
+              {
+                'id': 101,
+                'name': 'Saved large',
+                'isActive': true,
+                'archivedAt': null,
+              },
+            ],
+          },
+        ],
+      });
+      final repository = _DiscountsRepository(detail: detail);
+      await _pumpScreen(
+        tester,
+        const Size(1280, 900),
+        repository: repository,
+        initialDiscount: _editRow,
+      );
+      expect(repository.detailRequests, 1);
+      expect(find.text('Saved coffee'), findsOneWidget);
+      expect(find.text('Saved large'), findsOneWidget);
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      final json = repository.lastUpdateRequest!.toJson();
+      final expected = detail.toUpsertRequest().toJson();
+      expect(json, expected);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('/discounts/create opens and keeps Discounts active', (
     WidgetTester tester,
@@ -76,7 +232,6 @@ void main() {
       'Discount Rules',
       'Stacking Rules',
       'Reports & Audit',
-      'Automatic',
       'BOGO',
       'Manager PIN required',
     ]) {
@@ -86,6 +241,13 @@ void main() {
     expect(find.text('Discard Changes'), findsOneWidget);
     expect(find.text('Save as Draft'), findsOneWidget);
     expect(find.text('Activate Discount'), findsOneWidget);
+    final mode = tester.widget<DropdownButton<String>>(
+      find.descendant(
+        of: find.byKey(const Key('discount-application-mode-field')),
+        matching: find.byType(DropdownButton<String>),
+      ),
+    );
+    expect(mode.items!.map((item) => item.value), isNot(contains('automatic')));
     expect(tester.takeException(), isNull);
   });
 
@@ -95,6 +257,8 @@ void main() {
     await _pumpScreen(tester, const Size(1280, 900));
 
     expect(find.byKey(const Key('discount-value-field')), findsOneWidget);
+    await tester.ensureVisible(find.text('20%').first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('20%').first);
     await tester.pump();
     expect(
@@ -773,6 +937,74 @@ void main() {
     expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-0002');
   });
 
+  for (final language in ['en', 'ar']) {
+    testWidgets(
+      '$language product and variant errors use safe localized labels',
+      (tester) async {
+        final repository = _DiscountsRepository(
+          createFailure: const ApiException(
+            message: 'SECRET',
+            statusCode: 422,
+            validationErrors: {
+              'productVariantSelections.0.variantIds': ['SECRET'],
+              'targetProductIds': ['SECRET'],
+            },
+          ),
+        );
+        await _pumpScreen(
+          tester,
+          const Size(1280, 900),
+          repository: repository,
+          locale: Locale(language),
+        );
+        await _submitValidDraft(tester);
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(CreateDiscountPolicyScreen)),
+        );
+        expect(
+          find.textContaining(
+            l10n.discountServerFieldInvalid(l10n.discountSelectedVariants),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            l10n.discountServerFieldInvalid(l10n.discountSelectedProducts),
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('SECRET'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets(
+    'saving disables both submit actions and prevents a second request',
+    (tester) async {
+      final repository = _DiscountsRepository(stallCreates: true);
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      await tester.enterText(
+        find.byKey(const Key('discount-name-field')),
+        'Policy',
+      );
+      await tester.enterText(
+        find.byKey(const Key('discount-value-field')),
+        '10',
+      );
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pump();
+      expect(repository.createCalls, 1);
+      final saveButton = tester.widget<OutlinedButton>(
+        find.ancestor(
+          of: find.text('Save as Draft'),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      expect(saveButton.onPressed, isNull);
+      expect(repository.createCalls, 1);
+    },
+  );
+
   testWidgets('known backend field validation is safely localized in English', (
     WidgetTester tester,
   ) async {
@@ -1000,6 +1232,7 @@ Future<void> _pumpScreen(
   _DiscountsRepository? repository,
   DiscountListItem? initialDiscount,
   Locale locale = const Locale('en'),
+  DiscountCapabilities capabilities = const DiscountCapabilities(),
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -1016,8 +1249,10 @@ Future<void> _pumpScreen(
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: BlocProvider<DiscountsCubit>(
-          create: (_) =>
-              DiscountsCubit(repository: repository ?? _DiscountsRepository()),
+          create: (_) => DiscountsCubit(
+            repository: repository ?? _DiscountsRepository(),
+            capabilityLoader: () async => capabilities,
+          ),
           child: CreateDiscountPolicyScreen(initialDiscount: initialDiscount),
         ),
       ),
@@ -1036,7 +1271,7 @@ Future<void> _submitValidDraft(WidgetTester tester) async {
   await tester.pump();
 }
 
-class _DiscountsRepository implements DiscountsRepository {
+class _DiscountsRepository extends DiscountsRepository {
   _DiscountsRepository({
     this.stallCreates = false,
     this.couponFailuresRemaining = 0,
@@ -1045,8 +1280,10 @@ class _DiscountsRepository implements DiscountsRepository {
   });
 
   int detailRequests = 0;
+  int createCalls = 0;
   final bool stallCreates;
   DiscountUpsertRequest? lastCreateRequest;
+  DiscountUpsertRequest? lastUpdateRequest;
   int generateCouponCalls = 0;
   int couponFailuresRemaining;
   final DiscountDetail? detail;
@@ -1119,6 +1356,7 @@ class _DiscountsRepository implements DiscountsRepository {
 
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
+    createCalls++;
     lastCreateRequest = request;
     if (stallCreates) return Completer<DiscountListItem>().future;
     if (createFailure != null) throw createFailure!;
@@ -1136,7 +1374,10 @@ class _DiscountsRepository implements DiscountsRepository {
   Future<DiscountListItem> updateDiscount(
     String discountId,
     DiscountUpsertRequest request,
-  ) => throw UnimplementedError();
+  ) async {
+    lastUpdateRequest = request;
+    throw UnimplementedError();
+  }
 }
 
 const DiscountListItem _editRow = DiscountListItem(

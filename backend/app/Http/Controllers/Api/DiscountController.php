@@ -7,11 +7,17 @@ use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
+use App\Services\DiscountEngineProtocol;
+use App\Services\DiscountProductVariantService;
+use App\Services\DiscountResolutionService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
 use App\Support\TenantContext;
+use Brick\Math\BigDecimal;
+use Brick\Math\Exception\MathException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -88,7 +94,9 @@ class DiscountController extends Controller
         $data = $this->validatedManagementData($request, $tenantId);
         try {
             $id = DB::transaction(function () use ($tenantId, $data): int {
+                app(DiscountResolutionService::class)->lock($tenantId);
                 $id = (int) DB::table('discounts')->insertGetId($this->discountPayload($tenantId, $data));
+                $this->assertTenantTargets($tenantId, $data);
                 $this->syncTargets($tenantId, $id, $data);
 
                 return $id;
@@ -108,6 +116,13 @@ class DiscountController extends Controller
 
         try {
             DB::transaction(function () use ($tenantId, $discount, $data): void {
+                app(DiscountResolutionService::class)->lock($tenantId);
+                abort_unless(DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->whereNull('deleted_at')->lockForUpdate()->first(), 404);
+                if ($data['applicationMode'] === 'automatic' && ! array_key_exists('code', $data)
+                    && DB::table('discounts')->where('id', $discount)->value('code') !== null) {
+                    throw ValidationException::withMessages(['code' => 'Explicitly clear the coupon code when changing to Automatic.']);
+                }
+                $this->assertTenantTargets($tenantId, $data);
                 DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update($this->discountPayload($tenantId, $data, false));
                 $this->syncTargets($tenantId, $discount, $data);
             });
@@ -123,10 +138,13 @@ class DiscountController extends Controller
         $tenantId = TenantContext::id($request);
         $this->findManagedDiscount($tenantId, $discount);
         $data = $request->validate(['isActive' => ['required', 'boolean']]);
-        DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update([
-            'is_active' => $data['isActive'],
-            'updated_at' => now(),
-        ]);
+        DB::transaction(function () use ($tenantId, $discount, $data): void {
+            app(DiscountResolutionService::class)->lock($tenantId);
+            DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update([
+                'is_active' => $data['isActive'],
+                'updated_at' => now(),
+            ]);
+        });
 
         return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount))]);
     }
@@ -136,6 +154,8 @@ class DiscountController extends Controller
         $tenantId = TenantContext::id($request);
         $this->findManagedDiscount($tenantId, $discount);
         DB::transaction(function () use ($tenantId, $discount): void {
+            app(DiscountResolutionService::class)->lock($tenantId);
+            DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->lockForUpdate()->first();
             DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
             DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
             DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
@@ -179,6 +199,7 @@ class DiscountController extends Controller
     public function apply(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
         $data = $request->validate([
             'code' => ['nullable', 'string'],
             'discountId' => ['nullable', 'integer', Rule::exists('discounts', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'))],
@@ -191,10 +212,19 @@ class DiscountController extends Controller
         $discount = $this->findDiscount($tenantId, $data);
         $this->assertApplicationMode($discount, $data);
 
-        $amount = DB::transaction(function () use ($tenantId, $order, $discount, $data): float {
+        $amount = DB::transaction(function () use ($request, $tenantId, $order, $discount, $data): string {
             $orderRow = $this->lockedOrder($tenantId, $order);
+            app(DiscountResolutionService::class)->lock($tenantId);
+            app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
             $this->lifecycle->assertDiscountable($orderRow);
             $discount = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->whereNull('deleted_at')->lockForUpdate()->first();
+            if (! $discount) {
+                throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'The configured discount is no longer available.');
+            }
+            $this->assertApplicationMode($discount, $data);
+            if (! empty($data['code']) && strcasecmp((string) $discount->code, trim($data['code'])) !== 0) {
+                throw new OrderLifecycleException('DISCOUNT_CODE_REQUIRED', 'The discount code has changed.');
+            }
             $result = $this->eligibility->assertApplicable($tenantId, $discount, $orderRow);
             $amount = $result['amount'];
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
@@ -213,7 +243,7 @@ class DiscountController extends Controller
 
         return response()->json(['data' => [
             'orderId' => $order,
-            'discount' => ['id' => $discount->id, 'name' => $discount->name, 'type' => $discount->type, 'value' => (float) $discount->value, 'amount' => $amount],
+            'discount' => ['id' => $discount->id, 'name' => $discount->name, 'type' => $discount->type, 'value' => (float) $discount->value, 'amount' => (float) $amount],
             'totals' => ['subtotal' => (float) $updated->subtotal, 'discountTotal' => (float) $updated->discount_total, 'taxTotal' => (float) $updated->tax_total, 'total' => (float) $updated->total],
         ]]);
     }
@@ -221,8 +251,12 @@ class DiscountController extends Controller
     public function remove(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        DB::transaction(function () use ($tenantId, $order): void {
-            $this->lifecycle->assertDiscountable($this->lockedOrder($tenantId, $order));
+        app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
+        DB::transaction(function () use ($request, $tenantId, $order): void {
+            $orderRow = $this->lockedOrder($tenantId, $order);
+            app(DiscountResolutionService::class)->lock($tenantId);
+            app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
+            $this->lifecycle->assertDiscountable($orderRow);
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
         });
@@ -239,7 +273,8 @@ class DiscountController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
-            'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code'])],
+            'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code', 'automatic'])],
+            'priority' => ['sometimes', 'required', 'integer', 'between:0,1000'],
             'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category', 'bundle'])],
             'fixedAmountBasis' => ['nullable', Rule::in(['per_order', 'per_unit'])],
             'value' => ['required', 'numeric', 'min:0'], 'conditions' => ['nullable', 'string'],
@@ -258,6 +293,7 @@ class DiscountController extends Controller
             'customerIds' => ['nullable', 'array'], 'customerIds.*' => ['integer', 'distinct'],
             'paymentMethodIds' => ['nullable', 'array'], 'paymentMethodIds.*' => ['integer', 'distinct'],
             'isActive' => ['required', 'boolean'], 'targetProductIds' => ['nullable', 'array'], 'targetProductIds.*' => ['integer', 'distinct'],
+            'productVariantSelections' => ['sometimes', 'required', 'array'],
             'targetCategoryIds' => ['nullable', 'array'], 'targetCategoryIds.*' => ['integer', 'distinct'],
             'bundleRequirements' => ['nullable', 'array'],
             'bundleRequirements.*.productId' => ['required_with:bundleRequirements', 'integer', 'distinct'],
@@ -276,6 +312,19 @@ class DiscountController extends Controller
                 Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')),
             ],
         ]);
+        app(DiscountProductVariantService::class)->validate($tenantId, $data);
+        if ($data['applicationMode'] === 'automatic' && ! app(DiscountResolutionService::class)->isolatedAutomatic()) {
+            throw new HttpResponseException(response()->json(['message' => 'Automatic policies are unavailable until rollout gates pass.', 'code' => 'DISCOUNT_ENGINE_NOT_READY', 'errors' => ['applicationMode' => ['Automatic policies are unavailable until rollout gates pass.']]], 422));
+        }
+        foreach (['value', 'minimumOrderAmount', 'maximumDiscountAmount'] as $field) {
+            if (isset($data[$field])) {
+                try {
+                    $data[$field] = (string) BigDecimal::of((string) $data[$field])->toScale(2);
+                } catch (MathException $exception) {
+                    throw ValidationException::withMessages([$field => 'Use at most two decimal places.']);
+                }
+            }
+        }
         $data['customerEligibilityMode'] ??= ($data['customerEligibility'] ?? null) === 'All Customers' ? 'all' : 'all';
         if (($data['customerEligibility'] ?? null) !== null && $data['customerEligibility'] !== 'All Customers') {
             throw ValidationException::withMessages(['customerEligibility' => 'Legacy spending-heuristic eligibility is not supported by Discount V1. Use customerEligibilityMode and customerGroupIds.']);
@@ -286,10 +335,10 @@ class DiscountController extends Controller
         if ($data['applicationMode'] === 'code' && trim((string) ($data['code'] ?? '')) === '') {
             throw ValidationException::withMessages(['code' => 'A code is required for code-applied discounts.']);
         }
-        if ($data['applicationMode'] === 'manual' && filled($data['code'] ?? null)) {
+        if (in_array($data['applicationMode'], ['manual', 'automatic'], true) && filled($data['code'] ?? null)) {
             throw ValidationException::withMessages(['code' => 'Manual discounts cannot define a coupon code.']);
         }
-        if ($data['type'] === 'percentage' && (float) $data['value'] > 100) {
+        if ($data['type'] === 'percentage' && BigDecimal::of($data['value'])->isGreaterThan(100)) {
             throw ValidationException::withMessages(['value' => 'A percentage discount cannot exceed 100.']);
         }
         $data['fixedAmountBasis'] ??= 'per_order';
@@ -366,11 +415,16 @@ class DiscountController extends Controller
             'is_active' => $data['isActive'], 'updated_at' => now(),
         ];
 
+        if ($creating || array_key_exists('priority', $data)) {
+            $payload['priority'] = $data['priority'] ?? 0;
+        }
+
         return $creating ? ['tenant_id' => $tenantId, 'used_count' => 0, 'estimated_saved_value' => 0, 'created_at' => now()] + $payload : $payload;
     }
 
     private function assertTenantTargets(int $tenantId, array $data): void
     {
+        app(DiscountProductVariantService::class)->validate($tenantId, $data);
         foreach (['targetProductIds' => 'products', 'targetCategoryIds' => 'categories'] as $key => $table) {
             $ids = array_values(array_unique(array_map('intval', $data[$key] ?? [])));
             $query = DB::table($table)->where('tenant_id', $tenantId)->whereNull('deleted_at')->whereIn('id', $ids);
@@ -399,6 +453,8 @@ class DiscountController extends Controller
 
     private function syncTargets(int $tenantId, int $discountId, array $data): void
     {
+        $variants = app(DiscountProductVariantService::class);
+        $savedVariants = $variants->savedIds($tenantId, $discountId);
         DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
         DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
         DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
@@ -426,6 +482,7 @@ class DiscountController extends Controller
         if ($rows) {
             DB::table('discount_targets')->insert($rows);
         }
+        $variants->persist($tenantId, $discountId, $data, $savedVariants);
         foreach (array_unique(array_map('strval', $data['channelKeys'] ?? [])) as $channel) {
             DB::table('discount_channel_targets')->insert(['tenant_id' => $tenantId, 'discount_id' => $discountId, 'channel_key' => $channel, 'created_at' => $now, 'updated_at' => $now]);
         }
@@ -504,6 +561,16 @@ class DiscountController extends Controller
 
     private function serializeManagementDiscount(int $tenantId, object $discount): array
     {
+        return DB::transaction(function () use ($tenantId, $discount): array {
+            $current = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->sharedLock()->first();
+            abort_if(! $current || $current->deleted_at !== null, 404);
+
+            return $this->serializeLockedManagementDiscount($tenantId, $current);
+        });
+    }
+
+    private function serializeLockedManagementDiscount(int $tenantId, object $discount): array
+    {
         $targets = DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->get()->groupBy('target_type');
         $ids = fn (string $type) => ($targets[$type] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values()->all();
         $productIds = $ids('product');
@@ -518,7 +585,7 @@ class DiscountController extends Controller
 
         return [
             'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
-            'applicationMode' => $discount->application_mode, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
+            'applicationMode' => $discount->application_mode, 'priority' => (int) $discount->priority, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
             'fixedAmountBasis' => $discount->fixed_amount_basis,
             'conditions' => $discount->conditions, 'startDate' => $discount->start_date, 'endDate' => $discount->end_date,
             // Legacy timestamps remain readable but are not used by V1 edits.
@@ -535,6 +602,7 @@ class DiscountController extends Controller
             'legacyCustomerEligibility' => $discount->customer_eligibility === 'selected_groups' ? null : $discount->customer_eligibility,
             'legacyPaymentMethod' => $discount->payment_method,
             'isActive' => (bool) $discount->is_active, 'status' => $this->status($discount), 'displayPeriodPrimary' => $discount->display_period_primary, 'displayPeriodSecondary' => $discount->display_period_secondary,
+            'productVariantSelections' => app(DiscountProductVariantService::class)->detail($tenantId, $discount->id, $productIds),
             'targetProductIds' => $productIds, 'productTargets' => $this->targetDetails($tenantId, 'products', $productIds),
             'targetCategoryIds' => $categoryIds, 'categoryTargets' => $this->targetDetails($tenantId, 'categories', $categoryIds),
             'bundleRequirements' => $bundleRequirements,

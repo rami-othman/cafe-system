@@ -30,6 +30,7 @@ final class LegacyShiftCloseConfigurationAdoptionService
                 $report['blockers'][] = ['code' => $code, 'message' => $message];
             };
 
+            app(ShiftLockService::class)->lockLocation($tenantId, $shiftId);
             $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)->whereNull('deleted_at')->lockForUpdate()->first();
             if (! $shift) {
                 $block('SHIFT_NOT_FOUND', "Shift {$shiftId} does not exist for tenant {$tenantId}.");

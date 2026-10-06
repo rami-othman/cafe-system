@@ -9,6 +9,8 @@ import '../../pos/models/order_receipt.dart';
 import '../../pos/models/payment_method.dart';
 import '../../pos/models/payment_result.dart';
 import '../../pos/models/payment_summary.dart';
+import '../../pos/controllers/pos_cubit.dart';
+import '../../pos/repositories/pos_repository.dart';
 import '../models/order_detail.dart';
 import '../models/order_page.dart';
 import '../models/order_payment_summary.dart';
@@ -25,16 +27,70 @@ enum RefundCompletionStatus { completed, retryableFailure, uncertain }
 enum OrdersActionOutcome { confirmed, retryableFailure, uncertain, stale }
 
 class OrdersCubit extends Cubit<OrdersState> {
+  int _historyReceiptGeneration = 0;
+
+  /// Read a saved receipt without entering or retrying the payment lifecycle.
+  Future<OrderReceipt?> loadHistoryReceipt(String orderId) async {
+    final int? id = int.tryParse(orderId);
+    if (isClosed || id == null || state.selectedOrderDetail?.id != orderId) {
+      return null;
+    }
+    final int generation = ++_historyReceiptGeneration;
+    final int detailsVersion = _detailsRequestVersion;
+    try {
+      final receipt = await repository.getReceipt(id);
+      if (isClosed ||
+          generation != _historyReceiptGeneration ||
+          detailsVersion != _detailsRequestVersion ||
+          state.selectedOrderDetail?.id != orderId) {
+        return null;
+      }
+      return receipt;
+    } catch (_) {
+      return null;
+    }
+  }
+
   OrdersCubit({
     required this.repository,
+    this.operationalRepository,
     String Function(String operation)? operationKeyGenerator,
   }) : _operationKeyGenerator = operationKeyGenerator ?? _defaultOperationKey,
        super(const OrdersState());
 
   final OrdersRepository repository;
+  final PosRepository? operationalRepository;
+  PosCubit? _quotedPayment;
+
+  Future<PosCubit?> prepareQuotedPayment(int orderId) async {
+    if (isClosed || operationalRepository == null) return null;
+    final current = _quotedPayment;
+    if (current != null && current.state.uncertainPaymentOrderId != null) {
+      return current.state.uncertainPaymentOrderId == orderId ? current : null;
+    }
+    if (current?.state.isPaymentSubmitting == true) return null;
+    if (current != null && current.state.currentOrderId != orderId) {
+      await current.close();
+      _quotedPayment = null;
+    }
+    final payment = _quotedPayment ??= PosCubit(
+      repository: operationalRepository!,
+    );
+    return await payment.openOrderForPayment(orderId) && !isClosed
+        ? payment
+        : null;
+  }
+
+  @override
+  Future<void> close() async {
+    await _quotedPayment?.close();
+    return super.close();
+  }
+
   final String Function(String operation) _operationKeyGenerator;
   int _ordersRequestVersion = 0;
   int _detailsRequestVersion = 0;
+  int get detailsContextVersion => _detailsRequestVersion;
   String? _inFlightOrdersKey;
   int? _inFlightOrdersVersion;
   String? _pendingRefundFingerprint;
@@ -121,6 +177,10 @@ class OrdersCubit extends Cubit<OrdersState> {
       );
       if (_inFlightOrdersVersion == requestVersion) {
         _inFlightOrdersKey = requestKey;
+      }
+      if (state.selectedBranchId != null &&
+          state.selectedBranchId != selectedBranchId) {
+        closeOrderDetails();
       }
       emit(
         state.copyWith(
@@ -226,6 +286,7 @@ class OrdersCubit extends Cubit<OrdersState> {
     }
 
     _debugLog('Applying POS branch context $branchId');
+    closeOrderDetails();
     emit(
       state.copyWith(
         selectedBranchId: branchId,
@@ -594,7 +655,11 @@ class OrdersCubit extends Cubit<OrdersState> {
         backendId,
       );
       if (rejection != null) {
-        _emitPaymentFailure(rejection);
+        _emitPaymentFailure(
+          operationalRepository == null
+              ? rejection
+              : 'd2:${summary.blockerCode ?? 'ORDER_PAYMENT_NOT_ALLOWED'}',
+        );
         return null;
       }
 
@@ -611,11 +676,13 @@ class OrdersCubit extends Cubit<OrdersState> {
     } catch (error) {
       if (_isCurrentPaymentRequest(requestVersion, orderId)) {
         _emitPaymentFailure(
-          _messageFor(
-            error,
-            fallback:
-                'Could not prepare payment. Check order access and try again.',
-          ),
+          operationalRepository != null
+              ? 'd2:${error is ApiException ? error.code ?? 'D2_GENERIC' : 'D2_GENERIC'}'
+              : _messageFor(
+                  error,
+                  fallback:
+                      'Could not prepare payment. Check order access and try again.',
+                ),
         );
       }
       return null;
@@ -680,10 +747,12 @@ class OrdersCubit extends Cubit<OrdersState> {
       }
     } catch (error) {
       _emitPaymentFailure(
-        _messageFor(
-          error,
-          fallback: 'Could not prepare payment. Please try again.',
-        ),
+        operationalRepository != null
+            ? 'd2:${error is ApiException ? error.code ?? 'D2_GENERIC' : 'D2_GENERIC'}'
+            : _messageFor(
+                error,
+                fallback: 'Could not prepare payment. Please try again.',
+              ),
       );
       return OrdersPaymentStatus.retryableFailure;
     }
@@ -952,15 +1021,20 @@ class OrdersCubit extends Cubit<OrdersState> {
     if (summary.orderId != orderId) {
       return 'Payment summary did not match the selected order.';
     }
-    if (!summary.canPay || !lifecyclePayable || summary.amountDue <= 0) {
+    if (!summary.canPay ||
+        !lifecyclePayable ||
+        (summary.amountDue <= 0 &&
+            summary.discountCapabilities?.supportsPaymentQuote != true)) {
       return summary.blockedReason ??
           'This order cannot be paid in its current state.';
     }
-    final bool hasSupportedMethod = summary.methods.any((String method) {
-      return method.toLowerCase() == 'cash' ||
-          method.toLowerCase() == 'card' ||
-          method.toLowerCase() == 'wallet';
-    });
+    final bool hasSupportedMethod =
+        summary.discountCapabilities?.supportsPaymentQuote == true ||
+        summary.methods.any((String method) {
+          return method.toLowerCase() == 'cash' ||
+              method.toLowerCase() == 'card' ||
+              method.toLowerCase() == 'wallet';
+        });
     if (!hasSupportedMethod) {
       return 'No supported payment method is available for this order.';
     }
@@ -1632,7 +1706,8 @@ class OrdersCubit extends Cubit<OrdersState> {
         _isCurrentOrdersActionContext(contextKey);
     if (canUpdateActionState) {
       final bool closesSelectedDetail =
-          _detailsOrderId == orderId || state.selectedOrderDetail?.id == orderId;
+          _detailsOrderId == orderId ||
+          state.selectedOrderDetail?.id == orderId;
       if (closesSelectedDetail) {
         _detailsRequestVersion++;
         _detailsOrderId = null;

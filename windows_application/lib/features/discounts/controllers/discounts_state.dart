@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../pos/models/discount_engine.dart';
 
 import '../models/discount_list_item.dart';
 import '../models/discount_form_references.dart';
@@ -21,6 +22,7 @@ class DiscountsState extends Equatable {
     this.formReferences = const DiscountFormReferences(),
     this.isLoadingFormReferences = false,
     this.formReferencesErrorMessage,
+    this.capabilities = const DiscountCapabilities(),
   });
 
   final List<DiscountListItem> discounts;
@@ -38,6 +40,7 @@ class DiscountsState extends Equatable {
   final DiscountFormReferences formReferences;
   final bool isLoadingFormReferences;
   final String? formReferencesErrorMessage;
+  final DiscountCapabilities capabilities;
 
   DiscountsState copyWith({
     List<DiscountListItem>? discounts,
@@ -61,7 +64,9 @@ class DiscountsState extends Equatable {
     bool? isLoadingFormReferences,
     String? formReferencesErrorMessage,
     bool clearFormReferencesError = false,
+    DiscountCapabilities? capabilities,
   }) => DiscountsState(
+    capabilities: capabilities ?? this.capabilities,
     discounts: discounts ?? this.discounts,
     actualSavedValueThisMonth: clearActualSavedValueThisMonth
         ? null
@@ -92,6 +97,7 @@ class DiscountsState extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+    capabilities,
     discounts,
     actualSavedValueThisMonth,
     searchQuery,

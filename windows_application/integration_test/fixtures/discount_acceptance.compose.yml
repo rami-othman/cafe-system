@@ -1,0 +1,53 @@
+name: cafe-discount-acceptance-20261003
+services:
+  accept-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cafe_discount_acceptance_testing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: acceptance-only
+    volumes:
+      - accept-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres -d cafe_discount_acceptance_testing]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+  accept-backend:
+    image: cafe_backend-backend
+    working_dir: /var/www/html
+    command: php -d opcache.enable_cli=0 artisan serve --host=0.0.0.0 --port=8000 --no-reload
+    environment:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: pgsql
+      DB_HOST: accept-postgres
+      DB_PORT: 5432
+      DB_DATABASE: cafe_discount_acceptance_testing
+      DB_USERNAME: postgres
+      DB_PASSWORD: acceptance-only
+      DB_URL: ''
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      CORS_ALLOWED_ORIGINS: http://localhost:18000
+      SUPER_ADMIN_WEB_URL: http://localhost:18001
+    volumes:
+      - ../../../backend:/var/www/html:ro
+      - accept-storage:/var/www/html/storage
+      - accept-cache:/var/www/html/bootstrap/cache
+      - vendor:/var/www/html/vendor:ro
+      - .:/acceptance:ro
+    ports:
+      - '127.0.0.1:18100:8000'
+    depends_on:
+      accept-postgres:
+        condition: service_healthy
+volumes:
+  accept-data:
+  accept-storage:
+  accept-cache:
+  vendor:
+    external: true
+    name: cafe_backend_backend_vendor

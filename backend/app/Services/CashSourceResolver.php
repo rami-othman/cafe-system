@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\DataScope;
 use App\Support\FinancialActor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,20 +17,25 @@ final class CashSourceResolver
     {
         $actor = User::query()->with('tenantRole')->where('tenant_id', $tenantId)->where('id', $actorId)
             ->where('is_active', true)->firstOrFail();
+
         return $this->roles->canonicalLegacyRole($actor->effectiveRoleCode()) === 'cashier' ? 'shift' : 'selectable';
     }
 
     public function allowedLocations(int $tenantId, int $actorId, int $branchId): array
     {
         FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
-        if ($this->mode($tenantId, $actorId) === 'shift') return [];
+        if ($this->mode($tenantId, $actorId) === 'shift') {
+            return [];
+        }
+
         return DB::table('financial_locations as l')->join('financial_accounts as a', function ($join) use ($tenantId): void {
             $join->on('a.id', '=', 'l.financial_account_id')->where('a.tenant_id', '=', $tenantId);
         })->where('l.tenant_id', $tenantId)->where('l.kind', 'cash')->where('l.is_active', true)
             ->where('a.is_active', true)->whereNull('a.deleted_at')
             ->where(function ($q) use ($branchId, $tenantId): void {
-                if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) {
+                if (DataScope::forBranch($tenantId, $branchId) !== null) {
                     $q->where('l.branch_id', $branchId);
+
                     return;
                 }
                 $q->where('l.branch_id', $branchId)
@@ -53,19 +59,25 @@ final class CashSourceResolver
             $query = DB::table('shifts')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
                 ->where('user_id', $actorId)->where('status', 'open')->whereNull('deleted_at')
                 ->orderByDesc('opened_at');
-            if ($lock) $query->lockForUpdate();
+            if ($lock) {
+                $candidate = (clone $query)->first();
+                if ($candidate) {
+                    app(ShiftLockService::class)->lockLocation($tenantId, (int) $candidate->id);
+                }
+                $query->lockForUpdate();
+            }
             $shift = $query->first();
             if (! $shift || ! $shift->financial_location_id) {
                 throw ValidationException::withMessages(['shift' => 'يجب فتح وردية بصندوق صالح قبل الحركة النقدية.']);
             }
             $selectedLocationId = (int) $shift->financial_location_id;
         } elseif ($selectedLocationId === null) {
-            if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) {
+            if (DataScope::forBranch($tenantId, $branchId) !== null) {
                 $selectedLocationId = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('pos_cash_financial_location_id');
                 $selectedLocationId = $selectedLocationId ? (int) $selectedLocationId : null;
             }
             if ($selectedLocationId === null) {
-            throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
+                throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
             }
         }
 
@@ -75,7 +87,9 @@ final class CashSourceResolver
             ->where('l.kind', 'cash')->where('l.is_active', true)
             ->where('a.is_active', true)->whereNull('a.deleted_at')
             ->select('l.*', 'a.code as account_code');
-        if ($lock) $query->lockForUpdate();
+        if ($lock) {
+            $query->lockForUpdate();
+        }
         $location = $query->first();
         if (! $location || ($mode === 'shift' && ((int) $location->branch_id !== $branchId || $location->type !== 'cash_drawer'))
             || ($mode === 'selectable' && ! collect($this->allowedLocations($tenantId, $actorId, $branchId))->contains('id', (int) $location->id))) {
@@ -86,12 +100,16 @@ final class CashSourceResolver
                 ->where('status', 'open')->whereNull('deleted_at')->exists()) {
             throw ValidationException::withMessages(['financialLocationId' => 'هذا الصندوق مرتبط بوردية مفتوحة. استخدم حركة نقدية معتمدة مرتبطة بالوردية.']);
         }
+
         return (object) ['location' => $location, 'shift' => $shift, 'mode' => $mode];
     }
 
     public function forPaymentMethod(int $tenantId, int $actorId, int $branchId, object $method, ?int $selectedLocationId, bool $lock = false): ?object
     {
-        if ($method->type !== 'cash') return null;
+        if ($method->type !== 'cash') {
+            return null;
+        }
+
         return $this->resolve($tenantId, $actorId, $branchId, $selectedLocationId, $lock);
     }
 }

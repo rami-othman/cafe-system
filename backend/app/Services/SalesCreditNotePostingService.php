@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\BackdatePolicy;
 use App\Support\IdempotencyFingerprint;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
@@ -113,7 +114,7 @@ final class SalesCreditNotePostingService
             if ($note->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only a draft credit note can be posted.']);
             }
-            \App\Support\BackdatePolicy::reason($note->branch_id, $note->credit_date, $note->backdate_reason);
+            BackdatePolicy::reason($note->branch_id, $note->credit_date, $note->backdate_reason);
 
             $plan = $this->computePlan($tenantId, $creditNoteId, lock: true);
             $accounts = $plan['accounts'];
@@ -145,13 +146,23 @@ final class SalesCreditNotePostingService
             }
 
             $journalLines = [];
-            if ($plan['subtotalCents'] > 0) $journalLines[] = ['accountCode' => $accounts['salesReturns'], 'debit' => Money::decimal($plan['subtotalCents']), 'description' => 'مرتجعات المبيعات'];
-            if ($plan['taxCents'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'debit' => Money::decimal($plan['taxCents']), 'description' => 'عكس ضريبة المبيعات'];
+            if ($plan['subtotalCents'] > 0) {
+                $journalLines[] = ['accountCode' => $accounts['salesReturns'], 'debit' => Money::decimal($plan['subtotalCents']), 'description' => 'مرتجعات المبيعات'];
+            }
+            if ($plan['taxCents'] > 0) {
+                $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'debit' => Money::decimal($plan['taxCents']), 'description' => 'عكس ضريبة المبيعات'];
+            }
             if ($isDirectCash) {
-                if ($plan['refundCents'] > 0) $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'رد نقد أو بنك', 'financialLocationId' => $refundSource['location']->id];
+                if ($plan['refundCents'] > 0) {
+                    $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'رد نقد أو بنك', 'financialLocationId' => $refundSource['location']->id];
+                }
             } else {
-                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'الذمم المدينة'];
-                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'رصيد العميل الدائن'];
+                if ($plan['arReductionCents'] > 0) {
+                    $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'الذمم المدينة'];
+                }
+                if ($plan['customerCreditCents'] > 0) {
+                    $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'رصيد العميل الدائن'];
+                }
             }
             if ($plan['cogsCents'] > 0) {
                 $journalLines[] = ['accountCode' => $accounts['inventory'], 'debit' => Money::decimal($plan['cogsCents']), 'description' => 'أصل المخزون'];
@@ -196,7 +207,7 @@ final class SalesCreditNotePostingService
     private function nextRefundNumber(int $tenantId): string
     {
         $year = now()->year;
-        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        DB::table('tenants')->where('id', $tenantId)->lock('FOR NO KEY UPDATE')->first();
         $count = DB::table('customer_refunds')->where('tenant_id', $tenantId)->where('refund_number', 'like', "RF-{$year}-%")->count() + 1;
 
         return sprintf('RF-%d-%06d', $year, $count);
