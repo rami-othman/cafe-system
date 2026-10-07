@@ -83,12 +83,15 @@ class CashierAccess {
     CashierRoutes.financeVouchers: 'finance.vouchers.view',
     CashierRoutes.financePurchases: 'finance.purchases.view',
     CashierRoutes.financeSales: 'finance.sales.view',
+    // Read-only investor portal: a till operator linked to a partner sees only it.
+    CashierRoutes.financeInvestor: 'finance.partners.portal',
   };
 
   static const Set<String> financeWorkspacePermissions = <String>{
     'finance.vouchers.view',
     'finance.purchases.view',
     'finance.sales.view',
+    'finance.partners.portal',
   };
 
   bool allowsPath(String path) {
@@ -151,4 +154,5 @@ abstract final class CashierRoutes {
   static const String financeVouchers = '/finance/vouchers';
   static const String financePurchases = '/finance/purchases';
   static const String financeSales = '/finance/sales';
+  static const String financeInvestor = '/finance/investor';
 }
