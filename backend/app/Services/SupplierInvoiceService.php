@@ -211,6 +211,7 @@ class SupplierInvoiceService
                 'posted_at' => $now,
                 'updated_at' => $now,
             ]);
+            app(\App\Services\FixedAssets\FixedAssetService::class)->draftsFromSupplierInvoice($tenantId, $id, $actorId);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'supplier_invoice.posted', 'supplier_invoice', $id, (array) $invoice, (array) $result, $result->branch_id, $actorId);
 
@@ -271,6 +272,7 @@ class SupplierInvoiceService
                 throw ValidationException::withMessages(['status' => 'Received inventory must be reversed before cancelling this purchase.']);
             }
 
+            app(\App\Services\FixedAssets\FixedAssetService::class)->releaseSupplierInvoice($tenantId, $id);
             $reversal = $this->entries->reverse($request, $tenantId, (int) $invoice->journal_entry_id, $actorId);
             DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'cancelled', 'reversal_journal_entry_id' => $reversal, 'updated_at' => now()]);
             $result = $this->find($tenantId, $id);
