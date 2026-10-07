@@ -8,6 +8,7 @@ import '../widgets/fa_widgets.dart';
 import 'asset_alerts_banner.dart';
 import 'asset_count_tab.dart';
 import 'asset_dialogs.dart';
+import 'asset_maintenance_report_tab.dart';
 
 /// الأصول الثابتة: سجل الأصول، مذكرات الاهتلاك، الأصناف، المواقع، تقرير
 /// العمليات والإعدادات — في مساحة عمل واحدة بتبويبات.
@@ -46,8 +47,8 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
     if (_error != null) return FinanceErrorState(message: _error!, onRetry: _loadRefs);
     if (_refs == null) return const FinanceLoadingState();
     return DefaultTabController(
-      length: 7,
-      initialIndex: widget.initialTab.clamp(0, 6),
+      length: 8,
+      initialIndex: widget.initialTab.clamp(0, 7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -69,6 +70,7 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
               Tab(text: 'تقرير العمليات'),
               Tab(text: 'الإعدادات'),
               Tab(text: 'الجرد الفعلي'),
+              Tab(text: 'تقرير الصيانة'),
             ],
           ),
           const SizedBox(height: FinanceSpace.md),
@@ -83,6 +85,7 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
                 _OperationsTab(refs: _refs!),
                 const _SettingsTab(),
                 AssetCountTab(refs: _refs!),
+                AssetMaintenanceReportTab(refs: _refs!),
               ],
             ),
           ),

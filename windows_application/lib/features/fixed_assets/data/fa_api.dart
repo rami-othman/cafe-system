@@ -84,6 +84,24 @@ class FaApi {
   Future<List<Json>> schedule(int id) async => asJsonList(asJson(await _api.get('finance/assets/$id/schedule'))['rows']);
   Future<Json> alerts({int days = 60}) async =>
       asJson(await _api.get('finance/assets/reports/alerts', queryParameters: <String, dynamic>{'days': days}));
+  // maintenance: expenses tagged to an asset (classification only) + service contracts + cost report
+  Future<Json> maintenanceSummary(int id) async => asJson(await _api.get('finance/assets/$id/maintenance-summary'));
+  Future<Json> linkExpense(int id, int expenseId, String kind) async =>
+      asJson(await _api.post('finance/assets/$id/link-expense', data: <String, dynamic>{'expenseId': expenseId, 'kind': kind}));
+  Future<Json> unlinkExpense(int id, int expenseId) async => asJson(await _api.delete('finance/assets/$id/link-expense/$expenseId'));
+  Future<List<Json>> saveContract(int assetId, Json data, {int? id}) async => asJsonList(
+    id == null
+        ? await _api.post('finance/assets/$assetId/contracts', data: _clean(data))
+        : await _api.patch('finance/assets/$assetId/contracts/$id', data: _clean(data)),
+  );
+  Future<List<Json>> deleteContract(int assetId, int id) async => asJsonList(await _api.delete('finance/assets/$assetId/contracts/$id'));
+  Future<Json> maintenanceReport(Json filters) async =>
+      asJson(await _api.get('finance/assets/reports/maintenance', queryParameters: _clean(filters)));
+  Future<List<Json>> unlinkedExpenses(String search) async => asJsonList(
+    await _api.get('finance/expenses', queryParameters: _clean(<String, dynamic>{'unlinked': 'true', 'search': search, 'perPage': 50})),
+  );
+  Future<List<Json>> suppliers() async => asJsonList(await _api.get('finance/suppliers'));
+
   Future<List<Json>> counts() async => asJsonList(await _api.get('finance/assets/counts'));
   Future<Json> count(int id) async => asJson(await _api.get('finance/assets/counts/$id'));
   Future<Json> startCount(Json data) async => asJson(await _api.post('finance/assets/counts', data: _clean(data)));

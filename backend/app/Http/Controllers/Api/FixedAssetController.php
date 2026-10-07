@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\FixedAssets\AssetCatalogService;
 use App\Services\FixedAssets\AssetCountService;
+use App\Services\FixedAssets\AssetMaintenanceService;
 use App\Services\FixedAssets\AssetQueryService;
 use App\Services\FixedAssets\DepreciationRunService;
 use App\Services\FixedAssets\FixedAssetService;
@@ -24,6 +25,7 @@ class FixedAssetController extends Controller
         private readonly AssetCatalogService $catalog,
         private readonly DepreciationRunService $runs,
         private readonly AssetCountService $counts,
+        private readonly AssetMaintenanceService $maintenance,
     ) {}
 
     // ------------------------------------------------------------ settings / catalog
@@ -215,6 +217,65 @@ class FixedAssetController extends Controller
         return response()->json(['data' => $this->queries->alerts($tenant, (int) ($data['days'] ?? 60), $branches, $owner)]);
     }
 
+    // ------------------------------------------------------------ maintenance (expense tagging, contracts, cost report)
+
+    public function maintenanceSummary(Request $request, int $asset): JsonResponse
+    {
+        return response()->json(['data' => $this->maintenance->summary(TenantContext::id($request), $asset)]);
+    }
+
+    public function linkExpense(Request $request, int $asset): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $data = $request->validate(['expenseId' => ['required', 'integer'], 'kind' => ['nullable', 'in:maintenance,repair,other']]);
+
+        return response()->json(['data' => $this->maintenance->linkExpense($request, $tenant, $asset, (int) $data['expenseId'], $data['kind'] ?? null, FinancialActor::id($request, $tenant))]);
+    }
+
+    public function unlinkExpense(Request $request, int $asset, int $expense): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+
+        return response()->json(['data' => $this->maintenance->unlinkExpense($request, $tenant, $asset, $expense, FinancialActor::id($request, $tenant))]);
+    }
+
+    public function contracts(Request $request, int $asset): JsonResponse
+    {
+        return response()->json(['data' => $this->maintenance->contracts(TenantContext::id($request), $asset)]);
+    }
+
+    public function storeContract(Request $request, int $asset): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+
+        return response()->json(['data' => $this->maintenance->saveContract($tenant, $asset, $this->contractData($request), null, FinancialActor::id($request, $tenant))], 201);
+    }
+
+    public function updateContract(Request $request, int $asset, int $contract): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+
+        return response()->json(['data' => $this->maintenance->saveContract($tenant, $asset, $this->contractData($request), $contract, FinancialActor::id($request, $tenant))]);
+    }
+
+    public function deleteContract(Request $request, int $asset, int $contract): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $owner = $this->maintenance->deleteContract($tenant, $contract);
+
+        return response()->json(['data' => $this->maintenance->contracts($tenant, $owner)]);
+    }
+
+    public function maintenanceReport(Request $request): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $filters = $request->validate(['dateFrom' => ['required', 'date_format:Y-m-d'], 'dateTo' => ['required', 'date_format:Y-m-d', 'after_or_equal:dateFrom'],
+            'kind' => ['nullable', 'in:maintenance,repair,other'], 'branchId' => ['nullable', 'string']]);
+        [$owner, $branches] = $this->scope($request, $tenant);
+
+        return response()->json(['data' => $this->maintenance->report($tenant, $filters, $branches, $owner)]);
+    }
+
     public function operations(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
@@ -263,6 +324,13 @@ class FixedAssetController extends Controller
     }
 
     // ------------------------------------------------------------ validation
+
+    private function contractData(Request $request): array
+    {
+        return $request->validate(['supplierId' => ['nullable', 'integer'], 'contractNo' => ['nullable', 'string', 'max:60'], 'startDate' => ['required', 'date_format:Y-m-d'],
+            'endDate' => ['required', 'date_format:Y-m-d'], 'annualCost' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'], 'billing' => ['nullable', 'in:monthly,quarterly,yearly,one_time'],
+            'renewalNoticeDays' => ['nullable', 'integer', 'min:0', 'max:365'], 'status' => ['nullable', 'in:active,cancelled'], 'notes' => ['nullable', 'string', 'max:2000']]);
+    }
 
     private function scope(Request $request, int $tenant): array
     {

@@ -6,6 +6,7 @@ import '../../finance_inventory_setup/widgets/finance_design.dart';
 import '../data/fa_api.dart';
 import '../widgets/fa_widgets.dart';
 import 'asset_dialogs.dart';
+import 'asset_maintenance_section.dart';
 import 'asset_split_widgets.dart';
 
 /// بطاقة أصل: كل ما يخص الأصل في صفحة واحدة — البيانات، الحسابات، الأرقام
@@ -384,6 +385,10 @@ class _AssetCardScreenState extends State<AssetCardScreen> {
             ],
           ),
         ),
+        if (status != 'draft') ...<Widget>[
+          const SizedBox(height: FinanceSpace.md),
+          AssetMaintenanceSection(assetId: widget.assetId),
+        ],
         const SizedBox(height: FinanceSpace.md),
         FaSection(
           title: 'سجل الأصل',

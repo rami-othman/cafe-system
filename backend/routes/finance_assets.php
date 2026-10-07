@@ -37,6 +37,7 @@ Route::prefix('assets')->group(function (): void {
 
     Route::get('reports/alerts', [A::class, 'alerts'])->middleware('finance.permission:finance.assets.view');
     Route::get('reports/operations', [A::class, 'operations'])->middleware('finance.permission:finance.assets.view');
+    Route::get('reports/maintenance', [A::class, 'maintenanceReport'])->middleware('finance.permission:finance.assets.view');
 
     Route::get('/', [A::class, 'index'])->middleware('finance.permission:finance.assets.view');
     Route::post('/', [A::class, 'store'])->middleware('finance.permission:finance.assets.manage');
@@ -48,6 +49,13 @@ Route::prefix('assets')->group(function (): void {
     Route::post('{asset}/additions', [A::class, 'addition'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
     Route::post('{asset}/maintenance', [A::class, 'maintenance'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
     Route::post('{asset}/expenses', [A::class, 'expense'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
+    Route::get('{asset}/maintenance-summary', [A::class, 'maintenanceSummary'])->whereNumber('asset')->middleware('finance.permission:finance.assets.view');
+    Route::post('{asset}/link-expense', [A::class, 'linkExpense'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
+    Route::delete('{asset}/link-expense/{expense}', [A::class, 'unlinkExpense'])->whereNumber('asset')->whereNumber('expense')->middleware('finance.permission:finance.assets.manage');
+    Route::get('{asset}/contracts', [A::class, 'contracts'])->whereNumber('asset')->middleware('finance.permission:finance.assets.view');
+    Route::post('{asset}/contracts', [A::class, 'storeContract'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
+    Route::patch('{asset}/contracts/{contract}', [A::class, 'updateContract'])->whereNumber('asset')->whereNumber('contract')->middleware('finance.permission:finance.assets.manage');
+    Route::delete('{asset}/contracts/{contract}', [A::class, 'deleteContract'])->whereNumber('asset')->whereNumber('contract')->middleware('finance.permission:finance.assets.manage');
     Route::post('{asset}/disposals', [A::class, 'disposal'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
     Route::post('{asset}/transfers', [A::class, 'transfer'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');
     Route::post('{asset}/transactions/{transaction}/reverse', [A::class, 'reverseTransaction'])->whereNumber('asset')->middleware('finance.permission:finance.assets.manage');

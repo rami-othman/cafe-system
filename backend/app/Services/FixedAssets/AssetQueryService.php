@@ -13,7 +13,7 @@ final class AssetQueryService
 
     public const TYPE_LABELS = ['opening' => 'رصيد افتتاحي', 'acquisition' => 'إدخال', 'addition' => 'إضافة', 'maintenance' => 'صيانة', 'expense' => 'مصروف', 'depreciation' => 'اهتلاك', 'disposal' => 'بيع/استبعاد', 'transfer' => 'نقل'];
 
-    public function __construct(private readonly AssetBook $book, private readonly DepreciationCalculator $calculator, private readonly ComponentBook $componentBook) {}
+    public function __construct(private readonly AssetBook $book, private readonly DepreciationCalculator $calculator, private readonly ComponentBook $componentBook, private readonly AssetMaintenanceService $maintenance) {}
 
     /** Register / list. Filters: q, status, categoryId, branchId ('company' = head office), asOf. */
     public function register(int $tenantId, array $filters, array $authorizedBranchIds, bool $owner): array
@@ -186,7 +186,7 @@ final class AssetQueryService
     }
 
     /**
-     * Alerts for the register: warranties ending (or ended) within $days, and straight-line assets whose
+     * Alerts for the register: warranties and maintenance contracts ending (or ended) within $days, and straight-line assets whose
      * useful life (incl. life added by maintenance) ends within $days. Disposed and draft assets are ignored.
      */
     public function alerts(int $tenantId, int $days, array $authorizedBranchIds, bool $owner): array
@@ -213,7 +213,9 @@ final class AssetQueryService
                 return $item($a, $end);
             })->filter(fn ($i) => $i['daysLeft'] >= 0 && $i['daysLeft'] <= $days)->sortBy('date')->values()->all();
 
-        return ['days' => $days, 'warranty' => $warranty, 'endOfLife' => $endOfLife, 'count' => count($warranty) + count($endOfLife)];
+        $contracts = $this->maintenance->contractAlerts($tenantId, $days, $authorizedBranchIds, $owner);
+
+        return ['days' => $days, 'warranty' => $warranty, 'endOfLife' => $endOfLife, 'contracts' => $contracts, 'count' => count($warranty) + count($endOfLife) + count($contracts)];
     }
 
     /** Items of the asset with their current cost and the expenses booked against them. */

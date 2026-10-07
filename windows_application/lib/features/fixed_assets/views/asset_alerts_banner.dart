@@ -56,6 +56,7 @@ class _AssetAlertsBannerState extends State<AssetAlertsBanner> {
     if (d == null || intOf(d['count']) == 0) return const SizedBox.shrink();
     final List<Json> warranty = asJsonList(d['warranty']);
     final List<Json> life = asJsonList(d['endOfLife']);
+    final List<Json> contracts = asJsonList(d['contracts']);
     return Padding(
       padding: const EdgeInsets.only(bottom: FinanceSpace.md),
       child: Container(
@@ -72,7 +73,7 @@ class _AssetAlertsBannerState extends State<AssetAlertsBanner> {
                   const SizedBox(width: FinanceSpace.sm),
                   Expanded(
                     child: Text(
-                      'تنبيهات (${d['count']}): ${warranty.length} كفالة، ${life.length} أصل يقترب انتهاء عمره خلال ${d['days']} يومًا',
+                      'تنبيهات (${d['count']}): ${warranty.length} كفالة، ${contracts.length} عقد صيانة، ${life.length} أصل يقترب انتهاء عمره خلال ${d['days']} يومًا',
                       style: FinanceText.label,
                     ),
                   ),
@@ -84,6 +85,16 @@ class _AssetAlertsBannerState extends State<AssetAlertsBanner> {
               const SizedBox(height: FinanceSpace.sm),
               if (warranty.isNotEmpty) const Text('الكفالات', style: FinanceText.subtitle),
               for (final Json a in warranty) _row(a, a['expired'] == true ? 'انتهت منذ ${(intOf(a['daysLeft']) ?? 0).abs()} يومًا' : 'تنتهي بعد ${a['daysLeft']} يومًا', danger: a['expired'] == true),
+              if (contracts.isNotEmpty) ...<Widget>[
+                const SizedBox(height: FinanceSpace.sm),
+                const Text('عقود الصيانة', style: FinanceText.subtitle),
+              ],
+              for (final Json a in contracts)
+                _row(
+                  a,
+                  a['expired'] == true ? 'العقد ${str(a['contractNo'])} انتهى منذ ${(intOf(a['daysLeft']) ?? 0).abs()} يومًا' : 'العقد ${str(a['contractNo'])} ينتهي بعد ${a['daysLeft']} يومًا',
+                  danger: a['expired'] == true,
+                ),
               if (life.isNotEmpty) ...<Widget>[
                 const SizedBox(height: FinanceSpace.sm),
                 const Text('انتهاء العمر الإنتاجي', style: FinanceText.subtitle),

@@ -316,6 +316,9 @@ class ExpenseRecord {
     this.rejectionReason,
     this.createdAt,
     this.updatedAt,
+    this.fixedAssetId,
+    this.fixedAssetName,
+    this.assetExpenseKind,
     this.allowedActions = const <String>[],
   });
   final int id;
@@ -346,6 +349,9 @@ class ExpenseRecord {
   final String? rejectionReason;
   final String? createdAt;
   final String? updatedAt;
+  final int? fixedAssetId;
+  final String? fixedAssetName;
+  final String? assetExpenseKind;
 
   /// Backend-computed, permission- and approval-policy-aware transitions
   /// (e.g. never includes `approve` for the expense's own creator). The
@@ -403,6 +409,13 @@ class ExpenseRecord {
     updatedAt: readString(json['updatedAt']).isEmpty
         ? null
         : readString(json['updatedAt']),
+    fixedAssetId: readInt(json['fixedAssetId']),
+    fixedAssetName: readString(json['fixedAssetName']).isEmpty
+        ? null
+        : readString(json['fixedAssetName']),
+    assetExpenseKind: readString(json['assetExpenseKind']).isEmpty
+        ? null
+        : readString(json['assetExpenseKind']),
     allowedActions: readStringList(json['allowedActions']),
   );
 }
