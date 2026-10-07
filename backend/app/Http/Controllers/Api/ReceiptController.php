@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CafeConfiguration\ReceiptTemplateResource;
 use App\Services\BranchAccessService;
+use App\Services\WhatsAppCloudService;
+use App\Services\WhatsAppDeliveryException;
 use App\Support\ReceiptTemplateResolver;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ReceiptController extends Controller
 {
@@ -22,6 +25,7 @@ class ReceiptController extends Controller
         $payment = DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->latest('paid_at')->first();
         $cashierName = $orderRow->cashier_id ? DB::table('users')->where('tenant_id', $tenantId)->where('id', $orderRow->cashier_id)->value('name') : null;
         $customerName = $orderRow->customer_id ? DB::table('customers')->where('tenant_id', $tenantId)->where('id', $orderRow->customer_id)->value('name') : null;
+        $customerPhone = $orderRow->customer_id ? $this->customerPhone($tenantId, (int) $orderRow->customer_id) : null;
         $template = ReceiptTemplateResolver::resolve($tenantId, (int) $orderRow->branch_id);
 
         return response()->json([
@@ -36,6 +40,7 @@ class ReceiptController extends Controller
                 'phone' => $branch?->phone,
                 'cashierName' => $cashierName,
                 'customerName' => $customerName,
+                'customerPhone' => $customerPhone,
                 'date' => $orderRow->created_at,
                 'items' => $this->items($tenantId, $orderRow->id),
                 'subtotal' => (float) $orderRow->subtotal,
@@ -94,6 +99,64 @@ class ReceiptController extends Controller
                 'queuedAt' => $now->toIso8601String(),
             ],
         ], 202);
+    }
+
+    /**
+     * Sends the receipt image the app rendered to the customer over the WhatsApp
+     * Cloud API. When the API is not configured it answers 503
+     * `whatsapp_not_configured` so the app falls back to its manual hand-off.
+     */
+    public function sendWhatsApp(Request $request, int $order, WhatsAppCloudService $whatsapp): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string', 'max:40'],
+            'image' => ['required', 'file', 'mimes:png', 'max:5120'],
+        ]);
+
+        $tenantId = TenantContext::id($request);
+        $orderRow = $this->findOrder($tenantId, $order);
+
+        if (! $whatsapp->isConfigured()) {
+            return response()->json(['message' => 'WhatsApp sending is not configured.', 'code' => 'whatsapp_not_configured'], 503);
+        }
+
+        $to = WhatsAppCloudService::normalizePhone($data['phone']);
+        if ($to === null) {
+            throw ValidationException::withMessages(['phone' => ['The phone number is not valid.']]);
+        }
+
+        $branchName = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $orderRow->branch_id)->value('name') ?? '');
+        $now = now();
+        $jobId = DB::table('print_jobs')->insertGetId([
+            'tenant_id' => $tenantId,
+            'branch_id' => $orderRow->branch_id,
+            'order_id' => $orderRow->id,
+            'type' => 'receipt',
+            'channel' => 'whatsapp',
+            'status' => 'printing',
+            'queued_at' => $now,
+            'started_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        try {
+            $messageId = $whatsapp->sendInvoiceImage($to, $request->file('image'), 'invoice-'.$orderRow->order_number.'.png', (string) $orderRow->order_number, $branchName);
+        } catch (WhatsAppDeliveryException $e) {
+            DB::table('print_jobs')->where('id', $jobId)->update([
+                'status' => 'failed',
+                'failure_code' => $e->failureCode,
+                'failure_message' => mb_substr($e->getMessage(), 0, 250),
+                'completed_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['message' => $e->getMessage(), 'code' => $e->failureCode], 502);
+        }
+
+        DB::table('print_jobs')->where('id', $jobId)->update(['status' => 'completed', 'completed_at' => now(), 'updated_at' => now()]);
+
+        return response()->json(['data' => ['id' => $jobId, 'orderId' => (int) $orderRow->id, 'channel' => 'whatsapp', 'status' => 'completed', 'messageId' => $messageId]]);
     }
 
     public function updatePrintJob(Request $request, int $printJob): JsonResponse
@@ -175,6 +238,20 @@ class ReceiptController extends Controller
             'printer_unreachable' => 'Could not connect to the receipt printer.',
             default => 'Printing failed.',
         };
+    }
+
+    private function customerPhone(int $tenantId, int $customerId): ?string
+    {
+        $row = DB::table('customer_phones')
+            ->where('tenant_id', $tenantId)
+            ->where('customer_id', $customerId)
+            ->orderByDesc('is_primary')
+            ->orderBy('id')
+            ->first();
+        $phone = $row ? ($row->normalized_number ?: $row->raw_number) : DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->value('phone');
+        $phone = is_string($phone) ? trim($phone) : '';
+
+        return $phone === '' ? null : $phone;
     }
 
     private function findOrder(int $tenantId, int $orderId): object

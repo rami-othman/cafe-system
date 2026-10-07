@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart' show DioMediaType, FormData, MultipartFile;
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -455,6 +458,27 @@ class PosRepository {
   Future<OrderReceipt> getReceipt(int orderId) async {
     final dynamic response = await apiClient!.get('orders/$orderId/receipt');
     return orderReceiptFromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  /// Sends the receipt image through the backend's WhatsApp Cloud API. Throws an
+  /// [ApiException] with code `whatsapp_not_configured` when it is not set up.
+  Future<void> sendReceiptViaWhatsApp({
+    required int orderId,
+    required String phone,
+    required Uint8List imageBytes,
+    required String fileName,
+  }) async {
+    await apiClient!.postMultipart(
+      'orders/$orderId/whatsapp',
+      data: FormData.fromMap(<String, dynamic>{
+        'phone': phone,
+        'image': MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName,
+          contentType: DioMediaType('image', 'png'),
+        ),
+      }),
+    );
   }
 
   Future<ReceiptData> getPrintableReceipt(int orderId) async {

@@ -105,6 +105,10 @@ class _ShiftClosingStep2CashState extends State<ShiftClosingStep2Cash> {
                   onChanged: cubit.setCashMode,
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                _FloatWarning(
+                  floatAmount: state.snapshot?.drawer.floatAmount ?? 0,
+                  counted: state.actualCash,
+                ),
                 ShiftField(
                   label: ShiftStrings.actualCashLabel,
                   isRequired: true,
@@ -150,6 +154,34 @@ class _ShiftClosingStep2CashState extends State<ShiftClosingStep2Cash> {
       );
     },
   );
+}
+
+/// The float (عهدة) is physical cash that stays in the drawer. The cashier counts everything; only
+/// what is above the float goes to the safe, and the float is never moved or booked.
+class _FloatWarning extends StatelessWidget {
+  const _FloatWarning({required this.floatAmount, required this.counted});
+
+  final double floatAmount;
+  final double? counted;
+
+  @override
+  Widget build(BuildContext context) {
+    if (floatAmount <= 0) return const SizedBox.shrink();
+    final double? total = counted;
+    final String detail = total == null
+        ? 'عُدّ كل ما بالدرج بما فيه العهدة. العهدة تبقى بالدرج ولا تُحوَّل للصندوق الرئيسي.'
+        : total < floatAmount
+        ? 'المبلغ المعدود أقل من العهدة. عُدّ العهدة والمبيعات معاً.'
+        : 'بالدرج ${ShiftFormat.money(total)}، منها عهدة ${ShiftFormat.money(floatAmount)}. سيُحوَّل ${ShiftFormat.money(total - floatAmount)} فقط للصندوق الرئيسي.';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: ShiftNotice(
+        key: const Key('shift-float-warning'),
+        message: 'في هذا الدرج عهدة ${ShiftFormat.money(floatAmount)}. $detail',
+        tone: ShiftTone.warning,
+      ),
+    );
+  }
 }
 
 class _CurrencySuffix extends StatelessWidget {

@@ -5,7 +5,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_summary.dart';
-import '../models/order_type.dart';
 import 'order_card_actions.dart';
 import 'order_items_preview.dart';
 import 'order_status_badge.dart';

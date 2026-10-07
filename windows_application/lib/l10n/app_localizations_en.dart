@@ -8835,6 +8835,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get posWhatsAppPending => 'WhatsApp sending will be added later.';
 
   @override
+  String get posWhatsAppSent => 'Invoice sent via WhatsApp.';
+
+  @override
+  String get posWhatsAppManualCopied =>
+      'Chat opened and the invoice file is copied. Press Ctrl+V in the chat, then Enter to send.';
+
+  @override
+  String get posWhatsAppManualDownloaded =>
+      'Chat opened and the invoice file was downloaded. Drag it into the chat, then send.';
+
+  @override
+  String get posWhatsAppManualFileFailed =>
+      'Chat opened, but the invoice file could not be prepared.';
+
+  @override
+  String get posWhatsAppFailed => 'Could not send via WhatsApp.';
+
+  @override
+  String get posWhatsAppNeedsLogin =>
+      'Scan the WhatsApp QR code in the Chrome window that opened (one time), then try again.';
+
+  @override
+  String get posWhatsAppUncertain =>
+      'Could not confirm the message was sent. Check the chat before retrying.';
+
+  @override
+  String get posWhatsAppPhoneTitle => 'Customer WhatsApp number';
+
+  @override
+  String get posWhatsAppPhoneHint => 'e.g. 09XXXXXXXX';
+
+  @override
+  String get posWhatsAppPhoneInvalid => 'Enter a valid number.';
+
+  @override
+  String get posWhatsAppPhoneSend => 'Send';
+
+  @override
+  String get posWhatsAppPhoneCancel => 'Cancel';
+
+  @override
+  String posWhatsAppMessage(String order, String branch) {
+    return 'Hello, your invoice no. $order from $branch. Thank you for visiting!';
+  }
+
+  @override
   String get posPaymentCompleted => 'Payment completed';
 
   @override

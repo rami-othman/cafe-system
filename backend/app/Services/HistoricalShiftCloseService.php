@@ -120,7 +120,7 @@ final class HistoricalShiftCloseService
             $continuation = (int) DB::table('shifts')->insertGetId([
                 'tenant_id' => $tenant, 'branch_id' => $shift->branch_id, 'user_id' => $shift->user_id,
                 'financial_location_id' => $shift->financial_location_id, 'close_destination_financial_location_id' => $shift->close_destination_financial_location_id,
-                'closing_float_amount' => $shift->closing_float_amount, 'opening_cash' => Money::decimal($counted),
+                'closing_float_amount' => $shift->closing_float_amount, 'float_amount' => $shift->float_amount, 'opening_cash' => Money::decimal($counted),
                 'shift_number' => $this->closer->nextShiftNumber($tenant, $period->end->setTimezone($period->timezone)->toDateString()),
                 'status' => 'open', 'opened_at' => $period->timestamp(), 'continuation_of_shift_id' => $shift->id,
                 'notes' => 'استمرار الوردية '.$shift->shift_number, 'created_at' => now(), 'updated_at' => now(),

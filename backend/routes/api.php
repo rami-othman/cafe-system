@@ -460,6 +460,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
             Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
             Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
+            Route::post('orders/{order}/whatsapp', [ReceiptController::class, 'sendWhatsApp']);
             Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
             Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
             Route::post('orders/{order}/refunds', [RefundController::class, 'store']);

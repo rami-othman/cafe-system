@@ -146,6 +146,23 @@ class ShiftDrawerReadinessService
         return $this->balances->summary($tenantId, (int) $drawer->financial_account_id, locationId: (int) $drawer->id)['balance'];
     }
 
+    /**
+     * The float (عهدة) the next shift on this drawer inherits: the last closed shift's own float, else (for
+     * shifts that predate the column, or a drawer never used) the branch default. Off-books by design.
+     */
+    public function carriedFloat(int $tenantId, ?object $drawer, mixed $branchDefault, int $ledgerCents = 0): string
+    {
+        $previous = $drawer ? DB::table('shifts')->where('tenant_id', $tenantId)->where('financial_location_id', $drawer->id)
+            ->where('status', 'closed')->whereNull('deleted_at')->whereNotNull('float_amount')
+            ->orderByDesc('closed_at')->orderByDesc('id')->value('float_amount') : null;
+
+        // The branch default only seeds a drawer that has no float history AND an empty ledger: cash already on the
+        // ledger (e.g. a float the old model retained there) is physically present once, so it must not be added again.
+        $fallback = $ledgerCents === 0 ? ($branchDefault ?? '0') : '0';
+
+        return Money::decimal(Money::cents((string) ($previous ?? $fallback)));
+    }
+
     /** The currently open (not deleted) shift on a physical drawer, if any. */
     public function openShiftOnDrawer(int $tenantId, int $drawerId): ?object
     {
@@ -182,6 +199,7 @@ class ShiftDrawerReadinessService
             'drawer' => $drawer ? ['id' => (int) $drawer->id, 'name' => $drawer->name, 'ledgerBalance' => $this->drawerLedgerBalance($tenantId, $drawer)] : null,
             'closeDestination' => $result['destination'] ? ['id' => (int) $result['destination']->id, 'name' => $result['destination']->name] : null,
             'closingFloat' => $result['closingFloat'],
+            'carriedFloat' => $this->carriedFloat($tenantId, $drawer, $result['closingFloat'], $drawer ? Money::cents($this->drawerLedgerBalance($tenantId, $drawer)) : 0),
             'openShift' => $openShift,
         ];
     }

@@ -72,11 +72,29 @@ class ShiftRepository {
     }
   }
 
+  /// The float (عهدة) the next shift inherits from the previous one, or null
+  /// when the server did not report it. It is off the books: only a number.
+  Future<double?> loadCarriedFloat({int? branchId}) async {
+    try {
+      final int resolvedBranchId = await _resolveBranchId(branchId);
+      final dynamic response = await _client.get(
+        'shifts/readiness?branchId=$resolvedBranchId',
+      );
+      final dynamic raw = _map(response)['carriedFloat'];
+      return raw == null ? null : _double(raw);
+    } on Object {
+      // Only an informational hint for the opening form; never block opening a shift on it.
+      return null;
+    }
+  }
+
+  /// Without [newFloat] the previous shift's float is carried by the server.
+  /// With it, [openingFloat] is the new float and replaces the old one.
   Future<ShiftSnapshot> openShift({
-    required double openingFloat,
+    double? openingFloat,
     required String note,
     int? branchId,
-    bool fundOpeningCash = false,
+    bool newFloat = false,
   }) async {
     try {
       final int resolvedBranchId = await _resolveBranchId(branchId);
@@ -84,8 +102,10 @@ class ShiftRepository {
         'shifts/current',
         data: <String, dynamic>{
           'branchId': resolvedBranchId,
-          'openingCash': openingFloat,
-          if (fundOpeningCash) 'fundOpeningCash': true,
+          if (newFloat) ...<String, dynamic>{
+            'newFloat': true,
+            'floatAmount': openingFloat ?? 0,
+          },
           if (note.trim().isNotEmpty) 'note': note.trim(),
         },
       );
@@ -283,10 +303,12 @@ class ShiftRepository {
   CashDrawerSnapshot _drawer(Map<String, dynamic> json) => CashDrawerSnapshot(
     customerPayments: _double(json['customerPayments']),
     customerRefunds: _double(json['customerRefunds']),
-    expectedCash: json['expectedCash'] == null
+    // The cashier counts the whole drawer, so every figure shown is physical: it includes the float.
+    expectedCash: (json['physicalExpectedCash'] ?? json['expectedCash']) == null
         ? null
-        : _double(json['expectedCash']),
-    openingFloat: _double(json['openingFloat']),
+        : _double(json['physicalExpectedCash'] ?? json['expectedCash']),
+    floatAmount: _double(json['floatAmount']),
+    openingFloat: _double(json['physicalOpeningCash'] ?? json['openingFloat']),
     cashSales: _double(json['cashSales']),
     cashRefunds: _double(json['cashRefunds']),
     withdrawals: _double(json['withdrawals']),

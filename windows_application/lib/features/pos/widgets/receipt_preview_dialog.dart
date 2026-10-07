@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -9,20 +11,53 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_receipt.dart';
+import '../services/file_handoff.dart';
+import '../services/receipt_image_builder.dart';
 import 'receipt_action_bar.dart';
 import 'receipt_preview_paper.dart';
 
-class ReceiptPreviewDialog extends StatelessWidget {
+class ReceiptPreviewDialog extends StatefulWidget {
   const ReceiptPreviewDialog({
     super.key,
     required this.receipt,
     required this.onPrintReceipt,
+    required this.onSendViaWhatsApp,
     this.isPrinting = false,
   });
 
   final OrderReceipt receipt;
   final VoidCallback onPrintReceipt;
+
+  /// Receives a builder that renders the receipt shown here into a PNG.
+  final Future<void> Function(Future<Uint8List> Function() buildImage)
+  onSendViaWhatsApp;
   final bool isPrinting;
+
+  @override
+  State<ReceiptPreviewDialog> createState() => _ReceiptPreviewDialogState();
+}
+
+class _ReceiptPreviewDialogState extends State<ReceiptPreviewDialog> {
+  final GlobalKey _paperKey = GlobalKey();
+  bool _isSendingWhatsApp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bring the local bridge up so the Chrome extension can connect before the
+    // cashier presses the WhatsApp button.
+    unawaited(startWhatsAppBridge());
+  }
+
+  Future<void> _sendViaWhatsApp() async {
+    if (_isSendingWhatsApp) return;
+    setState(() => _isSendingWhatsApp = true);
+    try {
+      await widget.onSendViaWhatsApp(() => buildReceiptPng(_paperKey));
+    } finally {
+      if (mounted) setState(() => _isSendingWhatsApp = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,18 +109,21 @@ class ReceiptPreviewDialog extends StatelessWidget {
                         child: SingleChildScrollView(
                           padding: AppSpacing.allXl,
                           child: Center(
-                            child: ReceiptPreviewPaper(receipt: receipt),
+                            child: RepaintBoundary(
+                              key: _paperKey,
+                              child: ReceiptPreviewPaper(
+                                receipt: widget.receipt,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                     ReceiptActionBar(
-                      onSendViaWhatsApp: () => _showPlaceholder(
-                        context,
-                        context.l10n.posWhatsAppPending,
-                      ),
-                      onPrintReceipt: onPrintReceipt,
-                      isPrinting: isPrinting,
+                      onSendViaWhatsApp: () => unawaited(_sendViaWhatsApp()),
+                      isSendingWhatsApp: _isSendingWhatsApp,
+                      onPrintReceipt: widget.onPrintReceipt,
+                      isPrinting: widget.isPrinting,
                     ),
                   ],
                 ),
@@ -95,12 +133,6 @@ class ReceiptPreviewDialog extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _showPlaceholder(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

@@ -8827,6 +8827,52 @@ class AppLocalizationsAr extends AppLocalizations {
   String get posWhatsAppPending => 'ستتوفر ميزة الإرسال عبر واتساب لاحقاً.';
 
   @override
+  String get posWhatsAppSent => 'تم إرسال الفاتورة عبر واتساب.';
+
+  @override
+  String get posWhatsAppManualCopied =>
+      'فتحنا المحادثة ونسخنا ملف الفاتورة. اضغط Ctrl+V داخل المحادثة ثم Enter للإرسال.';
+
+  @override
+  String get posWhatsAppManualDownloaded =>
+      'فتحنا المحادثة ونزّلنا ملف الفاتورة. اسحبه إلى المحادثة ثم أرسل.';
+
+  @override
+  String get posWhatsAppManualFileFailed =>
+      'فتحنا المحادثة لكن تعذّر تجهيز ملف الفاتورة.';
+
+  @override
+  String get posWhatsAppFailed => 'تعذّر الإرسال عبر واتساب.';
+
+  @override
+  String get posWhatsAppNeedsLogin =>
+      'سجّل دخول واتساب بمسح الرمز في نافذة كروم المفتوحة (مرة وحدة) ثم أعد المحاولة.';
+
+  @override
+  String get posWhatsAppUncertain =>
+      'ما قدرنا نتأكد من الإرسال. تحقق من المحادثة قبل إعادة المحاولة.';
+
+  @override
+  String get posWhatsAppPhoneTitle => 'رقم واتساب العميل';
+
+  @override
+  String get posWhatsAppPhoneHint => 'مثال: 09XXXXXXXX';
+
+  @override
+  String get posWhatsAppPhoneInvalid => 'أدخل رقماً صحيحاً.';
+
+  @override
+  String get posWhatsAppPhoneSend => 'إرسال';
+
+  @override
+  String get posWhatsAppPhoneCancel => 'إلغاء';
+
+  @override
+  String posWhatsAppMessage(String order, String branch) {
+    return 'مرحباً، فاتورتك رقم $order من $branch. شكراً لزيارتكم!';
+  }
+
+  @override
   String get posPaymentCompleted => 'تم الدفع';
 
   @override

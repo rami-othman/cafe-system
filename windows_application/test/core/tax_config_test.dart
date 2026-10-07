@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/utils/tax_formatter.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/features/discounts/widgets/discount_pos_preview_card.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/features/pos/models/order_receipt_mapper.dart';
@@ -42,6 +43,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Column(
           children: <Widget>[
             const OrderTotalsPanel(

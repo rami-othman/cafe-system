@@ -73,6 +73,7 @@ Map<String, dynamic> _session({
   'session': <String, dynamic>{
     'lastValidatedAt': '2026-09-10T00:00:00Z',
     'offlineSessionMaxAgeSeconds': 3600,
+    'expiresAt': '2099-01-01T00:00:00Z',
   },
   'capabilities': <String, dynamic>{
     'customer': <String, dynamic>{'manage': canManage},

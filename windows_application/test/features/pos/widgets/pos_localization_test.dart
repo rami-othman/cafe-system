@@ -146,6 +146,7 @@ void main() {
       ReceiptPreviewDialog(
         receipt: _receipt,
         onPrintReceipt: () => printCalls++,
+        onSendViaWhatsApp: (_) async {},
       ),
       locale: const Locale('ar'),
       size: const Size(700, 700),

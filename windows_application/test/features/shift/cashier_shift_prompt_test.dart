@@ -116,6 +116,35 @@ void main() {
     await pos.close();
   });
 
+  testWidgets('a new float needs an amount; the old float is replaced only on request', (
+    tester,
+  ) async {
+    final pos = _PromptPosCubit(_state);
+    final repository = ShiftMockRepository()
+      ..selectScenario(ShiftScenario.noOpenShift);
+    await tester.pumpWidget(_app(pos, repository));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('shift-opening-float-field')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('shift-new-float-checkbox')));
+    await tester.tap(find.byKey(const Key('shift-new-float-checkbox')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shift-opening-float-field')), findsOneWidget);
+
+    // Asking for a new float without an amount is refused before anything is sent.
+    await tester.ensureVisible(find.byKey(const Key('shift-open-submit-button')));
+    await tester.tap(find.byKey(const Key('shift-open-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shift-confirm-open-button')), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('shift-opening-float-field')), '300');
+    await tester.tap(find.byKey(const Key('shift-open-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shift-confirm-open-button')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await pos.close();
+  });
+
   testWidgets('successful opening closes the popup after confirmation', (
     tester,
   ) async {
@@ -124,10 +153,8 @@ void main() {
       ..selectScenario(ShiftScenario.noOpenShift);
     await tester.pumpWidget(_app(pos, repository));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('shift-opening-float-field')),
-      '0',
-    );
+    // No amount to type: the previous shift's float is carried over by the server.
+    expect(find.byKey(const Key('shift-opening-float-field')), findsNothing);
     await tester.ensureVisible(
       find.byKey(const Key('shift-open-submit-button')),
     );

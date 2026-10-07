@@ -56,6 +56,20 @@ void main() {
       expect(find.text('التصنيف في الشجرة'), findsOneWidget);
       expect(find.text('مدين'), findsWidgets);
       expect(tester.takeException(), isNull);
+      await tester.enterText(
+        find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)).at(1),
+        'صندوق جديد',
+      );
+      await tester.tap(find.text('إلغاء'));
+      await tester.pump();
+      await tester.binding.setSurfaceSize(const Size(1366, 900));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'account controllers must survive the dialog exit transition',
+      );
       await tester.binding.setSurfaceSize(null);
     },
   );

@@ -93,9 +93,9 @@ class _RejectedOpeningRepository extends ShiftRepository {
 
   @override
   Future<ShiftSnapshot> openShift({
-    required double openingFloat,
+    double? openingFloat,
     required String note,
     int? branchId,
-    bool fundOpeningCash = false,
+    bool newFloat = false,
   }) async => throw const ShiftDataException(message);
 }

@@ -296,6 +296,7 @@ class CashDrawerSnapshot extends Equatable {
     this.customerPayments = 0,
     this.customerRefunds = 0,
     this.expectedCash,
+    this.floatAmount = 0,
   });
 
   final double openingFloat;
@@ -308,6 +309,10 @@ class CashDrawerSnapshot extends Equatable {
   final double customerPayments;
   final double customerRefunds;
   final double? expectedCash;
+
+  /// The float (عهدة) inside [openingFloat]/[expected]: physical cash that stays in the drawer
+  /// and never transfers to the safe.
+  final double floatAmount;
 
   double get expected =>
       expectedCash ??
@@ -332,6 +337,7 @@ class CashDrawerSnapshot extends Equatable {
     customerPayments,
     customerRefunds,
     expectedCash,
+    floatAmount,
   ];
 }
 

@@ -263,7 +263,7 @@ class _NoOpenShiftView extends StatefulWidget {
 }
 
 class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
-  bool _fundOpeningCash = false;
+  bool _newFloat = false;
   late final TextEditingController _floatController = TextEditingController(
     text: widget.state.openingFloatInput,
   );
@@ -364,31 +364,47 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    ShiftField(
-                      label: ShiftStrings.openingFloatLabel,
-                      isRequired: true,
-                      error: state.openingFloatError,
-                      child: ShiftNumberField(
-                        fieldKey: const Key('shift-opening-float-field'),
-                        controller: _floatController,
-                        allowDecimal: true,
-                        large: true,
-                        hasError: state.openingFloatError != null,
-                        hintText: ShiftStrings.openingFloatHint,
-                        suffix: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                          ),
-                          child: Center(
-                            widthFactor: 1,
-                            child: Text('ل.س', style: ShiftText.bodyStrong),
-                          ),
-                        ),
-                        onChanged: (String v) => context
-                            .read<ShiftOverviewCubit>()
-                            .updateOpeningFloat(v),
+                    _CarriedFloatNotice(carriedFloat: state.carriedFloat),
+                    CheckboxListTile(
+                      key: const Key('shift-new-float-checkbox'),
+                      contentPadding: EdgeInsets.zero,
+                      value: _newFloat,
+                      onChanged: state.isOpeningShift
+                          ? null
+                          : (bool? value) =>
+                                setState(() => _newFloat = value ?? false),
+                      title: const Text('عهدة جديدة'),
+                      subtitle: const Text(
+                        'تستبدل العهدة السابقة بالمبلغ الذي تدخله، مهما كانت العهدة السابقة. بدون هذا الخيار تنتقل العهدة السابقة تلقائياً.',
                       ),
                     ),
+                    if (_newFloat) ...<Widget>[
+                      ShiftField(
+                        label: ShiftStrings.openingFloatLabel,
+                        isRequired: true,
+                        error: state.openingFloatError,
+                        child: ShiftNumberField(
+                          fieldKey: const Key('shift-opening-float-field'),
+                          controller: _floatController,
+                          allowDecimal: true,
+                          large: true,
+                          hasError: state.openingFloatError != null,
+                          hintText: ShiftStrings.openingFloatHint,
+                          suffix: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                            ),
+                            child: Center(
+                              widthFactor: 1,
+                              child: Text('ل.س', style: ShiftText.bodyStrong),
+                            ),
+                          ),
+                          onChanged: (String v) => context
+                              .read<ShiftOverviewCubit>()
+                              .updateOpeningFloat(v),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     ShiftField(
                       label: ShiftStrings.openingNotes,
@@ -399,19 +415,6 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
                         onChanged: (String v) => context
                             .read<ShiftOverviewCubit>()
                             .updateOpeningNote(v),
-                      ),
-                    ),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _fundOpeningCash,
-                      onChanged: state.isOpeningShift
-                          ? null
-                          : (bool? value) => setState(
-                              () => _fundOpeningCash = value ?? false,
-                            ),
-                      title: const Text('تسليم العهدة من صندوق تسليم النقدية'),
-                      subtitle: const Text(
-                        'يسجل النظام تحويل المبلغ الناقص من صندوق تسليم النقدية المحدد للفرع إلى صندوق الوردية عند الفتح.',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -449,7 +452,9 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
 
   Future<void> _confirmAndOpen(BuildContext context) async {
     final ShiftOverviewCubit cubit = context.read<ShiftOverviewCubit>();
-    final double? amount = cubit.validateOpeningFloat();
+    final double? amount = _newFloat
+        ? cubit.validateOpeningFloat()
+        : (widget.state.carriedFloat ?? 0);
     if (amount == null) return;
     if (!context.mounted) return;
     final bool? confirmed = await showDialog<bool>(
@@ -461,8 +466,31 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
       ),
     );
     if (confirmed == true) {
-      await cubit.openShift(fundOpeningCash: _fundOpeningCash);
+      await cubit.openShift(newFloat: _newFloat);
     }
+  }
+}
+
+/// What the shift will start with: the previous float, carried over by itself.
+class _CarriedFloatNotice extends StatelessWidget {
+  const _CarriedFloatNotice({required this.carriedFloat});
+
+  final double? carriedFloat;
+
+  @override
+  Widget build(BuildContext context) {
+    final double? value = carriedFloat;
+    if (value == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ShiftNotice(
+        key: const Key('shift-carried-float-notice'),
+        message: value > 0
+            ? 'ستُنقل عهدة الوردية السابقة تلقائياً: ${ShiftFormat.money(value)}. لا تحتاج لإدخال شيء.'
+            : 'لا توجد عهدة من الوردية السابقة. اختر "عهدة جديدة" إذا كان بالدرج عهدة.',
+        tone: ShiftTone.accent,
+      ),
+    );
   }
 }
 

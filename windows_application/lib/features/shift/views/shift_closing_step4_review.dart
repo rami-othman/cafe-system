@@ -46,6 +46,7 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
       final CashCountResult cash = state.cashCount!;
       final BarCountTemplate bar = state.barTemplate!;
       final ShiftAssessment assessment = state.assessment!;
+      final double floatAmount = snapshot.drawer.floatAmount;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,18 +99,22 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                     children: <Widget>[
                       ShiftKeyValueRow(
                         label: ShiftStrings.openingFloat,
+                        hint: ShiftStrings.hintOpeningFloat,
                         value: ShiftFormat.money(snapshot.drawer.openingFloat),
                       ),
                       ShiftKeyValueRow(
                         label: ShiftStrings.expectedCash,
+                        hint: ShiftStrings.hintExpectedCash,
                         value: ShiftFormat.money(cash.expected),
                       ),
                       ShiftKeyValueRow(
                         label: ShiftStrings.actualCash,
+                        hint: ShiftStrings.hintActualCash,
                         value: ShiftFormat.money(cash.actual),
                       ),
                       ShiftKeyValueRow(
                         label: ShiftStrings.cashDifference,
+                        hint: ShiftStrings.hintCashDifference,
                         value: ShiftFormat.signedMoney(cash.difference),
                         valueColor: cash.isBalanced
                             ? ShiftColors.matchInk
@@ -219,9 +224,14 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
           if (state.preview?.destinationName != null) ...<Widget>[
             ShiftNotice(
               tone: ShiftTone.neutral,
+              hint: ShiftStrings.hintTransfer,
               message: () {
+                // The off-books float stays in the drawer on top of whatever
+                // the ledger-side close configuration keeps.
                 final double transferAmount =
-                    cash.actual - state.preview!.continuationCashAfterTransfer;
+                    cash.actual -
+                    floatAmount -
+                    state.preview!.continuationCashAfterTransfer;
                 return transferAmount <= kShiftEpsilon
                     ? ShiftStrings.transferNoneNeeded
                     : ShiftStrings.transferWillMove(
@@ -230,7 +240,9 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                       );
               }(),
               detail: ShiftStrings.transferFloatLeft(
-                ShiftFormat.money(state.preview!.continuationCashAfterTransfer),
+                ShiftFormat.money(
+                  floatAmount + state.preview!.continuationCashAfterTransfer,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),

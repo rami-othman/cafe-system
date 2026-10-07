@@ -121,7 +121,12 @@ class ShiftController extends Controller
     public function open(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)], 'userId' => ['prohibited'], 'openingCash' => ['required', 'numeric', 'min:0'], 'fundOpeningCash' => ['sometimes', 'boolean'], 'note' => ['nullable', 'string', 'max:4000']]);
+        $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)], 'userId' => ['prohibited'], 'openingCash' => ['nullable', 'numeric', 'min:0'], 'fundOpeningCash' => ['sometimes', 'boolean'],
+            // The float (عهدة) is carried from the previous shift unless the cashier sets a new one.
+            'newFloat' => ['sometimes', 'boolean'], 'floatAmount' => ['nullable', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000']]);
+        if (($data['newFloat'] ?? false) && ! isset($data['floatAmount'])) {
+            throw ValidationException::withMessages(['floatAmount' => __('shifts.float_amount_required')]);
+        }
         $this->branches->authorizeRequestBranch($request, (int) $data['branchId']);
         $actor = $request->attributes->get('auth_user');
         try {
@@ -133,9 +138,16 @@ class ShiftController extends Controller
                     throw ValidationException::withMessages(['branchId' => __('shifts.drawer_has_open_shift')]);
                 }
                 $ledgerCash = $this->readiness->drawerLedgerBalance($tenantId, $drawer);
-                $openingCents = Money::cents($data['openingCash'], 'openingCash');
                 $ledgerCents = Money::cents($ledgerCash);
-                if (($data['fundOpeningCash'] ?? false) && $ledgerCents >= 0 && $openingCents > $ledgerCents) {
+                // The float is physical cash outside the books, so the opening ledger is simply the drawer's book balance.
+                // A cashier-typed `openingCash` is only the legacy ledger-count path and must still match it.
+                // Clients that still send `openingCash` keep the original on-ledger float behaviour; a request without it uses the off-books float.
+                $legacyCount = array_key_exists('openingCash', $data) && $data['openingCash'] !== null && ! ($data['newFloat'] ?? false);
+                $openingCents = $legacyCount ? Money::cents($data['openingCash'], 'openingCash') : $ledgerCents;
+                if (! $legacyCount && $ledgerCents < 0) {
+                    throw ValidationException::withMessages(['branchId' => __('shifts.ledger_negative', ['ledger' => $ledgerCash])]);
+                }
+                if ($legacyCount && ($data['fundOpeningCash'] ?? false) && $ledgerCents >= 0 && $openingCents > $ledgerCents) {
                     $safe = $this->readiness->destinationLocation($tenantId, (int) $data['branchId'], (int) $config['destination']->id, true);
                     $amount = $openingCents - $ledgerCents;
                     if (! $safe || Money::cents($this->readiness->drawerLedgerBalance($tenantId, $safe)) < $amount) {
@@ -149,13 +161,16 @@ class ShiftController extends Controller
                     ], (int) $actor->id);
                     $ledgerCash = $this->readiness->drawerLedgerBalance($tenantId, $drawer);
                 }
-                if (Money::cents($data['openingCash'], 'openingCash') !== Money::cents($ledgerCash)) {
+                if ($legacyCount && $openingCents !== Money::cents($ledgerCash)) {
                     throw ValidationException::withMessages(['openingCash' => __('shifts.opening_cash_mismatch', ['ledger' => $ledgerCash])]);
                 }
+                $floatCents = ($data['newFloat'] ?? false)
+                    ? Money::cents((string) $data['floatAmount'], 'floatAmount')
+                    : Money::cents($this->readiness->carriedFloat($tenantId, $drawer, $config['closingFloat'], $ledgerCents));
                 $this->closer->lockShiftNumbering($tenantId);
                 $now = now();
                 // Snapshot the close configuration: later branch edits never mutate an open shift.
-                $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $config['destination']->id, 'closing_float_amount' => $config['closingFloat'], 'shift_number' => $this->closer->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
+                $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $config['destination']->id, 'closing_float_amount' => $legacyCount ? $config['closingFloat'] : '0.00', 'float_amount' => $legacyCount ? null : Money::decimal($floatCents), 'shift_number' => $this->closer->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => Money::decimal($openingCents), 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
 
                 return DB::table('shifts')->where('id', $id)->first();
             });
@@ -197,6 +212,16 @@ class ShiftController extends Controller
         ]);
         $tenantId = TenantContext::id($request);
         $actor = $request->attributes->get('auth_user');
+        // The cashier counts everything in the drawer; the float (عهدة) is off the books, so only the rest is
+        // compared with the ledger, varied and transferred. Everything below works on that ledger-side amount.
+        $floatCents = Money::cents((string) (DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->value('float_amount') ?? '0'));
+        if ($floatCents > 0) {
+            $physicalCents = Money::cents((string) $data['closingCash'], 'closingCash');
+            if ($physicalCents < $floatCents) {
+                throw ValidationException::withMessages(['closingCash' => __('shifts.counted_below_shift_float', ['counted' => Money::decimal($physicalCents), 'float' => Money::decimal($floatCents)])]);
+            }
+            $data['closingCash'] = Money::decimal($physicalCents - $floatCents);
+        }
         try {
             $closed = DB::transaction(function () use ($request, $data, $tenantId, $actor, $shift): object {
                 if (! empty($data['closingDate'])) {
@@ -354,7 +379,7 @@ class ShiftController extends Controller
                 'amount' => $transferRow->amount ?? null,
                 'date' => $transferRow->transfer_date ?? null,
                 'destinationName' => $destinationName,
-                'floatLeft' => $shift->closing_float_amount,
+                'floatLeft' => $shift->float_amount ?? $shift->closing_float_amount,
                 'skippedReason' => $shift->close_transfer_id ? null : 'المبلغ المعدود يساوي العهدة المتبقية، لا يوجد ما يُحوَّل',
             ],
             'unexplainedCash' => Money::decimal(Money::cents($shift->expected_cash ?? '0') - Money::cents($snapshot['drawer']['expectedCash'] ?? '0')),
@@ -369,7 +394,8 @@ class ShiftController extends Controller
     {
         $presentation = ShiftClosePresentation::for($shift);
 
-        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'closeType' => $shift->close_type, 'closeMode' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'financialLocationId' => $shift->financial_location_id, 'closeDestinationFinancialLocationId' => $shift->close_destination_financial_location_id, 'closingFloatAmount' => $shift->closing_float_amount, 'closeTransferId' => $shift->close_transfer_id, 'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => $presentation['expectedCash'] === null ? null : (float) $presentation['expectedCash'], 'cashDifference' => $presentation['cashDifference'] === null ? null : (float) $presentation['cashDifference'], 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
+        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'closeType' => $shift->close_type, 'closeMode' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'financialLocationId' => $shift->financial_location_id, 'closeDestinationFinancialLocationId' => $shift->close_destination_financial_location_id, 'closingFloatAmount' => $shift->closing_float_amount, 'closeTransferId' => $shift->close_transfer_id, 'floatAmount' => $shift->float_amount === null ? null : (float) $shift->float_amount, 'physicalOpeningCash' => (float) $shift->opening_cash + (float) ($shift->float_amount ?? 0), 'physicalClosingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash + (float) ($shift->float_amount ?? 0), 'physicalExpectedCash' => $presentation['expectedCash'] === null ? null : (float) $presentation['expectedCash'] + (float) ($shift->float_amount ?? 0),
+            'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => $presentation['expectedCash'] === null ? null : (float) $presentation['expectedCash'], 'cashDifference' => $presentation['cashDifference'] === null ? null : (float) $presentation['cashDifference'], 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
     }
 
     private function timestamp(?string $value): ?string
