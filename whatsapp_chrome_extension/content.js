@@ -72,7 +72,23 @@
   }
 
   async function main() {
-    // A job survives the reload that opens the customer's chat.
+    // A receipt requested by the POS web page: the extension has already pointed
+    // this tab at the customer's chat. A freshly opened tab may ask a moment
+    // before the job is stored, so try a few times.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const taken = await ask({ type: 'takeJob' });
+      if (taken && taken.job) {
+        try {
+          await run(taken.job);
+        } catch (error) {
+          await report(taken.job.id, 'uncertain', String(error));
+        }
+        break;
+      }
+      await sleep(700);
+    }
+
+    // A job from the Windows app survives the reload that opens the chat.
     const pending = sessionStorage.getItem(KEY);
     if (pending) {
       sessionStorage.removeItem(KEY);

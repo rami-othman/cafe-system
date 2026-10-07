@@ -7,6 +7,12 @@ Future<FileHandoffResult> handOffImage(Uint8List bytes, String fileName) async =
 
 Future<bool> openInChrome(String url) async => false;
 
+void reserveChatTab() {}
+
+bool openReservedChat(String url) => false;
+
+void releaseChatTab() {}
+
 Future<void> startWhatsAppBridge() async {}
 
 Future<bool> isWhatsAppExtensionConnected() async => false;
