@@ -122,7 +122,10 @@ class ReceiptWhatsAppSender {
     final Uri chat = Uri.https('web.whatsapp.com', '/send', <String, String>{
       'phone': phone,
     });
-    final bool opened = await openInChrome(chat.toString()) || await _open(chat);
+    final bool opened =
+        openReservedChat(chat.toString()) ||
+        await openInChrome(chat.toString()) ||
+        await _open(chat);
     if (!opened) {
       return WhatsAppSendOutcome(WhatsAppSendStatus.failed, detail: detail);
     }

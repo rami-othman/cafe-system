@@ -34,6 +34,12 @@ Future<FileHandoffResult> handOffImage(Uint8List bytes, String fileName) async {
   }
 }
 
+void reserveChatTab() {}
+
+bool openReservedChat(String url) => false;
+
+void releaseChatTab() {}
+
 Future<void> startWhatsAppBridge() => bridge.startWhatsAppBridge();
 
 Future<bool> isWhatsAppExtensionConnected() => bridge.isWhatsAppExtensionConnected();

@@ -21,6 +21,7 @@ import '../models/pos_menu_runtime_models.dart';
 import '../models/pos_published_menu_presenter.dart';
 import '../models/product_detail_load_result.dart';
 import '../models/product_customization.dart';
+import '../services/file_handoff.dart';
 import '../services/receipt_whatsapp_sender.dart';
 import '../utils/whatsapp_phone.dart';
 import '../widgets/whatsapp_phone_dialog.dart';
@@ -557,6 +558,8 @@ class _PosScreenState extends State<PosScreen> {
     required OrderReceipt receipt,
     required Future<Uint8List> Function() buildImage,
   }) async {
+    // Web only: reserve the chat tab now, while the click still counts.
+    reserveChatTab();
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     void say(String text) => messenger
       ..hideCurrentSnackBar()
@@ -587,7 +590,10 @@ class _PosScreenState extends State<PosScreen> {
         context,
         initialValue: savedPhone,
       );
-      if (phone == null) return;
+      if (phone == null) {
+        releaseChatTab();
+        return;
+      }
     }
 
     try {
@@ -607,6 +613,8 @@ class _PosScreenState extends State<PosScreen> {
       );
     } catch (error) {
       say('${texts[WhatsAppSendStatus.failed]!} ($error)');
+    } finally {
+      releaseChatTab();
     }
   }
 
