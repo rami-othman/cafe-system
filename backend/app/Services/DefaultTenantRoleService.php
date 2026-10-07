@@ -29,6 +29,9 @@ class DefaultTenantRoleService
         'finance.periods.manage',
         'finance.periods.lock',
         'finance.accounts.manage',
+        'finance.partners.view',
+        'finance.partners.manage',
+        'finance.partners.distribute',
     ];
 
     /** @return array<string, TenantRole> */

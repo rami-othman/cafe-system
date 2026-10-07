@@ -33,14 +33,14 @@ void main() {
         await _pumpApp(tester);
         expect(
           appRouter.state.uri.path,
-          AppRoutes.pos,
-          reason: '$forbidden must redirect a cashier back to POS',
+          AppRoutes.dashboard,
+          reason: '$forbidden must redirect a cashier back to the dashboard',
         );
       }
     },
   );
 
-  testWidgets('cashier is routed to the limited Finance workspace', (
+  testWidgets('cashier cannot open the Finance landing page', (
     WidgetTester tester,
   ) async {
     await _configureAuthenticatedApp(role: 'employee');
@@ -48,7 +48,24 @@ void main() {
     appRouter.go(AppRoutes.finance);
     await _pumpApp(tester);
 
-    expect(appRouter.state.uri.path, AppRoutes.financeReceiptVouchers);
+    expect(appRouter.state.uri.path, AppRoutes.dashboard);
+  });
+
+  testWidgets('cashier opens only the Finance workspaces they are granted', (
+    WidgetTester tester,
+  ) async {
+    await _configureAuthenticatedApp(
+      role: 'employee',
+      financeCapabilities: const <String>{'finance.vouchers.view'},
+    );
+
+    appRouter.go(AppRoutes.financeVouchers);
+    await _pumpApp(tester);
+    expect(appRouter.state.uri.path, AppRoutes.financeVouchers);
+
+    appRouter.go(AppRoutes.financePurchases);
+    await _pumpApp(tester);
+    expect(appRouter.state.uri.path, AppRoutes.dashboard);
   });
 
   testWidgets(
@@ -67,21 +84,22 @@ void main() {
     (WidgetTester tester) async {
       await _configureAuthenticatedApp(role: 'employee');
 
-    for (final String allowed in <String>[
-      AppRoutes.orders,
-      AppRoutes.discounts,
-      AppRoutes.settings,
-      AppRoutes.shiftCurrent,
-    ]) {
-      appRouter.go(allowed);
-      await _pumpApp(tester);
-      expect(
-        appRouter.state.uri.path,
-        allowed,
-        reason: '$allowed must remain reachable for a cashier',
-      );
-    }
-  });
+      for (final String allowed in <String>[
+        AppRoutes.orders,
+        AppRoutes.discounts,
+        AppRoutes.settings,
+        AppRoutes.shiftCurrent,
+      ]) {
+        appRouter.go(allowed);
+        await _pumpApp(tester);
+        expect(
+          appRouter.state.uri.path,
+          allowed,
+          reason: '$allowed must remain reachable for a cashier',
+        );
+      }
+    },
+  );
 
   testWidgets('cashier with granted customer capability keeps /customers', (
     WidgetTester tester,
@@ -118,6 +136,7 @@ void main() {
 Future<void> _configureAuthenticatedApp({
   required String role,
   bool canManageCustomers = false,
+  Set<String> financeCapabilities = const <String>{},
 }) async {
   await serviceLocator.reset();
   serviceLocator.registerLazySingleton<AuthSessionStorage>(
@@ -129,6 +148,7 @@ Future<void> _configureAuthenticatedApp({
           name: 'Test User',
           role: role,
           email: '$role@example.test',
+          financeCapabilities: financeCapabilities,
         ),
         tenant: const AuthTenant(id: 1, name: 'Test Cafe'),
         mustChangePassword: false,

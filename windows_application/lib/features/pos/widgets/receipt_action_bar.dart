@@ -13,11 +13,13 @@ class ReceiptActionBar extends StatelessWidget {
     required this.onSendViaWhatsApp,
     required this.onPrintReceipt,
     this.isPrinting = false,
+    this.isSendingWhatsApp = false,
   });
 
   final VoidCallback onSendViaWhatsApp;
   final VoidCallback onPrintReceipt;
   final bool isPrinting;
+  final bool isSendingWhatsApp;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +38,13 @@ class ReceiptActionBar extends StatelessWidget {
           SizedBox(
             height: AppSizes.receiptActionButtonHeight,
             child: OutlinedButton.icon(
-              onPressed: onSendViaWhatsApp,
-              icon: const Icon(Icons.send_outlined, size: 18),
+              onPressed: isSendingWhatsApp ? null : onSendViaWhatsApp,
+              icon: isSendingWhatsApp
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_outlined, size: 18),
               label: Text(context.l10n.posSendViaWhatsApp),
               style: OutlinedButton.styleFrom(
                 backgroundColor: AppColors.white,

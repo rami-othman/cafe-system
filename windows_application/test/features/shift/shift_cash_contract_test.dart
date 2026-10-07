@@ -5,6 +5,7 @@ import 'package:windows_application/features/shift/models/shift_models.dart';
 import 'package:windows_application/features/shift/repositories/shift_repository.dart';
 
 void main() {
+  floatContractTests();
   test(
     'API drawer keeps customer settlements and authoritative expected cash',
     () async {
@@ -103,4 +104,35 @@ void main() {
       expect(drawer.expected, 215);
     },
   );
+}
+
+void floatContractTests() {
+  test('the float is part of the physical figures the cashier counts', () async {
+    final dio = Dio();
+    final api = DioApiClient(dio: dio);
+    final snapshot = <String, dynamic>{
+      'identity': {'id': 8, 'shiftNumber': 'SH-8', 'openedAt': '2026-09-25T08:00:00Z'},
+      'sales': {'grossSales': '0.00', 'discounts': '0.00', 'refunds': '0.00', 'salesSum': '0.00', 'salesTotal': '0.00', 'salesNet': '0.00'},
+      'drawer': {
+        'openingFloat': '0.00',
+        'physicalOpeningCash': '500.00',
+        'floatAmount': '500.00',
+        'cashSales': '500.00',
+        'expectedCash': '500.00',
+        'physicalExpectedCash': '1000.00',
+      },
+    };
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) => handler.resolve(
+          Response(requestOptions: options, statusCode: 200, data: {'data': snapshot}),
+        ),
+      ),
+    );
+    final loaded = (await ShiftRepository(apiClient: api).loadOpenShift())!;
+
+    expect(loaded.drawer.floatAmount, 500);
+    expect(loaded.drawer.openingFloat, 500);
+    expect(loaded.drawer.expected, 1000);
+  });
 }

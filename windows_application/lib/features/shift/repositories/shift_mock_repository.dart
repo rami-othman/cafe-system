@@ -103,16 +103,16 @@ class ShiftMockRepository extends ShiftRepository {
 
   @override
   Future<ShiftSnapshot> openShift({
-    required double openingFloat,
+    double? openingFloat,
     String note = '',
     int? branchId,
-    bool fundOpeningCash = false,
+    bool newFloat = false,
   }) async {
     await Future<void>.delayed(_latency);
     final DateTime now = _clock();
     final ShiftSnapshot base = ShiftMockData.freshSnapshot(
       now: now,
-      openingFloat: openingFloat,
+      openingFloat: openingFloat ?? 0,
       openingNote: note,
     );
     _scenario = ShiftScenario.balanced;
@@ -155,6 +155,9 @@ class ShiftMockRepository extends ShiftRepository {
     if (fromSession != null) return fromSession;
     return ShiftMockData.archivedResult(shiftNumber, _clock());
   }
+
+  @override
+  Future<double?> loadCarriedFloat({int? branchId}) async => null;
 
   /// The most recently closed shift, shown as continuity on the "no open
   /// shift" screen.

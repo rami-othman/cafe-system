@@ -166,10 +166,29 @@ class AppSidebar extends StatelessWidget {
       'manufacturing.view',
     );
     final Iterable<_SidebarDestination> destinations = isCashier
-        ? _cashierDestinations.where(
-            (_SidebarDestination destination) =>
-                destination.id != 'finance' || canOpenFinance,
-          )
+        ? _cashierDestinations
+              .where(
+                (_SidebarDestination destination) =>
+                    destination.id != 'finance' || canOpenFinance,
+              )
+              .map(
+                // An operator whose only finance grant is the investor portal
+                // lands on it instead of the (forbidden) vouchers workspace.
+                (_SidebarDestination destination) =>
+                    destination.id == 'finance' &&
+                        !financeCapabilities.any(
+                          CashierAccess.financeRoutePermissions.values
+                              .where((String p) => p != 'finance.partners.portal')
+                              .contains,
+                        )
+                    ? _SidebarDestination(
+                        destination.id,
+                        destination.icon,
+                        CashierRoutes.financeInvestor,
+                        destination.labelId,
+                      )
+                    : destination,
+              )
         : _destinations
               .where(
                 (destination) =>

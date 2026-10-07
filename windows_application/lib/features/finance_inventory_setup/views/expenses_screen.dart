@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../fixed_assets/data/fa_api.dart' show FaApi, Json, asJsonList;
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
 import '../widgets/cash_source_field.dart';
@@ -836,6 +837,11 @@ class _ExpenseDetailDialogState extends State<_ExpenseDetailDialog> {
                     FinanceInfoItem('المبلغ قبل الضريبة', _money(e.amount)),
                     FinanceInfoItem('الضريبة', _money(e.taxAmount)),
                     if (e.notes != null) FinanceInfoItem('ملاحظات', e.notes!),
+                    if (e.fixedAssetName != null)
+                      FinanceInfoItem(
+                        'الأصل المرتبط',
+                        '${e.fixedAssetName} (${<String, String>{'maintenance': 'صيانة دورية', 'repair': 'إصلاح', 'other': 'أخرى'}[e.assetExpenseKind] ?? 'أخرى'})',
+                      ),
                     if (e.paymentMethodName != null)
                       FinanceInfoItem('طريقة الدفع', e.paymentMethodName!),
                     if (e.financialLocationName != null)
@@ -1186,11 +1192,36 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
   late String _date;
   String? _error;
   bool _saving = false;
+  // Optional link to a fixed asset (maintenance tracking). Hidden when the user cannot see assets.
+  int? _assetId;
+  String _assetKind = 'maintenance';
+  List<Json> _assets = const <Json>[];
+  bool _assetsLoaded = false;
+
+  Future<void> _loadAssets() async {
+    try {
+      final Json d = await FaApi().register(<String, dynamic>{});
+      final List<Json> rows = asJsonList(d)
+          .where((Json a) => a['status'] == 'active' || a['status'] == 'fully_depreciated')
+          .toList(growable: false);
+      if (mounted) {
+        setState(() {
+          _assets = rows;
+          _assetsLoaded = true;
+        });
+      }
+    } catch (_) {
+      // no access to assets (or offline): the field simply stays hidden and the link is left untouched
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     final ExpenseRecord? current = widget.current;
+    _assetId = current?.fixedAssetId;
+    _assetKind = current?.assetExpenseKind ?? 'maintenance';
+    _loadAssets();
     _amount = TextEditingController(text: current?.amount);
     _tax = TextEditingController(text: current?.taxAmount ?? '0.00');
     _description = TextEditingController(text: current?.description);
@@ -1250,6 +1281,10 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
         'expenseDate': _date,
         'description': _description.text.trim(),
         'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        if (_assetsLoaded) ...<String, dynamic>{
+          'fixedAssetId': _assetId,
+          if (_assetId != null) 'assetExpenseKind': _assetKind,
+        },
         if (widget.current == null)
           'idempotencyKey': 'expense-${DateTime.now().microsecondsSinceEpoch}',
       });
@@ -1361,6 +1396,42 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
               controller: _notes,
               decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
             ),
+            if (_assetsLoaded) ...<Widget>[
+              const SizedBox(height: FinanceSpace.md),
+              DropdownButtonFormField<int?>(
+                initialValue: _assetId,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'مرتبط بأصل ثابت (اختياري)'),
+                items: <DropdownMenuItem<int?>>[
+                  const DropdownMenuItem<int?>(value: null, child: Text('بدون')),
+                  ..._assets.map(
+                    (Json a) => DropdownMenuItem<int?>(
+                      value: a['id'] as int,
+                      child: Text('${a['code']} — ${a['nameAr']}'),
+                    ),
+                  ),
+                  if (_assetId != null && !_assets.any((Json a) => a['id'] == _assetId))
+                    DropdownMenuItem<int?>(
+                      value: _assetId,
+                      child: Text(widget.current?.fixedAssetName ?? 'أصل #$_assetId'),
+                    ),
+                ],
+                onChanged: (int? v) => setState(() => _assetId = v),
+              ),
+              if (_assetId != null) ...<Widget>[
+                const SizedBox(height: FinanceSpace.md),
+                DropdownButtonFormField<String>(
+                  initialValue: _assetKind,
+                  decoration: const InputDecoration(labelText: 'نوع المصروف على الأصل'),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(value: 'maintenance', child: Text('صيانة دورية')),
+                    DropdownMenuItem<String>(value: 'repair', child: Text('إصلاح')),
+                    DropdownMenuItem<String>(value: 'other', child: Text('أخرى')),
+                  ],
+                  onChanged: (String? v) => setState(() => _assetKind = v ?? _assetKind),
+                ),
+              ],
+            ],
             if (_error != null) ...<Widget>[
               const SizedBox(height: FinanceSpace.sm),
               Text(_error!, style: const TextStyle(color: FinanceColors.danger)),

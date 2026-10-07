@@ -31,6 +31,9 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
     tax: readDouble(json['taxTotal']),
     taxRate: readDouble(json['taxRate'], fallback: TaxConfig.defaultTaxRate),
     total: total,
+    customerPhone: readString(json['customerPhone']).trim().isEmpty
+        ? null
+        : readString(json['customerPhone']).trim(),
     payment: PaymentResult(
       method: paymentMethodFromApi(readString(payment['method'])),
       totalDue: total,

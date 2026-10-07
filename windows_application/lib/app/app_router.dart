@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import 'menu_management_route_locations.dart';
 import 'customer_management_route_locations.dart';
+import 'shell_page_refresh.dart';
 import 'shift_route_locations.dart';
 
 import '../core/services/service_locator.dart';
@@ -57,6 +58,11 @@ import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen
 import '../features/finance_inventory_setup/views/invoice_type_catalog_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
 import '../features/finance_inventory_setup/views/account_mappings_screen.dart';
+import '../features/fixed_assets/views/asset_card_screen.dart';
+import '../features/fixed_assets/views/fixed_assets_screen.dart';
+import '../features/partners/views/partner_statement_screen.dart';
+import '../features/partners/views/investor_portal_screen.dart';
+import '../features/partners/views/partners_screen.dart';
 import '../features/finance_inventory_setup/views/finance_operations_screen.dart';
 import '../features/finance_inventory_setup/views/finance_overview.dart';
 import '../features/finance_inventory_setup/views/finance_transactions.dart';
@@ -1828,6 +1834,34 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
+          path: AppRoutes.financeAssets,
+          builder: (context, state) => const FixedAssetsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAssetDetail,
+          builder: (context, state) {
+            final int? assetId = parsePositiveRouteId(state.pathParameters['assetId']);
+            if (assetId == null) return const _InvalidCatalogRouteScreen();
+            return AssetCardScreen(key: ValueKey<int>(assetId), assetId: assetId);
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeInvestor,
+          builder: (context, state) => const InvestorPortalScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financePartners,
+          builder: (context, state) => const PartnersScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financePartnerDetail,
+          builder: (context, state) {
+            final int? partnerId = parsePositiveRouteId(state.pathParameters['partnerId']);
+            if (partnerId == null) return const _InvalidCatalogRouteScreen();
+            return PartnerStatementScreen(key: ValueKey<int>(partnerId), partnerId: partnerId);
+          },
+        ),
+        GoRoute(
           path: AppRoutes.financeAccountMappings,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
@@ -2263,7 +2297,11 @@ final GoRouter appRouter = GoRouter(
                   final branchId = context.read<PosCubit>().state.branchId;
                   return cubit.selectBranch(branchId);
                 },
-                child: const _BranchFollowingReport(),
+                child: RegisterShellRefresh(
+                  refresh: (BuildContext context) =>
+                      context.read<ReportsOverviewCubit>().load(force: true),
+                  child: const _BranchFollowingReport(),
+                ),
               ),
             ),
           ),
@@ -2486,7 +2524,11 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.dashboard,
           builder: (context, state) => BlocProvider<CashierDashboardCubit>(
             create: (_) => serviceLocator<CashierDashboardCubit>(),
-            child: const CashierDashboardScreen(),
+            child: RegisterShellRefresh(
+              refresh: (BuildContext context) =>
+                  context.read<CashierDashboardCubit>().refresh(),
+              child: const CashierDashboardScreen(),
+            ),
           ),
         ),
         GoRoute(
@@ -2494,8 +2536,12 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.cashierInventory,
           builder: (context, state) => BlocProvider<CashierInventoryCubit>(
             create: (_) => serviceLocator<CashierInventoryCubit>(),
-            child: CashierInventoryScreen(
-              initialState: state.uri.queryParameters['state'],
+            child: RegisterShellRefresh(
+              refresh: (BuildContext context) =>
+                  context.read<CashierInventoryCubit>().load(),
+              child: CashierInventoryScreen(
+                initialState: state.uri.queryParameters['state'],
+              ),
             ),
           ),
         ),
@@ -2613,6 +2659,9 @@ String _financeActiveTabFor(String path) {
     return 'accounts';
   }
   if (path.startsWith(AppRoutes.financeAccountingPeriods)) return 'periods';
+  if (path.startsWith(AppRoutes.financeAssets)) return 'assets';
+  if (path.startsWith(AppRoutes.financeInvestor)) return 'investor';
+  if (path.startsWith(AppRoutes.financePartners)) return 'partners';
   if (path.startsWith(AppRoutes.financePaymentMethods)) return 'settings';
   if (path.startsWith(AppRoutes.financeWarehouses)) return 'settings';
   if (path.startsWith(AppRoutes.financeSettings)) return 'settings';
@@ -2690,15 +2739,13 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
         hasActiveCart: pos.hasCartItems || pos.currentOrderId != null,
       );
     },
-    AppRoutes.dashboard =>
-      (BuildContext context) => context.read<CashierDashboardCubit>().refresh(),
-    AppRoutes.cashierInventory =>
-      (BuildContext context) => context.read<CashierInventoryCubit>().load(),
+    // These pages provide their own cubit below the shell, so the top bar
+    // cannot read it; each registers its refresh via RegisterShellRefresh.
+    AppRoutes.dashboard ||
+    AppRoutes.cashierInventory ||
+    AppRoutes.reports => (BuildContext context) => ShellPageRefresh.run(),
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
-    AppRoutes.reports =>
-      (BuildContext context) =>
-          context.read<ReportsOverviewCubit>().load(force: true),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     AppRoutes.menuManagementProducts =>
@@ -2962,6 +3009,11 @@ abstract final class AppRoutes {
   static const String financeVouchers = '/finance/vouchers';
   static const String financeAccountsCanonical = '/finance/accounts';
   static const String financeAccountMappings = '/finance/account-mappings';
+  static const String financeAssets = '/finance/assets';
+  static const String financeAssetDetail = '/finance/assets/:assetId';
+  static const String financeInvestor = '/finance/investor';
+  static const String financePartners = '/finance/partners';
+  static const String financePartnerDetail = '/finance/partners/:partnerId';
   static const String financeAccountDetail = '/finance/accounts/:accountId';
   static const String financeJournalEntriesCanonical =
       '/finance/journal-entries';

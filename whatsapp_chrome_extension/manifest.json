@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Cafe 618 WhatsApp Sender",
+  "version": "1.0.0",
+  "description": "Lets the Cafe 618 POS send receipt images through your own WhatsApp Web tab.",
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "http://127.0.0.1:47618/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

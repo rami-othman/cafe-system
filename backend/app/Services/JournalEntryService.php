@@ -12,6 +12,13 @@ class JournalEntryService
 {
     public function __construct(private readonly OperationalAuditService $audit, private readonly AccountingPeriodGuard $periods) {}
 
+    /**
+     * Lines may carry their own 'branchId' (null = company-wide) and 'costCenterId'. A line
+     * without the 'branchId' key inherits the entry's branch. When the lines span several
+     * branches, every branch must balance on its own; with 'autoBalanceBranches' => true the
+     * service adds the balancing lines on the inter-branch account (جاري الفروع) instead.
+     */
+
     public function createOpeningDraft(Request $request, int $tenantId, int $periodId, array $data, int $actorId): int
     {
         return DB::transaction(function () use ($request, $tenantId, $periodId, $data, $actorId): int {
@@ -43,6 +50,7 @@ class JournalEntryService
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
         $this->assertBranch($tenantId, $data['branchId'] ?? null, $actorId);
+        $data['lines'] = $this->resolveLineDimensions($tenantId, $data, $actorId);
         $this->validateLines($tenantId, $data['lines']);
 
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId): int {
@@ -69,6 +77,8 @@ class JournalEntryService
                     'journal_entry_id' => $entryId,
                     'financial_account_id' => (int) $line['accountId'],
                     'financial_location_id' => isset($line['locationId']) ? (int) $line['locationId'] : null,
+                    'branch_id' => $line['branchId'],
+                    'cost_center_id' => $line['costCenterId'],
                     'line_number' => $index + 1,
                     'description' => $line['description'] ?? null,
                     'debit' => Money::decimal(Money::cents($line['debit'] ?? '0', "lines.$index.debit")),
@@ -135,13 +145,23 @@ class JournalEntryService
      * undone, when in fact both the original and its reversal remain posted
      * forever, side by side, as two balanced entries.
      */
-    public function reverse(Request $request, int $tenantId, int $entryId, ?int $actorId): int
+    /** Entries owned by a module ledger (assets, partners): reversing them directly would desync that ledger. */
+    public const MODULE_MANAGED_SOURCES = [
+        'asset_acquisition' => 'الأصول الثابتة', 'asset_addition' => 'الأصول الثابتة', 'asset_maintenance' => 'الأصول الثابتة', 'asset_expense' => 'الأصول الثابتة', 'asset_disposal' => 'الأصول الثابتة',
+        'asset_transfer' => 'الأصول الثابتة', 'asset_depreciation' => 'مذكرات الاهتلاك',
+        'partner_transaction' => 'الشركاء', 'profit_distribution' => 'توزيع الأرباح', 'overhead_allocation' => 'توزيع مصاريف الإدارة',
+    ];
+
+    public function reverse(Request $request, int $tenantId, int $entryId, ?int $actorId, bool $sourceManaged = false, ?string $reversalDate = null): int
     {
-        return DB::transaction(function () use ($request, $tenantId, $entryId, $actorId): int {
+        return DB::transaction(function () use ($request, $tenantId, $entryId, $actorId, $sourceManaged, $reversalDate): int {
             $original = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('id', $entryId)->lockForUpdate()->first();
             abort_unless($original, 404, 'Journal entry not found.');
             if ($original->status !== 'posted') {
                 throw ValidationException::withMessages(['entry' => 'Only a posted journal entry can be reversed.']);
+            }
+            if (! $sourceManaged && isset(self::MODULE_MANAGED_SOURCES[$original->source_type])) {
+                throw ValidationException::withMessages(['entry' => 'هذا القيد ناتج عن شاشة «'.self::MODULE_MANAGED_SOURCES[$original->source_type].'»؛ اعكس العملية من هناك.']);
             }
             if ($original->source_type === 'sales_invoice'
                 && DB::table('customer_payments')->where('tenant_id', $tenantId)
@@ -167,11 +187,12 @@ class JournalEntryService
 
             $lines = DB::table('journal_entry_lines')->where('tenant_id', $tenantId)->where('journal_entry_id', $entryId)->orderBy('line_number')->get();
             $now = now();
+            $reversalOn = $reversalDate ?? $now->toDateString();
             $reversalId = (int) DB::table('journal_entries')->insertGetId([
                 'tenant_id' => $tenantId,
                 'branch_id' => $original->branch_id,
-                'entry_number' => $this->nextEntryNumber($tenantId, $now->toDateString()),
-                'entry_date' => $now->toDateString(),
+                'entry_number' => $this->nextEntryNumber($tenantId, $reversalOn),
+                'entry_date' => $reversalOn,
                 'source_type' => 'journal_reversal',
                 'source_id' => $entryId,
                 'source_event' => null,
@@ -189,6 +210,8 @@ class JournalEntryService
                     'journal_entry_id' => $reversalId,
                     'financial_account_id' => $line->financial_account_id,
                     'financial_location_id' => $line->financial_location_id,
+                    'branch_id' => $line->branch_id ?? $original->branch_id,
+                    'cost_center_id' => $line->cost_center_id ?? null,
                     'line_number' => $index + 1,
                     'description' => $line->description,
                     'debit' => $line->credit,
@@ -236,6 +259,57 @@ class JournalEntryService
         });
 
         return [$debit, $credit];
+    }
+
+    /** @return array<int, array<string,mixed>> lines with explicit branchId / costCenterId (+ inter-branch balancing lines) */
+    private function resolveLineDimensions(int $tenantId, array $data, ?int $actorId): array
+    {
+        $headerBranch = isset($data['branchId']) && $data['branchId'] ? (int) $data['branchId'] : null;
+        $lines = [];
+        $checkedBranches = [];
+        foreach (array_values($data['lines']) as $index => $line) {
+            $branch = array_key_exists('branchId', $line) ? ($line['branchId'] ? (int) $line['branchId'] : null) : $headerBranch;
+            if ($branch !== null && $branch !== $headerBranch && ! isset($checkedBranches[$branch])) {
+                $this->assertBranch($tenantId, $branch, $actorId);
+                $checkedBranches[$branch] = true;
+            }
+            $costCenter = isset($line['costCenterId']) && $line['costCenterId'] ? (int) $line['costCenterId'] : null;
+            if ($costCenter !== null && ! DB::table('cost_centers')->where('tenant_id', $tenantId)->where('id', $costCenter)
+                ->where('is_active', true)->whereNull('deleted_at')->exists()) {
+                throw ValidationException::withMessages(["lines.$index.costCenterId" => 'مركز الكلفة غير متاح.']);
+            }
+            $lines[] = ['branchId' => $branch, 'costCenterId' => $costCenter] + $line;
+        }
+
+        $net = [];
+        foreach ($lines as $index => $line) {
+            $key = $line['branchId'] === null ? 'company' : (string) $line['branchId'];
+            $net[$key] = ($net[$key] ?? 0)
+                + Money::cents($line['debit'] ?? '0', "lines.$index.debit")
+                - Money::cents($line['credit'] ?? '0', "lines.$index.credit");
+        }
+        if (count($net) < 2 || array_filter($net) === []) {
+            return $lines;
+        }
+        if (! ($data['autoBalanceBranches'] ?? false)) {
+            throw ValidationException::withMessages(['lines' => 'القيد موزع على أكثر من فرع: يجب أن يتوازن كل فرع لوحده (أو استخدم حساب جاري الفروع).']);
+        }
+        $clearing = app(InterBranchAccount::class)->id($tenantId);
+        foreach ($net as $key => $cents) {
+            if ($cents === 0) {
+                continue;
+            }
+            $lines[] = [
+                'accountId' => $clearing,
+                'branchId' => $key === 'company' ? null : (int) $key,
+                'costCenterId' => null,
+                'description' => 'موازنة جاري الفروع',
+                'debit' => $cents < 0 ? Money::decimal(-$cents) : '0.00',
+                'credit' => $cents > 0 ? Money::decimal($cents) : '0.00',
+            ];
+        }
+
+        return $lines;
     }
 
     private function validateLines(int $tenantId, array $lines): void

@@ -118,8 +118,17 @@ abstract final class AppTheme {
         thickness: 1,
       ),
       iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 22),
+      // exitDuration stays zero so a stale tooltip is closed before the next
+      // one is entered; otherwise Flutter shows the next one with no wait.
+      tooltipTheme: const TooltipThemeData(
+        waitDuration: tooltipDelay,
+        exitDuration: Duration.zero,
+      ),
     );
   }
+
+  /// How long the pointer must rest on something before its tooltip appears.
+  static const Duration tooltipDelay = Duration(milliseconds: 1250);
 
   static ThemeData get light => lightTheme;
 }

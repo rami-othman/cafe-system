@@ -19,6 +19,7 @@ class OrderReceipt extends Equatable {
     required this.payment,
     this.taxRate = TaxConfig.defaultTaxRate,
     this.customerName,
+    this.customerPhone,
   });
 
   final String orderNumber;
@@ -34,6 +35,7 @@ class OrderReceipt extends Equatable {
   final double total;
   final PaymentResult payment;
   final String? customerName;
+  final String? customerPhone;
 
   int get itemCount {
     return items.fold<int>(
@@ -57,5 +59,6 @@ class OrderReceipt extends Equatable {
     total,
     payment,
     customerName,
+    customerPhone,
   ];
 }

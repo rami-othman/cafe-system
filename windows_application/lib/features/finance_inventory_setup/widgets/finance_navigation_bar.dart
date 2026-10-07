@@ -98,6 +98,24 @@ class FinanceNavigationBar extends StatelessWidget {
       permission: 'finance.accounts.view',
     ),
     _FinanceDestination(
+      'assets',
+      '/finance/assets',
+      Icons.chair_alt_outlined,
+      permission: 'finance.assets.view',
+    ),
+    _FinanceDestination(
+      'partners',
+      '/finance/partners',
+      Icons.handshake_outlined,
+      permission: 'finance.partners.view',
+    ),
+    _FinanceDestination(
+      'investor',
+      '/finance/investor',
+      Icons.account_balance_wallet_outlined,
+      permission: 'finance.partners.portal',
+    ),
+    _FinanceDestination(
       'periods',
       '/finance/accounting-periods',
       Icons.calendar_month_outlined,
@@ -185,6 +203,9 @@ String financeSectionLabel(AppLocalizations l10n, String id) => switch (id) {
   'reports' => l10n.financeSectionReports,
   'accounts' => l10n.financeSectionAccounts,
   'periods' => l10n.financeSectionPeriods,
+  'assets' => 'الأصول الثابتة',
+  'partners' => 'الشركاء والمستثمرون',
+  'investor' => 'حسابي كمستثمر',
   'settings' => l10n.financeSectionSettings,
   _ => l10n.financeSectionOverview,
 };

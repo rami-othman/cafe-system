@@ -29,6 +29,9 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
       if (isClosed) return;
       if (snapshot == null) {
         final ShiftHistoryEntry? last = await repository.loadLastShift();
+        final double? carried = await repository.loadCarriedFloat(
+          branchId: branchId,
+        );
         if (isClosed) return;
         emit(
           state.copyWith(
@@ -36,6 +39,7 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
             clearSnapshot: true,
             clearAssessment: true,
             lastShift: last,
+            carriedFloat: carried,
           ),
         );
         return;
@@ -94,9 +98,14 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
     return parsed;
   }
 
-  Future<bool> openShift({bool fundOpeningCash = false}) async {
-    final double? amount = validateOpeningFloat();
-    if (amount == null) return false;
+  /// Opens with the previous shift's float, or with [newFloat] set to the
+  /// typed amount (which replaces the old float whatever it was).
+  Future<bool> openShift({bool newFloat = false}) async {
+    double? amount;
+    if (newFloat) {
+      amount = validateOpeningFloat();
+      if (amount == null) return false;
+    }
 
     emit(state.copyWith(isOpeningShift: true, clearErrorMessage: true));
     try {
@@ -104,7 +113,7 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
         openingFloat: amount,
         note: state.openingNoteInput.trim(),
         branchId: branchId,
-        fundOpeningCash: fundOpeningCash,
+        newFloat: newFloat,
       );
       if (isClosed) return false;
       emit(

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart';
 import 'shift_design.dart';
 
 /// Low-level presentation pieces every shift screen is assembled from.
@@ -326,6 +329,7 @@ class ShiftKeyValueRow extends StatelessWidget {
     this.emphasize = false,
     this.secondary,
     this.numeric = true,
+    this.hint,
   });
 
   final String label;
@@ -337,41 +341,135 @@ class ShiftKeyValueRow extends StatelessWidget {
   final String? secondary;
   final bool numeric;
 
+  /// Explanation shown in a tooltip while the pointer rests on the row.
+  final String? hint;
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            label,
-            style: emphasize ? ShiftText.bodyStrong : ShiftText.body,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (secondary != null) ...<Widget>[
-          ShiftValue(secondary!, style: ShiftText.label),
-          const SizedBox(width: AppSpacing.md),
-        ],
-        if (numeric)
-          ShiftValue(
-            value,
-            style: emphasize
-                ? ShiftText.metricValueSmall
-                : ShiftText.bodyStrong,
-            color: valueColor ?? ShiftColors.ink,
-          )
-        else
-          Text(
-            value,
-            style: emphasize
-                ? ShiftText.metricValueSmall
-                : ShiftText.bodyStrong,
-          ),
-      ],
+  Widget build(BuildContext context) => _ShiftHint(
+    hint: hint,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: _row(),
     ),
   );
+
+  Widget _row() => Row(
+    children: <Widget>[
+      Expanded(
+        child: Text(
+          label,
+          style: emphasize ? ShiftText.bodyStrong : ShiftText.body,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      if (secondary != null) ...<Widget>[
+        ShiftValue(secondary!, style: ShiftText.label),
+        const SizedBox(width: AppSpacing.md),
+      ],
+      if (numeric)
+        ShiftValue(
+          value,
+          style: emphasize ? ShiftText.metricValueSmall : ShiftText.bodyStrong,
+          color: valueColor ?? ShiftColors.ink,
+        )
+      else
+        Text(
+          value,
+          style: emphasize ? ShiftText.metricValueSmall : ShiftText.bodyStrong,
+        ),
+    ],
+  );
+}
+
+/// Hover explanation that always waits [_delay] before appearing.
+///
+/// The stock [Tooltip] skips its wait when the pointer moves from one open
+/// tooltip to another, so the explanation would pop up instantly while
+/// sweeping across rows. This one restarts the full delay on every enter.
+class _ShiftHint extends StatefulWidget {
+  const _ShiftHint({required this.hint, required this.child});
+
+  final String? hint;
+  final Widget child;
+
+  @override
+  State<_ShiftHint> createState() => _ShiftHintState();
+}
+
+class _ShiftHintState extends State<_ShiftHint> {
+  static const Duration _delay = AppTheme.tooltipDelay;
+  static const double _maxWidth = 320;
+
+  final OverlayPortalController _overlay = OverlayPortalController();
+  final LayerLink _link = LayerLink();
+  Timer? _timer;
+
+  void _arm(PointerEvent _) {
+    _timer?.cancel();
+    _timer = Timer(_delay, () {
+      if (mounted) _overlay.show();
+    });
+  }
+
+  void _disarm(PointerEvent _) {
+    _timer?.cancel();
+    if (_overlay.isShowing) _overlay.hide();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String? hint = widget.hint;
+    if (hint == null) return widget.child;
+    return Semantics(
+      tooltip: hint,
+      child: CompositedTransformTarget(
+        link: _link,
+        child: MouseRegion(
+          onEnter: _arm,
+          onExit: _disarm,
+          child: OverlayPortal(
+            controller: _overlay,
+            overlayChildBuilder: (BuildContext context) => Align(
+              alignment: AlignmentDirectional.topStart,
+              child: CompositedTransformFollower(
+                link: _link,
+                targetAnchor: Alignment.bottomCenter,
+                followerAnchor: Alignment.topCenter,
+                offset: const Offset(0, 6),
+                child: IgnorePointer(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: _maxWidth),
+                    child: Material(
+                      color: ShiftColors.ink.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          hint,
+                          style: ShiftText.body.copyWith(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ShiftDividerLine extends StatelessWidget {
@@ -1012,6 +1110,7 @@ class ShiftNotice extends StatelessWidget {
     this.detail,
     this.action,
     this.icon,
+    this.hint,
   });
 
   final String message;
@@ -1020,8 +1119,13 @@ class ShiftNotice extends StatelessWidget {
   final Widget? action;
   final IconData? icon;
 
+  /// Explanation shown in a tooltip while the pointer rests on the notice.
+  final String? hint;
+
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => _ShiftHint(hint: hint, child: _strip());
+
+  Widget _strip() => Container(
     padding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.md,
       vertical: AppSpacing.md,

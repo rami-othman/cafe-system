@@ -77,6 +77,8 @@ final class ShiftClosePreviewService
             }
         }
         $snapshot['drawer']['expectedCash'] = $expected;
+        $floatCents = Money::cents((string) ($shift->float_amount ?? '0'));
+        $snapshot['drawer']['physicalExpectedCash'] = Money::decimal(Money::cents($expected) + $floatCents);
         $varianceAccount = null;
         $overAccount = null;
         try {
@@ -96,6 +98,8 @@ final class ShiftClosePreviewService
             'openedAt' => $snapshot['identity']['openedAt'],
             'periodEndExclusive' => $period->end->toIso8601String(), 'historical' => $historical,
             'expectedCash' => $expected, 'ledgerAtPeriodEnd' => $previousLedger,
+            // The float (عهدة) stays in the drawer, off the books: the cashier counts it with the sales, and only the rest transfers.
+            'floatAmount' => Money::decimal($floatCents), 'physicalExpectedCash' => Money::decimal(Money::cents($expected) + $floatCents),
             'currentLedgerCash' => $ledger,
             'summaryExpectedCash' => $cash['expectedCash'],
             'unexplainedCash' => Money::decimal(Money::cents($expected) - Money::cents($cash['expectedCash'])),

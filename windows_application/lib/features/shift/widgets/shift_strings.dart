@@ -35,7 +35,8 @@ abstract final class ShiftStrings {
   static const String salesTotal = 'الإجمالي';
   static const String salesTotalHint = 'بعد المرتجعات والخصومات';
   static const String netSales = 'صافي المبيعات';
-  static const String netSalesHint = 'بعد المرتجعات والخصومات والمشتريات والمصروفات';
+  static const String netSalesHint =
+      'بعد المرتجعات والخصومات والمشتريات والمصروفات';
   static const String orderCount = 'عدد الطلبات';
   static const String averageOrder = 'متوسط قيمة الطلب';
   static const String cashSales = 'المبيعات النقدية';
@@ -115,6 +116,16 @@ abstract final class ShiftStrings {
       'سيُحوَّل $amount إلى $destination';
   static String transferMoved(String amount, String destination) =>
       'تم تحويل $amount إلى $destination';
+  static const String hintOpeningFloat =
+      'النقد المسجَّل بدفاتر الصندوق عند فتح الوردية، من دون العهدة.';
+  static const String hintExpectedCash =
+      'ما يجب أن يكون بالدرج حسب الدفاتر: الافتتاحي + المبيعات النقدية − المرتجعات والمصروفات.';
+  static const String hintActualCash =
+      'المبلغ الذي عدّه الكاشير فعلياً، بعد استبعاد العهدة.';
+  static const String hintCashDifference =
+      'المعدود − المتوقع. أي فرق يُرحَّل تلقائياً لحساب فروقات النقدية.';
+  static const String hintTransfer =
+      'يُحوَّل للصندوق الرئيسي المعدود ناقص العهدة. العهدة تبقى بالدرج للوردية القادمة ولا تدخل الدفاتر.';
   static String transferFloatLeft(String amount) =>
       'ويبقى $amount عهدة بالصندوق';
   static const String transferNoneNeeded =

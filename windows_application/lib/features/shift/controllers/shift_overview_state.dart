@@ -16,6 +16,7 @@ class ShiftOverviewState extends Equatable {
     this.openingFloatInput = '',
     this.openingNoteInput = '',
     this.openingFloatError,
+    this.carriedFloat,
     this.isOpeningShift = false,
     this.errorMessage,
   });
@@ -30,6 +31,9 @@ class ShiftOverviewState extends Equatable {
   final String openingFloatInput;
   final String openingNoteInput;
   final String? openingFloatError;
+
+  /// The float the previous shift hands over; opening without a new float keeps it.
+  final double? carriedFloat;
   final bool isOpeningShift;
   final String? errorMessage;
 
@@ -52,6 +56,7 @@ class ShiftOverviewState extends Equatable {
     String? openingFloatInput,
     String? openingNoteInput,
     String? openingFloatError,
+    double? carriedFloat,
     bool clearOpeningFloatError = false,
     bool? isOpeningShift,
     String? errorMessage,
@@ -66,6 +71,7 @@ class ShiftOverviewState extends Equatable {
     openingFloatError: clearOpeningFloatError
         ? null
         : openingFloatError ?? this.openingFloatError,
+    carriedFloat: carriedFloat ?? this.carriedFloat,
     isOpeningShift: isOpeningShift ?? this.isOpeningShift,
     errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
   );
@@ -79,6 +85,7 @@ class ShiftOverviewState extends Equatable {
     openingFloatInput,
     openingNoteInput,
     openingFloatError,
+    carriedFloat,
     isOpeningShift,
     errorMessage,
   ];

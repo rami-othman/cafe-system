@@ -460,6 +460,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
             Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
             Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
+            Route::post('orders/{order}/whatsapp', [ReceiptController::class, 'sendWhatsApp']);
             Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
             Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
             Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
@@ -692,6 +693,7 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('accounting-periods/{period}', [AccountingPeriodController::class, 'update'])->middleware('finance.permission:finance.periods.manage');
             Route::post('accounting-periods/{period}/close', [AccountingPeriodController::class, 'close'])->middleware('finance.permission:finance.periods.close');
             Route::post('accounting-periods/{period}/lock', [AccountingPeriodController::class, 'lock'])->middleware('finance.permission:finance.periods.lock');
+            require __DIR__.'/finance_assets.php';
         });
 
         // Manufacturing: recipes, production preview/draft/completion/reversal,

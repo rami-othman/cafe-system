@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -20,6 +21,9 @@ import '../models/pos_menu_runtime_models.dart';
 import '../models/pos_published_menu_presenter.dart';
 import '../models/product_detail_load_result.dart';
 import '../models/product_customization.dart';
+import '../services/receipt_whatsapp_sender.dart';
+import '../utils/whatsapp_phone.dart';
+import '../widgets/whatsapp_phone_dialog.dart';
 import '../widgets/product_customization_dialog.dart';
 import '../widgets/pos_product_area.dart';
 import '../widgets/receipt_preview_dialog.dart';
@@ -514,6 +518,13 @@ class _PosScreenState extends State<PosScreen> {
                 ReceiptPreviewDialog(
                   receipt: receipt,
                   isPrinting: printState.isPrinting,
+                  onSendViaWhatsApp: (Future<Uint8List> Function() buildImage) =>
+                      _sendReceiptViaWhatsApp(
+                        context,
+                        posCubit: posCubit,
+                        receipt: receipt,
+                        buildImage: buildImage,
+                      ),
                   onPrintReceipt: () => unawaited(
                     _printPaidReceipt(
                       context,
@@ -537,6 +548,65 @@ class _PosScreenState extends State<PosScreen> {
     final OrderReceipt? nextReceipt = cubit.state.lastReceipt;
     if (nextReceipt != null && nextReceipt != receipt) {
       unawaited(_showReceiptDialog(context, nextReceipt));
+    }
+  }
+
+  Future<void> _sendReceiptViaWhatsApp(
+    BuildContext context, {
+    required PosCubit posCubit,
+    required OrderReceipt receipt,
+    required Future<Uint8List> Function() buildImage,
+  }) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    void say(String text) => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+
+    // Resolve every string before the first await: the dialog may close while
+    // the image is being prepared.
+    final Map<WhatsAppSendStatus, String> texts = <WhatsAppSendStatus, String>{
+      WhatsAppSendStatus.sentViaApi: context.l10n.posWhatsAppSent,
+      WhatsAppSendStatus.sentViaChrome: context.l10n.posWhatsAppSent,
+      WhatsAppSendStatus.needsLogin: context.l10n.posWhatsAppNeedsLogin,
+      WhatsAppSendStatus.uncertain: context.l10n.posWhatsAppUncertain,
+      WhatsAppSendStatus.manualClipboard: context.l10n.posWhatsAppManualCopied,
+      WhatsAppSendStatus.manualDownload:
+          context.l10n.posWhatsAppManualDownloaded,
+      WhatsAppSendStatus.manualChatOnly:
+          context.l10n.posWhatsAppManualFileFailed,
+      WhatsAppSendStatus.failed: context.l10n.posWhatsAppFailed,
+    };
+
+    // The customer's saved number first (receipt, then the customer picked in
+    // the POS); only ask when there is none.
+    final String? savedPhone =
+        receipt.customerPhone ?? posCubit.state.selectedCustomer?.phone;
+    String? phone = normalizeWhatsAppPhone(savedPhone ?? '');
+    if (phone == null) {
+      phone = await showWhatsAppPhoneDialog(
+        context,
+        initialValue: savedPhone,
+      );
+      if (phone == null) return;
+    }
+
+    try {
+      final Uint8List image = await buildImage();
+      final WhatsAppSendOutcome outcome =
+          await ReceiptWhatsAppSender(posCubit.repository).send(
+            orderId: posCubit.state.lastPaidOrderId,
+            phone: phone,
+            image: image,
+            fileName: 'invoice-${receipt.orderNumber}.png',
+          );
+      final String? detail = outcome.detail;
+      say(
+        detail == null || detail.isEmpty
+            ? texts[outcome.status]!
+            : '${texts[outcome.status]!} ($detail)',
+      );
+    } catch (error) {
+      say('${texts[WhatsAppSendStatus.failed]!} ($error)');
     }
   }
 

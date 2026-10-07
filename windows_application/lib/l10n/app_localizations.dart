@@ -15782,6 +15782,84 @@ abstract class AppLocalizations {
   /// **'WhatsApp sending will be added later.'**
   String get posWhatsAppPending;
 
+  /// No description provided for @posWhatsAppSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice sent via WhatsApp.'**
+  String get posWhatsAppSent;
+
+  /// No description provided for @posWhatsAppManualCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat opened and the invoice file is copied. Press Ctrl+V in the chat, then Enter to send.'**
+  String get posWhatsAppManualCopied;
+
+  /// No description provided for @posWhatsAppManualDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat opened and the invoice file was downloaded. Drag it into the chat, then send.'**
+  String get posWhatsAppManualDownloaded;
+
+  /// No description provided for @posWhatsAppManualFileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat opened, but the invoice file could not be prepared.'**
+  String get posWhatsAppManualFileFailed;
+
+  /// No description provided for @posWhatsAppFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send via WhatsApp.'**
+  String get posWhatsAppFailed;
+
+  /// No description provided for @posWhatsAppNeedsLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the WhatsApp QR code in the Chrome window that opened (one time), then try again.'**
+  String get posWhatsAppNeedsLogin;
+
+  /// No description provided for @posWhatsAppUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not confirm the message was sent. Check the chat before retrying.'**
+  String get posWhatsAppUncertain;
+
+  /// No description provided for @posWhatsAppPhoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer WhatsApp number'**
+  String get posWhatsAppPhoneTitle;
+
+  /// No description provided for @posWhatsAppPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 09XXXXXXXX'**
+  String get posWhatsAppPhoneHint;
+
+  /// No description provided for @posWhatsAppPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number.'**
+  String get posWhatsAppPhoneInvalid;
+
+  /// No description provided for @posWhatsAppPhoneSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get posWhatsAppPhoneSend;
+
+  /// No description provided for @posWhatsAppPhoneCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get posWhatsAppPhoneCancel;
+
+  /// No description provided for @posWhatsAppMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, your invoice no. {order} from {branch}. Thank you for visiting!'**
+  String posWhatsAppMessage(String order, String branch);
+
   /// No description provided for @posPaymentCompleted.
   ///
   /// In en, this message translates to:
