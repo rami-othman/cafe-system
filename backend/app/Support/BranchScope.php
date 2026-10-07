@@ -30,4 +30,24 @@ final class BranchScope
 
         return $query->where(fn (Builder $q) => $q->whereIn($column, $authorizedBranchIds)->orWhereNull($column));
     }
+
+    /**
+     * Branch scope for queries joined as `journal_entries as entries` + `journal_entry_lines as lines`.
+     * A line's branch is its own branch_id, falling back to its entry's (lines written before the
+     * line-level dimension, or by code that does not set it). Same NULL = company-wide rule as apply().
+     */
+    public static function applyJournalLines(Builder $query, ?int $branchId, array $authorizedBranchIds): Builder
+    {
+        $expression = 'COALESCE(lines.branch_id, entries.branch_id)';
+        if ($branchId !== null) {
+            return $query->whereRaw("$expression = ?", [$branchId]);
+        }
+        if ($authorizedBranchIds === []) {
+            return $query->whereRaw("$expression IS NULL");
+        }
+        $ids = array_values(array_map('intval', $authorizedBranchIds));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        return $query->where(fn (Builder $q) => $q->whereRaw("$expression IN ($placeholders)", $ids)->orWhereRaw("$expression IS NULL"));
+    }
 }

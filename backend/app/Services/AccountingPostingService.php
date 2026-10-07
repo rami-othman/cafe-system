@@ -77,12 +77,13 @@ class AccountingPostingService
 
                 $lines = array_map(
                     fn (array $line): array => [
-                        'accountId' => $this->resolveAccountId($tenantId, (string) $line['accountCode']),
+                        'accountId' => isset($line['accountId']) ? (int) $line['accountId'] : $this->resolveAccountId($tenantId, (string) $line['accountCode']),
                         'debit' => $line['debit'] ?? '0',
                         'credit' => $line['credit'] ?? '0',
                         'description' => $line['description'] ?? null,
                         'locationId' => $line['financialLocationId'] ?? null,
-                    ],
+                        'costCenterId' => $line['costCenterId'] ?? null,
+                    ] + (array_key_exists('branchId', $line) ? ['branchId' => $line['branchId']] : []),
                     $data['lines'] ?? [],
                 );
 
@@ -94,6 +95,7 @@ class AccountingPostingService
                     'sourceEvent' => $sourceEvent,
                     'description' => $data['description'] ?? null,
                     'lines' => $lines,
+                    'autoBalanceBranches' => (bool) ($data['autoBalanceBranches'] ?? false),
                 ], $actorId);
 
                 $this->entries->post($request, $tenantId, $entryId, $actorId);

@@ -35,6 +35,10 @@ final class AccountMappingController extends Controller
         'cash.short' => ['عجز الصندوق (الافتراضي)', 'يُستخدم إن لم يحدد الفرع حساب العجز الخاص به.', [['expenses', 'debit']]],
         'cash.over' => ['زيادة الصندوق (الافتراضي)', 'يُستخدم إن لم يحدد الفرع حساب الزيادة الخاص به.', [['revenue', 'credit']]],
         'cash.drawer' => ['درج الكاشير (الافتراضي)', 'حساب درج الصندوق عند إنشاء فرع جديد.', [['assets', 'debit']]],
+        'assets.gain' => ['أرباح رأسمالية', 'ربح بيع الأصول الثابتة (الافتراضي إن لم يحدده صنف الأصل).', [['revenue', 'credit']]],
+        'assets.loss' => ['خسائر رأسمالية', 'خسارة بيع/استبعاد الأصول الثابتة (الافتراضي).', [['expenses', 'debit']]],
+        'partners.distribution' => ['توزيعات أرباح الفروع', 'الطرف المدين عند توزيع نتيجة فرع على الشركاء (حقوق ملكية).', [['equity', 'debit']]],
+        'branches.inter_branch' => ['جاري الفروع', 'حساب وسيط يوازن كل فرع عندما يتوزع قيد واحد على أكثر من فرع (نقل أصل، توزيع مصروف). مجموعه على مستوى الشركة صفر.', [['assets', 'debit'], ['liabilities', 'credit']]],
     ];
 
     public function __construct(private readonly FinanceAccountMap $map, private readonly OperationalAuditService $audit) {}
