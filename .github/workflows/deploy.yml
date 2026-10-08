@@ -1,0 +1,88 @@
+# Cafe 6:18 deploys.
+#   - Every push to main  -> staging, automatically.
+#   - Production          -> only by hand: Actions > Deploy > Run workflow, type DEPLOY-PRODUCTION.
+#                            It deploys exactly the commit staging is running (the server refuses anything else).
+#
+# Repository settings needed (Settings > Secrets and variables > Actions):
+#   secrets:   DEPLOY_SSH_KEY      private key whose public half is the forced-command key on the server
+#              DEPLOY_KNOWN_HOSTS  the server's host key line (ssh-keyscan output, fingerprint checked by hand)
+#              DEPLOY_HOST         46.224.139.32
+#   variable:  PRODUCTION_DEPLOYERS  GitHub usernames allowed to deploy production, comma-separated
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY-PRODUCTION to deploy the commit staging is running to production'
+        required: true
+        type: string
+      sha:
+        description: 'Optional: the exact commit (must equal what staging runs). Leave empty = staging head.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# Never two deploys at once, and never cancel one half-way (migrations).
+concurrency:
+  group: cafe618-deploy
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 45
+    steps:
+      - name: Deploy to staging
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+              "root@${DEPLOY_HOST}" "staging ${SHA}"
+
+  production:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - name: Check who is deploying and the confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          SHA_INPUT: ${{ inputs.sha }}
+          ACTOR: ${{ github.actor }}
+          ALLOWED: ${{ vars.PRODUCTION_DEPLOYERS }}
+        run: |
+          set -euo pipefail
+          [ "$CONFIRM" = "DEPLOY-PRODUCTION" ] || { echo "Confirmation text is wrong - nothing deployed."; exit 1; }
+          case ",${ALLOWED// /}," in *",${ACTOR},"*) ;; *) echo "$ACTOR may not deploy production."; exit 1;; esac
+          if [ -n "$SHA_INPUT" ] && ! [[ "$SHA_INPUT" =~ ^[0-9a-f]{40}$ ]]; then echo "sha must be the full 40-character commit."; exit 1; fi
+
+      - name: Deploy to production
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          SHA_INPUT: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+              "root@${DEPLOY_HOST}" "production ${SHA_INPUT:-staging-head}"

@@ -1,0 +1,16 @@
+# /etc/cafe618-ci.conf - read by /usr/local/sbin/cafe618-ci-deploy (root:root, chmod 600). Not in git.
+# Health: GET /api/v1/auth/me without a token answers 401 from Laravel itself (PHP-FPM + app booted).
+# (/up is not routed to Laravel on these vhosts: on 443 it reaches the Next.js admin, on 8443 it is 404.)
+
+DEPLOY_SCRIPT=/usr/local/sbin/cafe618-deploy.sh
+HEALTH_OK_CODES="401"
+
+STAGING_APP_DIR=/var/www/cafe-system-staging
+STAGING_WEB_DIR=/var/www/cafe18-staging-root/cafe18
+STAGING_API_BASE_URL=https://46.224.139.32:8443/api/v1
+STAGING_HEALTH_URL=https://46.224.139.32:8443/api/v1/auth/me
+
+PRODUCTION_APP_DIR=/var/www/cafe-system
+PRODUCTION_WEB_DIR=/var/www/cafe18
+PRODUCTION_API_BASE_URL=https://46.224.139.32/api/v1
+PRODUCTION_HEALTH_URL=https://46.224.139.32/api/v1/auth/me
