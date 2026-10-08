@@ -12,6 +12,7 @@ import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/features/discounts/views/create_discount_policy_screen.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_product_selection.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
 import 'package:windows_application/features/discounts/models/discount_dashboard_metrics.dart';
 import 'package:windows_application/features/discounts/models/discount_form_references.dart';
@@ -1187,11 +1188,25 @@ void main() {
         tester,
         find.byKey(const Key('discount-bundle-product-0')),
       );
+      // Phase 3: the saved selection is restored as removable variant chips.
+      final Finder variants = find.byKey(
+        const Key('discount-bundle-variants-0'),
+      );
+      expect(
+        find.descendant(of: variants, matching: find.text('Large')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: variants, matching: find.text('Iced')),
+        findsOneWidget,
+      );
       expect(
         tester
-            .widget<Text>(find.byKey(const Key('discount-bundle-variants-0')))
-            .data,
-        contains('Large, Iced'),
+            .widget<ChoiceChip>(
+              find.byKey(const Key('discount-bundle-variant-mode-0-selected')),
+            )
+            .selected,
+        isTrue,
       );
 
       await tester.tap(find.text('Save as Draft'));
@@ -1236,6 +1251,127 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  _phase3CreateEditTests();
+}
+
+void _phase3CreateEditTests() {
+  testWidgets(
+    'Phase 3: combination behavior is chosen in business language and priority explains its role',
+    (WidgetTester tester) async {
+      final _DiscountsRepository repository = _DiscountsRepository(
+        stallCreates: true,
+      );
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      final AppLocalizations l10n = AppLocalizations.of(
+        tester.element(find.byType(CreateDiscountPolicyScreen)),
+      );
+      expect(find.text(l10n.dp3PriorityHelp), findsOneWidget);
+      expect(find.text(l10n.dp3FollowPolicyHelp), findsOneWidget);
+      expect(find.text('follow_cafe_policy'), findsNothing);
+      const Key field = Key('discount-combination-field-follow_cafe_policy');
+      await _scrollToField(tester, find.byKey(field));
+      await _selectDropdown(tester, field, l10n.dp3Exclusive);
+      expect(find.text(l10n.dp3ExclusiveHelp), findsOneWidget);
+      _fillRequiredFields(tester, name: 'Exclusive coupon', value: '10');
+      await tester.pump();
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pump();
+      expect(
+        repository.lastCreateRequest!.toJson()['combinationBehavior'],
+        'exclusive',
+      );
+    },
+  );
+
+  testWidgets(
+    'Phase 3: package selected variants need one variant and the paged picker writes the choice',
+    (WidgetTester tester) async {
+      final _VariantRepository repository = _VariantRepository();
+      await _pumpScreen(
+        tester,
+        const Size(1280, 900),
+        repository: repository,
+        initialDiscount: _editRow,
+      );
+      final AppLocalizations l10n = AppLocalizations.of(
+        tester.element(find.byType(CreateDiscountPolicyScreen)),
+      );
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-bundle-variants-0')),
+      );
+      // Removing every saved variant leaves "selected" empty: never submitted.
+      for (final int id in <int>[101, 102]) {
+        final Finder chip = find.byKey(Key('discount-bundle-variant-0-$id'));
+        await tester.tap(
+          find.descendant(of: chip, matching: find.byType(Icon)).last,
+        );
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      expect(repository.lastUpdateRequest, isNull);
+      expect(find.text(l10n.dp3BundleVariantsRequired), findsWidgets);
+
+      // The picker searches the product's own variants page by page.
+      final Finder picker = find.byKey(
+        const Key('discount-bundle-variants-picker-0'),
+      );
+      await _scrollToField(tester, picker);
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+      expect(repository.variantRequests, contains(11));
+      await tester.tap(find.byKey(const Key('discount-reference-103')));
+      await tester.pump();
+      await tester.tap(find.text(l10n.discountFormDone));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('discount-bundle-variants-0')),
+          matching: find.text('Regular'),
+        ),
+        findsOneWidget,
+      );
+      // Let the validation toast from the blocked save leave the button.
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      expect(
+        repository.lastUpdateRequest!.toJson()['bundleRequirements'],
+        <Map<String, dynamic>>[
+          <String, dynamic>{
+            'productId': 11,
+            'quantity': 1.0,
+            'variantMode': 'selected',
+            'variantIds': <int>[103],
+          },
+        ],
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+class _VariantRepository extends _DiscountsRepository {
+  _VariantRepository() : super(detail: _variantPackageDetail);
+  final List<int> variantRequests = <int>[];
+  @override
+  Future<DiscountReferencePage> getVariants(
+    int productId, {
+    String search = '',
+    int page = 1,
+  }) async {
+    variantRequests.add(productId);
+    return const DiscountReferencePage(
+      items: <DiscountFormReference>[
+        DiscountFormReference(id: 101, name: 'Large', isActive: true),
+        DiscountFormReference(id: 102, name: 'Iced', isActive: true),
+        DiscountFormReference(id: 103, name: 'Regular', isActive: true),
+      ],
+    );
+  }
 }
 
 FilledButton _activateButton(WidgetTester tester) =>

@@ -37,9 +37,12 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
+          // Both authoritative lines, numbered in backend application order.
+          expect(find.text('1. Saved 1'), findsOneWidget);
+          expect(find.text('2. Saved 2'), findsOneWidget);
           expect(
-            find.text('Saved 1\n${language == 'en' ? 'Automatic' : 'تلقائي'}'),
-            findsOneWidget,
+            find.text(language == 'en' ? 'Automatic' : 'تلقائي'),
+            findsNWidgets(2),
           );
           expect(find.text('-2.00'), findsOneWidget);
           await tester.tap(find.byType(DropdownButtonFormField<int>));

@@ -1,7 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-/// The eight writable fields. Version and activation capability belong to the
+/// The editable settings. Version and activation capability belong to the
 /// saved resource, never to the editable replacement.
+///
+/// The public screen edits only [policy] and [maximumTotalDiscountPercent].
+/// The eight legacy engine fields are carried unchanged from the saved resource
+/// so a save never resets them, but they are no longer shown.
 class DiscountSettingsDraft extends Equatable {
   const DiscountSettingsDraft({
     this.automaticEnabled = false,
@@ -12,11 +16,13 @@ class DiscountSettingsDraft extends Equatable {
     this.manualBehavior = 'exclusive',
     this.maximumTotalDiscountPercent = '',
     this.allowAutomaticSuppression = true,
+    this.policy = const DiscountCafePolicy(),
   });
   final bool automaticEnabled;
   final String selectionStrategy, combinationMode, orderDiscountBehavior;
   final String couponBehavior, manualBehavior, maximumTotalDiscountPercent;
   final bool allowAutomaticSuppression;
+  final DiscountCafePolicy policy;
 
   factory DiscountSettingsDraft.fromJson(Map<String, dynamic> j) =>
       DiscountSettingsDraft(
@@ -29,6 +35,7 @@ class DiscountSettingsDraft extends Equatable {
         maximumTotalDiscountPercent:
             j['maximumTotalDiscountPercent']?.toString() ?? '',
         allowAutomaticSuppression: j['allowAutomaticSuppression'] == true,
+        policy: DiscountCafePolicy.fromJson(j),
       );
   bool get isValid {
     final cap = maximumTotalDiscountPercent.trim();
@@ -54,7 +61,8 @@ class DiscountSettingsDraft extends Equatable {
             (RegExp(r'^\d+(\.\d{1,4})?$').hasMatch(cap) &&
                 n != null &&
                 n > 0 &&
-                n <= 100));
+                n <= 100)) &&
+        policy.isValid;
   }
 
   Map<String, dynamic> toJson(int expectedVersion) => {
@@ -68,6 +76,9 @@ class DiscountSettingsDraft extends Equatable {
         ? null
         : maximumTotalDiscountPercent.trim(),
     'allowAutomaticSuppression': allowAutomaticSuppression,
+    // V3 Cafe Discount Policy. Dormant values (e.g. a maximum of 3 while
+    // multiple discounts are off) are sent back unchanged, never normalized.
+    ...policy.toJson(),
     'expectedVersion': expectedVersion,
   };
   DiscountSettingsDraft copyWith({
@@ -79,6 +90,7 @@ class DiscountSettingsDraft extends Equatable {
     String? manualBehavior,
     String? maximumTotalDiscountPercent,
     bool? allowAutomaticSuppression,
+    DiscountCafePolicy? policy,
   }) => DiscountSettingsDraft(
     automaticEnabled: automaticEnabled ?? this.automaticEnabled,
     selectionStrategy: selectionStrategy ?? this.selectionStrategy,
@@ -90,6 +102,13 @@ class DiscountSettingsDraft extends Equatable {
         maximumTotalDiscountPercent ?? this.maximumTotalDiscountPercent,
     allowAutomaticSuppression:
         allowAutomaticSuppression ?? this.allowAutomaticSuppression,
+    policy: policy ?? this.policy,
+  );
+
+  /// Public defaults for the visible policy; hidden legacy fields are kept.
+  DiscountSettingsDraft withPublicDefaults() => copyWith(
+    policy: const DiscountCafePolicy(),
+    maximumTotalDiscountPercent: '',
   );
   @override
   List<Object?> get props => [
@@ -101,15 +120,14 @@ class DiscountSettingsDraft extends Equatable {
     manualBehavior,
     maximumTotalDiscountPercent,
     allowAutomaticSuppression,
+    policy,
   ];
 }
 
-/// Discount V3 Cafe Discount Policy, as persisted by the backend.
+/// Discount V3 Cafe Discount Policy, as persisted and enforced by the backend.
 ///
-/// Read-only contract for now: the backend does not enforce these fields until
-/// Phase 2 and the Settings screen exposes them in Phase 3. The defaults are
-/// today's single-discount behavior and also apply when an older backend omits
-/// the fields. The total-percent limit is the draft's
+/// The defaults are the single-discount behavior and also apply when an older
+/// backend omits the fields. The total-percent limit is the draft's
 /// maximumTotalDiscountPercent, shared with V3, not a second field.
 class DiscountCafePolicy extends Equatable {
   const DiscountCafePolicy({
@@ -132,6 +150,39 @@ class DiscountCafePolicy extends Equatable {
 
   /// `best_saving` or `priority`.
   final String conflictResolution;
+
+  static const int maximumDiscountsLimit = 10;
+
+  bool get isValid =>
+      maximumDiscountsPerOrder >= 1 &&
+      maximumDiscountsPerOrder <= maximumDiscountsLimit;
+
+  /// Shown/enforced count: 1 while multiple discounts are off. The saved value
+  /// itself is left untouched.
+  int get effectiveMaximumDiscounts =>
+      allowMultipleDiscounts ? maximumDiscountsPerOrder : 1;
+
+  DiscountCafePolicy copyWith({
+    bool? allowMultipleDiscounts,
+    String? stackingMode,
+    bool? allowMultipleCoupons,
+    bool? allowCouponWithConfigured,
+    bool? allowOrderAfterItemDiscounts,
+    int? maximumDiscountsPerOrder,
+    String? conflictResolution,
+  }) => DiscountCafePolicy(
+    allowMultipleDiscounts:
+        allowMultipleDiscounts ?? this.allowMultipleDiscounts,
+    stackingMode: stackingMode ?? this.stackingMode,
+    allowMultipleCoupons: allowMultipleCoupons ?? this.allowMultipleCoupons,
+    allowCouponWithConfigured:
+        allowCouponWithConfigured ?? this.allowCouponWithConfigured,
+    allowOrderAfterItemDiscounts:
+        allowOrderAfterItemDiscounts ?? this.allowOrderAfterItemDiscounts,
+    maximumDiscountsPerOrder:
+        maximumDiscountsPerOrder ?? this.maximumDiscountsPerOrder,
+    conflictResolution: conflictResolution ?? this.conflictResolution,
+  );
 
   factory DiscountCafePolicy.fromJson(Map<String, dynamic> j) =>
       DiscountCafePolicy(

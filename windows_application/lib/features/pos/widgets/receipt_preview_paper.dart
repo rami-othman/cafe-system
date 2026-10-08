@@ -123,10 +123,11 @@ class ReceiptPreviewPaper extends StatelessWidget {
             DiscountBreakdown(discounts: receipt.discounts),
             if (receipt.discountTotal > 0)
               _AmountRow(
-                label:
-                    receipt.discountLabel == null ||
-                        receipt.discountLabel!.trim().toLowerCase() ==
-                            'discount'
+                label: receipt.discounts.length > 1
+                    ? context.l10n.d3TotalDiscounts
+                    : receipt.discountLabel == null ||
+                          receipt.discountLabel!.trim().toLowerCase() ==
+                              'discount'
                     ? context.l10n.posDiscount
                     : receipt.discountLabel!,
                 amount: -receipt.discountTotal,

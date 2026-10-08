@@ -9815,11 +9815,224 @@ class AppLocalizationsEn extends AppLocalizations {
   String get d2SourceAutomatic => 'Automatic';
 
   @override
-  String get d2SourceCode => 'Code';
+  String get d2SourceCode => 'Coupon';
 
   @override
-  String get d2SourceManual => 'Configured Manual';
+  String get d2SourceManual => 'Configured discount';
 
   @override
   String get d2SourceAdHoc => 'Ad-hoc';
+
+  @override
+  String get ds3NavPolicies => 'Policies';
+
+  @override
+  String get ds3NavSettings => 'Settings';
+
+  @override
+  String get ds3Title => 'Cafe Discount Policy';
+
+  @override
+  String get ds3Subtitle =>
+      'Decide how discounts may combine on one order. POS and payment always follow this policy.';
+
+  @override
+  String get ds3General => 'General';
+
+  @override
+  String get ds3AllowMultiple => 'Allow multiple discounts on one order';
+
+  @override
+  String get ds3AllowMultipleHelp =>
+      'When off, an order keeps one discount at most. The options below stay saved for when you turn this on again.';
+
+  @override
+  String get ds3Combining => 'Combining discounts';
+
+  @override
+  String get ds3Stacking => 'Discounts on the same item';
+
+  @override
+  String get ds3StackingDifferent => 'Different items only';
+
+  @override
+  String get ds3StackingDifferentHelp =>
+      'Each item can receive one discount only.';
+
+  @override
+  String get ds3StackingSame => 'Allow stacking on the same item';
+
+  @override
+  String get ds3StackingSameHelp =>
+      'Discounts apply one after another, each on the price that remains.';
+
+  @override
+  String get ds3AllowCoupons => 'Allow multiple coupon codes';
+
+  @override
+  String get ds3AllowCouponConfigured =>
+      'Allow coupons with configured discounts';
+
+  @override
+  String get ds3AllowOrderAfterItems =>
+      'Allow an order discount after item discounts';
+
+  @override
+  String get ds3AllowOrderAfterItemsHelp =>
+      'The order discount applies to what remains after item discounts.';
+
+  @override
+  String get ds3Limits => 'Safety limits';
+
+  @override
+  String get ds3MaxCount => 'Maximum discounts per order';
+
+  @override
+  String get ds3MaxCountHelp =>
+      'From 1 to 10. Used only while multiple discounts are allowed.';
+
+  @override
+  String get ds3MaxCountInvalid => 'Enter a whole number from 1 to 10.';
+
+  @override
+  String get ds3Conflict => 'When discounts cannot all be applied';
+
+  @override
+  String get ds3BestSaving => 'Give the customer the best saving';
+
+  @override
+  String get ds3PriorityRule => 'Use discount priority';
+
+  @override
+  String get ds3PriorityRuleHelp =>
+      'A discount with a higher priority number wins.';
+
+  @override
+  String get ds3Effective => 'In effect now';
+
+  @override
+  String get ds3OneDiscount => 'One discount per order';
+
+  @override
+  String ds3UpToDiscounts(int count) {
+    return 'Up to $count discounts per order';
+  }
+
+  @override
+  String get ds3NoCap => 'No total discount limit';
+
+  @override
+  String ds3CapValue(String value) {
+    return 'Total discount at most $value% of the subtotal';
+  }
+
+  @override
+  String get ds3Allowed => 'Allowed';
+
+  @override
+  String get ds3NotAllowed => 'Not allowed';
+
+  @override
+  String get dp3Combination => 'Combination';
+
+  @override
+  String get dp3FollowPolicy => 'Follow Cafe Policy';
+
+  @override
+  String get dp3FollowPolicyHelp =>
+      'Can combine with other discounts when the Cafe Discount Policy allows it.';
+
+  @override
+  String get dp3Exclusive => 'Exclusive';
+
+  @override
+  String get dp3ExclusiveHelp => 'Cannot be combined with another discount.';
+
+  @override
+  String get dp3PriorityHelp =>
+      'Only used when the Cafe Discount Policy resolves conflicts by priority. Higher numbers win.';
+
+  @override
+  String get dp3ChooseVariants => 'Choose variants';
+
+  @override
+  String get dp3ChooseProductFirst => 'Choose the product first.';
+
+  @override
+  String get dp3BundleVariantsRequired =>
+      'Select at least one variant for every package product set to selected variants.';
+
+  @override
+  String get d3Applied => 'Applied discounts';
+
+  @override
+  String get d3NotApplied => 'Not applied';
+
+  @override
+  String get d3TotalDiscounts => 'Total discounts';
+
+  @override
+  String get d3Capped => 'Reduced by the cafe maximum discount limit.';
+
+  @override
+  String get d3RemoveDiscount => 'Remove discount';
+
+  @override
+  String get d3PendingReview =>
+      'Selected but not applied. Review the order discounts.';
+
+  @override
+  String get d3ReviewHelp =>
+      'Check which discounts will apply before confirming.';
+
+  @override
+  String get d3NothingApplied => 'No discount will apply.';
+
+  @override
+  String get d3UnknownDiscount => 'Discount';
+
+  @override
+  String get d3ReasonMultipleDisabled =>
+      'This cafe allows one discount per order. Another discount gives a better result.';
+
+  @override
+  String get d3ReasonSameItem => 'This cafe allows only one discount per item.';
+
+  @override
+  String get d3ReasonMultipleCoupons =>
+      'Multiple coupon codes are not allowed by the cafe policy.';
+
+  @override
+  String get d3ReasonCouponCombination =>
+      'Coupons cannot be combined with configured discounts.';
+
+  @override
+  String get d3ReasonOrderItem =>
+      'An order discount cannot be combined with item discounts.';
+
+  @override
+  String get d3ReasonExclusive =>
+      'This discount is exclusive and cannot be combined with another discount.';
+
+  @override
+  String get d3ReasonMaxCount =>
+      'The maximum number of discounts for this order has been reached.';
+
+  @override
+  String get d3ReasonMaxTotal =>
+      'This would exceed the cafe maximum discount limit.';
+
+  @override
+  String get d3ReasonNoItems =>
+      'No remaining items are eligible for this discount.';
+
+  @override
+  String get d3ReasonConflict =>
+      'Another discount gives a better result for this order.';
+
+  @override
+  String get d3Duplicate => 'This discount is already on the order.';
+
+  @override
+  String get d3CouponAgain => 'Enter the coupon code again.';
 }

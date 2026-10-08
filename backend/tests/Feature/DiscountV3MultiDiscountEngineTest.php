@@ -548,4 +548,39 @@ class DiscountV3MultiDiscountEngineTest extends TestCase
         $this->assertSame([$b], DB::table('order_discounts')->pluck('discount_id')->map(fn ($v) => (int) $v)->all());
         $this->assertCount(2, json_decode(DB::table('order_discount_intents')->where('order_id', $f['order'])->value('intent'), true), 'The reviewed intent set is not rewritten by a cart edit.');
     }
+
+    public function test_an_applied_coupon_can_be_kept_by_id_in_a_full_set_but_never_redeemed_by_id(): void
+    {
+        $f = $this->fixture();
+        $this->multi($f, ['stackingMode' => 'same_item_allowed', 'allowCouponWithConfigured' => true]);
+        $coupon = $this->coupon($f, 'KEEP5', ['value' => 10]);
+        $a = $this->manual($f, ['value' => 20]);
+        $b = $this->manual($f, ['value' => 5]);
+        $url = '/api/v1/orders/'.$f['order'].'/discounts/preview';
+
+        // A coupon id alone never redeems a coupon that is not already on the order.
+        $this->postJson($url, ['action' => 'set', 'intents' => [['source' => 'code', 'discountId' => $coupon]]], $f['headers'])
+            ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_NOT_FOUND');
+
+        $this->applyReview($f, $this->preview($f, ['action' => 'set', 'intents' => [['source' => 'code', 'code' => 'keep5'], $this->m($a)]]), 'with-coupon');
+        // The client re-sends the saved coupon by id when it changes the rest of the list.
+        $review = $this->preview($f, ['action' => 'set', 'intents' => [['source' => 'code', 'discountId' => $coupon], $this->m($b)]]);
+        $this->assertSame([$coupon, $b], $this->ids($review));
+        $this->applyReview($f, $review, 'kept-coupon');
+        $this->assertSame([$coupon, $b], DB::table('order_discounts')->orderBy('application_sequence')->pluck('discount_id')->map(fn ($v) => (int) $v)->all());
+        foreach (['discount_reviews', 'order_discount_intents', 'order_discounts'] as $table) {
+            $this->assertStringNotContainsString('KEEP5', json_encode(DB::table($table)->get()));
+        }
+
+        // Another order cannot borrow it: retention is per order.
+        $other = (array) DB::table('orders')->find($f['order']);
+        unset($other['id']);
+        $other['order_number'] = uniqid('OTHER-');
+        $otherId = DB::table('orders')->insertGetId($other);
+        DB::table('order_items')->insert(['tenant_id' => $f['tenant'], 'order_id' => $otherId, 'product_id' => $f['products'][0], 'product_name' => 'Pinned', 'quantity' => 1, 'unit_price' => '10.00', 'total' => '10.00']);
+        $this->postJson('/api/v1/orders/'.$otherId.'/discounts/preview', ['action' => 'set', 'intents' => [['source' => 'code', 'discountId' => $coupon]]], $f['headers'])
+            ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_NOT_FOUND');
+        // Mixed id + code for one coupon is still rejected as ambiguous.
+        $this->postJson($url, ['action' => 'set', 'intents' => [['source' => 'code', 'discountId' => $coupon, 'code' => 'KEEP5']]], $f['headers'])->assertUnprocessable();
+    }
 }

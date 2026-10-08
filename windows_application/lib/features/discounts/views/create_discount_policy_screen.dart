@@ -403,11 +403,58 @@ class _CreateDiscountPolicyScreenState
           ),
           _LabeledField(
             label: l10n.d2Priority,
-            child: AppTextField(
-              key: const Key('discount-priority-field'),
-              controller: _priorityController,
-              enabled: !locked,
-              keyboardType: TextInputType.number,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                AppTextField(
+                  key: const Key('discount-priority-field'),
+                  controller: _priorityController,
+                  enabled: !locked,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                // Priority matters only under the "priority" conflict rule;
+                // higher numbers win (the backend's established direction).
+                Text(
+                  l10n.dp3PriorityHelp,
+                  key: const Key('discount-priority-help'),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _LabeledField(
+            label: l10n.dp3Combination,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _SelectField(
+                  // Rebuilt per value: an edit hydrates the saved behavior.
+                  key: ValueKey<String>(
+                    'discount-combination-field-$_combinationBehavior',
+                  ),
+                  value: _combinationBehavior,
+                  options: <_SelectOption>[
+                    _SelectOption('follow_cafe_policy', l10n.dp3FollowPolicy),
+                    _SelectOption('exclusive', l10n.dp3Exclusive),
+                  ],
+                  enabled: !locked,
+                  onChanged: (String value) =>
+                      setState(() => _combinationBehavior = value),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  _combinationBehavior == 'exclusive'
+                      ? l10n.dp3ExclusiveHelp
+                      : l10n.dp3FollowPolicyHelp,
+                  key: const Key('discount-combination-help'),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
           if (!context
@@ -1152,17 +1199,7 @@ class _CreateDiscountPolicyScreenState
                     ),
                   ],
                 ),
-                if (_bundleRequirements[index].isSelected)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: Text(
-                      key: Key('discount-bundle-variants-$index'),
-                      '${l10n.discountSelectedVariants}: ${_bundleRequirements[index].variantSummary(l10n.localeName.startsWith('ar'))}',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ),
+                _bundleVariantScope(index, locked),
               ],
             ),
           ),
@@ -1177,6 +1214,110 @@ class _CreateDiscountPolicyScreenState
           label: Text(l10n.discountV2AddProduct),
         ),
       ],
+    );
+  }
+
+  /// All variants / Selected variants for one package requirement. Selected
+  /// variants are picked from the product's own paginated, searchable list.
+  Widget _bundleVariantScope(int index, bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final _BundleRequirementDraft requirement = _bundleRequirements[index];
+    final bool arabic = l10n.localeName.startsWith('ar');
+    final bool hasProduct = requirement.productId > 0;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              for (final String mode in const <String>['all', 'selected'])
+                ChoiceChip(
+                  key: Key('discount-bundle-variant-mode-$index-$mode'),
+                  label: Text(
+                    mode == 'all'
+                        ? l10n.discountAllVariants
+                        : l10n.discountSelectedVariants,
+                  ),
+                  selected: (requirement.variantMode ?? 'all') == mode,
+                  onSelected: locked || !hasProduct
+                      ? null
+                      : (_) => setState(() => requirement.setMode(mode)),
+                ),
+              if (requirement.isSelected)
+                OutlinedButton.icon(
+                  key: Key('discount-bundle-variants-picker-$index'),
+                  onPressed: locked || !hasProduct
+                      ? null
+                      : () => _pickBundleVariants(index),
+                  icon: const Icon(Icons.checklist, size: 18),
+                  label: Text(l10n.dp3ChooseVariants),
+                ),
+            ],
+          ),
+          if (!hasProduct)
+            Text(
+              l10n.dp3ChooseProductFirst,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          if (requirement.isSelected)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Wrap(
+                key: Key('discount-bundle-variants-$index'),
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: <Widget>[
+                  for (final int id in requirement.variantIds)
+                    InputChip(
+                      key: Key('discount-bundle-variant-$index-$id'),
+                      label: Text(requirement.variantLabel(id, arabic)),
+                      onDeleted: locked
+                          ? null
+                          : () => setState(
+                              () => requirement.setVariants(
+                                requirement.variantIds
+                                    .where((int other) => other != id)
+                                    .toList(growable: false),
+                                requirement.variants,
+                              ),
+                            ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickBundleVariants(int index) async {
+    final _BundleRequirementDraft requirement = _bundleRequirements[index];
+    final int productId = requirement.productId;
+    final Set<int>? ids = await pickDiscountReferences(
+      context,
+      _targets,
+      productId,
+      AppLocalizations.of(context).discountSelectedVariants,
+      requirement.variantIds.toSet(),
+    );
+    if (!mounted || ids == null || requirement.productId != productId) return;
+    final Map<int, DiscountFormReference> known = <int, DiscountFormReference>{
+      for (final DiscountFormReference v in requirement.variants) v.id: v,
+    };
+    setState(
+      () => requirement
+          .setVariants(ids.toList(growable: false), <DiscountFormReference>[
+            for (final int id in ids)
+              if (known[id] ?? _targets.reference(productId, id)
+                  case final DiscountFormReference ref)
+                ref,
+          ]),
     );
   }
 
@@ -1340,6 +1481,7 @@ class _CreateDiscountPolicyScreenState
     setState(() {
       _active = false;
       _applicationMode = 'manual';
+      _combinationBehavior = 'follow_cafe_policy';
       _priorityController.text = '0';
       _scope = 'order';
       _valueType = 'percentage';
@@ -1608,6 +1750,14 @@ class _CreateDiscountPolicyScreenState
             _FormValidationIssue(
               'bundleRequirements',
               l10n.discountValidationBundleUnique,
+            ),
+          );
+        }
+        if (requirement.isSelected && requirement.variantIds.isEmpty) {
+          issues.add(
+            _FormValidationIssue(
+              'bundleRequirements',
+              l10n.dp3BundleVariantsRequired,
             ),
           );
         }
@@ -2149,16 +2299,29 @@ class _BundleRequirementDraft {
 
   bool get isSelected => variantMode == 'selected';
 
-  String variantSummary(bool arabic) => variantIds
-      .map(
-        (int id) =>
-            variants
-                .where((DiscountFormReference v) => v.id == id)
-                .map((DiscountFormReference v) => v.label(arabic))
-                .firstOrNull ??
-            '#$id',
-      )
-      .join(', ');
+  String variantLabel(int id, bool arabic) =>
+      variants
+          .where((DiscountFormReference v) => v.id == id)
+          .map((DiscountFormReference v) => v.label(arabic))
+          .firstOrNull ??
+      '#$id';
+
+  String variantSummary(bool arabic) =>
+      variantIds.map((int id) => variantLabel(id, arabic)).join(', ');
+
+  /// An explicit choice is always sent; switching to all clears the list.
+  void setMode(String mode) {
+    variantMode = mode;
+    if (mode == 'all') {
+      variantIds = const <int>[];
+      variants = const <DiscountFormReference>[];
+    }
+  }
+
+  void setVariants(List<int> ids, List<DiscountFormReference> labels) {
+    variantIds = List<int>.unmodifiable(ids);
+    variants = List<DiscountFormReference>.unmodifiable(labels);
+  }
 
   void changeProduct(int newProductId) {
     if (newProductId == productId) return;

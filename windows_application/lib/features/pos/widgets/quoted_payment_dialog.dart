@@ -14,7 +14,7 @@ class QuotedPaymentDialog extends StatefulWidget {
 
 class _QuotedPaymentDialogState extends State<QuotedPaymentDialog> {
   final _amount = TextEditingController();
-  String? _shownQuote;
+  String? _shownQuote, _shownTotal;
   @override
   void initState() {
     super.initState();
@@ -38,7 +38,12 @@ class _QuotedPaymentDialogState extends State<QuotedPaymentDialog> {
           cubit = c.read<PosCubit>();
       if (q != null && q.quoteId != _shownQuote) {
         _shownQuote = q.quoteId;
-        if (_amount.text.isEmpty) _amount.text = q.resolution.totals.total;
+        // A refreshed quote (e.g. discounts changed) replaces an amount that
+        // was only the previous total; a typed cash amount is kept.
+        if (_amount.text.isEmpty || _amount.text == _shownTotal) {
+          _amount.text = q.resolution.totals.total;
+        }
+        _shownTotal = q.resolution.totals.total;
       }
       final waiting = w.busy || state.isPaymentSubmitting;
       final uncertain = state.uncertainPaymentOrderId != null;
@@ -83,7 +88,9 @@ class _QuotedPaymentDialogState extends State<QuotedPaymentDialog> {
                   if (q != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     ExactDiscountTotals(totals: q.resolution.totals),
-                    DiscountBreakdown(discounts: q.resolution.discounts),
+                    if (q.resolution.discounts.isNotEmpty ||
+                        q.resolution.excluded.isNotEmpty)
+                      DiscountResolutionSummary(resolution: q.resolution),
                     if (q.resolution.provisional) Text(l.d2Provisional),
                   ],
                   TextField(

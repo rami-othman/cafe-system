@@ -16,12 +16,16 @@ import '../controllers/discounts_cubit.dart';
 import '../controllers/discounts_state.dart';
 import '../models/discount_list_item.dart';
 import '../widgets/discount_search_controls.dart';
+import '../widgets/discounts_area_tabs.dart';
 import '../widgets/discount_summary_card.dart';
 import '../widgets/discount_localization.dart';
 import '../widgets/discounts_table.dart';
 
 class DiscountsListScreen extends StatelessWidget {
-  const DiscountsListScreen({super.key});
+  const DiscountsListScreen({super.key, this.canManageSettings = false});
+
+  /// Shows the Discounts → Settings tab (Owner / authorized Manager).
+  final bool canManageSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +61,11 @@ class DiscountsListScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  DiscountsAreaTabs(
+                    selected: DiscountsArea.policies,
+                    showSettings: canManageSettings,
+                    onSelected: (_) => context.go(AppRoutes.discountSettings),
+                  ),
                   _PageHeader(
                     onCreateDiscount: () =>
                         context.go(AppRoutes.discountCreate),

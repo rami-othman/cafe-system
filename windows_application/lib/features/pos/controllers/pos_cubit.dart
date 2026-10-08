@@ -241,13 +241,19 @@ class PosCubit extends Cubit<PosState> {
     }
   }
 
-  Future<bool> previewDiscountChange(DiscountReviewRequest request) async {
+  Future<bool> previewDiscountChange(DiscountReviewRequest request) =>
+      _previewDiscount(() => request);
+
+  /// [build] runs after the order and its saved discount state are refreshed,
+  /// so a V3 list is always built from the current backend intents.
+  Future<bool> _previewDiscount(DiscountReviewRequest Function() build) async {
     if (isClosed ||
         state.discounts.busy ||
         !await prepareDiscountOrder() ||
         state.discounts.busy) {
       return false;
     }
+    final request = build();
     final orderId = state.currentOrderId!;
     final generation = ++_discountGeneration;
     _discountState(
@@ -276,6 +282,43 @@ class PosCubit extends Cubit<PosState> {
       return false;
     }
   }
+
+  /// The cashier's current desired discount list, in the saved backend order.
+  List<DesiredDiscountIntent> get desiredDiscountIntents =>
+      DesiredDiscountIntent.fromSaved(state.discounts.saved);
+
+  bool get _usesDiscountSets =>
+      state.discounts.capabilities?.supportsMultipleDiscounts == true;
+
+  /// Review request for adding one discount. V3 always sends the COMPLETE list;
+  /// money and survival are decided by the backend (the new discount may be
+  /// the one excluded). Older backends keep the legacy replace-one request.
+  DiscountReviewRequest discountRequestAdding(DesiredDiscountIntent intent) {
+    if (!_usesDiscountSets) {
+      return intent.code != null
+          ? DiscountReviewRequest.code(intent.code!)
+          : DiscountReviewRequest.manual(intent.discountId!);
+    }
+    return DiscountReviewRequest.set([...desiredDiscountIntents, intent]);
+  }
+
+  /// Review request for removing one saved discount: the remaining list, or a
+  /// clear when nothing remains. Totals are never subtracted locally.
+  DiscountReviewRequest discountRequestRemoving(int discountId) {
+    final remaining = desiredDiscountIntents
+        .where((intent) => intent.discountId != discountId)
+        .toList(growable: false);
+    if (!_usesDiscountSets || remaining.isEmpty) {
+      return DiscountReviewRequest.remove();
+    }
+    return DiscountReviewRequest.set(remaining);
+  }
+
+  Future<bool> previewDiscountAddition(DesiredDiscountIntent intent) =>
+      _previewDiscount(() => discountRequestAdding(intent));
+
+  Future<bool> previewDiscountRemoval(int discountId) =>
+      _previewDiscount(() => discountRequestRemoving(discountId));
 
   Future<bool> confirmDiscountReview(String reviewId) async {
     if (isClosed ||

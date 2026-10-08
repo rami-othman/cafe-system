@@ -15,7 +15,8 @@ enum CafeConfigurationDestination {
   printing('/cafe-configuration/printing', Icons.print_outlined),
   team('/cafe-configuration/team', Icons.group_outlined),
   tax('/cafe-configuration/tax', Icons.percent_outlined),
-  discounts('/cafe-configuration/discount-settings', Icons.discount_outlined);
+  // Opens Discounts → Settings (the old configuration path redirects there).
+  discounts('/discounts/settings', Icons.discount_outlined);
 
   const CafeConfigurationDestination(this.path, this.icon);
   final String path;

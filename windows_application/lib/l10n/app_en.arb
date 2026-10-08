@@ -4429,8 +4429,8 @@
   "d2Lifecycle": "The order is not available for this operation. Refresh its state.",
   "d2Sync": "Wait for the cart to synchronize before review or payment.",
   "d2SourceAutomatic": "Automatic",
-  "d2SourceCode": "Code",
-  "d2SourceManual": "Configured Manual",
+  "d2SourceCode": "Coupon",
+  "d2SourceManual": "Configured discount",
   "d2SourceAdHoc": "Ad-hoc",
   "@dsCurrentVersion": {
     "placeholders": {
@@ -4438,5 +4438,81 @@
         "type": "int"
       }
     }
-  }
+  },
+  "ds3NavPolicies": "Policies",
+  "ds3NavSettings": "Settings",
+  "ds3Title": "Cafe Discount Policy",
+  "ds3Subtitle": "Decide how discounts may combine on one order. POS and payment always follow this policy.",
+  "ds3General": "General",
+  "ds3AllowMultiple": "Allow multiple discounts on one order",
+  "ds3AllowMultipleHelp": "When off, an order keeps one discount at most. The options below stay saved for when you turn this on again.",
+  "ds3Combining": "Combining discounts",
+  "ds3Stacking": "Discounts on the same item",
+  "ds3StackingDifferent": "Different items only",
+  "ds3StackingDifferentHelp": "Each item can receive one discount only.",
+  "ds3StackingSame": "Allow stacking on the same item",
+  "ds3StackingSameHelp": "Discounts apply one after another, each on the price that remains.",
+  "ds3AllowCoupons": "Allow multiple coupon codes",
+  "ds3AllowCouponConfigured": "Allow coupons with configured discounts",
+  "ds3AllowOrderAfterItems": "Allow an order discount after item discounts",
+  "ds3AllowOrderAfterItemsHelp": "The order discount applies to what remains after item discounts.",
+  "ds3Limits": "Safety limits",
+  "ds3MaxCount": "Maximum discounts per order",
+  "ds3MaxCountHelp": "From 1 to 10. Used only while multiple discounts are allowed.",
+  "ds3MaxCountInvalid": "Enter a whole number from 1 to 10.",
+  "ds3Conflict": "When discounts cannot all be applied",
+  "ds3BestSaving": "Give the customer the best saving",
+  "ds3PriorityRule": "Use discount priority",
+  "ds3PriorityRuleHelp": "A discount with a higher priority number wins.",
+  "ds3Effective": "In effect now",
+  "ds3OneDiscount": "One discount per order",
+  "ds3UpToDiscounts": "Up to {count} discounts per order",
+  "@ds3UpToDiscounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ds3NoCap": "No total discount limit",
+  "ds3CapValue": "Total discount at most {value}% of the subtotal",
+  "@ds3CapValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "ds3Allowed": "Allowed",
+  "ds3NotAllowed": "Not allowed",
+  "dp3Combination": "Combination",
+  "dp3FollowPolicy": "Follow Cafe Policy",
+  "dp3FollowPolicyHelp": "Can combine with other discounts when the Cafe Discount Policy allows it.",
+  "dp3Exclusive": "Exclusive",
+  "dp3ExclusiveHelp": "Cannot be combined with another discount.",
+  "dp3PriorityHelp": "Only used when the Cafe Discount Policy resolves conflicts by priority. Higher numbers win.",
+  "dp3ChooseVariants": "Choose variants",
+  "dp3ChooseProductFirst": "Choose the product first.",
+  "dp3BundleVariantsRequired": "Select at least one variant for every package product set to selected variants.",
+  "d3Applied": "Applied discounts",
+  "d3NotApplied": "Not applied",
+  "d3TotalDiscounts": "Total discounts",
+  "d3Capped": "Reduced by the cafe maximum discount limit.",
+  "d3RemoveDiscount": "Remove discount",
+  "d3PendingReview": "Selected but not applied. Review the order discounts.",
+  "d3ReviewHelp": "Check which discounts will apply before confirming.",
+  "d3NothingApplied": "No discount will apply.",
+  "d3UnknownDiscount": "Discount",
+  "d3ReasonMultipleDisabled": "This cafe allows one discount per order. Another discount gives a better result.",
+  "d3ReasonSameItem": "This cafe allows only one discount per item.",
+  "d3ReasonMultipleCoupons": "Multiple coupon codes are not allowed by the cafe policy.",
+  "d3ReasonCouponCombination": "Coupons cannot be combined with configured discounts.",
+  "d3ReasonOrderItem": "An order discount cannot be combined with item discounts.",
+  "d3ReasonExclusive": "This discount is exclusive and cannot be combined with another discount.",
+  "d3ReasonMaxCount": "The maximum number of discounts for this order has been reached.",
+  "d3ReasonMaxTotal": "This would exceed the cafe maximum discount limit.",
+  "d3ReasonNoItems": "No remaining items are eligible for this discount.",
+  "d3ReasonConflict": "Another discount gives a better result for this order.",
+  "d3Duplicate": "This discount is already on the order.",
+  "d3CouponAgain": "Enter the coupon code again."
 }

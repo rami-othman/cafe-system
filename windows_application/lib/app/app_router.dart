@@ -16,6 +16,7 @@ import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
 import '../features/discounts/models/discount_list_item.dart';
 import '../features/discounts/views/discounts_list_screen.dart';
+import '../features/discounts/widgets/discounts_area_tabs.dart';
 import '../features/shift/controllers/shift_closing_cubit.dart';
 import '../features/shift/controllers/shift_history_cubit.dart';
 import '../features/shift/controllers/shift_overview_cubit.dart';
@@ -2352,7 +2353,23 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.discounts,
           builder: (context, state) => BlocProvider<DiscountsCubit>(
             create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
-            child: const DiscountsListScreen(),
+            child: DiscountsListScreen(
+              canManageSettings: _canManageDiscountSettings(),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.discountSettings,
+          name: AppRouteNames.discountSettings,
+          redirect: _discountSettingsAccessRedirect,
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<DiscountSettingsCubit>()..load(),
+            child: DiscountSettingsScreen(
+              header: DiscountsAreaTabs(
+                selected: DiscountsArea.settings,
+                onSelected: (_) => context.go(AppRoutes.discounts),
+              ),
+            ),
           ),
         ),
         GoRoute(
@@ -2455,13 +2472,12 @@ final GoRouter appRouter = GoRouter(
             child: const TeamAccessScreen(),
           ),
         ),
+        // Legacy alias: Cafe Discount Policy now lives under Discounts.
         GoRoute(
           path: AppRoutes.cafeConfigurationDiscountSettings,
-          redirect: _cafeConfigurationAccessRedirect,
-          builder: (context, state) => BlocProvider(
-            create: (_) => serviceLocator<DiscountSettingsCubit>()..load(),
-            child: const DiscountSettingsScreen(),
-          ),
+          redirect: (context, state) =>
+              _cafeConfigurationAccessRedirect(context, state) ??
+              AppRoutes.discountSettings,
         ),
         GoRoute(
           path: AppRoutes.cafeConfigurationTax,
@@ -2784,7 +2800,9 @@ String _activeDestinationFor(GoRouterState state) {
   }
   return switch (state.matchedLocation) {
     AppRoutes.dashboard => 'dashboard',
-    AppRoutes.discounts || AppRoutes.discountCreate => 'discounts',
+    AppRoutes.discounts ||
+    AppRoutes.discountCreate ||
+    AppRoutes.discountSettings => 'discounts',
     AppRoutes.orders => 'orders',
     _ when state.uri.path.startsWith(AppRoutes.reports) => 'reports',
     AppRoutes.settings => 'settings',
@@ -2811,6 +2829,7 @@ abstract final class AppRoutes {
   static const String reportsExpenses = '/reports/expenses';
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
+  static const String discountSettings = '/discounts/settings';
   static const String shift = ShiftRouteLocations.root;
   static const String shiftCurrent = ShiftRouteLocations.current;
   static const String shiftHistory = ShiftRouteLocations.history;
@@ -3046,6 +3065,7 @@ abstract final class AppRouteNames {
   static const String reports = 'reports';
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
+  static const String discountSettings = 'discount-settings';
   static const String shiftCurrent = 'shift-current';
   static const String shiftHistory = 'shift-history';
   static const String shiftClosing = 'shift-closing';
@@ -3180,6 +3200,16 @@ String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState state) {
 
   return AppRoutes.pos;
 }
+
+/// Cafe Discount Policy: Owner, or a Manager (the settings endpoint enforces
+/// the `discounts.settings.manage` grant). Everyone else goes to POS.
+bool _canManageDiscountSettings() => const <String>{
+  'owner',
+  'manager',
+}.contains(serviceLocator<AuthSessionCubit>().state.session?.user.role);
+
+String? _discountSettingsAccessRedirect(BuildContext _, GoRouterState _) =>
+    _canManageDiscountSettings() ? null : AppRoutes.pos;
 
 String? _customerManagementAccessRedirect(BuildContext _, GoRouterState _) =>
     CustomerManagementAccess.allows(

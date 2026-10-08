@@ -58,7 +58,7 @@ class SettingsFake implements DiscountSettingsRepository {
 
 void main() {
   test(
-    'defaults and replacement contain exactly eight fields plus expectedVersion',
+    'defaults and replacement contain the eight legacy fields, the V3 policy and expectedVersion',
     () {
       final j = const DiscountSettingsDraft().toJson(0);
       expect(j.keys.toSet(), {
@@ -70,6 +70,13 @@ void main() {
         'manualBehavior',
         'maximumTotalDiscountPercent',
         'allowAutomaticSuppression',
+        'allowMultipleDiscounts',
+        'stackingMode',
+        'allowMultipleCoupons',
+        'allowCouponWithConfigured',
+        'allowOrderAfterItemDiscounts',
+        'maximumDiscountsPerOrder',
+        'conflictResolution',
         'expectedVersion',
       });
       expect(j['automaticEnabled'], false);
@@ -120,7 +127,11 @@ void main() {
     final r = SettingsFake();
     final cubit = DiscountSettingsCubit(r);
     await cubit.load();
-    cubit.update(cubit.state.draft.copyWith(combinationMode: 'disjoint_items'));
+    cubit.update(
+      cubit.state.draft.copyWith(
+        policy: const DiscountCafePolicy(allowMultipleDiscounts: true),
+      ),
+    );
     await cubit.save();
     expect(r.writes.length, 1);
     expect(cubit.state.saved!.version, 1);

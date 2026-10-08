@@ -62,24 +62,36 @@ final class DiscountEngineProtocol
         return $method;
     }
 
-    /** Normalize secret coupon text to policy identity before any storage. */
-    private function explicit(Request $request, int $tenantId, array $input): array
+    /**
+     * Normalize secret coupon text to policy identity before any storage.
+     *
+     * $retainedCodes: coupon discount ids already saved as explicit intents on
+     * this order. A full `set` list may keep such a coupon by `discountId`, since
+     * the coupon text is never stored or returned; a new coupon still needs its
+     * code, so a policy id alone can never redeem a coupon.
+     */
+    private function explicit(Request $request, int $tenantId, array $input, array $retainedCodes = []): array
     {
         $source = $input['source'];
         if ($source === 'ad_hoc') {
             throw new OrderLifecycleException('DISCOUNT_AD_HOC_DISABLED', 'Choose an existing eligible discount policy.');
         }
+        $retained = $source === 'code' && ! array_key_exists('code', $input) && array_key_exists('discountId', $input);
         $allowed = match ($source) {
-            'code' => ['source', 'code'],
+            'code' => $retained ? ['source', 'discountId'] : ['source', 'code'],
             'configured_manual' => ['source', 'discountId'],
         };
         if (array_diff(array_keys($input), $allowed) !== []) {
             throw ValidationException::withMessages(['intent' => 'Specify exactly one explicit discount intent.']);
         }
         $this->access->authorize($request, DiscountAccess::APPLY_CONFIGURED);
+        if ($retained && ! in_array((int) $input['discountId'], $retainedCodes, true)) {
+            throw new OrderLifecycleException('DISCOUNT_NOT_FOUND', 'Enter the coupon code again.');
+        }
         $query = DB::table('discounts')->where('tenant_id', $tenantId)->whereNull('deleted_at');
         $policy = $source === 'code'
-            ? $query->where('application_mode', 'code')->whereRaw('lower(code) = ?', [strtolower(trim((string) ($input['code'] ?? '')))])->first()
+            ? ($retained ? $query->where('application_mode', 'code')->where('id', (int) $input['discountId'])->first()
+                : $query->where('application_mode', 'code')->whereRaw('lower(code) = ?', [strtolower(trim((string) ($input['code'] ?? '')))])->first())
             : $query->where('application_mode', 'manual')->where('id', $input['discountId'] ?? 0)->first();
         if (! $policy) {
             throw new OrderLifecycleException('DISCOUNT_NOT_FOUND', 'The selected discount is unavailable.');
@@ -139,7 +151,13 @@ final class DiscountEngineProtocol
         } elseif ($change['action'] === 'set') {
             // One reviewed, ordered set that replaces every explicit intent. The
             // client sends intent only; the server resolves eligibility and money.
-            $change['intents'] = array_map(fn (array $one): array => $this->explicit($request, $tenantId, $one), $data['intents']);
+            $retainedCodes = [];
+            foreach ($this->engine->intents($this->engine->intent($tenantId, (int) $order->id)) as $saved) {
+                if (($saved['source'] ?? null) === 'code' && isset($saved['discountId'])) {
+                    $retainedCodes[] = (int) $saved['discountId'];
+                }
+            }
+            $change['intents'] = array_map(fn (array $one): array => $this->explicit($request, $tenantId, $one, $retainedCodes), $data['intents']);
             if (count(array_unique(array_column($change['intents'], 'discountId'))) !== count($change['intents'])) {
                 throw new OrderLifecycleException('DISCOUNT_DUPLICATE_INTENT', 'Each discount can be requested only once.');
             }

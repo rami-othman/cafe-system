@@ -56,6 +56,11 @@ class DiscountTargetsCubit extends Cubit<DiscountTargetsState> {
   }
 
   void clear() => hydrate([]);
+
+  /// A reference already returned by a page load (e.g. a variant picked for a
+  /// package requirement), used to label it after the picker closes.
+  DiscountFormReference? reference(int parentId, int id) =>
+      _known[parentId]?[id];
   void invalidatePage(int key) {
     _requests[key] = (_requests[key] ?? 0) + 1;
   }

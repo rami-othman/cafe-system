@@ -24,8 +24,16 @@ class DiscountCapabilities extends Equatable {
     this.supportsPaymentQuote = false,
     this.requiresPaymentQuote = false,
     this.canSuppressAutomatic = false,
+    this.supportsMultipleDiscounts = false,
+    this.maximumRequestedDiscounts = 1,
+    this.policy,
   });
   final int contractVersion, settingsVersion;
+
+  /// Discount V3: the backend accepts a full ordered intent list (`set`).
+  final bool supportsMultipleDiscounts;
+  final int maximumRequestedDiscounts;
+  final DiscountEffectivePolicy? policy;
   final bool engineReady, automaticPolicyCreationAvailable, automaticEnabled;
   final bool supportsDiscountReview,
       supportsPaymentQuote,
@@ -43,9 +51,19 @@ class DiscountCapabilities extends Equatable {
         supportsPaymentQuote: j['supportsPaymentQuote'] == true,
         requiresPaymentQuote: j['requiresPaymentQuote'] == true,
         canSuppressAutomatic: j['canSuppressAutomatic'] == true,
+        supportsMultipleDiscounts: j['supportsMultipleDiscounts'] == true,
+        maximumRequestedDiscounts: j['maximumRequestedDiscounts'] is int
+            ? j['maximumRequestedDiscounts'] as int
+            : 1,
+        policy: j['policy'] is Map
+            ? DiscountEffectivePolicy.fromJson(engineMap(j['policy']))
+            : null,
       );
   @override
   List<Object?> get props => [
+    supportsMultipleDiscounts,
+    maximumRequestedDiscounts,
+    policy,
     contractVersion,
     settingsVersion,
     engineReady,
@@ -55,6 +73,43 @@ class DiscountCapabilities extends Equatable {
     supportsPaymentQuote,
     requiresPaymentQuote,
     canSuppressAutomatic,
+  ];
+}
+
+/// The Cafe Discount Policy as the engine applies it right now. UI hints only:
+/// the backend decides which discounts survive.
+class DiscountEffectivePolicy extends Equatable {
+  const DiscountEffectivePolicy({
+    this.allowMultipleDiscounts = false,
+    this.effectiveMaximumDiscounts = 1,
+    this.allowMultipleCoupons = false,
+    this.allowCouponWithConfigured = false,
+    this.conflictResolution = 'best_saving',
+  });
+  final bool allowMultipleDiscounts,
+      allowMultipleCoupons,
+      allowCouponWithConfigured;
+  final int effectiveMaximumDiscounts;
+  final String conflictResolution;
+  factory DiscountEffectivePolicy.fromJson(Map<String, dynamic> j) =>
+      DiscountEffectivePolicy(
+        allowMultipleDiscounts: j['allowMultipleDiscounts'] == true,
+        effectiveMaximumDiscounts: j['effectiveMaximumDiscounts'] is int
+            ? j['effectiveMaximumDiscounts'] as int
+            : 1,
+        allowMultipleCoupons: j['allowMultipleCoupons'] == true,
+        allowCouponWithConfigured: j['allowCouponWithConfigured'] == true,
+        conflictResolution: j['conflictResolution'] == 'priority'
+            ? 'priority'
+            : 'best_saving',
+      );
+  @override
+  List<Object?> get props => [
+    allowMultipleDiscounts,
+    effectiveMaximumDiscounts,
+    allowMultipleCoupons,
+    allowCouponWithConfigured,
+    conflictResolution,
   ];
 }
 
@@ -86,9 +141,19 @@ class SavedDiscount extends Equatable {
     this.applicationMode,
     this.fixedAmountBasis,
     this.scope,
+    this.sequence,
+    this.combinationBehavior,
+    this.capped = false,
     this.allocations = const [],
   });
   final int? id, discountId, settingsVersion, priority;
+
+  /// V3 authoritative application order (1-based). Absent on old orders.
+  final int? sequence;
+  final String? combinationBehavior;
+
+  /// True when the shared maximum-total-discount limit reduced this discount.
+  final bool capped;
   final String name, type, value, amount;
   final String? source, stage, applicationMode, fixedAmountBasis, scope;
   final List<DiscountAllocation> allocations;
@@ -106,6 +171,9 @@ class SavedDiscount extends Equatable {
     applicationMode: j['applicationMode'] as String?,
     fixedAmountBasis: j['fixedAmountBasis'] as String?,
     scope: j['scope'] as String?,
+    sequence: j['sequence'] as int?,
+    combinationBehavior: j['combinationBehavior'] as String?,
+    capped: j['capped'] == true,
     allocations: List.unmodifiable(
       engineList(j['allocations']).map(DiscountAllocation.fromJson),
     ),
@@ -125,6 +193,9 @@ class SavedDiscount extends Equatable {
     applicationMode,
     fixedAmountBasis,
     scope,
+    sequence,
+    combinationBehavior,
+    capped,
     allocations,
   ];
 }
@@ -193,6 +264,7 @@ class SavedDiscountState extends Equatable {
     required this.orderId,
     required this.totals,
     this.explicitIntent,
+    this.explicitIntents = const [],
     this.discounts = const [],
     this.suppressions = const [],
     this.requiresDiscountBreakdown = false,
@@ -202,33 +274,81 @@ class SavedDiscountState extends Equatable {
   final bool requiresDiscountBreakdown;
   final DiscountTotals totals;
   final ExplicitDiscountIntent? explicitIntent;
+
+  /// V3 ordered explicit intents. Older backends only send [explicitIntent].
+  final List<ExplicitDiscountIntent> explicitIntents;
   final List<SavedDiscount> discounts;
   final List<DiscountSuppression> suppressions;
-  factory SavedDiscountState.fromJson(Map<String, dynamic> j) =>
-      SavedDiscountState(
-        orderId: j['orderId'] as int,
-        totals: DiscountTotals.fromJson(engineMap(j['totals'])),
-        explicitIntent: j['explicitIntent'] == null
-            ? null
-            : ExplicitDiscountIntent.fromJson(engineMap(j['explicitIntent'])),
-        discounts: List.unmodifiable(
-          engineList(j['discounts']).map(SavedDiscount.fromJson),
-        ),
-        suppressions: List.unmodifiable(
-          engineList(j['suppressions']).map(DiscountSuppression.fromJson),
-        ),
-        requiresDiscountBreakdown: j['requiresDiscountBreakdown'] == true,
-        discountContractVersion: j['discountContractVersion'] as int,
-      );
+  factory SavedDiscountState.fromJson(Map<String, dynamic> j) {
+    final single = j['explicitIntent'] == null
+        ? null
+        : ExplicitDiscountIntent.fromJson(engineMap(j['explicitIntent']));
+    return SavedDiscountState(
+      orderId: j['orderId'] as int,
+      totals: DiscountTotals.fromJson(engineMap(j['totals'])),
+      explicitIntent: single,
+      explicitIntents: List.unmodifiable(
+        j['explicitIntents'] is List
+            ? engineList(
+                j['explicitIntents'],
+              ).map(ExplicitDiscountIntent.fromJson)
+            : [?single],
+      ),
+      discounts: List.unmodifiable(
+        engineList(j['discounts']).map(SavedDiscount.fromJson),
+      ),
+      suppressions: List.unmodifiable(
+        engineList(j['suppressions']).map(DiscountSuppression.fromJson),
+      ),
+      requiresDiscountBreakdown: j['requiresDiscountBreakdown'] == true,
+      discountContractVersion: j['discountContractVersion'] as int,
+    );
+  }
   @override
   List<Object?> get props => [
     orderId,
     totals,
     explicitIntent,
+    explicitIntents,
     discounts,
     suppressions,
     requiresDiscountBreakdown,
     discountContractVersion,
+  ];
+}
+
+/// A requested discount the backend did not apply, with a stable reason code.
+class ExcludedDiscount extends Equatable {
+  const ExcludedDiscount({
+    required this.code,
+    this.position,
+    this.discountId,
+    this.name,
+    this.source,
+    this.conflictsWith = const [],
+  });
+  final int? position, discountId;
+  final String? name, source;
+  final String code;
+  final List<int> conflictsWith;
+  factory ExcludedDiscount.fromJson(Map<String, dynamic> j) => ExcludedDiscount(
+    code: j['code'] as String,
+    position: j['position'] as int?,
+    discountId: j['discountId'] as int?,
+    name: j['name'] as String?,
+    source: j['source'] as String?,
+    conflictsWith: List.unmodifiable(
+      (j['conflictsWith'] as List? ?? const []).whereType<int>(),
+    ),
+  );
+  @override
+  List<Object?> get props => [
+    code,
+    position,
+    discountId,
+    name,
+    source,
+    conflictsWith,
   ];
 }
 
@@ -238,6 +358,7 @@ class DiscountResolution extends Equatable {
     required this.fingerprint,
     required this.settingsVersion,
     this.discounts = const [],
+    this.excluded = const [],
     this.provisional = false,
     this.reasons = const [],
   });
@@ -246,6 +367,9 @@ class DiscountResolution extends Equatable {
   final int settingsVersion;
   final bool provisional;
   final List<SavedDiscount> discounts;
+
+  /// V3: requested but not applied. Never hide these from the cashier.
+  final List<ExcludedDiscount> excluded;
   final List<(int?, String)> reasons;
   factory DiscountResolution.fromJson(Map<String, dynamic> j) =>
       DiscountResolution(
@@ -255,6 +379,9 @@ class DiscountResolution extends Equatable {
         provisional: j['provisional'] == true,
         discounts: List.unmodifiable(
           engineList(j['discounts']).map(SavedDiscount.fromJson),
+        ),
+        excluded: List.unmodifiable(
+          engineList(j['excluded']).map(ExcludedDiscount.fromJson),
         ),
         reasons: List.unmodifiable(
           engineList(
@@ -269,6 +396,7 @@ class DiscountResolution extends Equatable {
     settingsVersion,
     provisional,
     discounts,
+    excluded,
     reasons,
   ];
 }
@@ -378,6 +506,43 @@ class PaymentQuote extends Equatable {
   ];
 }
 
+/// One entry of the cashier's desired discount list. Never carries money.
+///
+/// A coupon typed in this session carries its [code]; a coupon already saved on
+/// the order is kept by [discountId] (the backend never returns coupon text).
+class DesiredDiscountIntent extends Equatable {
+  const DesiredDiscountIntent._(this.source, this.discountId, this.code);
+  const DesiredDiscountIntent.configured(int id)
+    : this._('configured_manual', id, null);
+  const DesiredDiscountIntent.coupon(String code) : this._('code', null, code);
+  const DesiredDiscountIntent.savedCoupon(int id) : this._('code', id, null);
+  final String source;
+  final int? discountId;
+  final String? code;
+
+  bool get isCoupon => source == 'code';
+
+  /// Saved V3 intents, in their authoritative order. Legacy ad-hoc intents
+  /// cannot be part of a set and are dropped.
+  static List<DesiredDiscountIntent> fromSaved(SavedDiscountState? saved) => [
+    for (final intent in saved?.explicitIntents ?? const [])
+      if (intent.discountId != null && intent.source == 'code')
+        DesiredDiscountIntent.savedCoupon(intent.discountId!)
+      else if (intent.discountId != null &&
+          intent.source == 'configured_manual')
+        DesiredDiscountIntent.configured(intent.discountId!),
+  ];
+
+  Map<String, dynamic> toJson() => {
+    'source': source,
+    if (code != null) 'code': code else 'discountId': discountId,
+  };
+  @override
+  List<Object?> get props => [source, discountId, code];
+  @override
+  String toString() => 'DesiredDiscountIntent($source)';
+}
+
 /// Coupon input exists only in this transient source-specific request.
 class DiscountReviewRequest {
   const DiscountReviewRequest._(this.body);
@@ -390,6 +555,13 @@ class DiscountReviewRequest {
     'action': 'apply',
     'intent': {'source': 'code', 'code': code},
   });
+
+  /// V3: the complete desired list replaces every explicit intent.
+  factory DiscountReviewRequest.set(List<DesiredDiscountIntent> intents) =>
+      DiscountReviewRequest._({
+        'action': 'set',
+        'intents': [for (final intent in intents) intent.toJson()],
+      });
   factory DiscountReviewRequest.remove() =>
       const DiscountReviewRequest._({'action': 'remove'});
   factory DiscountReviewRequest.suppress(int id, String reason) =>

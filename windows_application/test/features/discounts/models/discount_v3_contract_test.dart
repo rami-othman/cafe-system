@@ -292,7 +292,7 @@ void main() {
     );
 
     test(
-      'the existing screen payload is unchanged and carries no V3 fields',
+      'Phase 3: the settings payload carries the V3 policy with legacy fields unchanged',
       () {
         final Map<String, dynamic> body = SavedDiscountSettings.fromJson(
           legacy,
@@ -306,8 +306,19 @@ void main() {
           'manualBehavior',
           'maximumTotalDiscountPercent',
           'allowAutomaticSuppression',
+          'allowMultipleDiscounts',
+          'stackingMode',
+          'allowMultipleCoupons',
+          'allowCouponWithConfigured',
+          'allowOrderAfterItemDiscounts',
+          'maximumDiscountsPerOrder',
+          'conflictResolution',
           'expectedVersion',
         });
+        // An older backend without V3 fields gets the safe single-discount defaults.
+        expect(body['allowMultipleDiscounts'], false);
+        expect(body['maximumDiscountsPerOrder'], 1);
+        expect(body['conflictResolution'], 'best_saving');
       },
     );
   });

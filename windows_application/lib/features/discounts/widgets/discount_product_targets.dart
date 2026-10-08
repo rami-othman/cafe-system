@@ -156,20 +156,31 @@ class DiscountProductTargets extends StatelessWidget {
     int id,
     String title,
     Set<int> ids,
-  ) async {
-    controller.load(productId: id, search: '', page: 1);
-    final result = await showDialog<Set<int>>(
-      context: context,
-      builder: (_) => _DiscountPagedPicker(
-        controller: controller,
-        productId: id,
-        title: title,
-        initial: ids,
-      ),
-    );
-    controller.invalidatePage(id);
-    return result;
-  }
+  ) => pickDiscountReferences(context, controller, id, title, ids);
+}
+
+/// Searchable, paginated multi-select of products (`parentId` 0) or of one
+/// product's active variants. Shared by product targets and package
+/// requirements so both use the same server-side search and paging.
+Future<Set<int>?> pickDiscountReferences(
+  BuildContext context,
+  DiscountTargetsCubit controller,
+  int parentId,
+  String title,
+  Set<int> initial,
+) async {
+  controller.load(productId: parentId, search: '', page: 1);
+  final result = await showDialog<Set<int>>(
+    context: context,
+    builder: (_) => _DiscountPagedPicker(
+      controller: controller,
+      productId: parentId,
+      title: title,
+      initial: initial,
+    ),
+  );
+  controller.invalidatePage(parentId);
+  return result;
 }
 
 class _DiscountPagedPicker extends StatefulWidget {

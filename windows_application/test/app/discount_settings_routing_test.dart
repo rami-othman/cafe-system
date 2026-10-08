@@ -31,11 +31,9 @@ void main() {
         appRouter.go(AppRoutes.cafeConfigurationDiscountSettings);
         await tester.pumpAndSettle();
         if (role == 'owner' || role == 'manager') {
+          // The old configuration path is an alias of Discounts → Settings.
           expect(find.byType(DiscountSettingsScreen), findsOneWidget);
-          expect(
-            appRouter.state.uri.path,
-            AppRoutes.cafeConfigurationDiscountSettings,
-          );
+          expect(appRouter.state.uri.path, AppRoutes.discountSettings);
         } else {
           expect(
             appRouter.state.uri.path,
@@ -60,6 +58,31 @@ void main() {
         checkBaselineDiagnostics(tester);
       },
     );
+  }
+  for (final role in ['owner', 'manager', 'employee']) {
+    testWidgets('Discounts → Settings tab and route for $role', (tester) async {
+      await configure(role);
+      final r = SettingsFake();
+      await serviceLocator.unregister<DiscountSettingsRepository>();
+      serviceLocator.registerLazySingleton<DiscountSettingsRepository>(() => r);
+      await pumpApp(tester);
+      appRouter.go(AppRoutes.discountSettings);
+      await tester.pumpAndSettle();
+      final allowed = role != 'employee';
+      expect(
+        find.byType(DiscountSettingsScreen),
+        allowed ? findsOneWidget : findsNothing,
+      );
+      if (allowed) {
+        expect(appRouter.state.uri.path, AppRoutes.discountSettings);
+        expect(find.byKey(const Key('discounts-area-tabs')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('discounts-tab-policies')));
+        await tester.pumpAndSettle();
+        expect(appRouter.state.uri.path, AppRoutes.discounts);
+        expect(find.byKey(const Key('discounts-tab-settings')), findsOneWidget);
+      }
+      checkBaselineDiagnostics(tester);
+    });
   }
   testWidgets(
     'server revocation on a direct Manager route clears draft and forbids save',

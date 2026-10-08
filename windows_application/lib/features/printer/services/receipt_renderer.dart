@@ -292,8 +292,8 @@ class ReceiptRenderer {
           for (final discount in receipt.discounts) {
             final source = switch (discount.source) {
               'automatic' => rtl ? 'تلقائي' : 'Automatic',
-              'code' => rtl ? 'رمز' : 'Code',
-              'configured_manual' => rtl ? 'يدوي معرّف' : 'Configured Manual',
+              'code' => rtl ? 'قسيمة' : 'Coupon',
+              'configured_manual' => rtl ? 'خصم معرّف' : 'Configured discount',
               'ad_hoc' => rtl ? 'حر' : 'Ad-hoc',
               _ => rtl ? 'خصم' : 'Discount',
             };
@@ -301,7 +301,13 @@ class ReceiptRenderer {
           }
         }
         if (cfg.showDiscount && receipt.discountTotal != 0) {
-          row(rtl ? 'الخصم' : 'Discount', amount(receipt.discountTotal));
+          // Several backend discount lines are followed by their total.
+          row(
+            receipt.discounts.length > 1
+                ? (rtl ? 'إجمالي الخصومات' : 'Total discounts')
+                : (rtl ? 'الخصم' : 'Discount'),
+            amount(receipt.discountTotal),
+          );
         }
         if (cfg.showTax) row(rtl ? 'الضريبة' : 'Tax', amount(receipt.taxTotal));
         // showTotal is always true: a receipt with no total is meaningless.

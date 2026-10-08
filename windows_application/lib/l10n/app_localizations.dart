@@ -17561,13 +17561,13 @@ abstract class AppLocalizations {
   /// No description provided for @d2SourceCode.
   ///
   /// In en, this message translates to:
-  /// **'Code'**
+  /// **'Coupon'**
   String get d2SourceCode;
 
   /// No description provided for @d2SourceManual.
   ///
   /// In en, this message translates to:
-  /// **'Configured Manual'**
+  /// **'Configured discount'**
   String get d2SourceManual;
 
   /// No description provided for @d2SourceAdHoc.
@@ -17575,6 +17575,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ad-hoc'**
   String get d2SourceAdHoc;
+
+  /// No description provided for @ds3NavPolicies.
+  ///
+  /// In en, this message translates to:
+  /// **'Policies'**
+  String get ds3NavPolicies;
+
+  /// No description provided for @ds3NavSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get ds3NavSettings;
+
+  /// No description provided for @ds3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Discount Policy'**
+  String get ds3Title;
+
+  /// No description provided for @ds3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decide how discounts may combine on one order. POS and payment always follow this policy.'**
+  String get ds3Subtitle;
+
+  /// No description provided for @ds3General.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get ds3General;
+
+  /// No description provided for @ds3AllowMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow multiple discounts on one order'**
+  String get ds3AllowMultiple;
+
+  /// No description provided for @ds3AllowMultipleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, an order keeps one discount at most. The options below stay saved for when you turn this on again.'**
+  String get ds3AllowMultipleHelp;
+
+  /// No description provided for @ds3Combining.
+  ///
+  /// In en, this message translates to:
+  /// **'Combining discounts'**
+  String get ds3Combining;
+
+  /// No description provided for @ds3Stacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts on the same item'**
+  String get ds3Stacking;
+
+  /// No description provided for @ds3StackingDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'Different items only'**
+  String get ds3StackingDifferent;
+
+  /// No description provided for @ds3StackingDifferentHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Each item can receive one discount only.'**
+  String get ds3StackingDifferentHelp;
+
+  /// No description provided for @ds3StackingSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow stacking on the same item'**
+  String get ds3StackingSame;
+
+  /// No description provided for @ds3StackingSameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts apply one after another, each on the price that remains.'**
+  String get ds3StackingSameHelp;
+
+  /// No description provided for @ds3AllowCoupons.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow multiple coupon codes'**
+  String get ds3AllowCoupons;
+
+  /// No description provided for @ds3AllowCouponConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow coupons with configured discounts'**
+  String get ds3AllowCouponConfigured;
+
+  /// No description provided for @ds3AllowOrderAfterItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow an order discount after item discounts'**
+  String get ds3AllowOrderAfterItems;
+
+  /// No description provided for @ds3AllowOrderAfterItemsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The order discount applies to what remains after item discounts.'**
+  String get ds3AllowOrderAfterItemsHelp;
+
+  /// No description provided for @ds3Limits.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety limits'**
+  String get ds3Limits;
+
+  /// No description provided for @ds3MaxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum discounts per order'**
+  String get ds3MaxCount;
+
+  /// No description provided for @ds3MaxCountHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'From 1 to 10. Used only while multiple discounts are allowed.'**
+  String get ds3MaxCountHelp;
+
+  /// No description provided for @ds3MaxCountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number from 1 to 10.'**
+  String get ds3MaxCountInvalid;
+
+  /// No description provided for @ds3Conflict.
+  ///
+  /// In en, this message translates to:
+  /// **'When discounts cannot all be applied'**
+  String get ds3Conflict;
+
+  /// No description provided for @ds3BestSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the customer the best saving'**
+  String get ds3BestSaving;
+
+  /// No description provided for @ds3PriorityRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Use discount priority'**
+  String get ds3PriorityRule;
+
+  /// No description provided for @ds3PriorityRuleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A discount with a higher priority number wins.'**
+  String get ds3PriorityRuleHelp;
+
+  /// No description provided for @ds3Effective.
+  ///
+  /// In en, this message translates to:
+  /// **'In effect now'**
+  String get ds3Effective;
+
+  /// No description provided for @ds3OneDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'One discount per order'**
+  String get ds3OneDiscount;
+
+  /// No description provided for @ds3UpToDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {count} discounts per order'**
+  String ds3UpToDiscounts(int count);
+
+  /// No description provided for @ds3NoCap.
+  ///
+  /// In en, this message translates to:
+  /// **'No total discount limit'**
+  String get ds3NoCap;
+
+  /// No description provided for @ds3CapValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total discount at most {value}% of the subtotal'**
+  String ds3CapValue(String value);
+
+  /// No description provided for @ds3Allowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed'**
+  String get ds3Allowed;
+
+  /// No description provided for @ds3NotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed'**
+  String get ds3NotAllowed;
+
+  /// No description provided for @dp3Combination.
+  ///
+  /// In en, this message translates to:
+  /// **'Combination'**
+  String get dp3Combination;
+
+  /// No description provided for @dp3FollowPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow Cafe Policy'**
+  String get dp3FollowPolicy;
+
+  /// No description provided for @dp3FollowPolicyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Can combine with other discounts when the Cafe Discount Policy allows it.'**
+  String get dp3FollowPolicyHelp;
+
+  /// No description provided for @dp3Exclusive.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive'**
+  String get dp3Exclusive;
+
+  /// No description provided for @dp3ExclusiveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be combined with another discount.'**
+  String get dp3ExclusiveHelp;
+
+  /// No description provided for @dp3PriorityHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Only used when the Cafe Discount Policy resolves conflicts by priority. Higher numbers win.'**
+  String get dp3PriorityHelp;
+
+  /// No description provided for @dp3ChooseVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose variants'**
+  String get dp3ChooseVariants;
+
+  /// No description provided for @dp3ChooseProductFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the product first.'**
+  String get dp3ChooseProductFirst;
+
+  /// No description provided for @dp3BundleVariantsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one variant for every package product set to selected variants.'**
+  String get dp3BundleVariantsRequired;
+
+  /// No description provided for @d3Applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied discounts'**
+  String get d3Applied;
+
+  /// No description provided for @d3NotApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Not applied'**
+  String get d3NotApplied;
+
+  /// No description provided for @d3TotalDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Total discounts'**
+  String get d3TotalDiscounts;
+
+  /// No description provided for @d3Capped.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced by the cafe maximum discount limit.'**
+  String get d3Capped;
+
+  /// No description provided for @d3RemoveDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove discount'**
+  String get d3RemoveDiscount;
+
+  /// No description provided for @d3PendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected but not applied. Review the order discounts.'**
+  String get d3PendingReview;
+
+  /// No description provided for @d3ReviewHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Check which discounts will apply before confirming.'**
+  String get d3ReviewHelp;
+
+  /// No description provided for @d3NothingApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'No discount will apply.'**
+  String get d3NothingApplied;
+
+  /// No description provided for @d3UnknownDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get d3UnknownDiscount;
+
+  /// No description provided for @d3ReasonMultipleDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This cafe allows one discount per order. Another discount gives a better result.'**
+  String get d3ReasonMultipleDisabled;
+
+  /// No description provided for @d3ReasonSameItem.
+  ///
+  /// In en, this message translates to:
+  /// **'This cafe allows only one discount per item.'**
+  String get d3ReasonSameItem;
+
+  /// No description provided for @d3ReasonMultipleCoupons.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple coupon codes are not allowed by the cafe policy.'**
+  String get d3ReasonMultipleCoupons;
+
+  /// No description provided for @d3ReasonCouponCombination.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupons cannot be combined with configured discounts.'**
+  String get d3ReasonCouponCombination;
+
+  /// No description provided for @d3ReasonOrderItem.
+  ///
+  /// In en, this message translates to:
+  /// **'An order discount cannot be combined with item discounts.'**
+  String get d3ReasonOrderItem;
+
+  /// No description provided for @d3ReasonExclusive.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount is exclusive and cannot be combined with another discount.'**
+  String get d3ReasonExclusive;
+
+  /// No description provided for @d3ReasonMaxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'The maximum number of discounts for this order has been reached.'**
+  String get d3ReasonMaxCount;
+
+  /// No description provided for @d3ReasonMaxTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'This would exceed the cafe maximum discount limit.'**
+  String get d3ReasonMaxTotal;
+
+  /// No description provided for @d3ReasonNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No remaining items are eligible for this discount.'**
+  String get d3ReasonNoItems;
+
+  /// No description provided for @d3ReasonConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Another discount gives a better result for this order.'**
+  String get d3ReasonConflict;
+
+  /// No description provided for @d3Duplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'This discount is already on the order.'**
+  String get d3Duplicate;
+
+  /// No description provided for @d3CouponAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the coupon code again.'**
+  String get d3CouponAgain;
 }
 
 class _AppLocalizationsDelegate

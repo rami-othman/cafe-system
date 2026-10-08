@@ -24,7 +24,9 @@ class OrderDetailTotalsSection extends StatelessWidget {
           DiscountBreakdown(discounts: detail.discounts),
           if (detail.discountTotal != 0)
             _TotalRow(
-              label: context.l10n.posDiscount,
+              label: detail.discounts.length > 1
+                  ? context.l10n.d3TotalDiscounts
+                  : context.l10n.posDiscount,
               amount: -detail.discountTotal,
             ),
           const SizedBox(height: AppSpacing.sm),

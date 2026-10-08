@@ -107,7 +107,9 @@ class DiscountSettingsCubit extends Cubit<DiscountSettingsState> {
     );
   }
 
-  void resetDraft() => update(const DiscountSettingsDraft());
+  /// Resets the visible Cafe Discount Policy to defaults; hidden legacy engine
+  /// fields keep their current values.
+  void resetDraft() => update(state.draft.withPublicDefaults());
   void acknowledgeConflict() {
     if (isClosed ||
         state.saved == null ||

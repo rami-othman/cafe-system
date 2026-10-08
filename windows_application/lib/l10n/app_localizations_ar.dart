@@ -9778,11 +9778,216 @@ class AppLocalizationsAr extends AppLocalizations {
   String get d2SourceAutomatic => 'تلقائي';
 
   @override
-  String get d2SourceCode => 'كود';
+  String get d2SourceCode => 'قسيمة';
 
   @override
-  String get d2SourceManual => 'يدوي معرّف';
+  String get d2SourceManual => 'خصم معرّف';
 
   @override
   String get d2SourceAdHoc => 'حر';
+
+  @override
+  String get ds3NavPolicies => 'سياسات الخصم';
+
+  @override
+  String get ds3NavSettings => 'الإعدادات';
+
+  @override
+  String get ds3Title => 'سياسة الخصومات';
+
+  @override
+  String get ds3Subtitle =>
+      'حدّد كيف يمكن الجمع بين الخصومات في الطلب الواحد. تلتزم نقطة البيع والدفع بهذه السياسة دائمًا.';
+
+  @override
+  String get ds3General => 'عام';
+
+  @override
+  String get ds3AllowMultiple => 'السماح بأكثر من خصم في الطلب الواحد';
+
+  @override
+  String get ds3AllowMultipleHelp =>
+      'عند الإيقاف، يحتفظ الطلب بخصم واحد على الأكثر. تبقى الخيارات أدناه محفوظة لحين تفعيل هذا الخيار مجددًا.';
+
+  @override
+  String get ds3Combining => 'الجمع بين الخصومات';
+
+  @override
+  String get ds3Stacking => 'الخصومات على نفس العنصر';
+
+  @override
+  String get ds3StackingDifferent => 'على عناصر مختلفة فقط';
+
+  @override
+  String get ds3StackingDifferentHelp => 'يحصل كل عنصر على خصم واحد فقط.';
+
+  @override
+  String get ds3StackingSame => 'السماح بأكثر من خصم على نفس العنصر';
+
+  @override
+  String get ds3StackingSameHelp =>
+      'تُطبَّق الخصومات واحدًا تلو الآخر، كلٌّ منها على السعر المتبقي.';
+
+  @override
+  String get ds3AllowCoupons => 'السماح بأكثر من قسيمة';
+
+  @override
+  String get ds3AllowCouponConfigured =>
+      'السماح بالجمع بين القسائم والخصومات المعرّفة';
+
+  @override
+  String get ds3AllowOrderAfterItems =>
+      'السماح بخصم على الطلب بعد خصومات العناصر';
+
+  @override
+  String get ds3AllowOrderAfterItemsHelp =>
+      'يُطبَّق خصم الطلب على المبلغ المتبقي بعد خصومات العناصر.';
+
+  @override
+  String get ds3Limits => 'حدود الأمان';
+
+  @override
+  String get ds3MaxCount => 'الحد الأقصى لعدد الخصومات في الطلب';
+
+  @override
+  String get ds3MaxCountHelp =>
+      'من 1 إلى 10. يُستخدم فقط عند السماح بأكثر من خصم.';
+
+  @override
+  String get ds3MaxCountInvalid => 'أدخل رقمًا صحيحًا من 1 إلى 10.';
+
+  @override
+  String get ds3Conflict => 'عندما يتعذّر تطبيق جميع الخصومات';
+
+  @override
+  String get ds3BestSaving => 'منح العميل أفضل توفير';
+
+  @override
+  String get ds3PriorityRule => 'استخدام أولوية الخصم';
+
+  @override
+  String get ds3PriorityRuleHelp => 'يفوز الخصم صاحب رقم الأولوية الأعلى.';
+
+  @override
+  String get ds3Effective => 'المطبّق حاليًا';
+
+  @override
+  String get ds3OneDiscount => 'خصم واحد لكل طلب';
+
+  @override
+  String ds3UpToDiscounts(int count) {
+    return 'حتى $count خصومات لكل طلب';
+  }
+
+  @override
+  String get ds3NoCap => 'بدون حد إجمالي للخصم';
+
+  @override
+  String ds3CapValue(String value) {
+    return 'إجمالي الخصم بحد أقصى $value% من المجموع الفرعي';
+  }
+
+  @override
+  String get ds3Allowed => 'مسموح';
+
+  @override
+  String get ds3NotAllowed => 'غير مسموح';
+
+  @override
+  String get dp3Combination => 'طريقة الجمع';
+
+  @override
+  String get dp3FollowPolicy => 'اتّباع سياسة المقهى';
+
+  @override
+  String get dp3FollowPolicyHelp =>
+      'يمكن جمعه مع خصومات أخرى عندما تسمح سياسة الخصومات بذلك.';
+
+  @override
+  String get dp3Exclusive => 'حصري';
+
+  @override
+  String get dp3ExclusiveHelp => 'لا يمكن جمعه مع أي خصم آخر.';
+
+  @override
+  String get dp3PriorityHelp =>
+      'تُستخدم فقط عندما تحلّ سياسة الخصومات التعارض بالأولوية. الرقم الأعلى يفوز.';
+
+  @override
+  String get dp3ChooseVariants => 'اختيار الأصناف';
+
+  @override
+  String get dp3ChooseProductFirst => 'اختر المنتج أولًا.';
+
+  @override
+  String get dp3BundleVariantsRequired =>
+      'اختر صنفًا واحدًا على الأقل لكل منتج في الباقة محدد بأصناف مختارة.';
+
+  @override
+  String get d3Applied => 'الخصومات المطبّقة';
+
+  @override
+  String get d3NotApplied => 'غير مطبّقة';
+
+  @override
+  String get d3TotalDiscounts => 'إجمالي الخصومات';
+
+  @override
+  String get d3Capped => 'خُفِّض بسبب الحد الأقصى للخصم في المقهى.';
+
+  @override
+  String get d3RemoveDiscount => 'إزالة الخصم';
+
+  @override
+  String get d3PendingReview => 'مختار لكنه غير مطبّق. راجع خصومات الطلب.';
+
+  @override
+  String get d3ReviewHelp => 'تحقّق من الخصومات التي ستُطبَّق قبل التأكيد.';
+
+  @override
+  String get d3NothingApplied => 'لن يُطبَّق أي خصم.';
+
+  @override
+  String get d3UnknownDiscount => 'خصم';
+
+  @override
+  String get d3ReasonMultipleDisabled =>
+      'يسمح المقهى بخصم واحد لكل طلب، ويوجد خصم آخر أنسب.';
+
+  @override
+  String get d3ReasonSameItem => 'يسمح المقهى بخصم واحد فقط على كل عنصر.';
+
+  @override
+  String get d3ReasonMultipleCoupons =>
+      'سياسة المقهى لا تسمح باستخدام أكثر من قسيمة.';
+
+  @override
+  String get d3ReasonCouponCombination =>
+      'لا يمكن الجمع بين القسائم والخصومات المعرّفة.';
+
+  @override
+  String get d3ReasonOrderItem =>
+      'لا يمكن الجمع بين خصم الطلب وخصومات العناصر.';
+
+  @override
+  String get d3ReasonExclusive => 'هذا الخصم حصري ولا يمكن جمعه مع خصم آخر.';
+
+  @override
+  String get d3ReasonMaxCount =>
+      'تم بلوغ الحد الأقصى لعدد الخصومات في هذا الطلب.';
+
+  @override
+  String get d3ReasonMaxTotal => 'سيتجاوز ذلك الحد الأقصى للخصم في المقهى.';
+
+  @override
+  String get d3ReasonNoItems => 'لا توجد عناصر متبقية مؤهلة لهذا الخصم.';
+
+  @override
+  String get d3ReasonConflict => 'يوجد خصم آخر أنسب لهذا الطلب.';
+
+  @override
+  String get d3Duplicate => 'هذا الخصم مضاف إلى الطلب بالفعل.';
+
+  @override
+  String get d3CouponAgain => 'أدخل رمز القسيمة مرة أخرى.';
 }

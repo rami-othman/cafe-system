@@ -3,13 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/navigation/unsaved_navigation_guard.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../auth/controllers/auth_session_cubit.dart';
 import '../../auth/controllers/auth_session_state.dart';
 import '../controllers/discount_settings_cubit.dart';
+import '../models/discount_settings.dart';
 
+/// Cafe Discount Policy, in business language. Legacy engine fields stay in
+/// the draft (and are saved back unchanged) but are not shown; Automatic
+/// Promotions are not production-ready and have no controls here.
 class DiscountSettingsScreen extends StatefulWidget {
-  const DiscountSettingsScreen({super.key});
+  const DiscountSettingsScreen({super.key, this.header});
+
+  /// Optional navigation shown above the policy (Discounts → Policies/Settings).
+  final Widget? header;
   @override
   State<DiscountSettingsScreen> createState() => _DiscountSettingsScreenState();
 }
@@ -17,6 +26,7 @@ class DiscountSettingsScreen extends StatefulWidget {
 class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
   VoidCallback? _unregister;
   final _cap = TextEditingController();
+  final _max = TextEditingController();
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -51,6 +61,7 @@ class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
   void dispose() {
     _unregister?.call();
     _cap.dispose();
+    _max.dispose();
     super.dispose();
   }
 
@@ -84,44 +95,50 @@ class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
           );
         }
         final d = state.draft;
+        final p = d.policy;
         if (_cap.text != d.maximumTotalDiscountPercent) {
           _cap.text = d.maximumTotalDiscountPercent;
+        }
+        if ((int.tryParse(_max.text.trim()) ?? 0) !=
+            p.maximumDiscountsPerOrder) {
+          _max.text = p.maximumDiscountsPerOrder.toString();
         }
         final enabled =
             state.status != DiscountSettingsStatus.saving &&
             state.status != DiscountSettingsStatus.loading;
-        Widget choice(
-          String key,
-          String title,
-          String value,
-          List<(String, String)> options,
-          void Function(String) change,
-        ) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-          child: DropdownButtonFormField<String>(
-            key: ValueKey('$key-$value'),
-            initialValue: value,
-            isExpanded: true,
-            decoration: InputDecoration(labelText: title),
-            items: options
-                .map(
-                  (o) => DropdownMenuItem(
-                    value: o.$1,
-                    child: Text(o.$2, overflow: TextOverflow.ellipsis),
-                  ),
-                )
-                .toList(),
-            onChanged: enabled
-                ? (v) {
-                    if (v != null) change(v);
-                  }
-                : null,
+        // Combination controls stay visible but inactive while multiple
+        // discounts are off; their saved values are never changed by that.
+        final combining = enabled && p.allowMultipleDiscounts;
+        void policy(DiscountCafePolicy next) =>
+            c.update(d.copyWith(policy: next));
+        Widget section(String title) => Padding(
+          padding: const EdgeInsets.only(
+            top: AppSpacing.xl,
+            bottom: AppSpacing.sm,
+          ),
+          child: Text(
+            title,
+            style: AppTextStyles.titleMedium.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         );
-        final rules = [
-          ('exclusive', l.dsExclusive),
-          ('follow_combination_rules', l.dsFollowRules),
-        ];
+        Widget toggle(
+          String key,
+          String title,
+          bool value,
+          bool active,
+          void Function(bool) change, {
+          String? help,
+        }) => SwitchListTile(
+          key: Key(key),
+          contentPadding: EdgeInsets.zero,
+          title: Text(title),
+          subtitle: help == null ? null : Text(help),
+          value: value,
+          onChanged: active ? change : null,
+        );
         return PopScope(
           canPop: !state.dirty,
           onPopInvokedWithResult: (didPop, result) async {
@@ -139,12 +156,13 @@ class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      ?widget.header,
                       Text(
-                        l.dsTitle,
+                        l.ds3Title,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Text(l.dsSubtitle),
+                      Text(l.ds3Subtitle),
                       if (state.saved!.version == 0)
                         Padding(
                           padding: const EdgeInsets.symmetric(
@@ -152,74 +170,92 @@ class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
                           ),
                           child: Text(l.dsDefaults),
                         ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(l.dsAutomatic),
-                        subtitle: Text(l.dsActivationUnavailable),
-                        value: d.automaticEnabled,
-                        onChanged: enabled && state.saved!.engineReady
-                            ? (v) => c.update(d.copyWith(automaticEnabled: v))
-                            : null,
+                      section(l.ds3General),
+                      toggle(
+                        'ds-allow-multiple',
+                        l.ds3AllowMultiple,
+                        p.allowMultipleDiscounts,
+                        enabled,
+                        (v) => policy(p.copyWith(allowMultipleDiscounts: v)),
+                        help: l.ds3AllowMultipleHelp,
                       ),
-                      choice(
-                        'ds-strategy',
-                        l.dsStrategy,
-                        d.selectionStrategy,
-                        [
-                          ('highest_saving', l.dsHighest),
-                          ('lowest_saving', l.dsLowest),
-                          ('priority', l.dsPriority),
-                        ],
-                        (v) => c.update(d.copyWith(selectionStrategy: v)),
+                      section(l.ds3Combining),
+                      Text(l.ds3Stacking, style: AppTextStyles.labelLarge),
+                      RadioGroup<String>(
+                        groupValue: p.stackingMode,
+                        onChanged: (v) {
+                          if (combining && v != null) {
+                            policy(p.copyWith(stackingMode: v));
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            for (final option in [
+                              (
+                                'different_items_only',
+                                l.ds3StackingDifferent,
+                                l.ds3StackingDifferentHelp,
+                              ),
+                              (
+                                'same_item_allowed',
+                                l.ds3StackingSame,
+                                l.ds3StackingSameHelp,
+                              ),
+                            ])
+                              RadioListTile<String>(
+                                key: Key('ds-stacking-${option.$1}'),
+                                contentPadding: EdgeInsets.zero,
+                                value: option.$1,
+                                enabled: combining,
+                                title: Text(option.$2),
+                                subtitle: Text(option.$3),
+                              ),
+                          ],
+                        ),
                       ),
-                      Text(l.dsSavingHelp),
-                      const SizedBox(height: AppSpacing.lg),
-                      choice(
-                        'ds-combination',
-                        l.dsCombination,
-                        d.combinationMode,
-                        [
-                          ('single', l.dsSingle),
-                          ('disjoint_items', l.dsDisjoint),
-                        ],
-                        (v) => c.update(
-                          d.copyWith(
-                            combinationMode: v,
-                            orderDiscountBehavior: v == 'single'
-                                ? 'exclusive'
-                                : d.orderDiscountBehavior,
+                      toggle(
+                        'ds-multiple-coupons',
+                        l.ds3AllowCoupons,
+                        p.allowMultipleCoupons,
+                        combining,
+                        (v) => policy(p.copyWith(allowMultipleCoupons: v)),
+                      ),
+                      toggle(
+                        'ds-coupon-configured',
+                        l.ds3AllowCouponConfigured,
+                        p.allowCouponWithConfigured,
+                        combining,
+                        (v) => policy(p.copyWith(allowCouponWithConfigured: v)),
+                      ),
+                      toggle(
+                        'ds-order-after-items',
+                        l.ds3AllowOrderAfterItems,
+                        p.allowOrderAfterItemDiscounts,
+                        combining,
+                        (v) =>
+                            policy(p.copyWith(allowOrderAfterItemDiscounts: v)),
+                        help: l.ds3AllowOrderAfterItemsHelp,
+                      ),
+                      section(l.ds3Limits),
+                      TextField(
+                        key: const Key('ds-max-discounts'),
+                        controller: _max,
+                        enabled: combining,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: l.ds3MaxCount,
+                          helperText: l.ds3MaxCountHelp,
+                          helperMaxLines: 2,
+                          errorText: p.isValid ? null : l.ds3MaxCountInvalid,
+                        ),
+                        onChanged: (v) => policy(
+                          p.copyWith(
+                            maximumDiscountsPerOrder:
+                                int.tryParse(v.trim()) ?? 0,
                           ),
                         ),
                       ),
-                      Text(l.dsCombinationHelp),
-                      const SizedBox(height: AppSpacing.lg),
-                      choice(
-                        'ds-order',
-                        l.dsOrderBehavior,
-                        d.orderDiscountBehavior,
-                        [
-                          ('exclusive', l.dsExclusive),
-                          if (d.combinationMode == 'disjoint_items')
-                            ('after_items', l.dsAfterItems),
-                        ],
-                        (v) => c.update(d.copyWith(orderDiscountBehavior: v)),
-                      ),
-                      Text(l.dsOrderHelp),
-                      const SizedBox(height: AppSpacing.lg),
-                      choice(
-                        'ds-coupon',
-                        l.dsCouponBehavior,
-                        d.couponBehavior,
-                        rules,
-                        (v) => c.update(d.copyWith(couponBehavior: v)),
-                      ),
-                      choice(
-                        'ds-manual',
-                        l.dsManualBehavior,
-                        d.manualBehavior,
-                        rules,
-                        (v) => c.update(d.copyWith(manualBehavior: v)),
-                      ),
+                      const SizedBox(height: AppSpacing.md),
                       TextField(
                         key: const Key('ds-cap'),
                         controller: _cap,
@@ -231,30 +267,51 @@ class _DiscountSettingsScreenState extends State<DiscountSettingsScreen> {
                           labelText: l.dsCap,
                           helperText: l.dsCapHelp,
                           helperMaxLines: 3,
-                          errorText: d.isValid ? null : l.dsValidation,
+                          errorText:
+                              d
+                                  .copyWith(policy: const DiscountCafePolicy())
+                                  .isValid
+                              ? null
+                              : l.dsValidation,
                         ),
                         onChanged: (v) => c.update(
                           d.copyWith(maximumTotalDiscountPercent: v),
                         ),
                       ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(l.dsAllowSuppression),
-                        subtitle: Text(l.dsSuppressionHelp),
-                        value: d.allowAutomaticSuppression,
-                        onChanged: enabled
-                            ? (v) => c.update(
-                                d.copyWith(allowAutomaticSuppression: v),
-                              )
-                            : null,
+                      section(l.ds3Conflict),
+                      RadioGroup<String>(
+                        groupValue: p.conflictResolution,
+                        onChanged: (v) {
+                          if (enabled && v != null) {
+                            policy(p.copyWith(conflictResolution: v));
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            RadioListTile<String>(
+                              key: const Key('ds-conflict-best_saving'),
+                              contentPadding: EdgeInsets.zero,
+                              value: 'best_saving',
+                              enabled: enabled,
+                              title: Text(l.ds3BestSaving),
+                            ),
+                            RadioListTile<String>(
+                              key: const Key('ds-conflict-priority'),
+                              contentPadding: EdgeInsets.zero,
+                              value: 'priority',
+                              enabled: enabled,
+                              title: Text(l.ds3PriorityRule),
+                              subtitle: Text(l.ds3PriorityRuleHelp),
+                            ),
+                          ],
+                        ),
                       ),
-                      const Divider(),
+                      const Divider(height: AppSpacing.xxl),
                       Text(
-                        l.dsSummary,
+                        l.ds3Effective,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       DiscountSettingsSummary(draft: d),
-                      Text(l.dsIntentHelp),
                       if (state.requiresReview) ...[
                         const SizedBox(height: AppSpacing.lg),
                         Text(l.dsConflict),

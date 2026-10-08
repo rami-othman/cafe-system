@@ -243,10 +243,16 @@ class PosCartPanel extends StatelessWidget {
         ).showSnackBar(SnackBar(content: Text(context.l10n.d2Eligibility)));
         return;
       }
-      final request = discount.code != null
-          ? DiscountReviewRequest.code(discount.code!)
-          : DiscountReviewRequest.manual(discount.backendId!);
-      await showDiscountReview(context, cubit, request);
+      // V3: the new discount joins the complete desired list; the backend
+      // decides which discounts survive and their amounts.
+      final intent = discount.code != null
+          ? DesiredDiscountIntent.coupon(discount.code!)
+          : DesiredDiscountIntent.configured(discount.backendId!);
+      await showDiscountChangeReview(
+        context,
+        cubit,
+        () => cubit.previewDiscountAddition(intent),
+      );
     } else {
       await cubit.applyDiscount(discount);
     }
@@ -421,21 +427,66 @@ class _DiscountCartState extends StatelessWidget {
             child: Text(l.commonRetry),
           ),
         if (w.saved != null) ...[
-          DiscountBreakdown(discounts: w.saved!.discounts),
-          if (w.saved!.explicitIntent != null)
+          if (w.saved!.discounts.isNotEmpty)
             Text(
-              '${l.dsIntentHelp}\n${discountSource(l, w.saved!.explicitIntent!.source)}',
+              l.d3Applied,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          if (w.saved!.explicitIntent != null)
-            TextButton(
-              onPressed: enabled
-                  ? () => showDiscountReview(
-                      c,
-                      cubit,
-                      DiscountReviewRequest.remove(),
-                    )
-                  : null,
-              child: Text(l.commonDelete),
+          DiscountBreakdown(
+            discounts: w.saved!.discounts,
+            total: w.saved!.totals.discountTotal,
+            onRemove: enabled
+                ? (id) => showDiscountChangeReview(
+                    c,
+                    cubit,
+                    () => cubit.previewDiscountRemoval(id),
+                  )
+                : null,
+          ),
+          // Selected intents the backend no longer applies (e.g. after a cart
+          // change) stay visible until the cashier reviews or removes them.
+          for (final intent in w.saved!.explicitIntents.where(
+            (i) =>
+                i.discountId == null ||
+                !w.saved!.discounts.any((d) => d.discountId == i.discountId),
+          ))
+            Row(
+              key: Key('discount-pending-${intent.discountId ?? 'legacy'}'),
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 16,
+                  color: AppColors.dangerStrong,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    '${discountSource(l, intent.source)} · ${l.d3PendingReview}',
+                  ),
+                ),
+                IconButton(
+                  tooltip: l.d3RemoveDiscount,
+                  onPressed: enabled
+                      ? () => intent.discountId == null
+                            ? showDiscountReview(
+                                c,
+                                cubit,
+                                DiscountReviewRequest.remove(),
+                              )
+                            : showDiscountChangeReview(
+                                c,
+                                cubit,
+                                () => cubit.previewDiscountRemoval(
+                                  intent.discountId!,
+                                ),
+                              )
+                      : null,
+                  icon: const Icon(Icons.close, size: 18),
+                ),
+              ],
             ),
           if (w.capabilities?.canSuppressAutomatic == true) ...[
             for (final d in w.saved!.discounts.where(
