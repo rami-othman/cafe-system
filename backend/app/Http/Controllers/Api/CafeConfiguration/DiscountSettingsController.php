@@ -40,6 +40,14 @@ final class DiscountSettingsController extends Controller
             'manualBehavior' => ['required', Rule::in(['exclusive', 'follow_combination_rules'])],
             'maximumTotalDiscountPercent' => ['present', 'nullable', 'numeric', 'gt:0', 'max:100', 'decimal:0,4'],
             'allowAutomaticSuppression' => ['required', 'boolean'],
+            // Discount V3 Cafe Policy: optional so existing clients keep working.
+            'allowMultipleDiscounts' => ['sometimes', 'required', 'boolean'],
+            'stackingMode' => ['sometimes', 'required', Rule::in(DiscountSettingsService::STACKING_MODES)],
+            'allowMultipleCoupons' => ['sometimes', 'required', 'boolean'],
+            'allowCouponWithConfigured' => ['sometimes', 'required', 'boolean'],
+            'allowOrderAfterItemDiscounts' => ['sometimes', 'required', 'boolean'],
+            'maximumDiscountsPerOrder' => ['sometimes', 'required', 'integer', 'min:1', 'max:'.DiscountSettingsService::MAX_DISCOUNTS_PER_ORDER_LIMIT],
+            'conflictResolution' => ['sometimes', 'required', Rule::in(DiscountSettingsService::CONFLICT_RESOLUTIONS)],
         ];
         $validator = Validator::make($request->all(), $rules);
         $validator->after(function ($validator) use ($request, $rules): void {
@@ -51,8 +59,16 @@ final class DiscountSettingsController extends Controller
                     $validator->errors()->add($field, 'A JSON boolean is required.');
                 }
             }
+            foreach (['allowMultipleDiscounts', 'allowMultipleCoupons', 'allowCouponWithConfigured', 'allowOrderAfterItemDiscounts'] as $field) {
+                if ($request->has($field) && ! is_bool($request->input($field))) {
+                    $validator->errors()->add($field, 'A JSON boolean is required.');
+                }
+            }
             if (! is_int($request->input('expectedVersion'))) {
                 $validator->errors()->add('expectedVersion', 'A JSON integer is required.');
+            }
+            if ($request->has('maximumDiscountsPerOrder') && ! is_int($request->input('maximumDiscountsPerOrder'))) {
+                $validator->errors()->add('maximumDiscountsPerOrder', 'A JSON integer is required.');
             }
             if ($request->input('orderDiscountBehavior') === 'after_items' && $request->input('combinationMode') !== 'disjoint_items') {
                 $validator->errors()->add('orderDiscountBehavior', 'after_items requires disjoint_items.');

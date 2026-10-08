@@ -1,3 +1,4 @@
+import 'discount_form_references.dart';
 import 'discount_product_selection.dart';
 
 class DiscountUpsertRequest {
@@ -9,6 +10,7 @@ class DiscountUpsertRequest {
     required this.value,
     this.fixedAmountBasis = 'per_order',
     this.priority,
+    this.combinationBehavior = 'follow_cafe_policy',
     required this.isActive,
     this.code,
     this.description,
@@ -51,6 +53,11 @@ class DiscountUpsertRequest {
   final double value;
   final String fixedAmountBasis;
   final int? priority;
+
+  /// `follow_cafe_policy` or `exclusive`. A discount may only restrict the
+  /// cafe policy, never widen it. Not editable in the UI until Discount V3
+  /// Phase 3; it is carried so a fetch-edit-save cycle never resets it.
+  final String combinationBehavior;
   final String? conditions;
   final double? minimumOrderAmount;
   final double? maximumDiscountAmount;
@@ -91,6 +98,7 @@ class DiscountUpsertRequest {
     'value': value,
     'fixedAmountBasis': fixedAmountBasis,
     if (priority != null) 'priority': priority,
+    'combinationBehavior': combinationBehavior,
     'conditions': conditions,
     'minimumOrderAmount': minimumOrderAmount,
     'maximumDiscountAmount': maximumDiscountAmount,
@@ -151,13 +159,37 @@ class DiscountBundleRequirement {
   const DiscountBundleRequirement({
     required this.productId,
     required this.quantity,
+    this.variantMode,
+    this.variantIds = const <int>[],
+    this.variants = const <DiscountFormReference>[],
   });
 
   final int productId;
   final double quantity;
 
+  /// `all` or `selected`. Null means the variant scope was not specified: the
+  /// field is then omitted from writes and the backend keeps the saved scope.
+  final String? variantMode;
+  final List<int> variantIds;
+  final List<DiscountFormReference> variants;
+
+  bool get isSelected => variantMode == 'selected';
+
+  bool get isVariantScopeValid =>
+      variantMode == null ||
+      (variantMode == 'all'
+          ? variantIds.isEmpty
+          : variantMode == 'selected' &&
+                variantIds.isNotEmpty &&
+                variantIds.every((int id) => id > 0) &&
+                variantIds.toSet().length == variantIds.length);
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'productId': productId,
     'quantity': quantity,
+    if (variantMode != null) ...<String, dynamic>{
+      'variantMode': variantMode,
+      'variantIds': variantMode == 'selected' ? variantIds : const <int>[],
+    },
   };
 }

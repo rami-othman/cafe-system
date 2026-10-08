@@ -45,23 +45,46 @@ final class DiscountResolutionService
             || $settings['maximumTotalDiscountPercent'] !== null;
     }
 
+    /**
+     * Saved explicit intent: the legacy single object, or (V3) an ordered list.
+     * Callers pass it straight back to resolve(), which accepts both shapes.
+     */
     public function intent(int $tenantId, int $orderId): ?array
     {
         $stored = DB::table('order_discount_intents')->where('tenant_id', $tenantId)->where('order_id', $orderId)->value('intent');
         if ($stored !== null) {
             return json_decode($stored, true, flags: JSON_THROW_ON_ERROR);
         }
-        $legacy = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $orderId)->where(fn ($q) => $q->whereNull('source')->orWhere('source', '!=', 'automatic'))->first();
-        if (! $legacy) {
+        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $orderId)->where(fn ($q) => $q->whereNull('source')->orWhere('source', '!=', 'automatic'))
+            ->orderByRaw('coalesce(application_sequence, 0), id')->get();
+        if ($rows->isEmpty()) {
             return null;
         }
-        if ($legacy->discount_id !== null) {
-            $mode = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $legacy->discount_id)->value('application_mode');
-
-            return ['source' => $mode === 'code' ? 'code' : 'configured_manual', 'discountId' => (int) $legacy->discount_id];
+        $modes = DB::table('discounts')->where('tenant_id', $tenantId)->whereIn('id', $rows->pluck('discount_id')->filter()->all())->pluck('application_mode', 'id');
+        $intents = [];
+        foreach ($rows as $legacy) {
+            $intents[] = $legacy->discount_id !== null
+                ? ['source' => ($modes[$legacy->discount_id] ?? null) === 'code' ? 'code' : 'configured_manual', 'discountId' => (int) $legacy->discount_id]
+                : ['source' => 'ad_hoc', 'type' => $legacy->discount_type, 'value' => (string) $legacy->discount_value, 'name' => $legacy->discount_name];
         }
 
-        return ['source' => 'ad_hoc', 'type' => $legacy->discount_type, 'value' => (string) $legacy->discount_value, 'name' => $legacy->discount_name];
+        return count($intents) === 1 ? $intents[0] : $intents;
+    }
+
+    /** Normalizes a stored/requested intent (single object, list or null) to an ordered list. */
+    public function intents(?array $intent): array
+    {
+        if ($intent === null || $intent === []) {
+            return [];
+        }
+        $list = array_key_exists('source', $intent) ? [$intent] : array_values($intent);
+
+        // Key order of stored JSON is not significant; hashes must not depend on it.
+        return array_map(function (array $one): array {
+            ksort($one);
+
+            return $one;
+        }, $list);
     }
 
     public function resolve(int $tenantId, object $order, ?array $intent, ?object $method = null, bool $strict = true, ?array $suppressionOverride = null): array
@@ -81,6 +104,51 @@ final class DiscountResolutionService
         $budget = min($budget, $subtotal);
         $policies = DB::table('discounts')->where('tenant_id', $tenantId)->whereNull('deleted_at')->orderBy('id')->lockForUpdate()->get();
         $suppressed = $suppressionOverride ?? DB::table('order_discount_suppressions')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('discount_id')->pluck('discount_id')->all();
+        $requested = $this->intents($intent);
+        $excluded = [];
+        if (count($requested) > 1) {
+            ['selected' => $selected, 'excluded' => $excluded, 'reasons' => $reasons, 'provisional' => $provisional] = $this->resolveSet($tenantId, $order, $requested, $method, $strict, $settings, $items, $balances, $budget, $policies);
+        } else {
+            [$selected, $reasons, $provisional] = $this->selectSingle($tenantId, $order, $requested[0] ?? null, $method, $strict, $settings, $items, $balances, $budget, $policies, $suppressed);
+        }
+        $discounts = [];
+        $allocated = array_fill_keys(array_keys($balances), 0);
+        foreach ($selected as $index => $row) {
+            $policy = $row['policy'];
+            $allocations = [];
+            foreach ($row['allocations'] as $id => $amount) {
+                $allocated[$id] += $amount;
+                if ($allocated[$id] > $balances[$id] || $amount < 0) {
+                    throw new \LogicException('Discount allocation exceeds line balance.');
+                }
+                $allocations[] = ['orderItemId' => $id, 'amount' => $this->decimal($amount)];
+            }
+            if (array_sum($row['allocations']) !== $row['amount']) {
+                throw new \LogicException('Discount allocation total mismatch.');
+            }
+            $discounts[] = ['discountId' => $policy->id === null ? null : (int) $policy->id, 'source' => $row['source'], 'stage' => in_array($policy->scope, ['product', 'category'], true) ? 'items' : 'order', 'name' => $policy->name, 'type' => $policy->type, 'value' => (string) $policy->value, 'amount' => $this->decimal($row['amount']), 'priority' => (int) ($policy->priority ?? 0), 'fixedAmountBasis' => $policy->fixed_amount_basis, 'applicationMode' => $policy->application_mode, 'scope' => $policy->scope, 'sequence' => $index + 1, 'combinationBehavior' => $policy->combination_behavior ?? 'follow_cafe_policy', 'capped' => (bool) ($row['capped'] ?? false), 'allocations' => $allocations];
+        }
+        $totalDiscount = array_sum(array_column($selected, 'amount'));
+        if ($totalDiscount > $subtotal || $totalDiscount > $budget) {
+            throw new \LogicException('Discount exceeds budget.');
+        }
+        $tax = $this->cents(BigDecimal::of($this->decimal($subtotal - $totalDiscount))->multipliedBy((string) $order->tax_rate));
+        $totals = ['subtotal' => $this->decimal($subtotal), 'discountTotal' => $this->decimal($totalDiscount), 'taxTotal' => $this->decimal($tax), 'total' => $this->decimal($subtotal - $totalDiscount + $tax)];
+        // Excluded candidates are reported in the legacy reasons list as well.
+        foreach ($excluded as $row) {
+            $reasons[] = ['discountId' => $row['discountId'], 'code' => $row['code']];
+        }
+        $result = ['discounts' => $discounts, 'totals' => $totals, 'settingsVersion' => $settings['version'], 'provisional' => $provisional, 'reasons' => $reasons,
+            'requested' => array_map(fn (array $one, int $position): array => ['position' => $position + 1, 'source' => $one['source'] ?? null, 'discountId' => isset($one['discountId']) ? (int) $one['discountId'] : null], $requested, array_keys($requested)),
+            'excluded' => $excluded, 'policy' => DiscountSettingsService::effectivePolicy($settings)];
+        $result['fingerprint'] = $this->fingerprint($tenantId, $order, $requested, $method, $result, $policies->all(), $items->all(), $suppressed);
+
+        return $result;
+    }
+
+    /** Legacy engine selection: at most one explicit intent plus Automatic candidates. */
+    private function selectSingle(int $tenantId, object $order, ?array $intent, ?object $method, bool $strict, array $settings, $items, array $balances, int $budget, $policies, array $suppressed): array
+    {
         $candidates = [];
         $explicit = null;
         $reasons = [];
@@ -201,36 +269,276 @@ final class DiscountResolutionService
                 }
             }
         }
-        $discounts = [];
-        $allocated = array_fill_keys(array_keys($balances), 0);
-        foreach ($selected as $row) {
-            $policy = $row['policy'];
-            $allocations = [];
-            foreach ($row['allocations'] as $id => $amount) {
-                $allocated[$id] += $amount;
-                if ($allocated[$id] > $balances[$id] || $amount < 0) {
-                    throw new \LogicException('Discount allocation exceeds line balance.');
-                }
-                $allocations[] = ['orderItemId' => $id, 'amount' => $this->decimal($amount)];
-            }
-            if (array_sum($row['allocations']) !== $row['amount']) {
-                throw new \LogicException('Discount allocation total mismatch.');
-            }
-            $discounts[] = ['discountId' => $policy->id === null ? null : (int) $policy->id, 'source' => $row['source'], 'stage' => in_array($policy->scope, ['product', 'category'], true) ? 'items' : 'order', 'name' => $policy->name, 'type' => $policy->type, 'value' => (string) $policy->value, 'amount' => $this->decimal($row['amount']), 'priority' => (int) ($policy->priority ?? 0), 'fixedAmountBasis' => $policy->fixed_amount_basis, 'applicationMode' => $policy->application_mode, 'scope' => $policy->scope, 'allocations' => $allocations];
-        }
-        $totalDiscount = array_sum(array_column($selected, 'amount'));
-        if ($totalDiscount > $subtotal || $totalDiscount > $budget) {
-            throw new \LogicException('Discount exceeds budget.');
-        }
-        $tax = $this->cents(BigDecimal::of($this->decimal($subtotal - $totalDiscount))->multipliedBy((string) $order->tax_rate));
-        $totals = ['subtotal' => $this->decimal($subtotal), 'discountTotal' => $this->decimal($totalDiscount), 'taxTotal' => $this->decimal($tax), 'total' => $this->decimal($subtotal - $totalDiscount + $tax)];
-        $result = ['discounts' => $discounts, 'totals' => $totals, 'settingsVersion' => $settings['version'], 'provisional' => $provisional, 'reasons' => $reasons];
-        $result['fingerprint'] = $this->fingerprint($tenantId, $order, $intent, $method, $result, $policies->all(), $items->all(), $suppressed);
 
-        return $result;
+        return [$selected, $reasons, $provisional];
     }
 
-    private function score(array $candidate, array $balances, int $budget): array
+    public const MAX_REQUESTED_INTENTS = 10;
+
+    /**
+     * Discount System V3: a reviewed set of two or more explicit intents
+     * resolved against the Cafe Discount Policy. Automatic candidates are not
+     * discovered here (Automatic Discounts are out of scope for V3).
+     *
+     * Rules, in this order of precedence:
+     *  1. A duplicate or malformed intent is rejected. An individually
+     *     ineligible discount throws when $strict (payment, apply, preview) and
+     *     is reported as excluded otherwise (draft cart recalculation).
+     *  2. Structural policy (violation()): multiple discounts, exclusivity,
+     *     maximum count, multiple coupons, coupon + configured, item + order.
+     *     conflictResolution picks which requested discounts are retained:
+     *     best_saving keeps the compatible subset with the highest total saving;
+     *     priority keeps compatible discounts greedily by priority (higher
+     *     number wins, then lower discount id).
+     *  3. The retained set is applied in one authoritative sequence: item-level
+     *     discounts before order-level ones, reviewed order within each level.
+     *     Each discount is calculated on what the previous ones left (sequential
+     *     stacking), clamped to the shared maximumTotalDiscountPercent budget.
+     *  4. different_items_only: a discount cannot touch an item already
+     *     discounted by an earlier one (an order-level discount may follow
+     *     item-level ones when allowOrderAfterItemDiscounts). It is calculated
+     *     on the disjoint remainder, or excluded when none remains.
+     */
+    private function resolveSet(int $tenantId, object $order, array $requested, ?object $method, bool $strict, array $settings, $items, array $balances, int $budget, $policies): array
+    {
+        if (count($requested) > self::MAX_REQUESTED_INTENTS) {
+            throw new OrderLifecycleException('MAXIMUM_DISCOUNT_COUNT_EXCEEDED', 'Too many discounts were requested.');
+        }
+        $seen = [];
+        foreach ($requested as $one) {
+            if (! in_array($one['source'] ?? null, ['code', 'configured_manual'], true)) {
+                throw new OrderLifecycleException('DISCOUNT_AD_HOC_DISABLED', 'Choose an existing eligible discount policy.');
+            }
+            $id = (int) ($one['discountId'] ?? 0);
+            if ($id <= 0) {
+                throw new OrderLifecycleException('DISCOUNT_NOT_FOUND', 'The selected discount is unavailable.');
+            }
+            if (isset($seen[$id])) {
+                throw new OrderLifecycleException('DISCOUNT_DUPLICATE_INTENT', 'Each discount can be requested only once.');
+            }
+            $seen[$id] = true;
+        }
+        $cfg = DiscountSettingsService::effectivePolicy($settings);
+        $candidates = [];
+        $excluded = [];
+        $reasons = [];
+        $provisional = false;
+        foreach ($requested as $index => $one) {
+            $id = (int) $one['discountId'];
+            $policy = $policies->firstWhere('id', $id);
+            try {
+                if (! $policy) {
+                    throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'Review the selected discount again.');
+                }
+                if (($one['source'] === 'code' && $policy->application_mode !== 'code') || ($one['source'] === 'configured_manual' && $policy->application_mode !== 'manual')) {
+                    throw new OrderLifecycleException('DISCOUNT_APPLICATION_MODE_INVALID', 'Review the selected discount again.');
+                }
+                $full = $this->eligibility->assertApplicable($tenantId, $policy, $order, $method?->paymentMethodId, $method?->type);
+                if ($method === null && $this->tenderRestricted($tenantId, $policy)) {
+                    $provisional = true;
+                    $reasons[] = ['discountId' => $id, 'code' => 'DISCOUNT_TENDER_PENDING'];
+                }
+                $weights = [];
+                foreach ($this->eligibility->eligibleItems($tenantId, $order, $policy)->orderBy('order_items.id')->get(['order_items.*']) as $item) {
+                    $weights[(int) $item->id] = ['balance' => $this->decimal($balances[(int) $item->id]), 'quantity' => (string) $item->quantity];
+                }
+                if ($policy->scope === 'bundle') {
+                    $weights = $this->bundleWeights($tenantId, $order, $policy, $items, $balances);
+                }
+                $candidates[] = ['policy' => $policy, 'source' => $one['source'], 'weights' => $weights, 'bundleAmount' => $this->cents($full['amount']),
+                    'position' => $index, 'level' => $policy->scope === 'order' ? 'order' : 'item', 'code' => $one['source'] === 'code',
+                    'exclusive' => ($policy->combination_behavior ?? 'follow_cafe_policy') === 'exclusive'];
+            } catch (OrderLifecycleException $e) {
+                if ($strict) {
+                    throw $e;
+                }
+                $excluded[] = $this->exclusion($index, $id, $policy->name ?? null, $one['source'], $e->domainCode, []);
+            }
+        }
+        $evaluation = $this->simulate([], $cfg, $balances, $budget);
+        if ($candidates !== []) {
+            $evaluation = $cfg['conflictResolution'] === 'priority'
+                ? $this->selectByPriority($candidates, $cfg, $balances, $budget)
+                : $this->selectBestSaving($candidates, $cfg, $balances, $budget);
+        }
+        $applied = array_column($evaluation['applied'], 'position');
+        $kept = array_values(array_filter($candidates, fn (array $candidate): bool => in_array($candidate['position'], $applied, true)));
+        foreach ($candidates as $candidate) {
+            if (! in_array($candidate['position'], $applied, true)) {
+                [$code, $with] = $this->explainExclusion($candidate, $kept, $cfg, $balances, $budget);
+                $excluded[] = $this->exclusion($candidate['position'], (int) $candidate['policy']->id, $candidate['policy']->name, $candidate['source'], $code, $with);
+            }
+        }
+        usort($excluded, fn (array $a, array $b): int => $a['position'] <=> $b['position']);
+
+        return ['selected' => $evaluation['applied'], 'excluded' => $excluded, 'reasons' => $reasons, 'provisional' => $provisional];
+    }
+
+    private function exclusion(int $index, int $discountId, ?string $name, string $source, string $code, array $conflictsWith): array
+    {
+        return ['position' => $index + 1, 'discountId' => $discountId, 'name' => $name, 'source' => $source, 'code' => $code, 'conflictsWith' => $conflictsWith];
+    }
+
+    /** First structural Cafe Policy rule a set breaks, or null. Monotone: a superset never repairs a violation. */
+    private function violation(array $set, array $cfg): ?string
+    {
+        if (count($set) < 2) {
+            return null;
+        }
+        if (! $cfg['allowMultipleDiscounts']) {
+            return 'MULTIPLE_DISCOUNTS_DISABLED';
+        }
+        if (array_filter($set, fn (array $candidate): bool => $candidate['exclusive']) !== []) {
+            return 'EXCLUSIVE_DISCOUNT_CONFLICT';
+        }
+        if (count($set) > $cfg['effectiveMaximumDiscounts']) {
+            return 'MAXIMUM_DISCOUNT_COUNT_EXCEEDED';
+        }
+        $codes = count(array_filter($set, fn (array $candidate): bool => $candidate['code']));
+        if ($codes > 1 && ! $cfg['allowMultipleCoupons']) {
+            return 'MULTIPLE_COUPONS_DISABLED';
+        }
+        if ($codes > 0 && $codes < count($set) && ! $cfg['allowCouponWithConfigured']) {
+            return 'COUPON_COMBINATION_NOT_ALLOWED';
+        }
+        if (count(array_unique(array_column($set, 'level'))) > 1 && ! $cfg['allowOrderAfterItemDiscounts']) {
+            return 'ORDER_ITEM_COMBINATION_NOT_ALLOWED';
+        }
+
+        return null;
+    }
+
+    /** Authoritative application sequence: item-level first, then order-level; reviewed order within a level. */
+    private function sequence(array $set): array
+    {
+        usort($set, fn (array $a, array $b): int => (($a['level'] === 'order') <=> ($b['level'] === 'order')) ?: ($a['position'] <=> $b['position']));
+
+        return $set;
+    }
+
+    /** Sequentially applies a set. Integer-cent arithmetic through score(); never negative. */
+    private function simulate(array $sequence, array $cfg, array $balances, int $budget): array
+    {
+        $residual = $balances;
+        $left = $budget;
+        $applied = [];
+        $dropped = [];
+        $byItem = [];
+        $byOrder = [];
+        $disjoint = $cfg['stackingMode'] === 'different_items_only';
+        foreach ($sequence as $candidate) {
+            $view = $residual;
+            if ($disjoint) {
+                foreach (array_keys($view) as $id) {
+                    if (isset($byOrder[$id]) || ($candidate['level'] === 'item' && isset($byItem[$id]))) {
+                        $view[$id] = 0;
+                    }
+                }
+            }
+            $scored = $this->score($candidate, $view, $left, true);
+            if ($scored['amount'] <= 0) {
+                $code = 'DISCOUNT_ITEMS_NOT_ELIGIBLE';
+                if ($left <= 0) {
+                    $code = 'MAXIMUM_TOTAL_DISCOUNT_EXCEEDED';
+                } elseif ($disjoint && $view !== $residual && $this->score($candidate, $residual, $left, true)['amount'] > 0) {
+                    $code = 'SAME_ITEM_STACKING_DISABLED';
+                }
+                $dropped[] = ['candidate' => $candidate, 'code' => $code];
+
+                continue;
+            }
+            $capped = $scored['amount'] >= $left && $this->score($candidate, $view, PHP_INT_MAX, true)['amount'] > $scored['amount'];
+            $applied[] = $scored + ['capped' => $capped];
+            foreach ($scored['allocations'] as $id => $amount) {
+                $residual[$id] -= $amount;
+                if ($candidate['level'] === 'order') {
+                    $byOrder[$id] = true;
+                } else {
+                    $byItem[$id] = true;
+                }
+            }
+            $left -= $scored['amount'];
+        }
+
+        return ['applied' => $applied, 'dropped' => $dropped, 'total' => array_sum(array_column($applied, 'amount'))];
+    }
+
+    private function selectBestSaving(array $candidates, array $cfg, array $balances, int $budget): array
+    {
+        $best = null;
+        $search = function (int $from, array $subset) use (&$search, &$best, $candidates, $cfg, $balances, $budget): void {
+            if ($subset !== []) {
+                $evaluation = $this->simulate($this->sequence($subset), $cfg, $balances, $budget);
+                if ($best === null || $this->betterSet($evaluation, $best)) {
+                    $best = $evaluation;
+                }
+            }
+            for ($i = $from; $i < count($candidates); $i++) {
+                $next = [...$subset, $candidates[$i]];
+                if ($this->violation($next, $cfg) === null) {
+                    $search($i + 1, $next);
+                }
+            }
+        };
+        $search(0, []);
+
+        return $best;
+    }
+
+    /** Higher total saving, then fewer discounts, then the lexicographically lower discount ids. */
+    private function betterSet(array $a, array $b): bool
+    {
+        if ($a['total'] !== $b['total']) {
+            return $a['total'] > $b['total'];
+        }
+        if (count($a['applied']) !== count($b['applied'])) {
+            return count($a['applied']) < count($b['applied']);
+        }
+        $ids = function (array $evaluation): array {
+            $ids = array_map(fn (array $row): int => (int) $row['policy']->id, $evaluation['applied']);
+            sort($ids);
+
+            return $ids;
+        };
+
+        return $ids($a) < $ids($b);
+    }
+
+    private function selectByPriority(array $candidates, array $cfg, array $balances, int $budget): array
+    {
+        usort($candidates, fn (array $a, array $b): int => ((int) ($b['policy']->priority ?? 0) <=> (int) ($a['policy']->priority ?? 0)) ?: ((int) $a['policy']->id <=> (int) $b['policy']->id));
+        $chosen = [];
+        foreach ($candidates as $candidate) {
+            $trial = [...$chosen, $candidate];
+            if ($this->violation($trial, $cfg) === null
+                && count($this->simulate($this->sequence($trial), $cfg, $balances, $budget)['applied']) === count($trial)) {
+                $chosen = $trial;
+            }
+        }
+
+        return $this->simulate($this->sequence($chosen), $cfg, $balances, $budget);
+    }
+
+    /** Stable reason why a requested, eligible discount was not part of the final set. */
+    private function explainExclusion(array $candidate, array $kept, array $cfg, array $balances, int $budget): array
+    {
+        $with = array_map(fn (array $row): int => (int) $row['policy']->id, $kept);
+        sort($with);
+        $trial = [...$kept, $candidate];
+        if (($code = $this->violation($trial, $cfg)) !== null) {
+            return [$code, $with];
+        }
+        $dropped = $this->simulate($this->sequence($trial), $cfg, $balances, $budget)['dropped'];
+        foreach ($dropped as $drop) {
+            if ($drop['candidate']['position'] === $candidate['position']) {
+                return [$drop['code'], $with];
+            }
+        }
+
+        return [$dropped[0]['code'] ?? 'DISCOUNT_CONFLICT', $with];
+    }
+
+    private function score(array $candidate, array $balances, int $budget, bool $sequential = false): array
     {
         $weights = [];
         $policy = $candidate['policy'];
@@ -249,6 +557,11 @@ final class DiscountResolutionService
         $raw = $policy->scope === 'bundle' ? BigDecimal::of($this->decimal($candidate['bundleAmount']))
             : ($policy->type === 'percentage' ? $basis->multipliedBy((string) $policy->value)->exactlyDividedBy(100)
                 : ($perUnit ? $basis : BigDecimal::of((string) $policy->value)));
+        if ($sequential && $policy->scope === 'bundle') {
+            // A package after another discount is priced on what remains of its
+            // matched lines. On pristine lines this equals bundleAmount.
+            $raw = BigDecimal::min($raw, $policy->type === 'percentage' ? $basis->multipliedBy((string) $policy->value)->exactlyDividedBy(100) : BigDecimal::min((string) $policy->value, $basis));
+        }
         if ($policy->maximum_discount_amount !== null) {
             $raw = BigDecimal::min($raw, (string) $policy->maximum_discount_amount);
         }
@@ -337,10 +650,12 @@ final class DiscountResolutionService
     private function bundleWeights(int $tenantId, object $order, object $policy, iterable $items, array $balances): array
     {
         $weights = [];
+        $selectedVariants = app(DiscountBundleVariantService::class)->savedIds($tenantId, $policy->id);
         foreach (DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $policy->id)->orderBy('product_id')->get() as $requirement) {
             $remaining = BigDecimal::of((string) $requirement->quantity);
             foreach ($items as $item) {
-                if ((int) $item->product_id !== (int) $requirement->product_id || $remaining->isLessThanOrEqualTo(0)) {
+                if ((int) $item->product_id !== (int) $requirement->product_id || $remaining->isLessThanOrEqualTo(0)
+                    || ! DiscountBundleVariantService::accepts($selectedVariants[(int) $requirement->product_id] ?? [], $item->product_variant_id)) {
                     continue;
                 }
                 $take = BigDecimal::min($remaining, (string) $item->quantity);
@@ -358,17 +673,15 @@ final class DiscountResolutionService
             || DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $policy->id)->where('target_type', 'payment_method')->exists();
     }
 
-    private function fingerprint(int $tenantId, object $order, ?array $intent, ?object $method, array $result, array $policies, array $items, array $suppressed): string
+    private function fingerprint(int $tenantId, object $order, array $intent, ?object $method, array $result, array $policies, array $items, array $suppressed): string
     {
-        // JSONB preserves values, not object key order. A stored review must
-        // hash the same normalized intent as its preview, including ad-hoc.
-        if ($intent !== null) {
-            ksort($intent);
-        }
+        // JSONB preserves values, not object key order; intents() already
+        // normalized every requested intent (including ad-hoc), and its list
+        // order is the reviewed application sequence, which is hashed too.
         // Full tenant policy set, including inactive/zero/ineligible candidates,
         // plus targets and usages: newly eligible/created policies cannot evade it.
         $context = [];
-        foreach (['discount_targets', 'discount_product_target_variants', 'discount_channel_targets', 'discount_bundle_requirements'] as $table) {
+        foreach (['discount_targets', 'discount_product_target_variants', 'discount_channel_targets', 'discount_bundle_requirements', 'discount_bundle_requirement_variants'] as $table) {
             $context[$table] = DB::table($table)->where('tenant_id', $tenantId)->orderBy('id')->get()->all();
         }
         $context['branch'] = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->first();
@@ -406,9 +719,10 @@ final class DiscountResolutionService
                     $snapshot['productVariantSelections'][] = ['productId' => $target['id'], 'variantMode' => $variants === [] ? 'all' : 'selected', 'variantIds' => $variants];
                 }
                 $snapshot['channelKeys'] = DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount['discountId'])->orderBy('channel_key')->pluck('channel_key')->all();
-                $snapshot['bundleRequirements'] = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount['discountId'])->orderBy('product_id')->get(['product_id', 'quantity'])->map(fn ($r) => ['productId' => (int) $r->product_id, 'quantity' => (string) $r->quantity])->all();
+                $bundleVariants = app(DiscountBundleVariantService::class)->savedIds($tenantId, $discount['discountId']);
+                $snapshot['bundleRequirements'] = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount['discountId'])->orderBy('product_id')->get(['product_id', 'quantity'])->map(fn ($r) => ['productId' => (int) $r->product_id, 'quantity' => (string) $r->quantity, 'variantMode' => ($bundleVariants[(int) $r->product_id] ?? []) === [] ? 'all' : 'selected', 'variantIds' => $bundleVariants[(int) $r->product_id] ?? []])->all();
             }
-            $id = DB::table('order_discounts')->insertGetId(['tenant_id' => $tenantId, 'order_id' => $order->id, 'discount_id' => $discount['discountId'], 'discount_name' => $discount['name'], 'discount_type' => $discount['type'], 'discount_value' => $discount['value'], 'discount_amount' => $discount['amount'], 'source' => $discount['source'], 'stage' => $discount['stage'], 'settings_version' => $result['settingsVersion'], 'calculation_metadata' => json_encode(['calculationVersion' => 1, 'rounding' => 'HALF_UP', 'allocation' => 'largest_remainder']), 'policy_snapshot' => json_encode($snapshot), 'created_at' => now(), 'updated_at' => now()]);
+            $id = DB::table('order_discounts')->insertGetId(['tenant_id' => $tenantId, 'order_id' => $order->id, 'discount_id' => $discount['discountId'], 'discount_name' => $discount['name'], 'discount_type' => $discount['type'], 'discount_value' => $discount['value'], 'discount_amount' => $discount['amount'], 'source' => $discount['source'], 'stage' => $discount['stage'], 'settings_version' => $result['settingsVersion'], 'application_sequence' => $discount['sequence'] ?? null, 'calculation_metadata' => json_encode(['calculationVersion' => 2, 'rounding' => 'HALF_UP', 'allocation' => 'largest_remainder', 'stacking' => 'sequential', 'sequence' => $discount['sequence'] ?? null, 'capped' => $discount['capped'] ?? false, 'policy' => $result['policy'] ?? null]), 'policy_snapshot' => json_encode($snapshot), 'created_at' => now(), 'updated_at' => now()]);
             foreach ($discount['allocations'] as $allocation) {
                 DB::table('order_discount_allocations')->insert(['tenant_id' => $tenantId, 'order_id' => $order->id, 'order_discount_id' => $id, 'order_item_id' => $allocation['orderItemId'], 'amount' => $allocation['amount'], 'created_at' => now(), 'updated_at' => now()]);
             }

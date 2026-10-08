@@ -6,6 +6,8 @@ use App\Domain\Menu\Enums\SalesChannel;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\CouponCodeGenerator;
+use App\Services\DiscountBundleVariantService;
 use App\Services\DiscountEligibilityService;
 use App\Services\DiscountEngineProtocol;
 use App\Services\DiscountProductVariantService;
@@ -27,6 +29,9 @@ use Illuminate\Validation\ValidationException;
 
 class DiscountController extends Controller
 {
+    /** follow_cafe_policy may combine only as the cafe policy permits; exclusive never combines. */
+    public const COMBINATION_BEHAVIORS = ['follow_cafe_policy', 'exclusive'];
+
     public function __construct(
         private readonly PosPricingService $pricing,
         private readonly OrderLifecyclePolicy $lifecycle,
@@ -165,18 +170,12 @@ class DiscountController extends Controller
         return response()->json([], 204);
     }
 
-    /** Generates a readable code; the unique database index remains final authority on create. */
+    /** Generates a short code; the unique database index remains final authority on create. */
     public function generateCode(Request $request): JsonResponse
     {
-        $tenantId = TenantContext::id($request);
-        for ($attempt = 0; $attempt < 16; $attempt++) {
-            $code = $this->newCouponCode();
-            if (! $this->discountQuery($tenantId)->whereRaw('LOWER(code) = ?', [strtolower($code)])->exists()) {
-                return response()->json(['data' => ['code' => $code]]);
-            }
-        }
+        $code = app(CouponCodeGenerator::class)->generate(TenantContext::id($request));
 
-        throw ValidationException::withMessages(['code' => 'A unique coupon code could not be generated. Please retry.']);
+        return response()->json(['data' => ['code' => $code]]);
     }
 
     public function available(Request $request): JsonResponse
@@ -275,6 +274,7 @@ class DiscountController extends Controller
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
             'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code', 'automatic'])],
             'priority' => ['sometimes', 'required', 'integer', 'between:0,1000'],
+            'combinationBehavior' => ['sometimes', 'required', Rule::in(self::COMBINATION_BEHAVIORS)],
             'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category', 'bundle'])],
             'fixedAmountBasis' => ['nullable', Rule::in(['per_order', 'per_unit'])],
             'value' => ['required', 'numeric', 'min:0'], 'conditions' => ['nullable', 'string'],
@@ -298,6 +298,9 @@ class DiscountController extends Controller
             'bundleRequirements' => ['nullable', 'array'],
             'bundleRequirements.*.productId' => ['required_with:bundleRequirements', 'integer', 'distinct'],
             'bundleRequirements.*.quantity' => ['required_with:bundleRequirements', 'numeric', 'gt:0'],
+            // Shapes are checked by DiscountBundleVariantService; the rules only keep the keys.
+            'bundleRequirements.*.variantMode' => ['sometimes', 'required', 'string'],
+            'bundleRequirements.*.variantIds' => ['sometimes', 'array'],
             'channelKeys' => ['nullable', 'array'],
             'channelKeys.*' => ['string', 'distinct', Rule::in($this->salesChannelKeys())],
             'appliesToAllBranches' => ['required', 'boolean'],
@@ -313,6 +316,7 @@ class DiscountController extends Controller
             ],
         ]);
         app(DiscountProductVariantService::class)->validate($tenantId, $data);
+        app(DiscountBundleVariantService::class)->validate($tenantId, $data);
         if ($data['applicationMode'] === 'automatic' && ! app(DiscountResolutionService::class)->isolatedAutomatic()) {
             throw new HttpResponseException(response()->json(['message' => 'Automatic policies are unavailable until rollout gates pass.', 'code' => 'DISCOUNT_ENGINE_NOT_READY', 'errors' => ['applicationMode' => ['Automatic policies are unavailable until rollout gates pass.']]], 422));
         }
@@ -418,6 +422,10 @@ class DiscountController extends Controller
         if ($creating || array_key_exists('priority', $data)) {
             $payload['priority'] = $data['priority'] ?? 0;
         }
+        // Omitted by older clients: the saved value is kept on update.
+        if ($creating || array_key_exists('combinationBehavior', $data)) {
+            $payload['combination_behavior'] = $data['combinationBehavior'] ?? 'follow_cafe_policy';
+        }
 
         return $creating ? ['tenant_id' => $tenantId, 'used_count' => 0, 'estimated_saved_value' => 0, 'created_at' => now()] + $payload : $payload;
     }
@@ -425,6 +433,7 @@ class DiscountController extends Controller
     private function assertTenantTargets(int $tenantId, array $data): void
     {
         app(DiscountProductVariantService::class)->validate($tenantId, $data);
+        app(DiscountBundleVariantService::class)->validate($tenantId, $data);
         foreach (['targetProductIds' => 'products', 'targetCategoryIds' => 'categories'] as $key => $table) {
             $ids = array_values(array_unique(array_map('intval', $data[$key] ?? [])));
             $query = DB::table($table)->where('tenant_id', $tenantId)->whereNull('deleted_at')->whereIn('id', $ids);
@@ -454,7 +463,9 @@ class DiscountController extends Controller
     private function syncTargets(int $tenantId, int $discountId, array $data): void
     {
         $variants = app(DiscountProductVariantService::class);
+        $bundleVariants = app(DiscountBundleVariantService::class);
         $savedVariants = $variants->savedIds($tenantId, $discountId);
+        $savedBundleVariants = $bundleVariants->savedIds($tenantId, $discountId);
         DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
         DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
         DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->delete();
@@ -486,9 +497,7 @@ class DiscountController extends Controller
         foreach (array_unique(array_map('strval', $data['channelKeys'] ?? [])) as $channel) {
             DB::table('discount_channel_targets')->insert(['tenant_id' => $tenantId, 'discount_id' => $discountId, 'channel_key' => $channel, 'created_at' => $now, 'updated_at' => $now]);
         }
-        foreach ($data['bundleRequirements'] ?? [] as $requirement) {
-            DB::table('discount_bundle_requirements')->insert(['tenant_id' => $tenantId, 'discount_id' => $discountId, 'product_id' => (int) $requirement['productId'], 'quantity' => $requirement['quantity'], 'created_at' => $now, 'updated_at' => $now]);
-        }
+        $bundleVariants->persist($tenantId, $discountId, $data, $savedBundleVariants);
     }
 
     private function discountQuery(int $tenantId): Builder
@@ -580,12 +589,16 @@ class DiscountController extends Controller
         $branchIds = $ids('branch');
         $paymentMethodIds = $ids('payment_method');
         $channelKeys = DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->orderBy('channel_key')->pluck('channel_key')->values()->all();
+        $bundleVariants = app(DiscountBundleVariantService::class);
+        $savedBundleVariants = $bundleVariants->savedIds($tenantId, $discount->id);
+        $bundleVariantRows = $bundleVariants->variantRows($tenantId, $savedBundleVariants);
         $bundleRequirements = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->orderBy('product_id')->get()
-            ->map(fn (object $requirement) => ['productId' => (int) $requirement->product_id, 'quantity' => (float) $requirement->quantity])->all();
+            ->map(fn (object $requirement) => ['productId' => (int) $requirement->product_id, 'quantity' => (float) $requirement->quantity]
+                + $bundleVariants->detail($savedBundleVariants, (int) $requirement->product_id, $bundleVariantRows))->all();
 
         return [
             'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
-            'applicationMode' => $discount->application_mode, 'priority' => (int) $discount->priority, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
+            'applicationMode' => $discount->application_mode, 'priority' => (int) $discount->priority, 'combinationBehavior' => $discount->combination_behavior, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
             'fixedAmountBasis' => $discount->fixed_amount_basis,
             'conditions' => $discount->conditions, 'startDate' => $discount->start_date, 'endDate' => $discount->end_date,
             // Legacy timestamps remain readable but are not used by V1 edits.
@@ -663,21 +676,6 @@ class DiscountController extends Controller
     private function salesChannelKeys(): array
     {
         return array_map(fn (SalesChannel $channel) => $channel->value, SalesChannel::cases());
-    }
-
-    private function newCouponCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        $part = function () use ($alphabet): string {
-            $value = '';
-            for ($index = 0; $index < 4; $index++) {
-                $value .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-
-            return $value;
-        };
-
-        return 'CPN-'.$part().'-'.$part();
     }
 
     private function throwFriendlyCodeConflict(QueryException $exception): never

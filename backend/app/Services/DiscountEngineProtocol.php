@@ -20,7 +20,7 @@ final class DiscountEngineProtocol
     {
         $settings = $this->settings->read($tenantId);
 
-        return ['contractVersion' => self::VERSION, 'engineReady' => false, 'automaticPolicyCreationAvailable' => $this->engine->isolatedAutomatic(), 'automaticEnabled' => $this->engine->automatic($tenantId), 'settingsVersion' => $settings['version'], 'supportsDiscountReview' => true, 'supportsPaymentQuote' => true, 'requiresPaymentQuote' => $request?->header('X-Discount-Contract') === '2' || $this->engine->requiresContract($tenantId), 'canSuppressAutomatic' => $request !== null && $settings['allowAutomaticSuppression'] && $this->access->allows($request, DiscountAccess::SUPPRESS_AUTOMATIC)];
+        return ['contractVersion' => self::VERSION, 'engineReady' => false, 'automaticPolicyCreationAvailable' => $this->engine->isolatedAutomatic(), 'automaticEnabled' => $this->engine->automatic($tenantId), 'settingsVersion' => $settings['version'], 'supportsDiscountReview' => true, 'supportsPaymentQuote' => true, 'supportsMultipleDiscounts' => true, 'maximumRequestedDiscounts' => DiscountResolutionService::MAX_REQUESTED_INTENTS, 'policy' => DiscountSettingsService::effectivePolicy($settings), 'requiresPaymentQuote' => $request?->header('X-Discount-Contract') === '2' || $this->engine->requiresContract($tenantId), 'canSuppressAutomatic' => $request !== null && $settings['allowAutomaticSuppression'] && $this->access->allows($request, DiscountAccess::SUPPRESS_AUTOMATIC)];
     }
 
     public function compatible(Request $request, int $tenantId, ?int $orderId = null, bool $required = false): void
@@ -115,6 +115,7 @@ final class DiscountEngineProtocol
     {
         $intent = match ($change['action']) {
             'apply' => $change['intent'],
+            'set' => $change['intents'],
             'remove' => null,
             default => $this->engine->intent($tenantId, (int) $order->id),
         };
@@ -135,6 +136,13 @@ final class DiscountEngineProtocol
         $change = ['action' => $data['action'], 'paymentMethodId' => $data['paymentMethodId'] ?? null];
         if ($change['action'] === 'apply') {
             $change['intent'] = $this->explicit($request, $tenantId, $data['intent']);
+        } elseif ($change['action'] === 'set') {
+            // One reviewed, ordered set that replaces every explicit intent. The
+            // client sends intent only; the server resolves eligibility and money.
+            $change['intents'] = array_map(fn (array $one): array => $this->explicit($request, $tenantId, $one), $data['intents']);
+            if (count(array_unique(array_column($change['intents'], 'discountId'))) !== count($change['intents'])) {
+                throw new OrderLifecycleException('DISCOUNT_DUPLICATE_INTENT', 'Each discount can be requested only once.');
+            }
         } elseif (in_array($change['action'], ['suppress', 'undo'], true)) {
             $change['discountId'] = (int) $data['discountId'];
             $change['reason'] = trim($data['reason'] ?? '');
@@ -186,8 +194,14 @@ final class DiscountEngineProtocol
         if (! hash_equals($review->fingerprint, $result['fingerprint'])) {
             throw new OrderLifecycleException('DISCOUNT_REVIEW_STALE', 'Order or discount context changed. Review again.');
         }
-        if (in_array($change['action'], ['apply', 'remove'], true)) {
-            DB::table('order_discount_intents')->updateOrInsert(['tenant_id' => $tenantId, 'order_id' => $order->id], ['intent' => json_encode($change['action'] === 'remove' ? null : $change['intent']), 'created_at' => now(), 'updated_at' => now()]);
+        if (in_array($change['action'], ['apply', 'remove', 'set'], true)) {
+            $stored = match ($change['action']) {
+                'remove' => null,
+                'apply' => $change['intent'],
+                // Excluded requests are not retained: the reviewed result is what is saved.
+                'set' => array_map(fn (array $d): array => ['discountId' => $d['discountId'], 'source' => $d['source']], $result['discounts']),
+            };
+            DB::table('order_discount_intents')->updateOrInsert(['tenant_id' => $tenantId, 'order_id' => $order->id], ['intent' => json_encode($stored), 'created_at' => now(), 'updated_at' => now()]);
         } elseif ($change['action'] === 'suppress') {
             DB::table('order_discount_suppressions')->updateOrInsert(['tenant_id' => $tenantId, 'order_id' => $order->id, 'discount_id' => $change['discountId']], ['suppressed_by' => (int) $request->attributes->get('auth_user')->id, 'reason' => $change['reason'], 'created_at' => now(), 'updated_at' => now()]);
         } elseif ($change['action'] === 'undo') {
@@ -196,7 +210,7 @@ final class DiscountEngineProtocol
         $this->engine->persist($tenantId, $order, $result);
         $after = $this->state($tenantId, DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order->id)->first());
         $after['operationId'] = $data['operationId'];
-        $this->audit->record($request, $tenantId, 'discount.engine.'.$change['action'], 'order', (int) $order->id, [], ['operationId' => $data['operationId'], 'discountId' => $change['discountId'] ?? ($change['intent']['discountId'] ?? null), 'reason' => $change['reason'] ?? null], branchId: (int) $order->branch_id, actorId: (int) $request->attributes->get('auth_user')->id);
+        $this->audit->record($request, $tenantId, 'discount.engine.'.$change['action'], 'order', (int) $order->id, [], ['operationId' => $data['operationId'], 'discountId' => $change['discountId'] ?? ($change['intent']['discountId'] ?? null), 'discountIds' => array_column($result['discounts'], 'discountId'), 'reason' => $change['reason'] ?? null], branchId: (int) $order->branch_id, actorId: (int) $request->attributes->get('auth_user')->id);
         DB::table('discount_operations')->insert(['tenant_id' => $tenantId, 'order_id' => $order->id, 'identity' => $data['operationId'], 'fingerprint' => $hash, 'payload' => json_encode(['reviewId' => $data['reviewId']]), 'result' => json_encode($after), 'created_at' => now(), 'updated_at' => now()]);
 
         return json_decode(DB::table('discount_operations')->where('tenant_id', $tenantId)->where('identity', $data['operationId'])->value('result'), true, flags: JSON_THROW_ON_ERROR);
@@ -242,12 +256,15 @@ final class DiscountEngineProtocol
     /** Saved snapshots only: this read never discovers or reprices discounts. */
     public function state(int $tenantId, object $order): array
     {
-        $intent = DB::table('order_discount_intents')->where('tenant_id', $tenantId)->where('order_id', $order->id)->value('intent');
-        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('id')->get();
+        $stored = DB::table('order_discount_intents')->where('tenant_id', $tenantId)->where('order_id', $order->id)->value('intent');
+        $intents = $stored === null ? [] : $this->engine->intents(json_decode($stored, true, flags: JSON_THROW_ON_ERROR));
+        $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderByRaw('coalesce(application_sequence, 0), id')->get();
         $discounts = $rows->map(function ($row) use ($tenantId): array {
-            return ['id' => (int) $row->id, 'discountId' => $row->discount_id === null ? null : (int) $row->discount_id, 'name' => $row->discount_name, 'source' => $row->source, 'stage' => $row->stage, 'type' => $row->discount_type, 'value' => (string) $row->discount_value, 'amount' => (string) $row->discount_amount, 'settingsVersion' => $row->settings_version, 'allocations' => DB::table('order_discount_allocations')->where('tenant_id', $tenantId)->where('order_discount_id', $row->id)->orderBy('order_item_id')->get()->map(fn ($a) => ['orderItemId' => (int) $a->order_item_id, 'amount' => (string) $a->amount])->all()];
+            $snapshot = $row->policy_snapshot === null ? [] : json_decode($row->policy_snapshot, true, flags: JSON_THROW_ON_ERROR);
+
+            return ['id' => (int) $row->id, 'discountId' => $row->discount_id === null ? null : (int) $row->discount_id, 'name' => $row->discount_name, 'source' => $row->source, 'stage' => $row->stage, 'type' => $row->discount_type, 'value' => (string) $row->discount_value, 'amount' => (string) $row->discount_amount, 'settingsVersion' => $row->settings_version, 'sequence' => $row->application_sequence === null ? null : (int) $row->application_sequence, 'combinationBehavior' => $snapshot['combinationBehavior'] ?? 'follow_cafe_policy', 'capped' => (bool) ($snapshot['capped'] ?? false), 'allocations' => DB::table('order_discount_allocations')->where('tenant_id', $tenantId)->where('order_discount_id', $row->id)->orderBy('order_item_id')->get()->map(fn ($a) => ['orderItemId' => (int) $a->order_item_id, 'amount' => (string) $a->amount])->all()];
         })->all();
 
-        return ['orderId' => (int) $order->id, 'explicitIntent' => $intent === null ? null : json_decode($intent, true, flags: JSON_THROW_ON_ERROR), 'discounts' => $discounts, 'requiresDiscountBreakdown' => count($discounts) > 1, 'discountContractVersion' => self::VERSION, 'totals' => ['subtotal' => (string) $order->subtotal, 'discountTotal' => (string) $order->discount_total, 'taxTotal' => (string) $order->tax_total, 'total' => (string) $order->total], 'suppressions' => DB::table('order_discount_suppressions')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('discount_id')->get(['discount_id', 'reason', 'suppressed_by'])->map(fn ($s) => ['discountId' => (int) $s->discount_id, 'reason' => $s->reason, 'actorId' => (int) $s->suppressed_by])->all()];
+        return ['orderId' => (int) $order->id, 'explicitIntent' => $intents[0] ?? null, 'explicitIntents' => $intents, 'discounts' => $discounts, 'requiresDiscountBreakdown' => count($discounts) > 1, 'discountContractVersion' => self::VERSION, 'policy' => DiscountSettingsService::effectivePolicy($this->settings->read($tenantId)), 'totals' => ['subtotal' => (string) $order->subtotal, 'discountTotal' => (string) $order->discount_total, 'taxTotal' => (string) $order->tax_total, 'total' => (string) $order->total], 'suppressions' => DB::table('order_discount_suppressions')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('discount_id')->get(['discount_id', 'reason', 'suppressed_by'])->map(fn ($s) => ['discountId' => (int) $s->discount_id, 'reason' => $s->reason, 'actorId' => (int) $s->suppressed_by])->all()];
     }
 }

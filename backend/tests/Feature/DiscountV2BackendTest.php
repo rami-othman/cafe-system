@@ -20,7 +20,7 @@ class DiscountV2BackendTest extends TestCase
         $secondProduct = $this->product($scope, 'Cookie', 20);
         $headers = $this->headers($scope);
         $generated = $this->postJson('/api/v1/discounts/generate-code', [], $headers)->assertOk()->json('data.code');
-        $this->assertMatchesRegularExpression('/^CPN-[A-Z2-9]{4}-[A-Z2-9]{4}$/', $generated);
+        $this->assertMatchesRegularExpression('/^[A-HJ-NP-Z2-9]{5}$/', $generated);
 
         $payload = $this->managementPayload($scope, $customer, $secondProduct, $generated);
         $created = $this->postJson('/api/v1/discounts', $payload, $headers)->assertCreated();

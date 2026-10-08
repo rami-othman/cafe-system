@@ -1,5 +1,7 @@
 # Discount product variant contract — backend Plan 1
 
+Discount V3 Phase 1 (2026-10-07) adds variant scope to Package / Bundle requirements and a per-discount `combinationBehavior`: see [Discount V3 Phase 1 contract](discount_v3_phase1_contract.md).
+
 Date: 2026-10-01 (Asia/Damascus). Scope: D1-01 through D1-08 only.
 
 Current staged-engine authority (2026-10-03): see the [Plan 2 backend contract](discount_settings_backend_contract.md) for additive priority, discounts[], review/quote/replay, policy-specific usage and capability gates. The Plan 1 verification/history below records its original phase; its single-discount client behavior remains the compatible default.

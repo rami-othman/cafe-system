@@ -72,6 +72,8 @@ class _CreateDiscountPolicyScreenState
   String _scope = 'order';
   String _valueType = 'percentage';
   String _fixedAmountBasis = 'per_order';
+  // Carried unchanged until Discount V3 Phase 3 exposes it in the form.
+  String _combinationBehavior = 'follow_cafe_policy';
   String _customerEligibilityMode = 'all';
   bool _appliesToAllBranches = true;
   bool _allPaymentMethods = true;
@@ -207,6 +209,7 @@ class _CreateDiscountPolicyScreenState
       };
       _valueType = detail.type == 'fixed' ? 'fixed' : 'percentage';
       _fixedAmountBasis = detail.fixedAmountBasis;
+      _combinationBehavior = detail.combinationBehavior;
       _customerEligibilityMode = switch (detail.customerEligibilityMode) {
         'selected_groups' => 'selected_groups',
         'selected_customers' => 'selected_customers',
@@ -1075,72 +1078,91 @@ class _CreateDiscountPolicyScreenState
         for (int index = 0; index < _bundleRequirements.length; index++)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: _AdaptiveFields(
-              children: <_LabeledField>[
-                _LabeledField(
-                  label: l10n.discountFormProduct,
-                  child: DropdownButtonFormField<int>(
-                    key: Key('discount-bundle-product-$index'),
-                    initialValue: _bundleRequirements[index].productId == 0
-                        ? null
-                        : _bundleRequirements[index].productId,
-                    isExpanded: true,
-                    items: state.formReferences.products
-                        .where(
-                          (DiscountFormReference product) =>
-                              product.id ==
-                                  _bundleRequirements[index].productId ||
-                              !_bundleRequirements.any(
-                                (_BundleRequirementDraft requirement) =>
-                                    requirement != _bundleRequirements[index] &&
-                                    requirement.productId == product.id,
-                              ),
-                        )
-                        .map(
-                          (DiscountFormReference product) =>
-                              DropdownMenuItem<int>(
-                                value: product.id,
-                                child: Text(product.name),
-                              ),
-                        )
-                        .toList(growable: false),
-                    onChanged: locked
-                        ? null
-                        : (int? value) => setState(
-                            () => _bundleRequirements[index].productId =
-                                value ?? 0,
-                          ),
-                  ),
-                ),
-                _LabeledField(
-                  label: l10n.discountV2RequiredQuantity,
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: AppTextField(
-                          key: Key('discount-bundle-quantity-$index'),
-                          controller: _bundleRequirements[index].controller,
-                          enabled: !locked,
-                          hintText: '0',
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        key: Key('discount-remove-bundle-row-$index'),
-                        onPressed: locked
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _AdaptiveFields(
+                  children: <_LabeledField>[
+                    _LabeledField(
+                      label: l10n.discountFormProduct,
+                      child: DropdownButtonFormField<int>(
+                        key: Key('discount-bundle-product-$index'),
+                        initialValue: _bundleRequirements[index].productId == 0
                             ? null
-                            : () => setState(() {
-                                final _BundleRequirementDraft requirement =
-                                    _bundleRequirements.removeAt(index);
-                                requirement.dispose();
-                              }),
-                        icon: const Icon(Icons.remove_circle_outline),
+                            : _bundleRequirements[index].productId,
+                        isExpanded: true,
+                        items: state.formReferences.products
+                            .where(
+                              (DiscountFormReference product) =>
+                                  product.id ==
+                                      _bundleRequirements[index].productId ||
+                                  !_bundleRequirements.any(
+                                    (_BundleRequirementDraft requirement) =>
+                                        requirement !=
+                                            _bundleRequirements[index] &&
+                                        requirement.productId == product.id,
+                                  ),
+                            )
+                            .map(
+                              (DiscountFormReference product) =>
+                                  DropdownMenuItem<int>(
+                                    value: product.id,
+                                    child: Text(product.name),
+                                  ),
+                            )
+                            .toList(growable: false),
+                        onChanged: locked
+                            ? null
+                            : (int? value) => setState(
+                                () => _bundleRequirements[index].changeProduct(
+                                  value ?? 0,
+                                ),
+                              ),
                       ),
-                    ],
-                  ),
+                    ),
+                    _LabeledField(
+                      label: l10n.discountV2RequiredQuantity,
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: AppTextField(
+                              key: Key('discount-bundle-quantity-$index'),
+                              controller: _bundleRequirements[index].controller,
+                              enabled: !locked,
+                              hintText: '0',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                            ),
+                          ),
+                          IconButton(
+                            key: Key('discount-remove-bundle-row-$index'),
+                            onPressed: locked
+                                ? null
+                                : () => setState(() {
+                                    final _BundleRequirementDraft requirement =
+                                        _bundleRequirements.removeAt(index);
+                                    requirement.dispose();
+                                  }),
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+                if (_bundleRequirements[index].isSelected)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(
+                      key: Key('discount-bundle-variants-$index'),
+                      '${l10n.discountSelectedVariants}: ${_bundleRequirements[index].variantSummary(l10n.localeName.startsWith('ar'))}',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1401,6 +1423,9 @@ class _CreateDiscountPolicyScreenState
                   (_BundleRequirementDraft item) => DiscountBundleRequirement(
                     productId: item.productId,
                     quantity: _decimalValue(item.controller.text) ?? 0,
+                    variantMode: item.variantMode,
+                    variantIds: item.variantIds,
+                    variants: item.variants,
                   ),
                 )
                 .toList(growable: false)
@@ -1412,6 +1437,7 @@ class _CreateDiscountPolicyScreenState
       branchIds: _appliesToAllBranches
           ? const <int>[]
           : _branchIds.toList(growable: false),
+      combinationBehavior: _combinationBehavior,
       isActive: activate ? true : _active,
     );
     final DiscountsCubit cubit = context.read<DiscountsCubit>();
@@ -2103,10 +2129,44 @@ class _BundleRequirementDraft {
     quantity: requirement.quantity == requirement.quantity.truncateToDouble()
         ? requirement.quantity.toInt().toString()
         : requirement.quantity.toString(),
-  );
+  ).._keepVariantScope(requirement);
 
   int productId;
   final TextEditingController controller;
+
+  /// Variant scope restored from the saved policy. It is kept as loaded until
+  /// the Phase 3 picker edits it, and resets when the product changes because
+  /// variants belong to one product.
+  String? variantMode;
+  List<int> variantIds = const <int>[];
+  List<DiscountFormReference> variants = const <DiscountFormReference>[];
+
+  void _keepVariantScope(DiscountBundleRequirement requirement) {
+    variantMode = requirement.variantMode;
+    variantIds = requirement.variantIds;
+    variants = requirement.variants;
+  }
+
+  bool get isSelected => variantMode == 'selected';
+
+  String variantSummary(bool arabic) => variantIds
+      .map(
+        (int id) =>
+            variants
+                .where((DiscountFormReference v) => v.id == id)
+                .map((DiscountFormReference v) => v.label(arabic))
+                .firstOrNull ??
+            '#$id',
+      )
+      .join(', ');
+
+  void changeProduct(int newProductId) {
+    if (newProductId == productId) return;
+    productId = newProductId;
+    variantMode = variantMode == null ? null : 'all';
+    variantIds = const <int>[];
+    variants = const <DiscountFormReference>[];
+  }
 
   void dispose() => controller.dispose();
 }

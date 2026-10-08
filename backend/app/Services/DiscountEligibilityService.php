@@ -353,10 +353,13 @@ class DiscountEligibilityService
         }
         $itemsByProduct = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
             ->whereIn('product_id', $requirements->pluck('product_id'))->orderBy('id')->get()->groupBy('product_id');
+        $selectedVariants = app(DiscountBundleVariantService::class)->savedIds($tenantId, $discount->id);
         $subtotal = 0.0;
         foreach ($requirements as $requirement) {
             $remaining = (float) $requirement->quantity;
-            foreach ($itemsByProduct->get($requirement->product_id, collect()) as $item) {
+            $accepted = $itemsByProduct->get($requirement->product_id, collect())
+                ->filter(fn ($item) => DiscountBundleVariantService::accepts($selectedVariants[(int) $requirement->product_id] ?? [], $item->product_variant_id));
+            foreach ($accepted as $item) {
                 $taken = min($remaining, (float) $item->quantity);
                 $subtotal += $taken * (float) $item->unit_price;
                 $remaining -= $taken;

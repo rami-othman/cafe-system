@@ -16,6 +16,7 @@ class DiscountDetail {
     required this.value,
     this.fixedAmountBasis = 'per_order',
     this.priority = 0,
+    this.combinationBehavior = 'follow_cafe_policy',
     required this.isActive,
     required this.appliesToAllBranches,
     required this.customerEligibilityMode,
@@ -62,6 +63,7 @@ class DiscountDetail {
   final double value;
   final String fixedAmountBasis;
   final int priority;
+  final String combinationBehavior;
   final String? conditions;
   final String? startsAt;
   final String? endsAt;
@@ -127,6 +129,7 @@ class DiscountDetail {
     scope: readString(json['scope']),
     value: readDouble(json['value']),
     priority: readInt(json['priority']) ?? 0,
+    combinationBehavior: _combinationBehavior(json['combinationBehavior']),
     fixedAmountBasis: readString(
       json['fixedAmountBasis'],
       fallback: 'per_order',
@@ -190,6 +193,7 @@ class DiscountDetail {
     value: value,
     fixedAmountBasis: fixedAmountBasis,
     priority: priority,
+    combinationBehavior: combinationBehavior,
     conditions: conditions,
     startsAt: startsAt,
     endsAt: endsAt,
@@ -242,10 +246,27 @@ class DiscountDetail {
             (Map item) => DiscountBundleRequirement(
               productId: readInt(item['productId']) ?? 0,
               quantity: readDouble(item['quantity']),
+              variantMode: item['variantMode'] == 'selected'
+                  ? 'selected'
+                  : (item['variantMode'] == 'all' ? 'all' : null),
+              variantIds: _ids(item['variantIds']),
+              variants:
+                  (item['variants'] as List<dynamic>? ?? const <dynamic>[])
+                      .whereType<Map>()
+                      .map(
+                        (Map variant) => DiscountFormReference.fromJson(
+                          Map<String, dynamic>.from(variant),
+                        ),
+                      )
+                      .toList(growable: false),
             ),
           )
           .where((DiscountBundleRequirement item) => item.productId > 0)
           .toList(growable: false);
+
+  /// Legacy responses carry no value; unknown values read as the safe default.
+  static String _combinationBehavior(dynamic value) =>
+      value == 'exclusive' ? 'exclusive' : 'follow_cafe_policy';
   static String? _nullable(dynamic value) {
     final String result = readString(value).trim();
     return result.isEmpty ? null : result;

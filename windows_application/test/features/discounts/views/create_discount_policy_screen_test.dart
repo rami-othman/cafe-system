@@ -1170,6 +1170,72 @@ void main() {
     expect(find.byKey(const Key('discount-channels-selector')), findsOneWidget);
     expect(_fieldText(tester, const Key('discount-bundle-quantity-0')), '1');
   });
+
+  testWidgets(
+    'edit restores the package variant scope, keeps it on save and resets it when the product changes',
+    (WidgetTester tester) async {
+      final _DiscountsRepository repository = _DiscountsRepository(
+        detail: _variantPackageDetail,
+      );
+      await _pumpScreen(
+        tester,
+        const Size(1280, 900),
+        repository: repository,
+        initialDiscount: _editRow,
+      );
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-bundle-product-0')),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(const Key('discount-bundle-variants-0')))
+            .data,
+        contains('Large, Iced'),
+      );
+
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      final Map<String, dynamic> saved = repository.lastUpdateRequest!.toJson();
+      expect(saved['combinationBehavior'], 'exclusive');
+      expect(saved['bundleRequirements'], <Map<String, dynamic>>[
+        <String, dynamic>{
+          'productId': 11,
+          'quantity': 1.0,
+          'variantMode': 'selected',
+          'variantIds': <int>[101, 102],
+        },
+      ]);
+
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-bundle-product-0')),
+      );
+      await _selectDropdown(
+        tester,
+        const Key('discount-bundle-product-0'),
+        'Espresso',
+      );
+      expect(find.byKey(const Key('discount-bundle-variants-0')), findsNothing);
+      // Let the first save's confirmation toast leave the button uncovered.
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pumpAndSettle();
+      expect(
+        repository.lastUpdateRequest!.toJson()['bundleRequirements'],
+        <Map<String, dynamic>>[
+          <String, dynamic>{
+            'productId': 12,
+            'quantity': 1.0,
+            'variantMode': 'all',
+            'variantIds': <int>[],
+          },
+        ],
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 FilledButton _activateButton(WidgetTester tester) =>
@@ -1293,6 +1359,7 @@ class _DiscountsRepository extends DiscountsRepository {
       const DiscountFormReferences(
         products: <DiscountFormReference>[
           DiscountFormReference(id: 11, name: 'Cappuccino', isActive: true),
+          DiscountFormReference(id: 12, name: 'Espresso', isActive: true),
         ],
         categories: <DiscountFormReference>[
           DiscountFormReference(id: 31, name: 'Coffee', isActive: true),
@@ -1441,6 +1508,37 @@ const DiscountDetail _v2Detail = DiscountDetail(
   channelKeys: <String>['pos', 'delivery'],
   bundleRequirements: <DiscountBundleRequirement>[
     DiscountBundleRequirement(productId: 11, quantity: 1),
+  ],
+);
+
+const DiscountDetail _variantPackageDetail = DiscountDetail(
+  id: 83,
+  name: 'Variant package',
+  code: 'K7M4P',
+  applicationMode: 'code',
+  type: 'percentage',
+  scope: 'bundle',
+  value: 20,
+  isActive: true,
+  appliesToAllBranches: true,
+  customerEligibilityMode: 'all',
+  targetProductIds: <int>[],
+  targetCategoryIds: <int>[],
+  customerGroupIds: <int>[],
+  branchIds: <int>[],
+  paymentMethodIds: <int>[],
+  combinationBehavior: 'exclusive',
+  bundleRequirements: <DiscountBundleRequirement>[
+    DiscountBundleRequirement(
+      productId: 11,
+      quantity: 1,
+      variantMode: 'selected',
+      variantIds: <int>[101, 102],
+      variants: <DiscountFormReference>[
+        DiscountFormReference(id: 101, name: 'Large', isActive: true),
+        DiscountFormReference(id: 102, name: 'Iced', isActive: true),
+      ],
+    ),
   ],
 );
 

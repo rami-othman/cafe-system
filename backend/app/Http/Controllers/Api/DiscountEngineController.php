@@ -49,7 +49,14 @@ final class DiscountEngineController extends Controller
         $tenantId = TenantContext::id($request);
         $this->protocol->compatible($request, $tenantId, $order, true);
         $data = $request->validate([
-            'action' => ['required', 'in:apply,remove,suppress,undo'],
+            'action' => ['required', 'in:apply,set,remove,suppress,undo'],
+            // V3: one reviewed, ordered set of explicit intents that replaces every
+            // explicit intent on the order. `apply` keeps its legacy meaning: replace
+            // with exactly one discount.
+            'intents' => ['required_if:action,set', 'array', 'min:1', 'max:'.DiscountResolutionService::MAX_REQUESTED_INTENTS],
+            'intents.*' => ['array:source,discountId,code'],
+            'intents.*.source' => ['required', 'in:configured_manual,code'],
+            'intents.*.discountId' => ['nullable', 'integer'], 'intents.*.code' => ['nullable', 'string', 'max:100'],
             'intent' => ['required_if:action,apply', 'array:source,discountId,code,type,value,reason'],
             'intent.source' => ['required_if:action,apply', 'in:configured_manual,code,ad_hoc'],
             'intent.discountId' => ['nullable', 'integer'], 'intent.code' => ['nullable', 'string', 'max:100'],

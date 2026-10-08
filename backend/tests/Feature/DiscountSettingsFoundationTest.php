@@ -149,6 +149,8 @@ class DiscountSettingsFoundationTest extends TestCase
         $runtime = require database_path('migrations/2026_10_03_000002_extend_discount_runtime_foundation.php');
         $settings = require database_path('migrations/2026_10_03_000001_create_discount_settings_foundation.php');
         $engine = require database_path('migrations/2026_10_03_000003_create_discount_engine_protocol.php');
+        $policy = require database_path('migrations/2026_10_11_000001_add_discount_v3_policy_settings.php');
+        $policy->down();
         $engine->down();
         $runtime->down();
         $settings->down();
@@ -158,6 +160,7 @@ class DiscountSettingsFoundationTest extends TestCase
         $settings->up();
         $runtime->up();
         $engine->up();
+        $policy->up();
         $this->assertDatabaseMissing('discount_role_permissions', ['tenant_id' => $tenant, 'permission' => 'discounts.manage']);
         $this->assertDatabaseHas('discount_role_permissions', ['tenant_id' => $tenant, 'role' => 'manager', 'permission' => 'discounts.settings.manage']);
         $this->assertDatabaseMissing('discount_role_permissions', ['tenant_id' => $tenant, 'role' => 'employee', 'permission' => 'discounts.settings.manage']);

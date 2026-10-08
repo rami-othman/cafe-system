@@ -86,6 +86,9 @@ class DiscountVariantConcurrencyTest extends TestCase
     {
         $this->assertSame('cafe_system_618_testing_migrations', DB::selectOne('select current_database() as name')->name);
         $migration = require database_path('migrations/2026_10_01_000001_create_discount_product_target_variants.php');
+        // The V3 package-variant table depends on this migration's variant identity key.
+        $bundleVariants = require database_path('migrations/2026_10_11_000003_create_discount_bundle_requirement_variants.php');
+        $bundleVariants->down();
         $migration->down();
         $tenant = DB::table('tenants')->insertGetId(['name' => 'Legacy', 'slug' => uniqid('legacy-')]);
         $branch = DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Branch', 'is_active' => true]);
@@ -97,6 +100,7 @@ class DiscountVariantConcurrencyTest extends TestCase
         DB::table('order_discounts')->insert(['tenant_id' => $tenant, 'order_id' => $order, 'discount_id' => $discount, 'discount_name' => 'Old snapshot', 'discount_type' => 'percentage', 'discount_value' => 10, 'discount_amount' => '0.01']);
         $before = [(array) DB::table('orders')->find($order), (array) DB::table('order_items')->where('order_id', $order)->first(), (array) DB::table('order_discounts')->where('order_id', $order)->first(), (array) DB::table('discount_targets')->find($target)];
         $migration->up();
+        $bundleVariants->up();
         $after = [(array) DB::table('orders')->find($order), (array) DB::table('order_items')->where('order_id', $order)->first(), (array) DB::table('order_discounts')->where('order_id', $order)->first(), (array) DB::table('discount_targets')->find($target)];
         $this->assertSame($before, $after);
         $this->assertDatabaseCount('discount_product_target_variants', 0);

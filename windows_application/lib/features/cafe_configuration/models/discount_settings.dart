@@ -104,21 +104,92 @@ class DiscountSettingsDraft extends Equatable {
   ];
 }
 
+/// Discount V3 Cafe Discount Policy, as persisted by the backend.
+///
+/// Read-only contract for now: the backend does not enforce these fields until
+/// Phase 2 and the Settings screen exposes them in Phase 3. The defaults are
+/// today's single-discount behavior and also apply when an older backend omits
+/// the fields. The total-percent limit is the draft's
+/// maximumTotalDiscountPercent, shared with V3, not a second field.
+class DiscountCafePolicy extends Equatable {
+  const DiscountCafePolicy({
+    this.allowMultipleDiscounts = false,
+    this.stackingMode = 'different_items_only',
+    this.allowMultipleCoupons = false,
+    this.allowCouponWithConfigured = false,
+    this.allowOrderAfterItemDiscounts = false,
+    this.maximumDiscountsPerOrder = 1,
+    this.conflictResolution = 'best_saving',
+  });
+  final bool allowMultipleDiscounts;
+
+  /// `different_items_only` or `same_item_allowed`.
+  final String stackingMode;
+  final bool allowMultipleCoupons;
+  final bool allowCouponWithConfigured;
+  final bool allowOrderAfterItemDiscounts;
+  final int maximumDiscountsPerOrder;
+
+  /// `best_saving` or `priority`.
+  final String conflictResolution;
+
+  factory DiscountCafePolicy.fromJson(Map<String, dynamic> j) =>
+      DiscountCafePolicy(
+        allowMultipleDiscounts: j['allowMultipleDiscounts'] == true,
+        stackingMode: j['stackingMode'] == 'same_item_allowed'
+            ? 'same_item_allowed'
+            : 'different_items_only',
+        allowMultipleCoupons: j['allowMultipleCoupons'] == true,
+        allowCouponWithConfigured: j['allowCouponWithConfigured'] == true,
+        allowOrderAfterItemDiscounts: j['allowOrderAfterItemDiscounts'] == true,
+        maximumDiscountsPerOrder: j['maximumDiscountsPerOrder'] is int
+            ? j['maximumDiscountsPerOrder'] as int
+            : 1,
+        conflictResolution: j['conflictResolution'] == 'priority'
+            ? 'priority'
+            : 'best_saving',
+      );
+
+  Map<String, dynamic> toJson() => {
+    'allowMultipleDiscounts': allowMultipleDiscounts,
+    'stackingMode': stackingMode,
+    'allowMultipleCoupons': allowMultipleCoupons,
+    'allowCouponWithConfigured': allowCouponWithConfigured,
+    'allowOrderAfterItemDiscounts': allowOrderAfterItemDiscounts,
+    'maximumDiscountsPerOrder': maximumDiscountsPerOrder,
+    'conflictResolution': conflictResolution,
+  };
+
+  @override
+  List<Object?> get props => [
+    allowMultipleDiscounts,
+    stackingMode,
+    allowMultipleCoupons,
+    allowCouponWithConfigured,
+    allowOrderAfterItemDiscounts,
+    maximumDiscountsPerOrder,
+    conflictResolution,
+  ];
+}
+
 class SavedDiscountSettings extends Equatable {
   const SavedDiscountSettings({
     required this.draft,
     required this.version,
     required this.engineReady,
+    this.policy = const DiscountCafePolicy(),
   });
   final DiscountSettingsDraft draft;
   final int version;
   final bool engineReady;
+  final DiscountCafePolicy policy;
   factory SavedDiscountSettings.fromJson(Map<String, dynamic> j) =>
       SavedDiscountSettings(
         draft: DiscountSettingsDraft.fromJson(j),
         version: j['version'] as int,
         engineReady: j['engineReady'] == true,
+        policy: DiscountCafePolicy.fromJson(j),
       );
   @override
-  List<Object?> get props => [draft, version, engineReady];
+  List<Object?> get props => [draft, version, engineReady, policy];
 }
