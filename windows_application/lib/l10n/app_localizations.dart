@@ -17375,7 +17375,7 @@ abstract class AppLocalizations {
   /// No description provided for @d2Priority.
   ///
   /// In en, this message translates to:
-  /// **'Priority (integer 0 to 1000)'**
+  /// **'Priority (integer 0 to 10)'**
   String get d2Priority;
 
   /// No description provided for @d2CreationUnavailable.
@@ -17441,13 +17441,13 @@ abstract class AppLocalizations {
   /// No description provided for @d2Suppress.
   ///
   /// In en, this message translates to:
-  /// **'Suppress Automatic discount'**
+  /// **'Remove promotion'**
   String get d2Suppress;
 
   /// No description provided for @d2Undo.
   ///
   /// In en, this message translates to:
-  /// **'Undo suppression'**
+  /// **'Restore promotion'**
   String get d2Undo;
 
   /// No description provided for @d2Reason.
@@ -17459,7 +17459,7 @@ abstract class AppLocalizations {
   /// No description provided for @d2Suppressed.
   ///
   /// In en, this message translates to:
-  /// **'Saved suppressions'**
+  /// **'Removed promotions'**
   String get d2Suppressed;
 
   /// No description provided for @d2Quote.
@@ -17555,7 +17555,7 @@ abstract class AppLocalizations {
   /// No description provided for @d2SourceAutomatic.
   ///
   /// In en, this message translates to:
-  /// **'Automatic'**
+  /// **'Automatic promotion'**
   String get d2SourceAutomatic;
 
   /// No description provided for @d2SourceCode.
@@ -17767,6 +17767,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not allowed'**
   String get ds3NotAllowed;
+
+  /// No description provided for @ds4GeneralDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The main switch for combining discounts on one order.'**
+  String get ds4GeneralDesc;
+
+  /// No description provided for @ds4CombiningDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Which kinds of discounts can be used together.'**
+  String get ds4CombiningDesc;
+
+  /// No description provided for @ds4CombiningOffHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on “Allow multiple discounts on one order” to change these options. Their saved values are kept.'**
+  String get ds4CombiningOffHint;
+
+  /// No description provided for @ds4LimitsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper limits that protect your margin.'**
+  String get ds4LimitsDesc;
+
+  /// No description provided for @ds4ConflictDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Used when the selected discounts cannot all be applied together.'**
+  String get ds4ConflictDesc;
+
+  /// No description provided for @ds4BestSavingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The POS keeps the combination that saves the customer the most.'**
+  String get ds4BestSavingHelp;
+
+  /// No description provided for @ds4StatusDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Default values'**
+  String get ds4StatusDefaults;
+
+  /// No description provided for @ds4StatusUnsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get ds4StatusUnsaved;
+
+  /// No description provided for @ds4StatusSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get ds4StatusSaved;
+
+  /// No description provided for @ds4Reload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get ds4Reload;
+
+  /// No description provided for @ds4Decrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease'**
+  String get ds4Decrease;
+
+  /// No description provided for @ds4Increase.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase'**
+  String get ds4Increase;
+
+  /// No description provided for @ds4PreviewDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'After you save'**
+  String get ds4PreviewDraft;
+
+  /// No description provided for @ds4PreviewHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The POS and payment will follow these rules.'**
+  String get ds4PreviewHelp;
+
+  /// No description provided for @ds5Automatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic promotions'**
+  String get ds5Automatic;
+
+  /// No description provided for @ds5AutomaticDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotions that apply by themselves when an order qualifies.'**
+  String get ds5AutomaticDesc;
+
+  /// No description provided for @ds5AutomaticEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply automatic promotions'**
+  String get ds5AutomaticEnabled;
+
+  /// No description provided for @ds5AutomaticEnabledHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Active discounts set to Automatic are applied at the POS without the cashier choosing them. They follow the combining rules and limits on this page and never replace a discount the cashier chose.'**
+  String get ds5AutomaticEnabledHelp;
+
+  /// No description provided for @ds5AllowRemoval.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow managers to remove a promotion from an order'**
+  String get ds5AllowRemoval;
+
+  /// No description provided for @ds5AllowRemovalHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A reason is required. Only roles with the remove-promotion permission can do it.'**
+  String get ds5AllowRemovalHelp;
+
+  /// No description provided for @d5AutomaticHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies at the POS by itself whenever an order qualifies, following the Discount settings.'**
+  String get d5AutomaticHelp;
+
+  /// No description provided for @d5AutomaticOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic promotions are off for this cafe. Turn them on in Discount settings to apply this discount.'**
+  String get d5AutomaticOff;
 
   /// No description provided for @dp3Combination.
   ///

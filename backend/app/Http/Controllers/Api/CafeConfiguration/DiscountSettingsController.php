@@ -78,9 +78,6 @@ final class DiscountSettingsController extends Controller
             return response()->json(['message' => 'Discount settings request is invalid.', 'code' => 'DISCOUNT_SETTINGS_VALIDATION_FAILED', 'errors' => $validator->errors()], 422);
         }
         $data = $validator->validated();
-        if ($data['automaticEnabled']) {
-            return $this->error('DISCOUNT_ENGINE_NOT_READY', 422);
-        }
         try {
             return response()->json(['data' => $this->settings->save($request, TenantContext::id($request), $data)]);
         } catch (HttpException $exception) {

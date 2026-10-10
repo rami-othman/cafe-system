@@ -129,7 +129,8 @@ class DiscountSettingsFoundationTest extends TestCase
         }
         $this->reject(fn () => DB::table('tenant_discount_settings')->insert($settings + ['tenant_id' => $s['tenant'], 'version' => 1, 'updated_by' => $otherActor]), '23503');
         $validSettings = $settings + ['tenant_id' => $s['tenant'], 'version' => 1, 'updated_by' => $actor];
-        $this->reject(fn () => DB::table('tenant_discount_settings')->insert(array_replace($validSettings, ['automatic_enabled' => true])), '23514');
+        // automatic_enabled may be true since 2026_10_13_000001; the other values stay checked.
+        $this->reject(fn () => DB::table('tenant_discount_settings')->insert(array_replace($validSettings, ['selection_strategy' => 'random'])), '23514');
         $this->reject(fn () => DB::table('tenant_discount_settings')->insert(array_replace($validSettings, ['order_discount_behavior' => 'after_items'])), '23514');
         DB::table('tenant_discount_settings')->insert($validSettings);
         $this->reject(fn () => DB::table('tenant_discount_settings')->insert($validSettings), '23505');

@@ -41,7 +41,7 @@ void main() {
           expect(find.text('1. Saved 1'), findsOneWidget);
           expect(find.text('2. Saved 2'), findsOneWidget);
           expect(
-            find.text(language == 'en' ? 'Automatic' : 'تلقائي'),
+            find.text(language == 'en' ? 'Automatic promotion' : 'عرض تلقائي'),
             findsNWidgets(2),
           );
           expect(find.text('-2.00'), findsOneWidget);

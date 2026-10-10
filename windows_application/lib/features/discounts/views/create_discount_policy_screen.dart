@@ -14,6 +14,8 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/widgets/management_ui.dart';
+import '../../../shared/widgets/settings_ui.dart';
 import '../../menu_management/operational_availability/operational_availability_formatters.dart'
     show operationalSalesChannels;
 import '../controllers/discount_targets_cubit.dart';
@@ -1423,7 +1425,13 @@ class _CreateDiscountPolicyScreenState
     return Column(
       children: <Widget>[
         if (_applicationMode == 'automatic')
-          Text(AppLocalizations.of(context).dsSubtitle)
+          _AutomaticModeNotice(
+            enabled: context
+                .watch<DiscountsCubit>()
+                .state
+                .capabilities
+                .automaticEnabled,
+          )
         else
           DiscountPosPreviewCard(
             discountValue: value,
@@ -1690,7 +1698,7 @@ class _CreateDiscountPolicyScreenState
       );
     }
     final priority = int.tryParse(_priorityController.text.trim());
-    if (priority == null || priority < 0 || priority > 1000) {
+    if (priority == null || priority < 0 || priority > 10) {
       issues.add(_FormValidationIssue('priority', l10n.d2Priority));
     }
     if (_applicationMode == 'automatic' &&
@@ -2386,6 +2394,32 @@ class _ValidationBanner extends StatelessWidget {
         uniqueMessages.join('\n'),
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
       ),
+    );
+  }
+}
+
+/// What an Automatic discount does, and a warning while the cafe has
+/// Automatic promotions switched off.
+class _AutomaticModeNotice extends StatelessWidget {
+  const _AutomaticModeNotice({required this.enabled});
+  final bool enabled;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      key: const Key('discount-automatic-notice'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        SettingsNotice(message: l10n.d5AutomaticHelp),
+        if (!enabled) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          SettingsNotice(
+            key: const Key('discount-automatic-off'),
+            tone: ManagementTone.warning,
+            message: l10n.d5AutomaticOff,
+          ),
+        ],
+      ],
     );
   }
 }

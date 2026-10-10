@@ -9707,7 +9707,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get d2Automatic => 'Automatic';
 
   @override
-  String get d2Priority => 'Priority (integer 0 to 1000)';
+  String get d2Priority => 'Priority (integer 0 to 10)';
 
   @override
   String get d2CreationUnavailable =>
@@ -9745,16 +9745,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'The context changed. Preview again and confirm the new result.';
 
   @override
-  String get d2Suppress => 'Suppress Automatic discount';
+  String get d2Suppress => 'Remove promotion';
 
   @override
-  String get d2Undo => 'Undo suppression';
+  String get d2Undo => 'Restore promotion';
 
   @override
   String get d2Reason => 'Required suppression reason';
 
   @override
-  String get d2Suppressed => 'Saved suppressions';
+  String get d2Suppressed => 'Removed promotions';
 
   @override
   String get d2Quote => 'Payment quote';
@@ -9812,7 +9812,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Wait for the cart to synchronize before review or payment.';
 
   @override
-  String get d2SourceAutomatic => 'Automatic';
+  String get d2SourceAutomatic => 'Automatic promotion';
 
   @override
   String get d2SourceCode => 'Coupon';
@@ -9931,6 +9931,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ds3NotAllowed => 'Not allowed';
+
+  @override
+  String get ds4GeneralDesc =>
+      'The main switch for combining discounts on one order.';
+
+  @override
+  String get ds4CombiningDesc =>
+      'Which kinds of discounts can be used together.';
+
+  @override
+  String get ds4CombiningOffHint =>
+      'Turn on “Allow multiple discounts on one order” to change these options. Their saved values are kept.';
+
+  @override
+  String get ds4LimitsDesc => 'Upper limits that protect your margin.';
+
+  @override
+  String get ds4ConflictDesc =>
+      'Used when the selected discounts cannot all be applied together.';
+
+  @override
+  String get ds4BestSavingHelp =>
+      'The POS keeps the combination that saves the customer the most.';
+
+  @override
+  String get ds4StatusDefaults => 'Default values';
+
+  @override
+  String get ds4StatusUnsaved => 'Unsaved changes';
+
+  @override
+  String get ds4StatusSaved => 'Saved';
+
+  @override
+  String get ds4Reload => 'Reload';
+
+  @override
+  String get ds4Decrease => 'Decrease';
+
+  @override
+  String get ds4Increase => 'Increase';
+
+  @override
+  String get ds4PreviewDraft => 'After you save';
+
+  @override
+  String get ds4PreviewHelp => 'The POS and payment will follow these rules.';
+
+  @override
+  String get ds5Automatic => 'Automatic promotions';
+
+  @override
+  String get ds5AutomaticDesc =>
+      'Promotions that apply by themselves when an order qualifies.';
+
+  @override
+  String get ds5AutomaticEnabled => 'Apply automatic promotions';
+
+  @override
+  String get ds5AutomaticEnabledHelp =>
+      'Active discounts set to Automatic are applied at the POS without the cashier choosing them. They follow the combining rules and limits on this page and never replace a discount the cashier chose.';
+
+  @override
+  String get ds5AllowRemoval =>
+      'Allow managers to remove a promotion from an order';
+
+  @override
+  String get ds5AllowRemovalHelp =>
+      'A reason is required. Only roles with the remove-promotion permission can do it.';
+
+  @override
+  String get d5AutomaticHelp =>
+      'Applies at the POS by itself whenever an order qualifies, following the Discount settings.';
+
+  @override
+  String get d5AutomaticOff =>
+      'Automatic promotions are off for this cafe. Turn them on in Discount settings to apply this discount.';
 
   @override
   String get dp3Combination => 'Combination';

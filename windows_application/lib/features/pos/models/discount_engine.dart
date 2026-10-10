@@ -246,17 +246,22 @@ class DiscountSuppression extends Equatable {
     required this.discountId,
     required this.reason,
     required this.actorId,
+    this.name,
   });
   final int discountId, actorId;
   final String reason;
+
+  /// Promotion name; null from older backends.
+  final String? name;
   factory DiscountSuppression.fromJson(Map<String, dynamic> j) =>
       DiscountSuppression(
         discountId: j['discountId'] as int,
         reason: j['reason'] as String,
         actorId: j['actorId'] as int,
+        name: j['name'] as String?,
       );
   @override
-  List<Object?> get props => [discountId, reason, actorId];
+  List<Object?> get props => [discountId, reason, actorId, name];
 }
 
 class SavedDiscountState extends Equatable {

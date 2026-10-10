@@ -36,12 +36,12 @@ class DiscountSettingsApiTest extends TestCase
     public function test_defaults_are_read_only_and_round_trip_with_atomic_version_and_audit(): void
     {
         [$tenant, $headers, $actor] = $this->scope();
-        $initial = DiscountSettingsService::DEFAULTS + ['version' => 0, 'engineReady' => false];
+        $initial = DiscountSettingsService::DEFAULTS + ['version' => 0, 'engineReady' => true];
         $this->getJson(self::URL, $headers)->assertOk()->assertExactJson(['data' => $initial]);
         $this->assertDatabaseCount('tenant_discount_settings', 0);
         $this->assertSame(0, DB::table('activity_logs')->where('action', 'discount.settings.updated')->count());
         $payload = $this->payload(changes: ['selectionStrategy' => 'priority', 'combinationMode' => 'disjoint_items', 'orderDiscountBehavior' => 'after_items', 'couponBehavior' => 'follow_combination_rules', 'manualBehavior' => 'follow_combination_rules', 'maximumTotalDiscountPercent' => 12.3456, 'allowAutomaticSuppression' => false]);
-        $saved = $this->putJson(self::URL, $payload, $headers)->assertOk()->assertJsonPath('data.version', 1)->assertJsonPath('data.engineReady', false)->json('data');
+        $saved = $this->putJson(self::URL, $payload, $headers)->assertOk()->assertJsonPath('data.version', 1)->assertJsonPath('data.engineReady', true)->json('data');
         $this->getJson(self::URL, $headers)->assertExactJson(['data' => $saved]);
         $this->assertDatabaseHas('tenant_discount_settings', ['tenant_id' => $tenant, 'version' => 1, 'updated_by' => $actor->id]);
         $audit = DB::table('activity_logs')->where('action', 'discount.settings.updated')->first();
@@ -108,7 +108,7 @@ class DiscountSettingsApiTest extends TestCase
         $this->putJson(self::URL, $this->payload(), ['Authorization' => ''])->assertUnauthorized()->assertJsonPath('code', 'AUTH_REQUIRED');
     }
 
-    public function test_invalid_fields_combinations_and_engine_activation_have_no_side_effects(): void
+    public function test_invalid_fields_and_combinations_have_no_side_effects(): void
     {
         [, $headers] = $this->scope();
         foreach ([['selectionStrategy' => 'random'], ['combinationMode' => 'stack'], ['orderDiscountBehavior' => 'after_items'], ['couponBehavior' => 'stack'], ['manualBehavior' => 'stack'], ['maximumTotalDiscountPercent' => 0], ['maximumTotalDiscountPercent' => 101], ['maximumTotalDiscountPercent' => 0.00001], ['automaticEnabled' => 0], ['allowAutomaticSuppression' => 'true'], ['expectedVersion' => '0'], ['expectedVersion' => -1], ['engineReady' => true], ['version' => 10], ['tenantId' => 999]] as $changes) {
@@ -117,7 +117,8 @@ class DiscountSettingsApiTest extends TestCase
         $missing = $this->payload();
         unset($missing['expectedVersion']);
         $this->putJson(self::URL, $missing, $headers)->assertUnprocessable();
-        $this->putJson(self::URL, $this->payload(changes: ['automaticEnabled' => true]), $headers)->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_ENGINE_NOT_READY');
+        // automaticEnabled=true is a valid opt-in since the Automatic rollout
+        // (DiscountAutomaticPromotionsTest); only malformed values are rejected.
         $this->assertDatabaseCount('tenant_discount_settings', 0);
         $this->assertSame(0, DB::table('activity_logs')->where('action', 'discount.settings.updated')->count());
     }

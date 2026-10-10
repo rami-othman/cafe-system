@@ -109,6 +109,8 @@ class DiscountSettingsDraft extends Equatable {
   DiscountSettingsDraft withPublicDefaults() => copyWith(
     policy: const DiscountCafePolicy(),
     maximumTotalDiscountPercent: '',
+    automaticEnabled: false,
+    allowAutomaticSuppression: true,
   );
   @override
   List<Object?> get props => [

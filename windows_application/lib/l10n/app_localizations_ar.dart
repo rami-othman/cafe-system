@@ -9680,7 +9680,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get d2Automatic => 'تلقائي';
 
   @override
-  String get d2Priority => 'الأولوية (عدد صحيح من 0 إلى 1000)';
+  String get d2Priority => 'الأولوية (عدد صحيح من 0 إلى 10)';
 
   @override
   String get d2CreationUnavailable =>
@@ -9715,16 +9715,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get d2FreshReview => 'تغير السياق. أعد المعاينة وأكد النتيجة الجديدة.';
 
   @override
-  String get d2Suppress => 'استبعاد الخصم التلقائي';
+  String get d2Suppress => 'إزالة العرض';
 
   @override
-  String get d2Undo => 'التراجع عن الاستبعاد';
+  String get d2Undo => 'إعادة العرض';
 
   @override
   String get d2Reason => 'سبب الاستبعاد المطلوب';
 
   @override
-  String get d2Suppressed => 'الاستبعادات المحفوظة';
+  String get d2Suppressed => 'العروض المُزالة';
 
   @override
   String get d2Quote => 'عرض الدفع';
@@ -9775,7 +9775,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get d2Sync => 'انتظر مزامنة السلة قبل المراجعة أو الدفع.';
 
   @override
-  String get d2SourceAutomatic => 'تلقائي';
+  String get d2SourceAutomatic => 'عرض تلقائي';
 
   @override
   String get d2SourceCode => 'قسيمة';
@@ -9892,6 +9892,81 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ds3NotAllowed => 'غير مسموح';
+
+  @override
+  String get ds4GeneralDesc =>
+      'المفتاح الرئيسي للجمع بين الخصومات في الطلب الواحد.';
+
+  @override
+  String get ds4CombiningDesc => 'أنواع الخصومات التي يمكن استخدامها معًا.';
+
+  @override
+  String get ds4CombiningOffHint =>
+      'فعّل «السماح بأكثر من خصم في الطلب الواحد» لتعديل هذه الخيارات. تبقى قيمها المحفوظة كما هي.';
+
+  @override
+  String get ds4LimitsDesc => 'حدود عليا تحمي هامش الربح.';
+
+  @override
+  String get ds4ConflictDesc =>
+      'تُستخدم عندما يتعذّر تطبيق جميع الخصومات المختارة معًا.';
+
+  @override
+  String get ds4BestSavingHelp =>
+      'تحتفظ نقطة البيع بمجموعة الخصومات التي تمنح العميل أكبر توفير.';
+
+  @override
+  String get ds4StatusDefaults => 'القيم الافتراضية';
+
+  @override
+  String get ds4StatusUnsaved => 'تغييرات غير محفوظة';
+
+  @override
+  String get ds4StatusSaved => 'محفوظ';
+
+  @override
+  String get ds4Reload => 'إعادة التحميل';
+
+  @override
+  String get ds4Decrease => 'إنقاص';
+
+  @override
+  String get ds4Increase => 'زيادة';
+
+  @override
+  String get ds4PreviewDraft => 'بعد الحفظ';
+
+  @override
+  String get ds4PreviewHelp => 'ستلتزم نقطة البيع والدفع بهذه القواعد.';
+
+  @override
+  String get ds5Automatic => 'العروض التلقائية';
+
+  @override
+  String get ds5AutomaticDesc =>
+      'عروض تُطبَّق من تلقاء نفسها عندما يستوفي الطلب شروطها.';
+
+  @override
+  String get ds5AutomaticEnabled => 'تطبيق العروض التلقائية';
+
+  @override
+  String get ds5AutomaticEnabledHelp =>
+      'تُطبَّق الخصومات النشطة المضبوطة على «تلقائي» في نقطة البيع دون أن يختارها الكاشير. تتبع قواعد الجمع والحدود في هذه الصفحة، ولا تحلّ أبدًا محل خصم اختاره الكاشير.';
+
+  @override
+  String get ds5AllowRemoval => 'السماح للمديرين بإزالة عرض من الطلب';
+
+  @override
+  String get ds5AllowRemovalHelp =>
+      'يلزم ذكر سبب، ويقتصر ذلك على الأدوار التي تملك صلاحية إزالة العروض.';
+
+  @override
+  String get d5AutomaticHelp =>
+      'يُطبَّق في نقطة البيع تلقائيًا كلما استوفى الطلب شروطه، وفق إعدادات الخصومات.';
+
+  @override
+  String get d5AutomaticOff =>
+      'العروض التلقائية متوقفة في هذا المقهى. فعّلها من إعدادات الخصومات لتطبيق هذا الخصم.';
 
   @override
   String get dp3Combination => 'طريقة الجمع';

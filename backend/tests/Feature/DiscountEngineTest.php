@@ -20,9 +20,9 @@ class DiscountEngineTest extends TestCase
     public function test_actual_saving_caps_priority_ties_and_zero_automatic(): void
     {
         $f = $this->fixture();
-        $zero = $this->policy($f, ['value' => 0, 'priority' => 1000]);
-        $low = $this->policy($f, ['value' => 90, 'maximumDiscountAmount' => '1.00', 'priority' => 10]);
-        $high = $this->policy($f, ['value' => 20, 'priority' => 10]);
+        $zero = $this->policy($f, ['value' => 0, 'priority' => 10]);
+        $low = $this->policy($f, ['value' => 90, 'maximumDiscountAmount' => '1.00', 'priority' => 5]);
+        $high = $this->policy($f, ['value' => 20, 'priority' => 5]);
         $this->assertSame($high, $this->resolution($f)['discounts'][0]['discountId']);
         $this->settings($f, ['selectionStrategy' => 'lowest_saving']);
         $this->assertSame($low, $this->resolution($f)['discounts'][0]['discountId']);
@@ -249,18 +249,19 @@ class DiscountEngineTest extends TestCase
         $this->assertDatabaseMissing('discount_role_permissions', ['role' => 'employee', 'permission' => DiscountAccess::SUPPRESS_AUTOMATIC]);
     }
 
-    public function test_policy_automatic_priority_clear_hydration_and_public_activation_gates(): void
+    public function test_policy_automatic_priority_clear_hydration_and_public_creation(): void
     {
         $f = $this->fixture();
-        $code = $this->policy($f, ['applicationMode' => 'code', 'code' => 'SECRET', 'priority' => 44]);
+        $code = $this->policy($f, ['applicationMode' => 'code', 'code' => 'SECRET', 'priority' => 4]);
         $payload = ['name' => 'Changed', 'applicationMode' => 'automatic', 'type' => 'fixed', 'scope' => 'order', 'value' => 2, 'isActive' => true, 'appliesToAllBranches' => true];
         $this->putJson('/api/v1/discounts/'.$code, $payload, $f['headers'])->assertUnprocessable()->assertJsonValidationErrors('code');
         $payload['code'] = null;
-        $this->putJson('/api/v1/discounts/'.$code, $payload, $f['headers'])->assertOk()->assertJsonPath('data.priority', 44)->assertJsonPath('data.code', null);
+        $this->putJson('/api/v1/discounts/'.$code, $payload, $f['headers'])->assertOk()->assertJsonPath('data.priority', 4)->assertJsonPath('data.code', null);
         $this->getJson('/api/v1/discounts/'.$code, $f['headers'])->assertOk()->assertJsonPath('data.applicationMode', 'automatic');
         config(['discount_engine.isolated_automatic' => false]);
-        $this->postJson('/api/v1/discounts', $payload, $f['headers'])->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_ENGINE_NOT_READY');
-        $this->getJson('/api/v1/discount-capabilities', $f['headers'])->assertOk()->assertJsonPath('data.engineReady', false)->assertJsonPath('data.automaticEnabled', false)->assertJsonPath('data.automaticPolicyCreationAvailable', false);
+        // Public rollout: promotions can be created; each cafe still opts in.
+        $this->postJson('/api/v1/discounts', $payload, $f['headers'])->assertCreated()->assertJsonPath('data.applicationMode', 'automatic');
+        $this->getJson('/api/v1/discount-capabilities', $f['headers'])->assertOk()->assertJsonPath('data.engineReady', true)->assertJsonPath('data.automaticEnabled', false)->assertJsonPath('data.automaticPolicyCreationAvailable', true);
         $this->assertDatabaseHas('discounts', ['id' => $code, 'deleted_at' => null]);
     }
 

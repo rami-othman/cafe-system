@@ -515,7 +515,8 @@ class _DiscountCartState extends StatelessWidget {
           for (final suppression in w.saved!.suppressions)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text('#${suppression.discountId}'),
+              key: Key('discount-suppressed-${suppression.discountId}'),
+              title: Text(suppression.name ?? '#${suppression.discountId}'),
               subtitle: Text(suppression.reason),
               trailing: w.capabilities?.canSuppressAutomatic == true
                   ? TextButton(

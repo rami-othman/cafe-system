@@ -23,6 +23,40 @@ import 'package:windows_application/features/pos/models/discount_engine.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
 void main() {
+  for (final cafeOn in [false, true]) {
+    testWidgets(
+      'Automatic explains itself and warns while the cafe has promotions off (on=$cafeOn)',
+      (tester) async {
+        await _pumpScreen(
+          tester,
+          const Size(1280, 1200),
+          capabilities: DiscountCapabilities(
+            contractVersion: 2,
+            engineReady: true,
+            automaticPolicyCreationAvailable: true,
+            automaticEnabled: cafeOn,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final mode = find.byKey(const Key('discount-application-mode-field'));
+        await tester.ensureVisible(mode);
+        await tester.tap(mode);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Automatic').last);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('discount-automatic-notice')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('discount-automatic-off')),
+          cafeOn ? findsNothing : findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'isolated Automatic conversion preserves full detail and clears Code explicitly',
     (tester) async {
@@ -52,14 +86,14 @@ void main() {
         of: find.byKey(const Key('discount-priority-field')),
         matching: find.byType(TextField),
       );
-      await tester.enterText(priority, '777');
+      await tester.enterText(priority, '7');
       await tester.pump();
       await tester.tap(find.text('Save as Draft'));
       await tester.pumpAndSettle();
       final expected = _detail.toUpsertRequest().toJson()
         ..['applicationMode'] = 'automatic'
         ..['code'] = null
-        ..['priority'] = 777;
+        ..['priority'] = 7;
       expect(r.lastUpdateRequest!.toJson(), expected);
       expect(tester.takeException(), null);
     },
@@ -82,7 +116,7 @@ void main() {
         of: find.byKey(const Key('discount-priority-field')),
         matching: find.byType(TextField),
       );
-      for (final value in ['1001', '-1', '2.5']) {
+      for (final value in ['11', '-1', '2.5']) {
         await tester.enterText(field, value);
         await tester.pump();
         await tester.pump(const Duration(seconds: 5));
@@ -92,14 +126,14 @@ void main() {
         await tester.pumpAndSettle();
         expect(r.createCalls, 0);
       }
-      await tester.enterText(field, '1000');
+      await tester.enterText(field, '10');
       await tester.pump();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Save as Draft'));
       await tester.tap(find.text('Save as Draft'));
       await tester.pumpAndSettle();
-      expect(r.lastCreateRequest!.priority, 1000);
+      expect(r.lastCreateRequest!.priority, 10);
       expect(r.createCalls, 1);
     },
   );

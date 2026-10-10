@@ -291,7 +291,7 @@ class ReceiptRenderer {
         if (cfg.showDiscount) {
           for (final discount in receipt.discounts) {
             final source = switch (discount.source) {
-              'automatic' => rtl ? 'تلقائي' : 'Automatic',
+              'automatic' => rtl ? 'عرض تلقائي' : 'Automatic promotion',
               'code' => rtl ? 'قسيمة' : 'Coupon',
               'configured_manual' => rtl ? 'خصم معرّف' : 'Configured discount',
               'ad_hoc' => rtl ? 'حر' : 'Ad-hoc',

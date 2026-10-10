@@ -150,6 +150,7 @@ final class DiscountSettingsService
             $data['maximumDiscountsPerOrder'] = (int) $row->maximum_discounts_per_order;
         }
 
-        return $data + ['version' => $row ? (int) $row->version : 0, 'engineReady' => false];
+        // The engine supports Automatic promotions; each cafe still opts in.
+        return $data + ['version' => $row ? (int) $row->version : 0, 'engineReady' => true];
     }
 }

@@ -31,9 +31,18 @@ void main() {
         appRouter.go(AppRoutes.cafeConfigurationDiscountSettings);
         await tester.pumpAndSettle();
         if (role == 'owner' || role == 'manager') {
-          // The old configuration path is an alias of Discounts → Settings.
+          // Opened from Cafe Configuration, the policy stays in that module:
+          // its navigation remains, and the Discounts tabs are not shown.
           expect(find.byType(DiscountSettingsScreen), findsOneWidget);
-          expect(appRouter.state.uri.path, AppRoutes.discountSettings);
+          expect(
+            appRouter.state.uri.path,
+            AppRoutes.cafeConfigurationDiscountSettings,
+          );
+          expect(
+            find.byKey(const Key('cafe-configuration-discounts')),
+            findsOneWidget,
+          );
+          expect(find.byKey(const Key('discounts-area-tabs')), findsNothing);
         } else {
           expect(
             appRouter.state.uri.path,
@@ -44,17 +53,67 @@ void main() {
           expect(find.byType(DiscountSettingsScreen), findsNothing);
         }
         if (role == 'manager') {
-          for (final path in [
-            AppRoutes.cafeConfigurationProfile,
-            AppRoutes.cafeConfigurationTax,
-            AppRoutes.cafeConfigurationBranches,
-            AppRoutes.cafeConfigurationTeam,
-          ]) {
-            appRouter.go(path);
-            await tester.pumpAndSettle();
-            expect(appRouter.state.uri.path, AppRoutes.pos);
+          // POS raises the known ListTile diagnostic once per tile in the same
+          // frame; collect each error so only that diagnostic is tolerated.
+          final errors = <String>[];
+          final previous = FlutterError.onError;
+          FlutterError.onError = (details) =>
+              errors.add(details.exceptionAsString());
+          try {
+            for (final path in [
+              AppRoutes.cafeConfigurationProfile,
+              AppRoutes.cafeConfigurationTax,
+              AppRoutes.cafeConfigurationBranches,
+              AppRoutes.cafeConfigurationTeam,
+            ]) {
+              appRouter.go(path);
+              await tester.pumpAndSettle();
+              expect(appRouter.state.uri.path, AppRoutes.pos);
+            }
+          } finally {
+            FlutterError.onError = previous;
+          }
+          for (final error in errors) {
+            expect(
+              error,
+              startsWith(
+                'ListTile background color or ink splashes may be invisible.',
+              ),
+            );
           }
         }
+        checkBaselineDiagnostics(tester);
+      },
+    );
+  }
+  for (final role in ['owner', 'manager']) {
+    testWidgets(
+      'Cafe Configuration discount settings item keeps $role in the module',
+      (tester) async {
+        await configure(role);
+        final r = SettingsFake();
+        await serviceLocator.unregister<DiscountSettingsRepository>();
+        serviceLocator.registerLazySingleton<DiscountSettingsRepository>(
+          () => r,
+        );
+        await pumpApp(tester);
+        appRouter.go(AppRoutes.cafeConfigurationPrinting);
+        await tester.pumpAndSettle();
+        final item = find.byKey(const Key('cafe-configuration-discounts'));
+        await tester.ensureVisible(item);
+        await tester.pumpAndSettle();
+        await tester.tap(item);
+        await tester.pumpAndSettle();
+        expect(
+          appRouter.state.uri.path,
+          AppRoutes.cafeConfigurationDiscountSettings,
+        );
+        expect(find.byType(DiscountSettingsScreen), findsOneWidget);
+        expect(
+          find.byKey(const Key('cafe-configuration-printing')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('discounts-area-tabs')), findsNothing);
         checkBaselineDiagnostics(tester);
       },
     );

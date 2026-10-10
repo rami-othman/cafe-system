@@ -58,7 +58,7 @@ class DiscountV3PolicySettingsTest extends TestCase
         $this->assertSame('single', $data['combinationMode']);
         $this->assertFalse($data['automaticEnabled']);
         $this->assertNull($data['maximumTotalDiscountPercent']);
-        $this->assertFalse($data['engineReady']);
+        $this->assertTrue($data['engineReady']);
         $this->assertDatabaseCount('tenant_discount_settings', 0);
     }
 

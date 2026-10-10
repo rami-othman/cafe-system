@@ -177,16 +177,12 @@ void main() {
     );
 
     test(
-      'an older backend without multi-discount support keeps replace-one requests',
+      'an older backend uses apply for the first discount but never silently replaces an existing one',
       () async {
         r.caps = const DiscountCapabilities(
           contractVersion: 2,
           supportsDiscountReview: true,
           supportsPaymentQuote: true,
-        );
-        r.savedWith(
-          [_intent('configured_manual', 1)],
-          [_line(1, 'Latte', '1.00')],
         );
         await c.previewDiscountAddition(
           const DesiredDiscountIntent.configured(2),
@@ -195,6 +191,20 @@ void main() {
           'action': 'apply',
           'intent': {'source': 'configured_manual', 'discountId': 2},
         });
+
+        r.savedWith(
+          [_intent('configured_manual', 1)],
+          [_line(1, 'Latte', '1.00')],
+        );
+        final previews = r.previews;
+        final added = await c.previewDiscountAddition(
+          const DesiredDiscountIntent.configured(3),
+        );
+        expect(added, isFalse);
+        expect(r.previews, previews, reason: 'no request may be sent');
+        expect(c.state.discounts.errorCode, 'DISCOUNT_CLIENT_UPDATE_REQUIRED');
+        expect(c.state.discounts.review, isNull);
+
         await c.previewDiscountRemoval(1);
         expect(r.lastReview!.body, {'action': 'remove'});
       },
@@ -240,6 +250,30 @@ void main() {
       expect(DesiredDiscountIntent.fromSaved(legacy), const [
         DesiredDiscountIntent.configured(1),
       ]);
+    });
+
+    test('a removed promotion carries its name; older backends omit it', () {
+      final withName = SavedDiscountState.fromJson(
+        savedJson(
+          suppressions: [
+            {
+              'discountId': 7,
+              'name': 'Happy hour',
+              'reason': 'Declined',
+              'actorId': 1,
+            },
+          ],
+        ),
+      );
+      expect(withName.suppressions.single.name, 'Happy hour');
+      final older = SavedDiscountState.fromJson(
+        savedJson(
+          suppressions: [
+            {'discountId': 7, 'reason': 'Declined', 'actorId': 1},
+          ],
+        ),
+      );
+      expect(older.suppressions.single.name, isNull);
     });
   });
 

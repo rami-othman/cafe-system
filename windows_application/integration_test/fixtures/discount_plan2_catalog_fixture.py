@@ -76,7 +76,7 @@ for name, value in [('Plan2 Tea', 4), ('Plan2 Cake', 3)]:
     label = name + ' automatic'
     existing = next((p for p in existing_policies if p['name'] == label), None)
     policy = api('GET', f"discounts/{existing['id']}") if existing else api('POST', 'discounts', {
-        'name': label, 'applicationMode': 'automatic', 'code': None, 'priority': 100,
+        'name': label, 'applicationMode': 'automatic', 'code': None, 'priority': 10,
         'type': 'fixed', 'fixedAmountBasis': 'per_unit', 'scope': 'product', 'value': value,
         'isActive': True, 'appliesToAllBranches': True,
         'targetProductIds': [products[name]['productId']],

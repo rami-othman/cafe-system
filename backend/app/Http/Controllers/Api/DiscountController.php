@@ -19,7 +19,6 @@ use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -273,7 +272,7 @@ class DiscountController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
             'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code', 'automatic'])],
-            'priority' => ['sometimes', 'required', 'integer', 'between:0,1000'],
+            'priority' => ['sometimes', 'required', 'integer', 'between:0,10'],
             'combinationBehavior' => ['sometimes', 'required', Rule::in(self::COMBINATION_BEHAVIORS)],
             'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category', 'bundle'])],
             'fixedAmountBasis' => ['nullable', Rule::in(['per_order', 'per_unit'])],
@@ -317,9 +316,6 @@ class DiscountController extends Controller
         ]);
         app(DiscountProductVariantService::class)->validate($tenantId, $data);
         app(DiscountBundleVariantService::class)->validate($tenantId, $data);
-        if ($data['applicationMode'] === 'automatic' && ! app(DiscountResolutionService::class)->isolatedAutomatic()) {
-            throw new HttpResponseException(response()->json(['message' => 'Automatic policies are unavailable until rollout gates pass.', 'code' => 'DISCOUNT_ENGINE_NOT_READY', 'errors' => ['applicationMode' => ['Automatic policies are unavailable until rollout gates pass.']]], 422));
-        }
         foreach (['value', 'minimumOrderAmount', 'maximumDiscountAmount'] as $field) {
             if (isset($data[$field])) {
                 try {

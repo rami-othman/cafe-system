@@ -2472,12 +2472,15 @@ final GoRouter appRouter = GoRouter(
             child: const TeamAccessScreen(),
           ),
         ),
-        // Legacy alias: Cafe Discount Policy now lives under Discounts.
+        // Same Cafe Discount Policy screen as Discounts → Settings, kept inside
+        // Cafe Configuration so its navigation does not switch modules.
         GoRoute(
           path: AppRoutes.cafeConfigurationDiscountSettings,
-          redirect: (context, state) =>
-              _cafeConfigurationAccessRedirect(context, state) ??
-              AppRoutes.discountSettings,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<DiscountSettingsCubit>()..load(),
+            child: const DiscountSettingsScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.cafeConfigurationTax,

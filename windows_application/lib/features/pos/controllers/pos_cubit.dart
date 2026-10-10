@@ -246,7 +246,7 @@ class PosCubit extends Cubit<PosState> {
 
   /// [build] runs after the order and its saved discount state are refreshed,
   /// so a V3 list is always built from the current backend intents.
-  Future<bool> _previewDiscount(DiscountReviewRequest Function() build) async {
+  Future<bool> _previewDiscount(DiscountReviewRequest? Function() build) async {
     if (isClosed ||
         state.discounts.busy ||
         !await prepareDiscountOrder() ||
@@ -254,6 +254,13 @@ class PosCubit extends Cubit<PosState> {
       return false;
     }
     final request = build();
+    if (request == null) {
+      // The backend cannot hold the desired set; never replace silently.
+      _discountState(
+        state.discounts.copyWith(errorCode: 'DISCOUNT_CLIENT_UPDATE_REQUIRED'),
+      );
+      return false;
+    }
     final orderId = state.currentOrderId!;
     final generation = ++_discountGeneration;
     _discountState(
@@ -292,9 +299,16 @@ class PosCubit extends Cubit<PosState> {
 
   /// Review request for adding one discount. V3 always sends the COMPLETE list;
   /// money and survival are decided by the backend (the new discount may be
-  /// the one excluded). Older backends keep the legacy replace-one request.
-  DiscountReviewRequest discountRequestAdding(DesiredDiscountIntent intent) {
+  /// the one excluded). Older backends keep the legacy replace-one request for
+  /// the first discount only; adding to an existing one returns null because
+  /// that request would silently replace it.
+  DiscountReviewRequest? discountRequestAdding(DesiredDiscountIntent intent) {
     if (!_usesDiscountSets) {
+      // Legacy apply replaces the explicit intent (automatic lines are not
+      // explicit and are unaffected).
+      if (state.discounts.saved?.explicitIntents.isNotEmpty ?? false) {
+        return null;
+      }
       return intent.code != null
           ? DiscountReviewRequest.code(intent.code!)
           : DiscountReviewRequest.manual(intent.discountId!);

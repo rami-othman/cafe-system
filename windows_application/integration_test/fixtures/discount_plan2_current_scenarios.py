@@ -31,7 +31,7 @@ elif args.action == 'zero-policy':
     policies = api('GET', 'discounts?perPage=100')
     existing = next((p for p in policies if p['name'] == name), None)
     policy = existing or api('POST', 'discounts', {
-        'name': name, 'applicationMode': 'manual', 'priority': 900,
+        'name': name, 'applicationMode': 'manual', 'priority': 9,
         'scope': 'order', 'type': 'percentage', 'value': 100,
         'isActive': True, 'appliesToAllBranches': True,
     })

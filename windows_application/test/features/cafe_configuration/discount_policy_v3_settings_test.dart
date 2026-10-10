@@ -174,7 +174,18 @@ void main() {
             false,
           );
           expect(find.text('3'), findsOneWidget);
-          expect(find.text('• ${l.ds3OneDiscount}'), findsOneWidget);
+          expect(find.text(l.ds3OneDiscount), findsOneWidget);
+          // The disabled group explains how to enable it.
+          expect(find.text(l.ds4CombiningOffHint), findsOneWidget);
+          expect(find.text(l.ds4StatusSaved), findsOneWidget);
+          // Wide: the live summary sits beside the settings; narrow: after.
+          final summaryTop = tester
+              .getTopLeft(find.byKey(const Key('ds-summary')))
+              .dy;
+          final switchTop = tester
+              .getTopLeft(find.byKey(const Key('ds-allow-multiple')))
+              .dy;
+          expect(summaryTop < switchTop, width >= 1100);
 
           Future<void> tap(String key) async {
             final finder = find.byKey(Key(key));
@@ -186,6 +197,15 @@ void main() {
 
           await tap('ds-allow-multiple');
           expect(tile('ds-multiple-coupons').onChanged, isNotNull);
+          expect(find.text(l.ds4CombiningOffHint), findsNothing);
+          expect(find.text(l.ds4StatusUnsaved), findsNWidgets(2));
+          // The stepper changes the count by one within 1..10.
+          final increase = find.byTooltip(l.ds4Increase);
+          await tester.ensureVisible(increase);
+          await tester.pumpAndSettle();
+          await tester.tap(increase);
+          await tester.pumpAndSettle();
+          expect(c.state.draft.policy.maximumDiscountsPerOrder, 4);
           await tap('ds-stacking-same_item_allowed');
           await tap('ds-multiple-coupons');
           await tap('ds-coupon-configured');

@@ -87,7 +87,8 @@ class DiscountSecurityHardeningTest extends TestCase
         $this->assertSame(0, DB::table('order_discounts')->where('order_id', $scope['orderB'])->count());
 
         $this->postJson('/api/v1/discounts', $this->managementPayload(['type' => 'bogo']), $headers)->assertUnprocessable()->assertJsonValidationErrors('type');
-        $this->postJson('/api/v1/discounts', $this->managementPayload(['applicationMode' => 'automatic']), $headers)->assertUnprocessable()->assertJsonValidationErrors('applicationMode');
+        // Automatic promotions are public now, but can never carry a secret coupon code.
+        $this->postJson('/api/v1/discounts', $this->managementPayload(['applicationMode' => 'automatic', 'code' => 'AUTO1']), $headers)->assertUnprocessable()->assertJsonValidationErrors('code');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['applicationMode' => 'code', 'code' => '']), $headers)->assertUnprocessable()->assertJsonValidationErrors('code');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['value' => -1]), $headers)->assertUnprocessable()->assertJsonValidationErrors('value');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['value' => 101]), $headers)->assertUnprocessable()->assertJsonValidationErrors('value');

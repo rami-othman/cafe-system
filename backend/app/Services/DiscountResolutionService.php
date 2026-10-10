@@ -106,7 +106,10 @@ final class DiscountResolutionService
         $suppressed = $suppressionOverride ?? DB::table('order_discount_suppressions')->where('tenant_id', $tenantId)->where('order_id', $order->id)->orderBy('discount_id')->pluck('discount_id')->all();
         $requested = $this->intents($intent);
         $excluded = [];
-        if (count($requested) > 1) {
+        $legacyAdHoc = in_array('ad_hoc', array_column($requested, 'source'), true);
+        if ($settings['automaticEnabled'] && ! $legacyAdHoc) {
+            ['selected' => $selected, 'excluded' => $excluded, 'reasons' => $reasons, 'provisional' => $provisional] = $this->resolveWithAutomatic($tenantId, $order, $requested, $method, $strict, $settings, $items, $balances, $budget, $policies, $suppressed);
+        } elseif (count($requested) > 1) {
             ['selected' => $selected, 'excluded' => $excluded, 'reasons' => $reasons, 'provisional' => $provisional] = $this->resolveSet($tenantId, $order, $requested, $method, $strict, $settings, $items, $balances, $budget, $policies);
         } else {
             [$selected, $reasons, $provisional] = $this->selectSingle($tenantId, $order, $requested[0] ?? null, $method, $strict, $settings, $items, $balances, $budget, $policies, $suppressed);
@@ -372,6 +375,124 @@ final class DiscountResolutionService
         usort($excluded, fn (array $a, array $b): int => $a['position'] <=> $b['position']);
 
         return ['selected' => $evaluation['applied'], 'excluded' => $excluded, 'reasons' => $reasons, 'provisional' => $provisional];
+    }
+
+    /** Promotions considered per order, ranked before the subset search. */
+    public const MAX_AUTOMATIC_CANDIDATES = 8;
+
+    /**
+     * Automatic promotions (cafe opted in with automaticEnabled).
+     *
+     * 1. Explicit intents (the cashier's choices) are resolved exactly like
+     *    resolveSet, including strict ineligibility errors.
+     * 2. Every active, eligible, non-suppressed automatic policy with a
+     *    positive standalone saving is a candidate. A payment-method-restricted
+     *    promotion waits for the tender (DISCOUNT_TENDER_PENDING, provisional).
+     *    At most MAX_AUTOMATIC_CANDIDATES are considered: the highest
+     *    standalone savings (best_saving) or priorities (priority), then ids.
+     * 3. Promotions are added around the retained explicit discounts as far as
+     *    the Cafe Discount Policy allows. A promotion never displaces an
+     *    explicit discount and every added promotion must produce a saving.
+     *    best_saving: the highest-saving valid set (ties: fewer discounts, then
+     *    lower ids); priority: greedy by priority (higher first), then id.
+     * 4. Promotions that do not fit are not reported as excluded: nobody
+     *    requested them. They are recomputed on every resolution, never saved
+     *    as intents, and a manager may suppress one with a reason.
+     */
+    private function resolveWithAutomatic(int $tenantId, object $order, array $requested, ?object $method, bool $strict, array $settings, $items, array $balances, int $budget, $policies, array $suppressed): array
+    {
+        $cfg = DiscountSettingsService::effectivePolicy($settings);
+        $explicit = $requested === []
+            ? ['selected' => [], 'excluded' => [], 'reasons' => [], 'provisional' => false]
+            : $this->resolveSet($tenantId, $order, $requested, $method, $strict, $settings, $items, $balances, $budget, $policies);
+        // Scored rows carry amount/allocations; score() must recompute them.
+        $base = array_map(fn (array $row): array => array_diff_key($row, array_flip(['amount', 'allocations', 'capped'])), $explicit['selected']);
+        $reasons = $explicit['reasons'];
+        $provisional = $explicit['provisional'];
+        $suppressed = array_map('intval', $suppressed);
+        $automatic = [];
+        foreach ($policies as $policy) {
+            if ($policy->application_mode !== 'automatic') {
+                continue;
+            }
+            if (in_array((int) $policy->id, $suppressed, true)) {
+                $reasons[] = ['discountId' => (int) $policy->id, 'code' => 'DISCOUNT_SUPPRESSED'];
+
+                continue;
+            }
+            try {
+                $full = $this->eligibility->assertApplicable($tenantId, $policy, $order, $method?->paymentMethodId, $method?->type);
+            } catch (OrderLifecycleException) {
+                continue;
+            }
+            if ($method === null && $this->tenderRestricted($tenantId, $policy)) {
+                if ($this->cents($full['amount']) > 0) {
+                    $provisional = true;
+                    $reasons[] = ['discountId' => (int) $policy->id, 'code' => 'DISCOUNT_TENDER_PENDING'];
+                }
+
+                continue;
+            }
+            $weights = [];
+            foreach ($this->eligibility->eligibleItems($tenantId, $order, $policy)->orderBy('order_items.id')->get(['order_items.*']) as $item) {
+                $weights[(int) $item->id] = ['balance' => $this->decimal($balances[(int) $item->id]), 'quantity' => (string) $item->quantity];
+            }
+            if ($policy->scope === 'bundle') {
+                $weights = $this->bundleWeights($tenantId, $order, $policy, $items, $balances);
+            }
+            $candidate = ['policy' => $policy, 'source' => 'automatic', 'weights' => $weights, 'bundleAmount' => $this->cents($full['amount']),
+                'position' => 0, 'level' => $policy->scope === 'order' ? 'order' : 'item', 'code' => false,
+                'exclusive' => ($policy->combination_behavior ?? 'follow_cafe_policy') === 'exclusive'];
+            $standalone = $this->score($candidate, $balances, $budget)['amount'];
+            if ($standalone > 0) {
+                $automatic[] = ['standalone' => $standalone, 'candidate' => $candidate];
+            }
+        }
+        usort($automatic, fn (array $a, array $b): int => ($cfg['conflictResolution'] === 'priority'
+            ? ((int) ($b['candidate']['policy']->priority ?? 0) <=> (int) ($a['candidate']['policy']->priority ?? 0))
+            : ($b['standalone'] <=> $a['standalone'])) ?: ((int) $a['candidate']['policy']->id <=> (int) $b['candidate']['policy']->id));
+        $ranked = [];
+        foreach (array_slice($automatic, 0, self::MAX_AUTOMATIC_CANDIDATES) as $rank => $entry) {
+            // Promotions follow the explicit discounts within each level.
+            $ranked[] = ['position' => count($requested) + $rank] + $entry['candidate'];
+        }
+
+        $evaluate = fn (array $set): array => $this->simulate($this->sequence($set), $cfg, $balances, $budget);
+        $best = $evaluate($base);
+        if ($cfg['conflictResolution'] === 'priority') {
+            $chosen = $base;
+            foreach ($ranked as $candidate) {
+                $trial = [...$chosen, $candidate];
+                if ($this->violation($trial, $cfg) !== null) {
+                    continue;
+                }
+                $evaluation = $evaluate($trial);
+                if (count($evaluation['applied']) === count($trial)) {
+                    $chosen = $trial;
+                    $best = $evaluation;
+                }
+            }
+        } else {
+            $search = function (int $from, array $set) use (&$search, &$best, $ranked, $cfg, $evaluate): void {
+                for ($i = $from; $i < count($ranked); $i++) {
+                    $trial = [...$set, $ranked[$i]];
+                    if ($this->violation($trial, $cfg) !== null) {
+                        continue;
+                    }
+                    $evaluation = $evaluate($trial);
+                    if (count($evaluation['applied']) !== count($trial)) {
+                        continue;
+                    }
+                    if ($this->betterSet($evaluation, $best)) {
+                        $best = $evaluation;
+                    }
+                    $search($i + 1, $trial);
+                }
+            };
+            $search(0, $base);
+        }
+
+        return ['selected' => $best['applied'], 'excluded' => $explicit['excluded'], 'reasons' => $reasons, 'provisional' => $provisional];
     }
 
     private function exclusion(int $index, int $discountId, ?string $name, string $source, string $code, array $conflictsWith): array
