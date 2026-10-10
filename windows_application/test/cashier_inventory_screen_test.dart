@@ -120,13 +120,13 @@ void main() {
         'Home',
         'POS',
         'Orders',
-        'Discounts',
         'Finance',
         'Inventory',
       ]) {
         expect(find.text(label), findsOneWidget, reason: label);
       }
       for (final String hidden in <String>[
+        'Discounts',
         'Dashboard',
         'Reports',
         'Menu Management',
@@ -169,7 +169,9 @@ Future<void> _pumpSidebar(WidgetTester tester, String role) async {
     MaterialApp(
       home: BlocProvider<AuthSessionCubit>.value(
         value: serviceLocator<AuthSessionCubit>(),
-        child: Scaffold(body: AppSidebar(activeLabel: 'pos', actorRole: role)),
+        child: Scaffold(
+          body: AppSidebar(activeLabel: 'pos', actorRole: role),
+        ),
       ),
     ),
   );

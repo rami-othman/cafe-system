@@ -61,11 +61,6 @@ class AppSidebar extends StatelessWidget {
           CashierRoutes.orders,
         ),
         _SidebarDestination(
-          'discounts',
-          Icons.local_offer_outlined,
-          CashierRoutes.discounts,
-        ),
-        _SidebarDestination(
           'finance',
           Icons.account_balance_wallet_outlined,
           CashierRoutes.financeVouchers,

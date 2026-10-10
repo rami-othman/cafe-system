@@ -9824,6 +9824,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get d2SourceAdHoc => 'Ad-hoc';
 
   @override
+  String get d4CouponInvalid => 'The coupon code is invalid or unavailable.';
+
+  @override
+  String get d4CouponThrottled =>
+      'Too many invalid coupon attempts. Wait a few minutes before trying again.';
+
+  @override
+  String posDiscountValidUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get discountsAccessDenied =>
+      'You do not have permission to manage discounts.';
+
+  @override
   String get ds3NavPolicies => 'Policies';
 
   @override

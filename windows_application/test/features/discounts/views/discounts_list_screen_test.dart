@@ -173,6 +173,25 @@ void main() {
     expect(find.text('Backend is not reachable.'), findsNothing);
     expect(find.text('Morning Rush 15%'), findsNothing);
   });
+
+  testWidgets('a 403 is presented as a localized permission message', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, repository: _ForbiddenRepository());
+    expect(
+      find.text('You do not have permission to manage discounts.'),
+      findsOneWidget,
+    );
+    expect(find.text('Morning Rush 15%'), findsNothing);
+    expect(find.textContaining('private'), findsNothing);
+
+    await _pumpScreen(
+      tester,
+      repository: _ForbiddenRepository(),
+      locale: const Locale('ar'),
+    );
+    expect(find.text('ليست لديك صلاحية إدارة الخصومات.'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpScreen(
@@ -288,6 +307,18 @@ class _Repository extends DiscountsRepository {
     String discountId,
     DiscountUpsertRequest request,
   ) => throw UnimplementedError();
+}
+
+class _ForbiddenRepository extends _Repository {
+  @override
+  Future<List<DiscountListItem>> getDiscounts() =>
+      Future<List<DiscountListItem>>.error(
+        const ApiException(
+          message: 'private backend content',
+          statusCode: 403,
+          type: ApiErrorType.forbidden,
+        ),
+      );
 }
 
 class _FailingRepository extends _Repository {

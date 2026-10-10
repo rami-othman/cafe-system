@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
+import 'package:windows_application/core/utils/currency_formatter.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/models/discount_engine.dart';
 import 'package:windows_application/features/pos/widgets/discount_engine_widgets.dart';
@@ -44,7 +45,7 @@ void main() {
             find.text(language == 'en' ? 'Automatic promotion' : 'عرض تلقائي'),
             findsNWidgets(2),
           );
-          expect(find.text('-2.00'), findsOneWidget);
+          expect(find.text('-${CurrencyFormatter.format(2)}'), findsOneWidget);
           await tester.tap(find.byType(DropdownButtonFormField<int>));
           await tester.pumpAndSettle();
           await tester.tap(find.text('Till cash').last);

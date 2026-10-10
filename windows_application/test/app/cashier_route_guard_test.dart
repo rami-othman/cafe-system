@@ -62,14 +62,13 @@ void main() {
     },
   );
 
-  testWidgets(
-    'cashier keeps direct access to POS, Orders, Discounts, Settings',
-    (WidgetTester tester) async {
-      await _configureAuthenticatedApp(role: 'employee');
+  testWidgets('cashier keeps direct access to POS, Orders, Settings', (
+    WidgetTester tester,
+  ) async {
+    await _configureAuthenticatedApp(role: 'employee');
 
     for (final String allowed in <String>[
       AppRoutes.orders,
-      AppRoutes.discounts,
       AppRoutes.settings,
       AppRoutes.shiftCurrent,
     ]) {

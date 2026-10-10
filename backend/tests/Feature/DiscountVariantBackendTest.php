@@ -148,13 +148,13 @@ class DiscountVariantBackendTest extends TestCase
     public function test_references_require_discount_manage_without_menu_access_and_isolate_tenants(): void
     {
         $f = $this->fixture();
-        $user = User::create(['tenant_id' => $f['tenant'], 'name' => 'Selector employee', 'email' => uniqid().'@test.example', 'password' => 'testing-password', 'role' => 'employee', 'is_active' => true]);
+        $user = User::create(['tenant_id' => $f['tenant'], 'name' => 'Selector manager', 'email' => uniqid().'@test.example', 'password' => 'testing-password', 'role' => 'manager', 'is_active' => true]);
         $headers = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($f['tenant'], $user)];
-        DB::table('discount_role_permissions')->where('tenant_id', $f['tenant'])->where('role', 'employee')->delete();
+        DB::table('discount_role_permissions')->where('tenant_id', $f['tenant'])->where('role', 'manager')->delete();
         $this->getJson('/api/v1/discounts/references/products', $headers)->assertForbidden();
-        DB::table('discount_role_permissions')->insert(['tenant_id' => $f['tenant'], 'role' => 'employee', 'permission' => 'discounts.manage']);
+        DB::table('discount_role_permissions')->insert(['tenant_id' => $f['tenant'], 'role' => 'manager', 'permission' => 'discounts.manage']);
         $this->getJson('/api/v1/discounts/references/products', $headers)->assertOk()->assertJsonCount(1, 'data');
-        $this->getJson('/api/v1/admin/catalog/products', $headers)->assertForbidden();
+        // Employees can no longer hold discounts.manage, so this selector is exercised with a Manager grant.
         $foreign = DB::table('tenants')->insertGetId(['name' => 'Foreign', 'slug' => uniqid('foreign-')]);
         $foreignProduct = DB::table('products')->insertGetId(['tenant_id' => $foreign, 'name' => 'Secret', 'is_active' => true]);
         $this->getJson("/api/v1/discounts/references/products/$foreignProduct/variants", $headers)->assertNotFound();

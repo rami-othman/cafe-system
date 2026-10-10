@@ -3,6 +3,7 @@
 namespace App\Domain\Discount;
 
 use App\Models\User;
+use App\Services\DefaultTenantRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +26,12 @@ final class DiscountAccess
 
     public const ALL_PERMISSIONS = [...self::CATALOG, self::SETTINGS_MANAGE, self::SUPPRESS_AUTOMATIC];
 
+    /** Administrative Discount Policy access; never available to the Employee role. */
+    public const ADMINISTRATIVE = [self::VIEW, self::MANAGE];
+
+    /** The only Discount grants the Employee role may hold: POS use, not administration. */
+    public const EMPLOYEE_ASSIGNABLE = [self::APPLY_CONFIGURED, self::APPLY_MANUAL];
+
     public function allows(Request $request, string $permission): bool
     {
         $actor = $request->attributes->get('auth_user');
@@ -39,12 +46,23 @@ final class DiscountAccess
         if ($actor->isOwner()) {
             return true;
         }
+        // Enforced here, not only by the stored grants, so a stale legacy
+        // discounts.view/discounts.manage row on the Employee role is inert.
+        if (in_array($permission, self::ADMINISTRATIVE, true) && $actor->effectiveRoleCode() === DefaultTenantRoleService::EMPLOYEE) {
+            return false;
+        }
 
         return DB::table('discount_role_permissions')
             ->where('tenant_id', $actor->tenant_id)
             ->where('role', $actor->effectiveRoleCode())
             ->where('permission', $permission)
             ->exists();
+    }
+
+    /** Coupon secrets are visible only to actors who may manage Discount Policies. */
+    public function canSeeCouponCodes(Request $request): bool
+    {
+        return $this->allows($request, self::MANAGE);
     }
 
     public function authorize(Request $request, string $permission): void

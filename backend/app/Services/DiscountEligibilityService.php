@@ -152,21 +152,11 @@ class DiscountEligibilityService
         if (! $discount->is_active) {
             throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'This discount is inactive.');
         }
-        $today = $now->toDateString();
-        if ($discount->start_date && $today < $discount->start_date) {
-            throw new OrderLifecycleException('DISCOUNT_NOT_STARTED', 'This discount has not started yet.');
-        }
-        if ($discount->end_date && $today > $discount->end_date) {
-            throw new OrderLifecycleException('DISCOUNT_EXPIRED', 'This discount has expired.');
-        }
-        // Legacy timestamps retain their original instant semantics. Canonical
-        // V1 date-only fields above are branch-local and never use app time.
-        if ($discount->start_date === null && $discount->starts_at && CarbonImmutable::now('UTC')->lessThan(CarbonImmutable::parse($discount->starts_at, 'UTC'))) {
-            throw new OrderLifecycleException('DISCOUNT_NOT_STARTED', 'This discount has not started yet.');
-        }
-        if ($discount->end_date === null && $discount->ends_at && CarbonImmutable::now('UTC')->greaterThan(CarbonImmutable::parse($discount->ends_at, 'UTC'))) {
-            throw new OrderLifecycleException('DISCOUNT_EXPIRED', 'This discount has expired.');
-        }
+        match ($this->validityStatus($discount, $now)) {
+            'scheduled' => throw new OrderLifecycleException('DISCOUNT_NOT_STARTED', 'This discount has not started yet.'),
+            'expired' => throw new OrderLifecycleException('DISCOUNT_EXPIRED', 'This discount has expired.'),
+            default => null,
+        };
         $days = $discount->active_days ? json_decode($discount->active_days, true) : [];
         if ($days && ! in_array($now->format('D'), $days, true)) {
             throw new OrderLifecycleException('DISCOUNT_DAY_NOT_ALLOWED', 'This discount is not available today.');
@@ -174,6 +164,34 @@ class DiscountEligibilityService
         if (! $this->withinTimeWindow($now, $discount->start_time, $discount->end_time)) {
             throw new OrderLifecycleException('DISCOUNT_TIME_NOT_ALLOWED', 'This discount is not available at this time.');
         }
+    }
+
+    /**
+     * Date validity ('scheduled' | 'expired' | 'active') of a policy at $now, the
+     * moment expressed in the evaluating branch's own timezone. The single
+     * definition shared by runtime eligibility and Discount Management status.
+     * Canonical V1 date-only fields are branch-local calendar days (start and end
+     * inclusive); legacy starts_at/ends_at keep their original UTC-instant
+     * semantics. Weekday and time-of-day windows are not part of validity.
+     */
+    public function validityStatus(object $discount, CarbonImmutable $now): string
+    {
+        $today = $now->toDateString();
+        if ($discount->start_date && $today < $discount->start_date) {
+            return 'scheduled';
+        }
+        if ($discount->end_date && $today > $discount->end_date) {
+            return 'expired';
+        }
+        $instant = $now->utc();
+        if ($discount->start_date === null && $discount->starts_at && $instant->lessThan(CarbonImmutable::parse($discount->starts_at, 'UTC'))) {
+            return 'scheduled';
+        }
+        if ($discount->end_date === null && $discount->ends_at && $instant->greaterThan(CarbonImmutable::parse($discount->ends_at, 'UTC'))) {
+            return 'expired';
+        }
+
+        return 'active';
     }
 
     private function withinTimeWindow(CarbonImmutable $now, ?string $start, ?string $end): bool
@@ -325,7 +343,7 @@ class DiscountEligibilityService
             return BigDecimal::of((string) $order->subtotal);
         }
         if ($discount->scope === 'bundle') {
-            return BigDecimal::of((string) $this->bundleSubtotal($tenantId, $order, $discount));
+            return $this->bundleSubtotal($tenantId, $order, $discount);
         }
 
         return BigDecimal::of((string) $this->eligibleItems($tenantId, $order, $discount)->sum('order_items.total'));
@@ -345,34 +363,35 @@ class DiscountEligibilityService
      * Prices are derived only from immutable order items. One requirement set
      * is selected, even where an order contains enough units for many bundles.
      */
-    private function bundleSubtotal(int $tenantId, object $order, object $discount): float
+    private function bundleSubtotal(int $tenantId, object $order, object $discount): BigDecimal
     {
         $requirements = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->orderBy('product_id')->get();
         if ($requirements->isEmpty()) {
-            return 0.0;
+            return BigDecimal::zero();
         }
         $itemsByProduct = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
             ->whereIn('product_id', $requirements->pluck('product_id'))->orderBy('id')->get()->groupBy('product_id');
         $selectedVariants = app(DiscountBundleVariantService::class)->savedIds($tenantId, $discount->id);
-        $subtotal = 0.0;
+        $subtotal = BigDecimal::zero();
         foreach ($requirements as $requirement) {
-            $remaining = (float) $requirement->quantity;
+            $remaining = BigDecimal::of((string) $requirement->quantity);
             $accepted = $itemsByProduct->get($requirement->product_id, collect())
                 ->filter(fn ($item) => DiscountBundleVariantService::accepts($selectedVariants[(int) $requirement->product_id] ?? [], $item->product_variant_id));
             foreach ($accepted as $item) {
-                $taken = min($remaining, (float) $item->quantity);
-                $subtotal += $taken * (float) $item->unit_price;
-                $remaining -= $taken;
-                if ($remaining <= 0.00001) {
+                $taken = BigDecimal::min($remaining, (string) $item->quantity);
+                $subtotal = $subtotal->plus($taken->multipliedBy((string) $item->unit_price));
+                $remaining = $remaining->minus($taken);
+                if ($remaining->isLessThanOrEqualTo(0)) {
                     break;
                 }
             }
-            if ($remaining > 0.00001) {
-                return 0.0;
+            if ($remaining->isGreaterThan(0)) {
+                return BigDecimal::zero();
             }
         }
 
-        return round($subtotal, 2);
+        // Exact line arithmetic; one HALF_UP rounding of the matched total.
+        return $subtotal->toScale(2, RoundingMode::HALF_UP);
     }
 
     private function assertUsageAvailable(int $tenantId, object $discount, object $order, object $branch): void

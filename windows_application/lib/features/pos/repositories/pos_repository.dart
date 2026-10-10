@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/backend_datetime.dart';
 import '../models/available_discount.dart';
 import '../models/discount_engine.dart';
 import '../models/backend_order.dart';
@@ -553,15 +554,18 @@ class PosRepository {
   AvailableDiscount _discountFromJson(Map<String, dynamic> json) {
     final int id = readInt(json['id']) ?? 0;
     final String type = readString(json['type']);
+    final String validUntilRaw = readString(json['validUntil']).trim();
+    // `validUntilKind` says how to read the value. Older servers sent only the
+    // legacy `ends_at` instant under `validUntil`, so an absent kind is an instant.
+    final bool validUntilIsDate =
+        readString(json['validUntilKind']) == 'date' ||
+        RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(validUntilRaw);
     return AvailableDiscount(
       id: id.toString(),
       backendId: id,
       title: readString(json['name']),
-      subtitle: readString(json['message']).isNotEmpty
-          ? readString(json['message'])
-          : readString(json['validUntil']).isNotEmpty
-          ? 'Valid until ${readString(json['validUntil'])}'
-          : 'Backend discount',
+      // Free text only; the localized "Valid until" line is built by the card.
+      subtitle: readString(json['message']),
       badgeLabel: readString(json['badge']),
       type: switch (type) {
         'percentage' => AvailableDiscountType.percentage,
@@ -577,6 +581,13 @@ class PosRepository {
       message: readString(json['message']).trim().isEmpty
           ? null
           : readString(json['message']).trim(),
+      validUntil: validUntilIsDate
+          ? parseBackendDateTime(validUntilRaw)
+          : parseBackendDateTimeIn(
+              validUntilRaw,
+              readString(json['validUntilTimezone']),
+            ),
+      validUntilIsDate: validUntilIsDate,
     );
   }
 

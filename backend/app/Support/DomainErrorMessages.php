@@ -32,6 +32,8 @@ final class DomainErrorMessages
         'DISCOUNT_ITEMS_NOT_ELIGIBLE' => 'الأصناف المحددة غير مؤهلة لهذا الخصم.',
         'DISCOUNT_MINIMUM_NOT_MET' => 'لم يتم بلوغ الحد الأدنى المطلوب لتطبيق هذا الخصم.',
         'DISCOUNT_NOT_STARTED' => 'لم يبدأ سريان هذا الخصم بعد.',
+        'DISCOUNT_NOT_FOUND' => 'كود الخصم غير صالح أو الخصم غير متاح.',
+        'COUPON_ATTEMPTS_THROTTLED' => 'محاولات كود خصم غير صحيحة كثيرة. حاول مرة أخرى بعد قليل.',
         'DISCOUNT_PAYMENT_METHOD_NOT_ALLOWED' => 'هذا الخصم غير متاح مع طريقة الدفع المحددة.',
         'DISCOUNT_SELECTION_REQUIRED' => 'يجب تحديد عنصر لتطبيق هذا الخصم.',
         'DISCOUNT_TIME_NOT_ALLOWED' => 'هذا الخصم غير متاح في هذا الوقت.',

@@ -294,7 +294,6 @@ void main() {
         CashierRoutes.dashboard,
         CashierRoutes.pos,
         CashierRoutes.orders,
-        CashierRoutes.discounts,
         CashierRoutes.cashierInventory,
         CashierRoutes.settings,
         CashierRoutes.financeVouchers,
@@ -345,6 +344,10 @@ void main() {
         '/inventory/movements',
         '/reports',
         '/reports/sales-profitability',
+        CashierRoutes.discounts,
+        '/discounts/create',
+        '/discounts/settings',
+        '/cafe-configuration/discount-settings',
         '/menu-management/products',
         '/cafe-configuration/overview',
       ]) {

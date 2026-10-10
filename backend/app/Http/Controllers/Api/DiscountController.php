@@ -2,26 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Discount\DiscountAccess;
 use App\Domain\Menu\Enums\SalesChannel;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\CouponAttemptGuard;
 use App\Services\CouponCodeGenerator;
 use App\Services\DiscountBundleVariantService;
 use App\Services\DiscountEligibilityService;
 use App\Services\DiscountEngineProtocol;
 use App\Services\DiscountProductVariantService;
 use App\Services\DiscountResolutionService;
+use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
 use App\Support\TenantContext;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -35,25 +38,31 @@ class DiscountController extends Controller
         private readonly PosPricingService $pricing,
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly DiscountEligibilityService $eligibility,
+        private readonly DiscountAccess $access,
+        private readonly OperationalAuditService $audit,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
         $query = $this->discountQuery($tenantId);
+        $revealCodes = $this->access->canSeeCouponCodes($request);
 
         if ($request->filled('search')) {
             $search = '%'.strtolower((string) $request->query('search')).'%';
-            $query->where(function (Builder $query) use ($search): void {
+            $query->where(function (Builder $query) use ($search, $revealCodes): void {
                 $query->whereRaw('LOWER(name) LIKE ?', [$search])
-                    ->orWhereRaw('LOWER(code) LIKE ?', [$search])
                     ->orWhereRaw('LOWER(conditions) LIKE ?', [$search]);
+                // A code search by a view-only actor would be a coupon-existence oracle.
+                if ($revealCodes) {
+                    $query->orWhereRaw('LOWER(code) LIKE ?', [$search]);
+                }
             });
         }
 
         $discounts = $query->orderBy('id')->get()
-            ->filter(fn (object $discount) => ! $request->filled('status') || $this->status($discount) === $request->query('status'))
-            ->map(fn (object $discount) => $this->serializeManagementDiscount($tenantId, $discount))
+            ->filter(fn (object $discount) => ! $request->filled('status') || $this->status($tenantId, $discount) === $request->query('status'))
+            ->map(fn (object $discount) => $this->serializeManagementDiscount($tenantId, $discount, $revealCodes))
             ->values();
 
         return response()->json(['data' => $discounts]);
@@ -89,7 +98,7 @@ class DiscountController extends Controller
     {
         $tenantId = TenantContext::id($request);
 
-        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount))]);
+        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount), $this->access->canSeeCouponCodes($request))]);
     }
 
     public function store(Request $request): JsonResponse
@@ -97,11 +106,12 @@ class DiscountController extends Controller
         $tenantId = TenantContext::id($request);
         $data = $this->validatedManagementData($request, $tenantId);
         try {
-            $id = DB::transaction(function () use ($tenantId, $data): int {
+            $id = DB::transaction(function () use ($request, $tenantId, $data): int {
                 app(DiscountResolutionService::class)->lock($tenantId);
                 $id = (int) DB::table('discounts')->insertGetId($this->discountPayload($tenantId, $data));
                 $this->assertTenantTargets($tenantId, $data);
                 $this->syncTargets($tenantId, $id, $data);
+                $this->auditDiscount($request, $tenantId, 'discount.created', $id, null);
 
                 return $id;
             });
@@ -109,7 +119,7 @@ class DiscountController extends Controller
             $this->throwFriendlyCodeConflict($exception);
         }
 
-        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $id))], 201);
+        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $id), $this->access->canSeeCouponCodes($request))], 201);
     }
 
     public function update(Request $request, int $discount): JsonResponse
@@ -119,7 +129,7 @@ class DiscountController extends Controller
         $data = $this->validatedManagementData($request, $tenantId, $discount);
 
         try {
-            DB::transaction(function () use ($tenantId, $discount, $data): void {
+            DB::transaction(function () use ($request, $tenantId, $discount, $data): void {
                 app(DiscountResolutionService::class)->lock($tenantId);
                 abort_unless(DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->whereNull('deleted_at')->lockForUpdate()->first(), 404);
                 if ($data['applicationMode'] === 'automatic' && ! array_key_exists('code', $data)
@@ -127,14 +137,16 @@ class DiscountController extends Controller
                     throw ValidationException::withMessages(['code' => 'Explicitly clear the coupon code when changing to Automatic.']);
                 }
                 $this->assertTenantTargets($tenantId, $data);
+                $before = $this->lockedManagementState($tenantId, $discount);
                 DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update($this->discountPayload($tenantId, $data, false));
                 $this->syncTargets($tenantId, $discount, $data);
+                $this->auditDiscount($request, $tenantId, 'discount.updated', $discount, $before);
             });
         } catch (QueryException $exception) {
             $this->throwFriendlyCodeConflict($exception);
         }
 
-        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount))]);
+        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount), $this->access->canSeeCouponCodes($request))]);
     }
 
     public function updateStatus(Request $request, int $discount): JsonResponse
@@ -142,28 +154,34 @@ class DiscountController extends Controller
         $tenantId = TenantContext::id($request);
         $this->findManagedDiscount($tenantId, $discount);
         $data = $request->validate(['isActive' => ['required', 'boolean']]);
-        DB::transaction(function () use ($tenantId, $discount, $data): void {
+        DB::transaction(function () use ($request, $tenantId, $discount, $data): void {
             app(DiscountResolutionService::class)->lock($tenantId);
+            $before = $this->lockedManagementState($tenantId, $discount);
             DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update([
                 'is_active' => $data['isActive'],
                 'updated_at' => now(),
             ]);
+            if ((bool) $before['isActive'] !== (bool) $data['isActive']) {
+                $this->auditDiscount($request, $tenantId, $data['isActive'] ? 'discount.activated' : 'discount.deactivated', $discount, $before);
+            }
         });
 
-        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount))]);
+        return response()->json(['data' => $this->serializeManagementDiscount($tenantId, $this->findManagedDiscount($tenantId, $discount), $this->access->canSeeCouponCodes($request))]);
     }
 
     public function destroy(Request $request, int $discount): JsonResponse
     {
         $tenantId = TenantContext::id($request);
         $this->findManagedDiscount($tenantId, $discount);
-        DB::transaction(function () use ($tenantId, $discount): void {
+        DB::transaction(function () use ($request, $tenantId, $discount): void {
             app(DiscountResolutionService::class)->lock($tenantId);
             DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->lockForUpdate()->first();
+            $before = $this->lockedManagementState($tenantId, $discount);
             DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
             DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
             DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount)->delete();
             DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount)->update(['deleted_at' => now(), 'updated_at' => now()]);
+            $this->audit->record($request, $tenantId, 'discount.archived', 'discount', $discount, $this->auditState($before), ['archived' => true], actorId: $this->actorId($request));
         });
 
         return response()->json([], 204);
@@ -187,7 +205,7 @@ class DiscountController extends Controller
         $discounts = $this->discountQuery($tenantId)->where('is_active', true)
             ->where('application_mode', 'manual')
             ->where('type', '!=', 'bogo')->get()
-            ->filter(fn (object $discount) => $this->status($discount) === 'active')
+            ->filter(fn (object $discount) => $this->availableNow($tenantId, $discount, $order))
             ->map(fn (object $discount) => $this->serializeDiscount($tenantId, $discount, $order))
             ->values();
 
@@ -207,36 +225,53 @@ class DiscountController extends Controller
             throw ValidationException::withMessages(['discount' => 'A coupon code or discountId is required.']);
         }
 
-        $discount = $this->findDiscount($tenantId, $data);
-        $this->assertApplicationMode($discount, $data);
-
-        $amount = DB::transaction(function () use ($request, $tenantId, $order, $discount, $data): string {
-            $orderRow = $this->lockedOrder($tenantId, $order);
-            app(DiscountResolutionService::class)->lock($tenantId);
-            app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
-            $this->lifecycle->assertDiscountable($orderRow);
-            $discount = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->whereNull('deleted_at')->lockForUpdate()->first();
-            if (! $discount) {
-                throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'The configured discount is no longer available.');
-            }
+        $redeem = function () use ($request, $tenantId, $order, $data): array {
+            $discount = $this->findDiscount($tenantId, $data);
             $this->assertApplicationMode($discount, $data);
-            if (! empty($data['code']) && strcasecmp((string) $discount->code, trim($data['code'])) !== 0) {
-                throw new OrderLifecycleException('DISCOUNT_CODE_REQUIRED', 'The discount code has changed.');
+
+            return DB::transaction(function () use ($request, $tenantId, $order, $discount, $data): array {
+                $orderRow = $this->lockedOrder($tenantId, $order);
+                app(DiscountResolutionService::class)->lock($tenantId);
+                app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
+                $this->lifecycle->assertDiscountable($orderRow);
+                $discount = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->whereNull('deleted_at')->lockForUpdate()->first();
+                if (! $discount) {
+                    throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'The configured discount is no longer available.');
+                }
+                $this->assertApplicationMode($discount, $data);
+                if (! empty($data['code']) && strcasecmp((string) $discount->code, trim($data['code'])) !== 0) {
+                    throw new OrderLifecycleException('DISCOUNT_CODE_REQUIRED', 'The discount code has changed.');
+                }
+                $result = $this->eligibility->assertApplicable($tenantId, $discount, $orderRow);
+                $amount = $result['amount'];
+                DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
+                DB::table('order_discounts')->insert([
+                    'tenant_id' => $tenantId, 'order_id' => $order, 'discount_id' => $discount->id,
+                    'discount_name' => $data['reason'] ?? $discount->name, 'discount_type' => $discount->type,
+                    'discount_value' => $discount->value, 'discount_amount' => $amount,
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+                $this->pricing->recalculateOrder($tenantId, $order);
+                $this->audit->record($request, $tenantId, 'discount.legacy.applied', 'order', $order,
+                    [], ['discountId' => (int) $discount->id, 'source' => $discount->application_mode === 'code' ? 'code' : 'configured_manual', 'amount' => $amount, 'reason' => $data['reason'] ?? null],
+                    branchId: (int) $orderRow->branch_id, actorId: $this->actorId($request));
+
+                return [$discount, $amount];
+            });
+        };
+        // A typed coupon is a guessable input: failures spend the attempt budget and availability is concealed.
+        if (empty($data['code'])) {
+            [$discount, $amount] = $redeem();
+        } else {
+            try {
+                [$discount, $amount] = app(CouponAttemptGuard::class)->guarded($request, $tenantId, $redeem);
+            } catch (OrderLifecycleException $exception) {
+                // Legacy contract: an unknown or unavailable typed coupon is one identical 404.
+                abort_if($exception->domainCode === 'DISCOUNT_NOT_FOUND', 404, 'Discount not found.');
+
+                throw $exception;
             }
-            $result = $this->eligibility->assertApplicable($tenantId, $discount, $orderRow);
-            $amount = $result['amount'];
-            DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
-            DB::table('order_discounts')->insert([
-                'tenant_id' => $tenantId, 'order_id' => $order, 'discount_id' => $discount->id,
-                'discount_name' => $data['reason'] ?? $discount->name, 'discount_type' => $discount->type,
-                'discount_value' => $discount->value, 'discount_amount' => $amount,
-                'created_at' => now(), 'updated_at' => now(),
-            ]);
-            $this->pricing->recalculateOrder($tenantId, $order);
-
-            return $amount;
-        });
-
+        }
         $updated = $this->findOrder($tenantId, $order);
 
         return response()->json(['data' => [
@@ -255,8 +290,10 @@ class DiscountController extends Controller
             app(DiscountResolutionService::class)->lock($tenantId);
             app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
             $this->lifecycle->assertDiscountable($orderRow);
+            $removed = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->pluck('discount_id')->filter()->map(fn ($id) => (int) $id)->all();
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
+            $this->audit->record($request, $tenantId, 'discount.legacy.removed', 'order', $order, ['discountIds' => $removed], [], branchId: (int) $orderRow->branch_id, actorId: $this->actorId($request));
         });
 
         return response()->json(['data' => ['orderId' => $order, 'discount' => null]]);
@@ -532,6 +569,10 @@ class DiscountController extends Controller
         $query = $this->discountQuery($tenantId);
         ! empty($data['discountId']) ? $query->where('id', $data['discountId']) : $query->whereRaw('LOWER(code) = ?', [strtolower($data['code'])]);
         $discount = $query->first();
+        if (! $discount && empty($data['discountId'])) {
+            // An unknown typed coupon is indistinguishable from an unavailable one (see CouponAttemptGuard).
+            throw new OrderLifecycleException('DISCOUNT_NOT_FOUND', 'The coupon code is invalid or unavailable.');
+        }
         abort_if(! $discount, 404, 'Discount not found.');
 
         return $discount;
@@ -542,39 +583,109 @@ class DiscountController extends Controller
         return DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->where('target_type', $type)->pluck('target_id')->map(fn ($id) => (int) $id)->all();
     }
 
-    private function status(object $discount): string
+    /** @var array<int, array<int, string>> tenant id => [branch id => timezone] */
+    private array $branchTimezones = [];
+
+    /**
+     * Management status. Date validity is evaluated on each branch's own local
+     * calendar day, exactly like runtime eligibility. When the policy spans
+     * branches whose status differs, the aggregate is 'active' while any branch
+     * is live (so POS-eligible policies are never reported as expired), then
+     * 'scheduled', then 'expired'; branchStatuses carries the per-branch detail.
+     */
+    private function status(int $tenantId, object $discount, ?array $branchIds = null): string
     {
         if (! $discount->is_active) {
             return 'inactive';
         }
-        $today = now()->toDateString();
-        if ($discount->start_date && $today < $discount->start_date) {
-            return 'scheduled';
-        }
-        if ($discount->end_date && $today > $discount->end_date) {
-            return 'expired';
-        }
-        if ($discount->start_date === null && $discount->starts_at && now('UTC')->lessThan(Carbon::parse($discount->starts_at, 'UTC'))) {
-            return 'scheduled';
-        }
-        if ($discount->end_date === null && $discount->ends_at && now('UTC')->greaterThan(Carbon::parse($discount->ends_at, 'UTC'))) {
-            return 'expired';
+        $statuses = array_values($this->branchValidity($tenantId, $discount, $branchIds));
+        foreach (['active', 'scheduled'] as $status) {
+            if (in_array($status, $statuses, true)) {
+                return $status;
+            }
         }
 
-        return 'active';
+        return 'expired';
     }
 
-    private function serializeManagementDiscount(int $tenantId, object $discount): array
+    /** @return array<int, string> branch id => 'scheduled'|'expired'|'active' (date validity only) */
+    private function branchValidity(int $tenantId, object $discount, ?array $branchIds = null): array
     {
-        return DB::transaction(function () use ($tenantId, $discount): array {
+        $this->branchTimezones[$tenantId] ??= DB::table('branches')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')
+            ->pluck('timezone', 'id')->map(fn ($timezone) => $timezone ?: 'UTC')->all();
+        $branches = $this->branchTimezones[$tenantId];
+        $branchIds ??= $this->targetIds($tenantId, (int) $discount->id, 'branch');
+        $scope = $branchIds === [] ? $branches : array_intersect_key($branches, array_flip($branchIds));
+        // No usable branch (tenant without active branches): UTC, never the server timezone.
+        $scope = $scope === [] ? [0 => 'UTC'] : $scope;
+        $now = CarbonImmutable::now();
+
+        return array_map(fn (string $timezone): string => $this->eligibility->validityStatus($discount, $now->setTimezone($timezone)), $scope);
+    }
+
+    /** POS list: with an order, that order's branch decides; otherwise any eligible branch keeps it visible. */
+    private function availableNow(int $tenantId, object $discount, ?object $order): bool
+    {
+        if ($order === null) {
+            return $this->status($tenantId, $discount) === 'active';
+        }
+
+        return $discount->is_active && ($this->branchValidity($tenantId, $discount, [(int) $order->branch_id])[(int) $order->branch_id] ?? 'expired') === 'active';
+    }
+
+    private function serializeManagementDiscount(int $tenantId, object $discount, bool $revealCode = true): array
+    {
+        return DB::transaction(function () use ($tenantId, $discount, $revealCode): array {
             $current = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->sharedLock()->first();
             abort_if(! $current || $current->deleted_at !== null, 404);
 
-            return $this->serializeLockedManagementDiscount($tenantId, $current);
+            return $this->serializeLockedManagementDiscount($tenantId, $current, $revealCode);
         });
     }
 
-    private function serializeLockedManagementDiscount(int $tenantId, object $discount): array
+    /** Raw (code included) state of a discount the caller already holds locked, for audit diffing only. */
+    private function lockedManagementState(int $tenantId, int $discountId): array
+    {
+        return $this->serializeLockedManagementDiscount($tenantId, DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discountId)->first());
+    }
+
+    private const AUDIT_FIELDS = [
+        'name', 'applicationMode', 'priority', 'combinationBehavior', 'type', 'scope', 'value', 'fixedAmountBasis',
+        'startDate', 'endDate', 'startsAt', 'endsAt', 'activeDays', 'startTime', 'endTime', 'minimumOrderAmount', 'maximumDiscountAmount',
+        'usageLimit', 'usageLimitPerCustomer', 'perCustomerDailyUsageLimit', 'customerEligibilityMode', 'customerGroupIds', 'customerIds',
+        'paymentMethodIds', 'isActive', 'targetProductIds', 'targetCategoryIds', 'productVariantSelections', 'bundleRequirements',
+        'channelKeys', 'appliesToAllBranches', 'branchIds',
+    ];
+
+    /** Meaningful policy state for the audit trail. The coupon text is never copied: only whether one exists. */
+    private function auditState(array $state): array
+    {
+        return array_intersect_key($state, array_flip(self::AUDIT_FIELDS)) + ['hasCode' => $state['code'] !== null];
+    }
+
+    private function actorId(Request $request): ?int
+    {
+        $actor = $request->attributes->get('auth_user');
+
+        return $actor ? (int) $actor->id : null;
+    }
+
+    /** @param array<string, mixed>|null $beforeRaw state from lockedManagementState(), or null on create */
+    private function auditDiscount(Request $request, int $tenantId, string $action, int $discountId, ?array $beforeRaw): void
+    {
+        $afterRaw = $this->lockedManagementState($tenantId, $discountId);
+        $before = $beforeRaw === null ? [] : $this->auditState($beforeRaw);
+        $after = $this->auditState($afterRaw);
+        $after['name'] ??= null;
+        $changed = $beforeRaw === null ? array_keys($after) : array_keys(array_filter($after, fn ($value, string $key): bool => ! array_key_exists($key, $before) || $before[$key] !== $value, ARRAY_FILTER_USE_BOTH));
+        $after['changedFields'] = $changed;
+        if ($beforeRaw !== null) {
+            $after['codeChanged'] = $beforeRaw['code'] !== $afterRaw['code'];
+        }
+        $this->audit->record($request, $tenantId, $action, 'discount', $discountId, $before, $after, actorId: $this->actorId($request));
+    }
+
+    private function serializeLockedManagementDiscount(int $tenantId, object $discount, bool $revealCode = true): array
     {
         $targets = DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->get()->groupBy('target_type');
         $ids = fn (string $type) => ($targets[$type] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values()->all();
@@ -593,7 +704,7 @@ class DiscountController extends Controller
                 + $bundleVariants->detail($savedBundleVariants, (int) $requirement->product_id, $bundleVariantRows))->all();
 
         return [
-            'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
+            'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $revealCode ? $discount->code : null, 'hasCode' => $discount->code !== null, 'description' => $discount->description,
             'applicationMode' => $discount->application_mode, 'priority' => (int) $discount->priority, 'combinationBehavior' => $discount->combination_behavior, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
             'fixedAmountBasis' => $discount->fixed_amount_basis,
             'conditions' => $discount->conditions, 'startDate' => $discount->start_date, 'endDate' => $discount->end_date,
@@ -610,7 +721,7 @@ class DiscountController extends Controller
             'paymentMethodIds' => $paymentMethodIds, 'paymentMethods' => $this->targetDetails($tenantId, 'payment_methods', $paymentMethodIds),
             'legacyCustomerEligibility' => $discount->customer_eligibility === 'selected_groups' ? null : $discount->customer_eligibility,
             'legacyPaymentMethod' => $discount->payment_method,
-            'isActive' => (bool) $discount->is_active, 'status' => $this->status($discount), 'displayPeriodPrimary' => $discount->display_period_primary, 'displayPeriodSecondary' => $discount->display_period_secondary,
+            'isActive' => (bool) $discount->is_active, 'status' => $this->status($tenantId, $discount, $branchIds), 'branchStatuses' => $this->branchStatuses($tenantId, $discount, $branchIds), 'displayPeriodPrimary' => $discount->display_period_primary, 'displayPeriodSecondary' => $discount->display_period_secondary,
             'productVariantSelections' => app(DiscountProductVariantService::class)->detail($tenantId, $discount->id, $productIds),
             'targetProductIds' => $productIds, 'productTargets' => $this->targetDetails($tenantId, 'products', $productIds),
             'targetCategoryIds' => $categoryIds, 'categoryTargets' => $this->targetDetails($tenantId, 'categories', $categoryIds),
@@ -618,6 +729,16 @@ class DiscountController extends Controller
             'channelKeys' => $channelKeys,
             'appliesToAllBranches' => ! $targets->has('branch'), 'branchIds' => $branchIds, 'branches' => $this->targetDetails($tenantId, 'branches', $branchIds),
         ];
+    }
+
+    /** @return array<int, array{branchId: int, status: string}> per-branch status, so a multi-branch policy never hides a branch-specific state */
+    private function branchStatuses(int $tenantId, object $discount, array $branchIds): array
+    {
+        $statuses = $discount->is_active ? $this->branchValidity($tenantId, $discount, $branchIds) : array_map(fn () => 'inactive', $this->branchValidity($tenantId, $discount, $branchIds));
+        unset($statuses[0]);
+        ksort($statuses);
+
+        return array_values(array_map(fn (int $id, string $status): array => ['branchId' => $id, 'status' => $status], array_keys($statuses), $statuses));
     }
 
     /** @return array<int, array{id: int, name: string, isActive: bool}> */
@@ -652,7 +773,35 @@ class DiscountController extends Controller
             'badge' => match ($discount->type) {
                 'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-SYP '.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)
             },
-            'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'eligible' => $eligible, 'message' => $message, 'validUntil' => $discount->ends_at];
+            'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'eligible' => $eligible, 'message' => $message]
+            + $this->validUntil($tenantId, $discount, $order);
+    }
+
+    /**
+     * Last moment a policy is valid, for POS display. Current policies end on a
+     * branch-local calendar day (end_date, inclusive: kind "date", no zone
+     * needed). Older policies carry an instant (ends_at, kind "instant", UTC
+     * ISO-8601) which is shown in the order branch's timezone. `validUntil`
+     * keeps its legacy key; the kind/timezone fields say how to read it.
+     *
+     * @return array{validUntil: ?string, validUntilKind: ?string, validUntilTimezone: ?string}
+     */
+    private function validUntil(int $tenantId, object $discount, ?object $order): array
+    {
+        if ($discount->end_date) {
+            return ['validUntil' => (string) $discount->end_date, 'validUntilKind' => 'date', 'validUntilTimezone' => null];
+        }
+        if ($discount->ends_at) {
+            $timezone = $order ? DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->value('timezone') : null;
+
+            return [
+                'validUntil' => CarbonImmutable::parse($discount->ends_at, 'UTC')->utc()->format('Y-m-d\TH:i:s\Z'),
+                'validUntilKind' => 'instant',
+                'validUntilTimezone' => $timezone ?: null,
+            ];
+        }
+
+        return ['validUntil' => null, 'validUntilKind' => null, 'validUntilTimezone' => null];
     }
 
     private function assertApplicationMode(object $discount, array $data): void

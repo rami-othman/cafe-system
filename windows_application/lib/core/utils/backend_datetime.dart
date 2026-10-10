@@ -11,6 +11,23 @@ timezone.Location get _damascusLocation {
   return _damascus ??= timezone.getLocation(damascusTimezone);
 }
 
+/// Parses a UTC instant for display in [zoneName] (an IANA name such as the
+/// order branch's timezone). An unknown or missing zone falls back to the
+/// cafe's operational timezone, exactly like [parseBackendDateTime].
+DateTime? parseBackendDateTimeIn(String? value, String? zoneName) {
+  final DateTime? base = parseBackendDateTime(value);
+  final String zone = zoneName?.trim() ?? '';
+  if (base == null || zone.isEmpty) return base;
+  // Calendar-only values carry no instant to convert.
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value!.trim())) return base;
+  timezone_data.initializeTimeZones();
+  try {
+    return timezone.TZDateTime.from(base.toUtc(), timezone.getLocation(zone));
+  } on timezone.LocationNotFoundException {
+    return base;
+  }
+}
+
 /// Parses API timestamps for display in the cafe's operational timezone.
 ///
 /// The backend persists instants in UTC. PostgreSQL query results are often

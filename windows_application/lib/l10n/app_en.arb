@@ -4432,6 +4432,17 @@
   "d2SourceCode": "Coupon",
   "d2SourceManual": "Configured discount",
   "d2SourceAdHoc": "Ad-hoc",
+  "d4CouponInvalid": "The coupon code is invalid or unavailable.",
+  "d4CouponThrottled": "Too many invalid coupon attempts. Wait a few minutes before trying again.",
+  "posDiscountValidUntil": "Valid until {date}",
+  "@posDiscountValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "discountsAccessDenied": "You do not have permission to manage discounts.",
   "@dsCurrentVersion": {
     "placeholders": {
       "version": {

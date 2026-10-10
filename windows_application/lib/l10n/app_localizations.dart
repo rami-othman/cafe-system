@@ -17576,6 +17576,30 @@ abstract class AppLocalizations {
   /// **'Ad-hoc'**
   String get d2SourceAdHoc;
 
+  /// No description provided for @d4CouponInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The coupon code is invalid or unavailable.'**
+  String get d4CouponInvalid;
+
+  /// No description provided for @d4CouponThrottled.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many invalid coupon attempts. Wait a few minutes before trying again.'**
+  String get d4CouponThrottled;
+
+  /// No description provided for @posDiscountValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String posDiscountValidUntil(String date);
+
+  /// No description provided for @discountsAccessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to manage discounts.'**
+  String get discountsAccessDenied;
+
   /// No description provided for @ds3NavPolicies.
   ///
   /// In en, this message translates to:

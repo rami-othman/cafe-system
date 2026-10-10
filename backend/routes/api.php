@@ -436,7 +436,7 @@ Route::prefix('v1')->group(function (): void {
         // DiscountController/PosOrderController/PaymentController about tenant
         // roles.
         Route::middleware('cafe.operations')->group(function (): void {
-            Route::get('discounts/available', [DiscountController::class, 'available'])->middleware('discount.permission:discounts.view');
+            Route::get('discounts/available', [DiscountController::class, 'available'])->middleware('discount.permission:discounts.apply_configured');
             Route::post('discounts/generate-code', [DiscountController::class, 'generateCode'])->middleware('discount.permission:discounts.manage');
             Route::get('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'show']);
             Route::put('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'replace']);

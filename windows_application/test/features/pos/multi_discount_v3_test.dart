@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/core/services/service_locator.dart';
+import 'package:windows_application/core/utils/currency_formatter.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/controllers/pos_print_cubit.dart';
 import 'package:windows_application/features/pos/models/discount_engine.dart';
@@ -464,10 +465,10 @@ void main() {
           // Authoritative lines in sequence (10 then 18, not 10% + 20%).
           expect(find.text('1. Latte 10%'), findsOneWidget);
           expect(find.text('2. WELCOME'), findsOneWidget);
-          expect(find.text('-10.00'), findsOneWidget);
-          expect(find.text('-18.00'), findsOneWidget);
+          expect(find.text('-${CurrencyFormatter.format(10)}'), findsOneWidget);
+          expect(find.text('-${CurrencyFormatter.format(18)}'), findsOneWidget);
           expect(find.text(l.d3TotalDiscounts), findsOneWidget);
-          expect(find.text('-28.00'), findsOneWidget);
+          expect(find.text('-${CurrencyFormatter.format(28)}'), findsOneWidget);
           expect(find.text(l.d2SourceCode), findsOneWidget);
           // A selected intent the backend no longer applies stays visible.
           expect(find.byKey(const Key('discount-pending-4')), findsOneWidget);

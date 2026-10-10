@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/core/utils/currency_formatter.dart';
 import 'package:windows_application/features/orders/models/order_detail.dart';
 import 'package:windows_application/features/orders/models/order_payment_summary.dart';
 import 'package:windows_application/features/orders/models/order_status.dart';
@@ -121,8 +122,11 @@ void main() {
       expect(find.text('1. Latte 10%'), findsOneWidget);
       expect(find.text('2. WELCOME'), findsOneWidget);
       expect(find.text('3. Bundle Offer'), findsOneWidget);
-      for (final amount in ['-1.00', '-0.50', '-0.75']) {
-        expect(find.text(amount), findsOneWidget);
+      for (final amount in [1.0, 0.5, 0.75]) {
+        expect(
+          find.text('-${CurrencyFormatter.format(amount)}'),
+          findsOneWidget,
+        );
       }
       expect(find.text(l.d2SourceCode), findsOneWidget);
       expect(find.text(l.d3TotalDiscounts.toUpperCase()), findsOneWidget);

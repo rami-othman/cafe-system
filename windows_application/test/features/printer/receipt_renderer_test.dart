@@ -120,6 +120,55 @@ void main() {
     },
   );
 
+  test(
+    'multi-discount receipts render on 58mm and 80mm paper in English and Arabic',
+    () async {
+      Map<String, dynamic> line(String name, String source, String amount) =>
+          <String, dynamic>{
+            'name': name,
+            'source': source,
+            'type': 'fixed',
+            'value': amount,
+            'amount': amount,
+          };
+      final withDiscounts = data()
+        ..['discounts'] = <Map<String, dynamic>>[
+          line('Configured', 'configured_manual', '1234.50'),
+          line('Coupon', 'code', '10.00'),
+          line('Promo', 'automatic', '0.25'),
+        ]
+        ..['discountTotal'] = 1244.75;
+      final plain = await renderer.render(
+        ReceiptData.fromJson(data()),
+        locale: const Locale('en'),
+        paperWidth: PrinterPaperWidth.mm58,
+      );
+
+      for (final width in PrinterPaperWidth.values) {
+        for (final locale in const <Locale>[Locale('en'), Locale('ar')]) {
+          final raster = await renderer.render(
+            ReceiptData.fromJson(withDiscounts),
+            locale: locale,
+            paperWidth: width,
+          );
+          expect(raster.width, width == PrinterPaperWidth.mm58 ? 384 : 576);
+          expect(raster.png.take(8), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
+          expect(raster.rgba.length, raster.width * raster.height * 4);
+        }
+      }
+      final narrow = await renderer.render(
+        ReceiptData.fromJson(withDiscounts),
+        locale: const Locale('en'),
+        paperWidth: PrinterPaperWidth.mm58,
+      );
+      expect(
+        narrow.height,
+        greaterThan(plain.height),
+        reason: 'three more lines',
+      );
+    },
+  );
+
   test('zero balance ignores even a stale cash payment record', () async {
     final withCash = ReceiptData.fromJson(
       data(total: 0, payment: <String, dynamic>{'method': 'cash', 'amount': 0}),

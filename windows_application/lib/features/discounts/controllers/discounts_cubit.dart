@@ -13,6 +13,7 @@ import 'discounts_state.dart';
 
 class DiscountsCubit extends Cubit<DiscountsState> {
   static const String requestFailed = 'discount_request_failed';
+  static const String accessDenied = 'discount_access_denied';
   DiscountsCubit({required this._repository, this.capabilityLoader})
     : super(const DiscountsState());
   final Future<DiscountCapabilities> Function()? capabilityLoader;
@@ -298,7 +299,10 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   }
 
   void clearError() => emit(state.copyWith(clearError: true));
-  String _message(Object error) => requestFailed;
+  String _message(Object error) =>
+      error is ApiException && error.statusCode == 403
+      ? accessDenied
+      : requestFailed;
 
   Map<String, List<String>> _validationErrors(Object error) =>
       error is ApiException

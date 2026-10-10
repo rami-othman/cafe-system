@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -7,6 +8,20 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/available_discount.dart';
+
+/// The card's secondary line: the backend's eligibility note when there is one,
+/// otherwise a localized "Valid until" date (a branch-local calendar day, or an
+/// instant shown in the order branch's timezone). Never a raw timestamp.
+String discountSubtitle(BuildContext context, AvailableDiscount discount) {
+  if (discount.subtitle.trim().isNotEmpty) return discount.subtitle;
+  final DateTime? until = discount.validUntil;
+  if (until == null) return '';
+  final String locale = Localizations.localeOf(context).toLanguageTag();
+  final DateFormat format = DateFormat.yMMMd(locale);
+  return context.l10n.posDiscountValidUntil(
+    (discount.validUntilIsDate ? format : format.add_jm()).format(until),
+  );
+}
 
 class DiscountCard extends StatelessWidget {
   const DiscountCard({
@@ -63,16 +78,21 @@ class DiscountCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        discount.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w500,
+                      if (discountSubtitle(
+                        context,
+                        discount,
+                      ).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          discountSubtitle(context, discount),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

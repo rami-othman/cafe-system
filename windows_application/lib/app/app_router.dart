@@ -2351,6 +2351,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.discounts,
           name: AppRouteNames.discounts,
+          redirect: _discountAdministrationAccessRedirect,
           builder: (context, state) => BlocProvider<DiscountsCubit>(
             create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
             child: DiscountsListScreen(
@@ -2553,6 +2554,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.discountCreate,
           name: AppRouteNames.discountCreate,
+          redirect: _discountAdministrationAccessRedirect,
           builder: (context, state) => BlocProvider<DiscountsCubit>(
             create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
             child: CreateDiscountPolicyScreen(
@@ -3213,6 +3215,15 @@ bool _canManageDiscountSettings() => const <String>{
 
 String? _discountSettingsAccessRedirect(BuildContext _, GoRouterState _) =>
     _canManageDiscountSettings() ? null : AppRoutes.pos;
+
+/// Discount administration (list, create/edit, settings) is Owner/Manager only.
+/// Cashiers apply discounts inside the POS; they never see this area. This is a
+/// usability boundary only: the backend rejects every administrative request
+/// from an Employee regardless of this redirect.
+String? _discountAdministrationAccessRedirect(
+  BuildContext _,
+  GoRouterState _,
+) => _canManageDiscountSettings() ? null : AppRoutes.pos;
 
 String? _customerManagementAccessRedirect(BuildContext _, GoRouterState _) =>
     CustomerManagementAccess.allows(

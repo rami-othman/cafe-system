@@ -62,7 +62,9 @@ class CashierAccess {
   /// Routes a Cashier may open, including by typing a deep link. Anything
   /// outside this set resolves to [homeRoute].
   ///
-  /// Deliberately absent: the Finance and Inventory module landing pages and
+  /// Deliberately absent: Discount administration (`/discounts`, create, edit,
+  /// settings) — a Cashier applies discounts inside the POS only — plus the
+  /// Finance and Inventory module landing pages and
   /// every administrative screen under them (accounts, journals, reports,
   /// reconciliation, daily closing, periods, settings, warehouses, transfers,
   /// counts, movements, item editing), plus Reports, Menu Management, and Cafe
@@ -72,7 +74,6 @@ class CashierAccess {
     CashierRoutes.dashboard,
     CashierRoutes.pos,
     CashierRoutes.orders,
-    CashierRoutes.discounts,
     CashierRoutes.cashierInventory,
     CashierRoutes.settings,
   };

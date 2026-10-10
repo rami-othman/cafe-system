@@ -44,15 +44,15 @@ class DefaultTenantRoleService
         }
 
         // Owners retain their architecture-level implicit access. At this
-        // development stage managers and employees intentionally start with
-        // the same explicit Discount grants; later custom-role work can
-        // replace these defaults without changing the authorization boundary.
+        // development stage managers start with the full Discount catalog;
+        // employees may only use Discounts in POS and never receive the
+        // administrative view/manage grants.
         if (Schema::hasTable('discount_role_permissions')) {
-            foreach ([self::MANAGER, self::EMPLOYEE] as $role) {
+            foreach ([self::MANAGER => DiscountAccess::CATALOG, self::EMPLOYEE => DiscountAccess::EMPLOYEE_ASSIGNABLE] as $role => $grants) {
                 if (in_array($role, $existingRoles, true)) {
                     continue;
                 }
-                foreach (DiscountAccess::CATALOG as $permission) {
+                foreach ($grants as $permission) {
                     DB::table('discount_role_permissions')->updateOrInsert(
                         ['tenant_id' => $tenantId, 'role' => $role, 'permission' => $permission],
                         ['created_at' => $now, 'updated_at' => $now],

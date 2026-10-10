@@ -489,12 +489,6 @@ class _QuickAccessSection extends StatelessWidget {
             onTap: () => context.go(CashierRoutes.orders),
           ),
           CashierActionTile(
-            label: context.l10n.cashierQuickDiscounts,
-            icon: Icons.local_offer_outlined,
-            tone: AppColors.tertiary,
-            onTap: () => context.go(CashierRoutes.discounts),
-          ),
-          CashierActionTile(
             label: context.l10n.cashierQuickInventory,
             icon: Icons.inventory_2_outlined,
             onTap: () => context.go(CashierRoutes.cashierInventory),

@@ -327,7 +327,9 @@ class _DiscountError extends StatelessWidget {
 }
 
 String _localizedFailure(BuildContext context, String message) =>
-    AppLocalizations.of(context).discountRequestFailed;
+    message == DiscountsCubit.accessDenied
+    ? AppLocalizations.of(context).discountsAccessDenied
+    : AppLocalizations.of(context).discountRequestFailed;
 
 class _PageHeader extends StatelessWidget {
   const _PageHeader({required this.onCreateDiscount});

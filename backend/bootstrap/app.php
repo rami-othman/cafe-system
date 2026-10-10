@@ -2,6 +2,7 @@
 
 use App\Domain\Customer\CustomerDomainException;
 use App\Domain\Manufacturing\ManufacturingDomainException;
+use App\Exceptions\CouponAttemptsThrottledException;
 use App\Exceptions\OrderLifecycleException;
 use App\Support\DomainErrorMessages;
 use App\Support\SafeExceptionResponse;
@@ -89,6 +90,15 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => DomainErrorMessages::forCode($exception->domainCode),
                     'code' => $exception->domainCode,
                 ], str_ends_with($exception->domainCode, 'IDEMPOTENCY_CONFLICT') ? 409 : 422);
+            }
+        });
+        $exceptions->render(function (CouponAttemptsThrottledException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => DomainErrorMessages::forCode(CouponAttemptsThrottledException::CODE),
+                    'code' => CouponAttemptsThrottledException::CODE,
+                    'retryAfterSeconds' => $exception->retryAfterSeconds,
+                ], 429, ['Retry-After' => (string) $exception->retryAfterSeconds]);
             }
         });
         $exceptions->render(function (MenuPricingException $exception, Request $request) {

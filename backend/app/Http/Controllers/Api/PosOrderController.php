@@ -10,6 +10,7 @@ use App\Services\BranchAccessService;
 use App\Services\DiscountEngineProtocol;
 use App\Services\DiscountResolutionService;
 use App\Services\Menu\PublishedMenuOrderResolver;
+use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosInventoryWarehouseResolver;
 use App\Services\PosNumberGenerator;
@@ -443,11 +444,14 @@ class PosOrderController extends Controller
     {
         $tenantId = TenantContext::id($request);
         app(DiscountEngineProtocol::class)->legacyMutation($request, $tenantId, $order);
-        DB::transaction(function () use ($tenantId, $order): void {
-            $this->lifecycle->assertDiscountable($this->lockedOrder($tenantId, $order));
+        DB::transaction(function () use ($request, $tenantId, $order): void {
+            $orderRow = $this->lockedOrder($tenantId, $order);
+            $this->lifecycle->assertDiscountable($orderRow);
             app(DiscountEngineProtocol::class)->legacyMutation(request(), $tenantId, $order);
+            $removed = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->pluck('discount_id')->filter()->map(fn ($id) => (int) $id)->all();
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
+            app(OperationalAuditService::class)->record($request, $tenantId, 'discount.legacy.removed', 'order', $order, ['discountIds' => $removed], [], branchId: (int) $orderRow->branch_id, actorId: (int) $request->attributes->get('auth_user')->id);
         });
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);

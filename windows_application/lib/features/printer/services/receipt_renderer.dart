@@ -71,6 +71,19 @@ class ReceiptRaster {
 /// receipt without a product name or a total is never produced regardless of
 /// what the template says (see [ReceiptTemplateItems.showProductName] /
 /// [ReceiptTemplateTotals.showTotal]).
+/// Signed text for one backend discount line, formatted exactly like every other
+/// receipt amount (grouping and two decimals, same on 58 mm and 80 mm paper).
+/// Zero is unsigned; an unparsable value is shown as received.
+@visibleForTesting
+String receiptDiscountAmount(
+  String backendAmount,
+  String Function(double value) money,
+) {
+  final double? value = double.tryParse(backendAmount);
+  if (value == null) return '-$backendAmount';
+  return value == 0 ? money(0) : '-${money(value)}';
+}
+
 class ReceiptRenderer {
   static Future<void>? _fontsReady;
   static final Map<String, ui.Image> _logoCache = <String, ui.Image>{};
@@ -297,7 +310,10 @@ class ReceiptRenderer {
               'ad_hoc' => rtl ? 'حر' : 'Ad-hoc',
               _ => rtl ? 'خصم' : 'Discount',
             };
-            row('${discount.name} ($source)', '-${discount.amount}');
+            row(
+              '${discount.name} ($source)',
+              receiptDiscountAmount(discount.amount, amount),
+            );
           }
         }
         if (cfg.showDiscount && receipt.discountTotal != 0) {

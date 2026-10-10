@@ -144,6 +144,17 @@ final class DiscountEngineProtocol
 
     public function preview(Request $request, int $tenantId, object $order, array $data): array
     {
+        // Typed coupon text is the only guessable input; retained coupons (by id) and configured discounts are not.
+        $typedCode = collect($data['action'] === 'set' ? ($data['intents'] ?? []) : [$data['intent'] ?? []])
+            ->contains(fn (array $intent): bool => ($intent['source'] ?? null) === 'code' && array_key_exists('code', $intent));
+
+        return $typedCode
+            ? app(CouponAttemptGuard::class)->guarded($request, $tenantId, fn (): array => $this->previewUnguarded($request, $tenantId, $order, $data))
+            : $this->previewUnguarded($request, $tenantId, $order, $data);
+    }
+
+    private function previewUnguarded(Request $request, int $tenantId, object $order, array $data): array
+    {
         $this->engine->lock($tenantId);
         $change = ['action' => $data['action'], 'paymentMethodId' => $data['paymentMethodId'] ?? null];
         if ($change['action'] === 'apply') {

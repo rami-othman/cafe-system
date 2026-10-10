@@ -5,10 +5,22 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
 import '../models/discount_engine.dart';
+
+/// Formats a backend decimal string ("1234.50") with the same shared convention
+/// as the POS totals panel, so every discount amount reads like the cart
+/// beside it. Display only: the backend remains the monetary authority.
+/// A [negative] amount shows a leading minus, except for zero.
+String discountMoney(String? amount, {bool negative = false}) {
+  final double? value = double.tryParse(amount ?? '');
+  if (value == null) return amount ?? '';
+  final String text = CurrencyFormatter.format(value.abs());
+  return negative && value != 0 ? '-$text' : text;
+}
 
 String discountSource(AppLocalizations l, String? source) => switch (source) {
   'automatic' => l.d2SourceAutomatic,
@@ -74,7 +86,8 @@ String localizedDiscountError(AppLocalizations l, Object? error) {
     'EXCLUSIVE_DISCOUNT_CONFLICT' ||
     'MAXIMUM_TOTAL_DISCOUNT_EXCEEDED' ||
     'DISCOUNT_CONFLICT' => localizedExclusionReason(l, code!),
-    'DISCOUNT_NOT_FOUND' ||
+    'COUPON_ATTEMPTS_THROTTLED' => l.d4CouponThrottled,
+    'DISCOUNT_NOT_FOUND' => l.d4CouponInvalid,
     'DISCOUNT_AD_HOC_DISABLED' ||
     'DISCOUNT_APPLICATION_MODE_INVALID' ||
     'DISCOUNT_INACTIVE' ||
@@ -166,7 +179,10 @@ class DiscountBreakdown extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Text('-${d.amount}', textDirection: TextDirection.ltr),
+                Text(
+                  discountMoney(d.amount, negative: true),
+                  textDirection: TextDirection.ltr,
+                ),
                 if (onRemove != null &&
                     d.discountId != null &&
                     d.source != 'automatic')
@@ -192,7 +208,7 @@ class DiscountBreakdown extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '-$total',
+                  discountMoney(total, negative: true),
                   key: const Key('discount-lines-total'),
                   textDirection: TextDirection.ltr,
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -308,7 +324,12 @@ class ExactDiscountTotals extends StatelessWidget {
           child: Row(
             children: [
               Expanded(child: Text(row.$1)),
-              Flexible(child: Text(row.$2, textDirection: TextDirection.ltr)),
+              Flexible(
+                child: Text(
+                  discountMoney(row.$2),
+                  textDirection: TextDirection.ltr,
+                ),
+              ),
             ],
           ),
         ),

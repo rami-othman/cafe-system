@@ -4204,6 +4204,10 @@
   "d2SourceCode": "قسيمة",
   "d2SourceManual": "خصم معرّف",
   "d2SourceAdHoc": "حر",
+  "d4CouponInvalid": "كود الخصم غير صالح أو غير متاح.",
+  "d4CouponThrottled": "محاولات كثيرة لكود خصم غير صحيح. انتظر بضع دقائق ثم حاول مجددًا.",
+  "posDiscountValidUntil": "صالح حتى {date}",
+  "discountsAccessDenied": "ليست لديك صلاحية إدارة الخصومات.",
   "@dsCurrentVersion": {
     "placeholders": {
       "version": {

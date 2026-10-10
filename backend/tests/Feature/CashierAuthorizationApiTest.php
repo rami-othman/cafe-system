@@ -29,7 +29,9 @@ class CashierAuthorizationApiTest extends TestCase
         $this->getJson("/api/v1/pos/state?branchId=$branch", $this->headers($tenant, $cashier))->assertOk();
         $this->getJson('/api/v1/orders', $this->headers($tenant, $cashier))->assertOk();
         $this->getJson('/api/v1/customers', $this->headers($tenant, $cashier))->assertOk();
-        $this->getJson('/api/v1/discounts', $this->headers($tenant, $cashier))->assertOk();
+        // POS use only: eligible discounts are listed, the administrative policy list is not.
+        $this->getJson('/api/v1/discounts/available', $this->headers($tenant, $cashier))->assertOk();
+        $this->getJson('/api/v1/discounts', $this->headers($tenant, $cashier))->assertForbidden();
     }
 
     public function test_cashier_can_fetch_and_close_own_shift(): void

@@ -14,7 +14,7 @@ class DiscountSecurityHardeningTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_owner_manager_and_employee_receive_the_temporary_four_permission_defaults(): void
+    public function test_owner_and_manager_receive_the_full_catalog_and_employee_only_pos_permissions(): void
     {
         $scope = $this->scope();
         $manager = User::query()->create([
@@ -24,15 +24,23 @@ class DiscountSecurityHardeningTest extends TestCase
             'role' => 'manager', 'is_active' => true,
         ]);
         $access = app(DiscountAccess::class);
-        foreach ([$scope['owner'], $manager, $scope['employee']] as $actor) {
+        foreach ([$scope['owner'], $manager] as $actor) {
             $request = Request::create('/');
             $request->attributes->set('auth_user', $actor);
             foreach (DiscountAccess::CATALOG as $permission) {
                 $this->assertTrue($access->allows($request, $permission));
             }
         }
+        $request = Request::create('/');
+        $request->attributes->set('auth_user', $scope['employee']);
+        foreach (DiscountAccess::EMPLOYEE_ASSIGNABLE as $permission) {
+            $this->assertTrue($access->allows($request, $permission));
+        }
+        foreach (DiscountAccess::ADMINISTRATIVE as $permission) {
+            $this->assertFalse($access->allows($request, $permission));
+        }
         $this->assertSame(5, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'manager')->count());
-        $this->assertSame(4, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'employee')->count());
+        $this->assertEqualsCanonicalizing(DiscountAccess::EMPLOYEE_ASSIGNABLE, DB::table('discount_role_permissions')->where('tenant_id', $scope['tenant'])->where('role', 'employee')->pluck('permission')->all());
     }
 
     public function test_employee_permissions_and_order_branch_access_are_enforced(): void
@@ -40,14 +48,18 @@ class DiscountSecurityHardeningTest extends TestCase
         $scope = $this->scope();
         $employeeHeaders = $this->headers($scope['tenant'], $scope['employee']);
 
-        $this->getJson('/api/v1/discounts', $employeeHeaders)->assertOk();
-        $this->postJson('/api/v1/discounts', $this->managementPayload(), $employeeHeaders)->assertCreated();
+        // Employees apply discounts in POS but never administer policies.
+        $this->getJson('/api/v1/discounts', $employeeHeaders)->assertForbidden();
+        $this->postJson('/api/v1/discounts', $this->managementPayload(), $employeeHeaders)->assertForbidden();
         $this->putJson("/api/v1/orders/{$scope['orderA']}/discount", ['type' => 'percentage', 'value' => 10], $employeeHeaders)
             ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_AD_HOC_DISABLED');
         $this->assertSame(0, DB::table('order_discounts')->where('order_id', $scope['orderA'])->count());
 
         $this->putJson('/api/v1/discounts/role-permissions/employee', [
             'permissions' => [DiscountAccess::VIEW, DiscountAccess::APPLY_CONFIGURED],
+        ], $this->headers($scope['tenant'], $scope['owner']))->assertUnprocessable();
+        $this->putJson('/api/v1/discounts/role-permissions/employee', [
+            'permissions' => [DiscountAccess::APPLY_CONFIGURED],
         ], $this->headers($scope['tenant'], $scope['owner']))->assertOk();
 
         $this->getJson("/api/v1/discounts/available?orderId={$scope['orderA']}", $employeeHeaders)->assertOk();

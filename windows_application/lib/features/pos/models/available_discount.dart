@@ -15,6 +15,8 @@ class AvailableDiscount extends Equatable {
     this.couponCode,
     this.isEligible = true,
     this.message,
+    this.validUntil,
+    this.validUntilIsDate = false,
   });
 
   final String id;
@@ -29,6 +31,12 @@ class AvailableDiscount extends Equatable {
   final bool isEligible;
   final String? message;
 
+  /// Last moment the policy is valid. A calendar day when [validUntilIsDate]
+  /// (branch-local, inclusive); otherwise an instant already converted to the
+  /// order branch's timezone. Formatting is the widget's job (localized).
+  final DateTime? validUntil;
+  final bool validUntilIsDate;
+
   @override
   List<Object?> get props => <Object?>[
     id,
@@ -42,5 +50,7 @@ class AvailableDiscount extends Equatable {
     couponCode,
     isEligible,
     message,
+    validUntil,
+    validUntilIsDate,
   ];
 }

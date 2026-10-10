@@ -9787,6 +9787,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get d2SourceAdHoc => 'حر';
 
   @override
+  String get d4CouponInvalid => 'كود الخصم غير صالح أو غير متاح.';
+
+  @override
+  String get d4CouponThrottled =>
+      'محاولات كثيرة لكود خصم غير صحيح. انتظر بضع دقائق ثم حاول مجددًا.';
+
+  @override
+  String posDiscountValidUntil(String date) {
+    return 'صالح حتى $date';
+  }
+
+  @override
+  String get discountsAccessDenied => 'ليست لديك صلاحية إدارة الخصومات.';
+
+  @override
   String get ds3NavPolicies => 'سياسات الخصم';
 
   @override
